@@ -1,0 +1,41 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# InCode:
+#   new RenderPass("Geometry Rendering", EffectHash("Geometry"))
+
+# Param blocks 
+param_blocks:
+
+# Render state
+render_states:
+
+# Effects tie everything together, these are what our actual draw calls in code
+# specifify to define how things should render.
+effects:
+
+  # Geometry effect is used for rendering any solid geometry. 
+  geometry:
+    techniques:
+      geometry_opaque:
+        draw_mode: Opaque
+      geometry_wireframe:
+        draw_mode: Wireframe
+
+techniques:
+
+  geometry_opaque:
+    vertex_shader: data:assets/shaders/geometry.hlsl|Vertex
+    pixel_shader: data:assets/shaders/geometry.hlsl|Pixel
+    render_state: opaque
+    param_blocks: [ camera_state ]
+
+  geometry_wireframe:
+    vertex_shader: assets/shaders/geometry.hlsl|Vertex
+    pixel_shader: assets/shaders/geometry.hlsl|Pixel
+    render_state: wireframe
+    param_blocks: [ camera_state ]
