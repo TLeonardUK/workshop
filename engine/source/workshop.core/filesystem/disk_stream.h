@@ -25,6 +25,7 @@ public:
 
     virtual void close() override;
     virtual void flush() override;
+    virtual bool can_write() override;
     virtual size_t position() override;
     virtual size_t length() override;
     virtual void seek(size_t position) override;
@@ -33,6 +34,8 @@ public:
 
 private:
     FILE* m_file;
+
+    bool m_can_write = false;
 
     uint64_t m_length;
 

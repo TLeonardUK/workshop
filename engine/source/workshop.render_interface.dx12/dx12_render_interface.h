@@ -32,6 +32,7 @@ public:
     virtual void new_frame() override;
     virtual std::unique_ptr<render_swapchain> create_swapchain(window& for_window, const char* debug_name) override;
     virtual std::unique_ptr<render_fence> create_fence(const char* debug_name) override;
+    virtual std::unique_ptr<render_shader_compiler> create_shader_compiler() override;
     virtual render_command_queue& get_graphics_queue() override;
     virtual size_t get_pipeline_depth() override;
 

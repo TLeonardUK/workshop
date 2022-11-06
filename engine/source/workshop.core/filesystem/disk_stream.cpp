@@ -18,6 +18,8 @@ result<void> disk_stream::open(const std::filesystem::path& path, bool for_writi
 {
     db_assert(m_file == nullptr);
 
+    m_can_write = for_writing;
+
     m_file = fopen(path.string().c_str(), for_writing ? "wb" : "rb");
     if (m_file == nullptr)
     {
@@ -47,6 +49,11 @@ void disk_stream::flush()
     fflush(m_file);
 }
 
+bool disk_stream::can_write()
+{
+    return m_can_write;
+}
+
 size_t disk_stream::position()
 {
     db_assert(m_file != nullptr);
@@ -72,14 +79,14 @@ size_t disk_stream::write(const char* data, size_t size)
 {
     db_assert(m_file != nullptr);
 
-    return fwrite(data, size, 1, m_file);
+    return fwrite(data, size, 1, m_file) * size;
 }
 
 size_t disk_stream::read(char* data, size_t size)
 {
     db_assert(m_file != nullptr);
 
-    return fread(data, size, 1, m_file);
+    return fread(data, size, 1, m_file) * size;
 }
 
 }; // namespace workshop

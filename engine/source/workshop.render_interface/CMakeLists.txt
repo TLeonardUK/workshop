@@ -13,6 +13,8 @@ SET(SOURCES
     "render_command_queue.h"
     "render_command_list.h"
     "render_target.h"
+    "render_types.h"
+    "render_shader_compiler.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

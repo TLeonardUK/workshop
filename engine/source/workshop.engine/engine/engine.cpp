@@ -14,11 +14,13 @@
 #include "workshop.core/async/async.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
+#include "workshop.core/filesystem/virtual_file_system_aliased_disk_handler.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/app/app.h"
 
 #include "workshop.engine/assets/asset_manager.h"
+#include "workshop.engine/assets/caches/asset_cache_disk.h"
 #include "workshop.engine/assets/types/shader/shader.h"
 #include "workshop.engine/assets/types/shader/shader_loader.h"
 
@@ -122,6 +124,11 @@ std::filesystem::path engine::get_game_asset_dir()
     return m_game_asset_dir;
 }
 
+std::filesystem::path engine::get_asset_cache_dir()
+{
+    return m_asset_cache_dir;
+}
+
 void engine::set_render_interface_type(render_interface_type type)
 {
     m_render_interface_type = type;
@@ -183,7 +190,8 @@ result<void> engine::create_filesystem(init_list& list)
     {
         m_engine_asset_dir = root_dir / "engine" / "assets";
         m_game_asset_dir = root_dir / "games" / app::instance().get_name() / "assets";
-
+        m_asset_cache_dir = root_dir / "intermediate" / "cache";
+         
         if (std::filesystem::exists(m_engine_asset_dir) && 
             std::filesystem::exists(m_game_asset_dir))
         {
@@ -203,14 +211,32 @@ result<void> engine::create_filesystem(init_list& list)
         db_fatal(engine, "Failed to find game asset directory.");
         return false;
     }
+    if (!std::filesystem::exists(m_asset_cache_dir))
+    {
+        if (!std::filesystem::create_directories(m_asset_cache_dir))
+        {
+            db_fatal(engine, "Failed to create asset cache directory: %s", m_asset_cache_dir.string().c_str());
+            return false;
+        }
+    }
 
     db_log(engine, "Engine asset directory: %s", m_engine_asset_dir.string().c_str());
     db_log(engine, "Game asset directory: %s", m_game_asset_dir.string().c_str());
+    db_log(engine, "Asset cache directory: %s", m_asset_cache_dir.string().c_str());
 
     // Create the main data protocol, engine and game assets are mounted to the same path, 
     // with game assets taking priority.
     m_filesystem->register_handler("data", 0, std::make_unique<virtual_file_system_disk_handler>(get_engine_asset_dir().string().c_str(), true));
     m_filesystem->register_handler("data", 1, std::make_unique<virtual_file_system_disk_handler>(get_game_asset_dir().string().c_str(), true));
+
+    // The cache protocol loads from the compiled asset cache. You should not try and query this
+    // protocol directly, you should load from the data protocol, this protocol handler is lazily
+    // filled as assets are requested.
+    m_filesystem->register_handler("cache", 0, std::make_unique<virtual_file_system_aliased_disk_handler>(false));
+
+    // The temporary mount is just a location on disk we can store temporary files in - for things like
+    // intermediate compiled files.
+    m_filesystem->register_handler("temp", 0, std::make_unique<virtual_file_system_disk_handler>(std::filesystem::temp_directory_path().string().c_str(), false));
 
     return true;
 }
@@ -225,11 +251,9 @@ result<void> engine::destroy_filesystem()
 
 result<void> engine::create_asset_manager(init_list& list)
 {
-    m_asset_manager = std::make_unique<asset_manager>();
-    m_asset_manager->register_loader(std::make_unique<shader_loader>());
-
-    asset_ptr<shader> instance = m_asset_manager->request_asset<shader>("data:shaders/geometry.yaml", 0);
-    instance.wait_for_load();
+    m_asset_manager = std::make_unique<asset_manager>(get_platform(), get_config());
+    m_asset_manager->register_loader(std::make_unique<shader_loader>(*this));
+    m_asset_manager->register_cache(std::make_unique<asset_cache_disk>("cache", m_asset_cache_dir, false));
 
     return true;
 }
@@ -334,6 +358,11 @@ result<void> engine::create_presenter(init_list& list)
 {
     m_presenter = std::make_unique<presenter>(*this);
     m_presenter->register_init(list);
+
+
+    asset_ptr<shader> instance = m_asset_manager->request_asset<shader>("data:shaders/geometry.yaml", 0);
+    instance.wait_for_load();
+
 
     return true;
 }

@@ -11,6 +11,8 @@ SET(SOURCES
 
     "filesystem/file.cpp"
     
+    "platform/platform.cpp"
+    
     "hashing/guid.cpp"
 
     "utils/windows_headers.h"
@@ -24,4 +26,4 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/core")
 
-target_link_libraries(${PROJECT_NAME} dbghelp.lib)
+target_link_libraries(${PROJECT_NAME} dbghelp.lib Rpcrt4.lib)

@@ -20,6 +20,8 @@ SET(SOURCES
     "dx12_render_command_list.cpp"
     "dx12_render_target.h"
     "dx12_render_target.cpp"
+    "dx12_render_shader_compiler.h"
+    "dx12_render_shader_compiler.cpp"
     "dx12_types.h"
     "dx12_types.cpp"
 )
@@ -30,7 +32,8 @@ util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/rendering")
 
 target_link_libraries(${PROJECT_NAME} 
     sdl2
+    dxcompiler
     d3d12.lib
     dxgi.lib
-    d3dcompiler.lib
 )
+

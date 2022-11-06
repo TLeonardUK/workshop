@@ -45,6 +45,8 @@ SET(SOURCES
     "filesystem/virtual_file_system.cpp"
     "filesystem/virtual_file_system_disk_handler.h"
     "filesystem/virtual_file_system_disk_handler.cpp"
+    "filesystem/virtual_file_system_aliased_disk_handler.h"
+    "filesystem/virtual_file_system_aliased_disk_handler.cpp"
     "filesystem/virtual_file_system_handler.h"
     "filesystem/virtual_file_system_handler.cpp"
 

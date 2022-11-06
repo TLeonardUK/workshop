@@ -7,6 +7,7 @@
 #include "workshop.render_interface.dx12/dx12_render_fence.h"
 #include "workshop.render_interface.dx12/dx12_render_command_queue.h"
 #include "workshop.render_interface.dx12/dx12_render_descriptor_heap.h"
+#include "workshop.render_interface.dx12/dx12_render_shader_compiler.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.windowing/window.h"
 
@@ -53,6 +54,17 @@ std::unique_ptr<render_swapchain> dx12_render_interface::create_swapchain(window
 std::unique_ptr<render_fence> dx12_render_interface::create_fence(const char* debug_name)
 {
     std::unique_ptr<dx12_render_fence> instance = std::make_unique<dx12_render_fence>(*this, debug_name);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
+}
+
+std::unique_ptr<render_shader_compiler> dx12_render_interface::create_shader_compiler()
+{
+    std::unique_ptr<dx12_render_shader_compiler> instance = std::make_unique<dx12_render_shader_compiler>(*this);
     if (!instance->create_resources())
     {
         return nullptr;

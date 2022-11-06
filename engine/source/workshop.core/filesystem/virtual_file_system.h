@@ -69,16 +69,25 @@ public:
     // Determines the type of the given filename.
     virtual_file_system_path_type type(const char* path);
 
+    // Removes a given file from the file system, only valid if path is writable.
+    bool remove(const char* path);
+
+    // Gets the time a file was modified.
+    bool modified_time(const char* path, virtual_file_system_time_point& timepoint);
+
     // Lists all the files or directories that exist in a given path.
     std::vector<std::string> list(const char* path, virtual_file_system_path_type type);
 
-protected:
+public:
 
     // Normalizes a path.
-    std::string normalize(const char* path);
+    static std::string normalize(const char* path);
 
     // Cracks a path into its consituent parts.
-    void crack(const char* path, std::string& protocol, std::string& filename);
+    static void crack(const char* path, std::string& protocol, std::string& filename);
+
+    // Swaps the protocol attached to the given path.
+    static std::string replace_protocol(const char* path, const char* new_protocol);
 
     // Gets a pointer to all the handlers for the given protocol.
     std::vector<virtual_file_system_handler*> get_handlers(const std::string& protocol);

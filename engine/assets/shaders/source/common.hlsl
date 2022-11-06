@@ -2,11 +2,4 @@
 //  workshop
 //  Copyright (C) 2022 Tim Leonard
 // ================================================================================================
-
-void Vertex()
-{
-}
-
-void Pixel()
-{
-}
+#include "data:shaders/source/common2.hlsl"

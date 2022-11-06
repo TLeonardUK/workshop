@@ -13,6 +13,7 @@ class render_swapchain;
 class render_fence;
 class render_command_queue;
 class render_command_list;
+class render_shader_compiler;
 
 // ================================================================================================
 //  Types of renderer implementations available. Make sure to update if you add new ones.
@@ -48,6 +49,9 @@ public:
 
     // Creates an object describing the state of the graphics pipeline durng a draw call.
     // virtual std::unique_ptr<pipeline> create_pipeline(const char* debug_name = nullptr) = 0;
+
+    // Creates a class to handle compiling shaders for offline use.
+    virtual std::unique_ptr<render_shader_compiler> create_shader_compiler() = 0;
 
     // Gets the main graphics command queue responsible for raster ops.
     virtual render_command_queue& get_graphics_queue() = 0;

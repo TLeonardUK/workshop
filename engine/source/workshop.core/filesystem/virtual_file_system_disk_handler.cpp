@@ -72,6 +72,40 @@ virtual_file_system_path_type virtual_file_system_disk_handler::type(const char*
     return virtual_file_system_path_type::non_existant;
 }
 
+bool virtual_file_system_disk_handler::remove(const char* path)
+{
+    if (m_read_only)
+    {
+        return false;
+    }
+
+    std::filesystem::path fspath(m_root + "/" + path);
+    try
+    {
+        std::filesystem::remove(fspath);
+    }
+    catch (std::filesystem::filesystem_error)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_file_system_time_point& timepoint)
+{
+    std::filesystem::path fspath(m_root + "/" + path);
+    if (std::filesystem::exists(fspath))
+    {
+        std::filesystem::file_time_type time = std::filesystem::last_write_time(fspath);
+        timepoint = std::chrono::file_clock::to_utc(time);
+
+        return true;
+    }
+
+    return false;
+}
+
 std::vector<std::string> virtual_file_system_disk_handler::list(const char* path, virtual_file_system_path_type type)
 {
     std::vector<std::string> result;

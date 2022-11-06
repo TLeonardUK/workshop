@@ -5,6 +5,7 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/virtual_file_system_handler.h"
 #include "workshop.core/filesystem/stream.h"
+#include "workshop.core/containers/string.h"
 
 #include <algorithm>
 
@@ -103,6 +104,13 @@ void virtual_file_system::crack(const char* path, std::string& protocol, std::st
     }
 }
 
+std::string virtual_file_system::replace_protocol(const char* path, const char* new_protocol)
+{
+    std::string protocol, filename;
+    crack(path, protocol, filename);
+    return string_format("%s:%s", new_protocol, filename.c_str());
+}
+
 std::vector<virtual_file_system_handler*> virtual_file_system::get_handlers(const std::string& protocol)
 {
     std::scoped_lock lock(m_handlers_mutex);
@@ -161,6 +169,48 @@ virtual_file_system_path_type virtual_file_system::type(const char* path)
     }
 
     return virtual_file_system_path_type::non_existant;
+}
+
+bool virtual_file_system::remove(const char* path)
+{
+    std::string protocol;
+    std::string filename;
+
+    crack(path, protocol, filename);
+    protocol = normalize(protocol.c_str());
+    filename = normalize(filename.c_str());
+
+    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
+    for (virtual_file_system_handler* handler : handlers)
+    {
+        if (handler->remove(filename.c_str()))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool virtual_file_system::modified_time(const char* path, virtual_file_system_time_point& timepoint)
+{
+    std::string protocol;
+    std::string filename;
+
+    crack(path, protocol, filename);
+    protocol = normalize(protocol.c_str());
+    filename = normalize(filename.c_str());
+
+    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
+    for (virtual_file_system_handler* handler : handlers)
+    {
+        if (handler->modified_time(filename.c_str(), timepoint))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::vector<std::string> virtual_file_system::list(const char* path, virtual_file_system_path_type type)

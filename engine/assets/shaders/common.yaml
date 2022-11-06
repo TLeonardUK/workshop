@@ -2,7 +2,9 @@
 #  workshop
 #  Copyright (C) 2022 Tim Leonard
 # ================================================================================================
-type: shader
+# This file just contains commonly used param blocks which are generic to specific shaders.
+# ================================================================================================
+type: Shader
 version: 1
 
 param_blocks:
@@ -11,6 +13,6 @@ param_blocks:
   camera_state:
     scope: global
     fields:
-      mvp_matrix: float4x4
+      mvp_matrix: matrix4
       near_clip: float
       far_clip: float

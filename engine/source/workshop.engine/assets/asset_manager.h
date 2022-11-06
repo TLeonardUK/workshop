@@ -6,6 +6,7 @@
 
 #include "workshop.core/debug/debug.h"
 #include "workshop.engine/assets/asset_loader.h"
+#include "workshop.engine/assets/asset_cache.h"
 
 #include <thread>
 #include <string>
@@ -120,8 +121,14 @@ class asset_manager
 public:
 
     using loader_id = size_t;
+    using cache_id = size_t;
 
-    asset_manager();
+    inline static std::string k_compiled_asset_extension = ".compiled";
+
+    // The platform passed in determines which assets are loaded. Normally this will
+    // always by the same as the platform being run on, but can be used to cross-compile
+    // assets.
+    asset_manager(platform_type asset_platform, config_type asset_config);
     ~asset_manager();
 
     // Registers a new loader for the given asset type.
@@ -131,6 +138,14 @@ public:
     // Unregisters a previously registered loader.
     // Ensure the loader is not being used.
     void unregister_loader(loader_id id);
+
+    // Registers a new cache for compiled assets.
+    // An id to uniquely identify this cache is returned, this can be later used to unregister it.
+    cache_id register_cache(std::unique_ptr<asset_cache>&& cache);
+
+    // Unregisters a previously registered cache.
+    // Ensure the cache is not being used.
+    void unregister_cache(cache_id id);
 
     // Requests to load an asset described in the yaml file at the given path.
     // 
@@ -195,6 +210,18 @@ protected:
     // for some debug logging.
     void set_load_state(asset_state* state, asset_loading_state new_state);
 
+    // Tries to find the compiled version of an asset by looking through
+    // all caches. If not available it will compile the asset and insert
+    // into into relevant caches.
+    bool get_asset_compiled_path(asset_loader* loader, asset_state* state, std::string& compiled_path);
+
+    // Searches for all asset caches for the given cache key and provides the path to the compiled
+    // version if it exists. May migrate assets to closer caches in found in far caches.
+    bool search_cache_for_key(const asset_cache_key& cache_key, std::string& compiled_path);
+
+    // Compiles the given asset and stores it in the cache.
+    bool compile_asset(asset_cache_key& cache_key, asset_loader* loader, asset_state* state, std::string& compiled_path);
+
 private:
     struct registered_loader
     {
@@ -221,8 +248,34 @@ private:
         std::unique_ptr<asset_loader> loader;
     };
 
-    std::recursive_mutex m_loaders_mutex;
+    struct registered_cache
+    {
+        registered_cache()
+            : id(0)
+            , cache(nullptr)
+        {
+        }
+
+        registered_cache(registered_cache&& handle)
+            : id(handle.id)
+            , cache(std::move(handle.cache))
+        {
+        }
+
+        registered_cache& operator=(registered_cache&& other)
+        {
+            id = other.id;
+            cache = std::move(other.cache);
+            return *this;
+        }
+
+        cache_id id;
+        std::unique_ptr<asset_cache> cache;
+    };
+
+    std::recursive_mutex m_loaders_mutex; // TODO: Change to shared_mutex
     std::vector<registered_loader> m_loaders;
+    size_t m_next_loader_id = 0;
 
     std::mutex m_states_mutex;
     std::condition_variable m_states_convar;
@@ -235,9 +288,14 @@ private:
 
     std::thread m_load_thread;
 
-    size_t m_next_loader_id = 0;
-
     bool m_shutting_down = false;
+
+    platform_type m_asset_platform;
+    config_type m_asset_config;
+
+    std::recursive_mutex m_cache_mutex; // TODO: Change to shared_mutex
+    std::vector<registered_cache> m_caches;
+    size_t m_next_cache_id = 0;
 
 };
 

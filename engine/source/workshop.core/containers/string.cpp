@@ -120,6 +120,19 @@ std::string string_replace(const std::string& subject, const std::string& needle
     return result;
 }
 
+std::string string_filter_out(const std::string& subject, const std::string& chars, char replacement_char, size_t start_offset)
+{
+    std::string result = subject;
+    for (size_t i = start_offset; i < result.size(); i++)
+    {
+        if (chars.find(result[i]) != std::string::npos)
+        {
+            result[i] = replacement_char;
+        }
+    }
+    return result;
+}
+
 bool string_ends_with(const std::string& subject, const std::string& needle)
 {
     if (subject.size() >= needle.size())

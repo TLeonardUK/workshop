@@ -4,8 +4,11 @@
 // ================================================================================================
 #include "workshop.engine/assets/asset_manager.h"
 #include "workshop.engine/assets/asset_loader.h"
+#include "workshop.engine/assets/asset_cache.h"
+#include "workshop.engine/assets/asset.h"
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/async/async.h"
+#include "workshop.core/filesystem/virtual_file_system.h"
 
 #include <algorithm>
 #include <thread>
@@ -57,7 +60,9 @@ static std::array<const char*, static_cast<int>(asset_loading_state::COUNT)> k_l
 
 };
 
-asset_manager::asset_manager()
+asset_manager::asset_manager(platform_type asset_platform, config_type asset_config)
+    : m_asset_platform(asset_platform)
+    , m_asset_config(asset_config)
 {
     m_load_thread = std::thread([this]() {
 
@@ -102,6 +107,32 @@ void asset_manager::unregister_loader(loader_id id)
     if (iter != m_loaders.end())
     {
         m_loaders.erase(iter);
+    }
+}
+
+asset_manager::cache_id asset_manager::register_cache(std::unique_ptr<asset_cache>&& cache)
+{
+    std::scoped_lock lock(m_cache_mutex);
+    
+    registered_cache handle;
+    handle.cache = std::move(cache);
+    handle.id = m_next_cache_id++;
+    m_caches.push_back(std::move(handle));
+
+    return handle.id;
+}
+
+void asset_manager::unregister_cache(cache_id id)
+{
+    std::scoped_lock lock(m_cache_mutex);
+
+    auto iter = std::find_if(m_caches.begin(), m_caches.end(), [id](const registered_cache& handle){
+        return handle.id == id;
+    });
+
+    if (iter != m_caches.end())
+    {
+        m_caches.erase(iter);
     }
 }
 
@@ -304,12 +335,194 @@ void asset_manager::begin_unload(asset_state* state)
     });
 }
 
+bool asset_manager::search_cache_for_key(const asset_cache_key& cache_key, std::string& compiled_path)
+{
+    std::scoped_lock lock(m_cache_mutex);
+
+    for (size_t i = 0; i < m_caches.size(); i++)
+    {
+        registered_cache& cache = m_caches[i];
+        if (cache.cache->get(cache_key, compiled_path))
+        {
+            // If we have found it in a later cache, move it to earlier caches.
+            // We assume later caches have higher latency/costs to access.
+            if (i > 0)
+            {
+                size_t best_cache = std::numeric_limits<size_t>::max();
+
+                for (size_t j = 0; j < i; i++)
+                {
+                    registered_cache& other_cache = m_caches[j];
+                    if (!other_cache.cache->is_read_only())
+                    {
+                        db_verbose(asset, "[%s] Migrating compiled asset to earlier cache.", cache_key.source.path.c_str());
+                        if (other_cache.cache->set(cache_key, compiled_path.c_str()))
+                        {
+                            best_cache = j;
+                        }
+                    }
+                }
+
+                // Now that we've populated all the caches, try to get the new path from the best cache.
+                if (best_cache != std::numeric_limits<size_t>::max())
+                {
+                    m_caches[best_cache].cache->get(cache_key, compiled_path);
+                }
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool asset_manager::compile_asset(asset_cache_key& cache_key, asset_loader* loader, asset_state* state, std::string& compiled_path)
+{
+    std::string temporary_path = string_format("temp:%s", to_string(guid::generate()).c_str());
+
+    if (!loader->compile(state->path.c_str(), temporary_path.c_str(), m_asset_platform, m_asset_config))
+    {
+        db_error(asset, "[%s] Failed to compile asset.", state->path.c_str());
+        return false;
+    }
+    else
+    {
+        db_log(asset, "[%s] Finished compiling, storing in cache.", state->path.c_str());
+    }
+
+    // Store compiled version in all writable caches.
+    {
+        std::scoped_lock lock(m_cache_mutex);
+
+        for (registered_cache& cache : m_caches)
+        {
+            if (!cache.cache->is_read_only())
+            {
+                db_verbose(asset, "[%s] Inserting compiled asset into cache.", state->path.c_str());
+
+                if (cache.cache->set(cache_key, temporary_path.c_str()))
+                {
+                    if (compiled_path.empty())
+                    {
+                        cache.cache->get(cache_key, compiled_path);
+                    }
+                }
+            }
+        }
+
+        // If we couldn't store it in the cache, use the temporary file directly.
+        if (compiled_path.empty())
+        {
+            compiled_path = temporary_path;
+        }
+
+        // Otherwise we can remove the temporary file now.
+        else
+        {
+            virtual_file_system::get().remove(temporary_path.c_str());
+        }
+    }
+
+    return true;
+}
+
+bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* state, std::string& compiled_path)
+{
+    asset_cache_key cache_key;
+
+    std::string with_compiled_extension = state->path + k_compiled_asset_extension;
+
+    // Try and find compiled version of asset in VFS. 
+    if (virtual_file_system::get().type(with_compiled_extension.c_str()) == virtual_file_system_path_type::file)
+    {
+        compiled_path = with_compiled_extension;
+    }
+
+    // Otherwise check in cache for compiled version.
+    else if (!m_caches.empty())
+    {
+        // Generate a key with no dependencies.
+        if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, cache_key, { }))
+        {
+            db_error(asset, "[%s] Failed to calculate cache key for asset.", state->path.c_str());
+            return false;
+        }
+
+        // Search for key with no dependencies in cache.
+        search_cache_for_key(cache_key, compiled_path);
+
+        bool needs_compile = false;
+
+        // Always compile if no compiled asset is found.
+        if (compiled_path.empty())
+        {
+            db_log(asset, "[%s] No compiled version available, compiling now.", state->path.c_str());
+            needs_compile = true;
+        }
+        // If compile asset exists, read the dependency header block and generate a cache key from the data
+        // if it differs from the one in the header, we need to rebuild it.
+        else
+        {
+            compiled_asset_header header;
+
+            if (!loader->load_header(compiled_path.c_str(), header))
+            {
+                db_error(asset, "[%s] Failed to read header from compiled asset: %s", state->path.c_str(), compiled_path.c_str());
+                return false;
+            }
+
+            asset_cache_key compiled_cache_key;
+            if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, compiled_cache_key, header.dependencies))
+            {
+                // This can fail if one of our dependencies has been deleted, in which case we know we need to rebuild.
+                db_error(asset, "[%s] Failed to calculate dependency cache key for asset, recompile required.", state->path.c_str());
+                needs_compile = true;
+            }
+            else
+            {
+                if (compiled_cache_key.hash() != header.compiled_hash)
+                {
+                    db_error(asset, "[%s] Compiled asset looks to be out of date, recompile required.", state->path.c_str());
+                    needs_compile = true;
+                }
+            }
+        }
+
+        // If no compiled version is available, compile to a temporary location.
+        if (needs_compile)
+        {
+            if (!compile_asset(cache_key, loader, state, compiled_path))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 void asset_manager::do_load(asset_state* state)
 {
     asset_loader* loader = get_loader_for_type(state->type_id);
     if (loader != nullptr)
     {
-        state->instance = loader->load(state->path.c_str());
+        std::string compiled_path;
+
+        if (!get_asset_compiled_path(loader, state, compiled_path))
+        {
+            return;
+        }
+
+        // Load the resulting compiled asset.
+        if (!compiled_path.empty())
+        {
+            state->instance = loader->load(compiled_path.c_str());
+        }
+        else
+        {
+            db_error(asset, "[%s] Failed to find compiled data for asset.", state->path.c_str());
+        }
     }
 }
 

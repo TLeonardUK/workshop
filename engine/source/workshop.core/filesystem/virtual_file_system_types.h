@@ -4,6 +4,8 @@
 // ================================================================================================
 #pragma once
 
+#include <chrono>
+
 namespace ws {
 
 // Represents what type of object a path points to.
@@ -14,5 +16,9 @@ enum class virtual_file_system_path_type
     file = 1,
     directory = 2
 };
+
+
+using virtual_file_system_time_clock = std::chrono::utc_clock;
+using virtual_file_system_time_point = std::chrono::time_point<virtual_file_system_time_clock>;
 
 }; // namespace workshop

@@ -69,6 +69,9 @@ public:
     // Gets the root folder that contains the game assets.
     std::filesystem::path get_game_asset_dir();
 
+    // Gets the root folder that contains cached assets.
+    std::filesystem::path get_asset_cache_dir();
+
     // Sets the renderer system to use, immutable once engine is initialized.
     void set_render_interface_type(render_interface_type type);
 
@@ -129,6 +132,7 @@ protected:
 
     std::filesystem::path m_engine_asset_dir;
     std::filesystem::path m_game_asset_dir;
+    std::filesystem::path m_asset_cache_dir;
 
 };
 

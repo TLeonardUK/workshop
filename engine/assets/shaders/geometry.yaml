@@ -5,37 +5,93 @@
 type: shader
 version: 1
 
+imports: [ data:shaders/common/camera.yaml ]
+
+# Keys with set of accepted values which are set at runtime.
+# These are used to select the appropriate technique to render
+# and effect with. If a technique doesn't specify a particular
+# variation value then its assumed it accepts all.
+variations:
+  draw_mode: [ Opaque, Wireframe ]
+  tile_size: [ 8, 16 ]  
+
 # InCode:
-#   new RenderPass("Geometry Rendering", EffectHash("Geometry"))
+#   new RenderPass("Geometry Rendering", EffectKey("Geometry"))
 
-# Param blocks 
+# Describes the uniform blocks passed into the shader.
 param_blocks:
+  geometry_state:
+    scope: instance
+    fields:
+      # Converts to define with indexing into bindless space?
+      texture_albedo: texture2d
+      # Converts to define with indexing into bindless space?
+      texture_sampler: sampler
 
-# Render state
+# Describes the pipeline state at the point a render call is made.
 render_states:
+  wireframe:
+    draw_mode: wireframe
+    blend_mode: overwrite
+    depth_write_enabled: true
+  opaque:
+    draw_mode: polygon
+    blend_mode: overwrite
+    depth_write_enabled: false
 
-# Effects tie everything together, these are what our actual draw calls in code
-# specifify to define how things should render.
+# Defines the layout of input vertex data.
+vertex_layouts:
+  unskinned_geometry:
+    position: float3
+    color: float4
+
+# The effect is what a render pass actually specifies, it selects an appropriate
+# technique based on variation settings. 
 effects:
-
-  # Geometry effect is used for rendering any solid geometry. 
   geometry:
     techniques:
       geometry_opaque:
-        draw_mode: Opaque
+        draw_mode: [ Opaque ]
       geometry_wireframe:
-        draw_mode: Wireframe
+        draw_mode: [ Wireframe ]
 
+# These techniques bind together the shader and the pipeline state
+# to be used when rendering individual draw calls.
 techniques:
 
   geometry_opaque:
-    vertex_shader: data:assets/shaders/geometry.hlsl|Vertex
-    pixel_shader: data:assets/shaders/geometry.hlsl|Pixel
+    vertex_shader: 
+      file: data:shaders/source/geometry.hlsl
+      entry: Vertex
+    pixel_shader: 
+      file: data:shaders/source/geometry.hlsl
+      entry: Pixel
     render_state: opaque
-    param_blocks: [ camera_state ]
+    vertex_layout: unskinned_geometry
+    param_blocks: [ camera_state, geometry_state ]
+    defines:
+      DRAW_MODE_OPAQUE: 1
 
   geometry_wireframe:
-    vertex_shader: assets/shaders/geometry.hlsl|Vertex
-    pixel_shader: assets/shaders/geometry.hlsl|Pixel
+    vertex_shader: 
+      file: data:shaders/source/geometry.hlsl
+      entry: Vertex
+    pixel_shader: 
+      file: data:shaders/source/geometry.hlsl
+      entry: Pixel
     render_state: wireframe
-    param_blocks: [ camera_state ]
+    vertex_layout: unskinned_geometry
+    param_blocks: [ camera_state, geometry_state ]
+    defines: 
+      DRAW_MODE_WIREFRAME: 1
+
+
+# compile each technique individually
+# generate a pso for each technique
+# effect is just use to select appropriate technique based on various keys
+
+
+# Auto generate code
+# get_vertex(SV_VertexID) returns struct containing vertex input data defined by vertex_layout, bindless. 
+# texture_albedo defined as a lookup into bindless texture array.
+

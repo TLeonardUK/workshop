@@ -28,6 +28,12 @@ public:
     // Determines the type of the given filename.
     virtual virtual_file_system_path_type type(const char* path) = 0;
 
+    // Removes a given file based on the filename.
+    virtual bool remove(const char* path) = 0; 
+
+    // Gets the time a file was modified.
+    virtual bool modified_time(const char* path, virtual_file_system_time_point& timepoint) = 0;
+
     // Lists all the files or directories that exist in a given path.
     virtual std::vector<std::string> list(const char* path, virtual_file_system_path_type type) = 0;
 

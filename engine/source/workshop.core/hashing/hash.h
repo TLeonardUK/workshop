@@ -5,7 +5,6 @@
 #pragma once
 
 #include <memory>
-#include <mutex>
 
 namespace ws {
 
@@ -30,5 +29,13 @@ struct std_pair_hash
         return h1 ^ (h2 << 1);
     }
 };
+
+// Combines to std::hash values together.
+template <class T>
+inline void hash_combine(std::size_t& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
 }; // namespace workshop
