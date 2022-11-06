@@ -14,7 +14,7 @@
 #include "workshop.core/async/async.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
-#include "workshop.core/filesystem/virtual_file_system_aliased_disk_handler.h"
+#include "workshop.core/filesystem/virtual_file_system_redirect_handler.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/app/app.h"
@@ -229,13 +229,21 @@ result<void> engine::create_filesystem(init_list& list)
     m_filesystem->register_handler("data", 0, std::make_unique<virtual_file_system_disk_handler>(get_engine_asset_dir().string().c_str(), true));
     m_filesystem->register_handler("data", 1, std::make_unique<virtual_file_system_disk_handler>(get_game_asset_dir().string().c_str(), true));
 
-    // The cache protocol loads from the compiled asset cache. You should not try and query this
-    // protocol directly, you should load from the data protocol, this protocol handler is lazily
-    // filled as assets are requested.
-    m_filesystem->register_handler("cache", 0, std::make_unique<virtual_file_system_aliased_disk_handler>(false));
+    // Points to the local asset cache disk folder.
+    m_filesystem->register_handler("local-cache", 0, std::make_unique<virtual_file_system_disk_handler>(get_asset_cache_dir().string().c_str(), false));
 
-    // The temporary mount is just a location on disk we can store temporary files in - for things like
-    // intermediate compiled files.
+    // The cache protocol redirects "clean" paths like cache:shaders/common.yaml to complex storage
+    // locations, eg. local-cache:windows/1/4/6/1/146123421341_geometry_yaml.compiled
+    // 
+    // The primary purpose of this is just to make things simpler to debug as we use the "true"
+    // asset paths rather than the mangled ones.
+    // 
+    // Paths to this protocol will be returned from things like the asset manager, you shouldn't try to 
+    // construct paths within this protocol yourself as they will not work without the behind-the-scenes
+    // remapping.
+    m_filesystem->register_handler("cache", 0, std::make_unique<virtual_file_system_redirect_handler>(false));
+
+    // The temporary mount is just a location on disk we can store temporary files in.
     m_filesystem->register_handler("temp", 0, std::make_unique<virtual_file_system_disk_handler>(std::filesystem::temp_directory_path().string().c_str(), false));
 
     return true;
@@ -253,7 +261,7 @@ result<void> engine::create_asset_manager(init_list& list)
 {
     m_asset_manager = std::make_unique<asset_manager>(get_platform(), get_config());
     m_asset_manager->register_loader(std::make_unique<shader_loader>(*this));
-    m_asset_manager->register_cache(std::make_unique<asset_cache_disk>("cache", m_asset_cache_dir, false));
+    m_asset_manager->register_cache(std::make_unique<asset_cache_disk>("local-cache", "cache", false));
 
     return true;
 }

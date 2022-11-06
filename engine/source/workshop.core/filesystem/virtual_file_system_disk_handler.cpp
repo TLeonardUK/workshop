@@ -92,6 +92,55 @@ bool virtual_file_system_disk_handler::remove(const char* path)
     return true;
 }
 
+bool virtual_file_system_disk_handler::rename(const char* source, const char* destination)
+{
+    if (m_read_only)
+    {
+        return false;
+    }
+
+    std::filesystem::path source_fspath(m_root + "/" + source);
+    std::filesystem::path dest_fspath(m_root + "/" + destination);
+
+    if ( std::filesystem::exists(source_fspath) &&
+        !std::filesystem::exists(dest_fspath))
+    {
+        try
+        {
+            std::filesystem::rename(source_fspath, dest_fspath);
+            return true;
+        }
+        catch (std::filesystem::filesystem_error)
+        {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool virtual_file_system_disk_handler::create_directory(const char* path)
+{
+    if (m_read_only)
+    {
+        return false;
+    }
+
+    std::filesystem::path fspath(m_root + "/" + path);
+    if (!std::filesystem::exists(fspath))
+    {        
+        try
+        {
+            return std::filesystem::create_directories(fspath);
+        }
+        catch (std::filesystem::filesystem_error)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_file_system_time_point& timepoint)
 {
     std::filesystem::path fspath(m_root + "/" + path);

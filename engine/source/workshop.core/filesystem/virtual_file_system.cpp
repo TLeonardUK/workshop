@@ -11,6 +11,30 @@
 
 namespace ws {
 
+namespace {
+
+template <typename callback_type>
+void iterate_handlers(const char* path, callback_type callback)
+{
+    std::string protocol;
+    std::string filename;
+
+    virtual_file_system::crack(path, protocol, filename);
+    protocol = virtual_file_system::normalize(protocol.c_str());
+    filename = virtual_file_system::normalize(filename.c_str());
+
+    std::vector<virtual_file_system_handler*> handlers = virtual_file_system::get().get_handlers(protocol);
+    for (virtual_file_system_handler* handler : handlers)
+    {
+        if (callback(protocol, filename, handler))
+        {
+            break;
+        }
+    }
+}
+
+};
+
 virtual_file_system::virtual_file_system()
 {
 }
@@ -111,6 +135,20 @@ std::string virtual_file_system::replace_protocol(const char* path, const char* 
     return string_format("%s:%s", new_protocol, filename.c_str());
 }
 
+std::string virtual_file_system::get_parent(const char* path)
+{
+    const char* colon_chr = strrchr(path, '/');
+    if (colon_chr == nullptr)
+    {
+        return path;
+    }
+    else
+    {
+        size_t pos = std::distance(path, colon_chr);
+        return std::string(path, pos);
+    }
+}
+
 std::vector<virtual_file_system_handler*> virtual_file_system::get_handlers(const std::string& protocol)
 {
     std::scoped_lock lock(m_handlers_mutex);
@@ -130,103 +168,122 @@ std::vector<virtual_file_system_handler*> virtual_file_system::get_handlers(cons
 
 std::unique_ptr<stream> virtual_file_system::open(const char* path, bool forWriting)
 {
-    std::string protocol;
-    std::string filename;
+    std::unique_ptr<stream> result;
 
-    crack(path, protocol, filename);
-    protocol = normalize(protocol.c_str());
-    filename = normalize(filename.c_str());
-
-    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
-    for (virtual_file_system_handler* handler : handlers)
-    {
+    iterate_handlers(path, [&result, &forWriting](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
         if (auto stream = handler->open(filename.c_str(), forWriting))
         {
-            return std::move(stream);
+            result = std::move(stream);
+            return true;
         }
-    }    
+        return false;
+    });
 
-    return nullptr;
+    return std::move(result);
 }
 
 virtual_file_system_path_type virtual_file_system::type(const char* path)
 {
-    std::string protocol;
-    std::string filename;
+    virtual_file_system_path_type result = virtual_file_system_path_type::non_existant;
+    
+    iterate_handlers(path, [&result](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        result = handler->type(filename.c_str());
+        return (result == virtual_file_system_path_type::non_existant);
+    });
 
-    crack(path, protocol, filename);
-    protocol = normalize(protocol.c_str());
-    filename = normalize(filename.c_str());
+    return result;
+}
 
-    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
-    for (virtual_file_system_handler* handler : handlers)
+bool virtual_file_system::exists(const char* path)
+{
+    return type(path) != virtual_file_system_path_type::non_existant;
+}
+
+bool virtual_file_system::create_directory(const char* path)
+{
+    bool result = false;
+
+    iterate_handlers(path, [&result](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        result = handler->create_directory(filename.c_str());
+        return result;
+    });
+
+    return result;
+}
+
+bool virtual_file_system::rename(const char* source, const char* destination)
+{
+    bool result = false;
+
+    std::string destination_protocol, destination_filename;
+    std::string source_protocol, source_filename;
+
+    crack(destination, destination_protocol, destination_filename);
+    destination_protocol = normalize(destination_protocol.c_str());
+    destination_filename = normalize(destination_filename.c_str());
+
+    crack(source, source_protocol, source_filename);
+    source_protocol = normalize(source_protocol.c_str());
+    source_filename = normalize(source_filename.c_str());
+
+    if (source_protocol != destination_protocol)
     {
-        virtual_file_system_path_type result = handler->type(filename.c_str());
-        if (result != virtual_file_system_path_type::non_existant)
-        {
-            return result;
-        }
+        // Must use the same protocol to have atomic renames.
+        return false;
     }
 
-    return virtual_file_system_path_type::non_existant;
+    iterate_handlers(source, [&result, &destination_filename](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        result = handler->rename(filename.c_str(), destination_filename.c_str());
+        return result;
+    });
+
+    return result;
+}
+
+bool virtual_file_system::copy(const char* source_f, const char* destination_f)
+{
+    std::unique_ptr<stream> source = open(source_f, false);
+    std::unique_ptr<stream> dest = open(destination_f, true);
+    if (!source || !dest)
+    {
+        return false;
+    }
+    if (!source->copy_to(*dest))
+    {
+        return false;
+    }
+    return true;
 }
 
 bool virtual_file_system::remove(const char* path)
 {
-    std::string protocol;
-    std::string filename;
+    bool result = false;
+    
+    iterate_handlers(path, [&result](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        result = handler->remove(filename.c_str());
+        return result;
+    });
 
-    crack(path, protocol, filename);
-    protocol = normalize(protocol.c_str());
-    filename = normalize(filename.c_str());
-
-    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
-    for (virtual_file_system_handler* handler : handlers)
-    {
-        if (handler->remove(filename.c_str()))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return result;
 }
 
 bool virtual_file_system::modified_time(const char* path, virtual_file_system_time_point& timepoint)
 {
-    std::string protocol;
-    std::string filename;
+    bool result = false;
+    
+    iterate_handlers(path, [&result, &timepoint](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        result = handler->modified_time(filename.c_str(), timepoint);
+        return result;
+    });
 
-    crack(path, protocol, filename);
-    protocol = normalize(protocol.c_str());
-    filename = normalize(filename.c_str());
-
-    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
-    for (virtual_file_system_handler* handler : handlers)
-    {
-        if (handler->modified_time(filename.c_str(), timepoint))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return result;
 }
 
 std::vector<std::string> virtual_file_system::list(const char* path, virtual_file_system_path_type type)
 {
-    std::string protocol;
-    std::string filename;
-
-    crack(path, protocol, filename);
-    protocol = normalize(protocol.c_str());
-    filename = normalize(filename.c_str());
-
     std::vector<std::string> result;
-
-    std::vector<virtual_file_system_handler*> handlers = get_handlers(protocol);
-    for (virtual_file_system_handler* handler : handlers)
-    {
+    
+    iterate_handlers(path, [&result, &type](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
         std::vector<std::string> files = handler->list(filename.c_str(), type);
         for (std::string& file : files)
         {
@@ -235,7 +292,8 @@ std::vector<std::string> virtual_file_system::list(const char* path, virtual_fil
                 result.push_back(file);
             }
         }
-    }
+        return false;
+    });
 
     return result;
 }

@@ -31,6 +31,12 @@ public:
     // Removes a given file based on the filename.
     virtual bool remove(const char* path) = 0; 
 
+    // Renames the given filename.
+    virtual bool rename(const char* source, const char* destination) = 0;
+
+    // Creates the given directory recursively.
+    virtual bool create_directory(const char* path) = 0;
+
     // Gets the time a file was modified.
     virtual bool modified_time(const char* path, virtual_file_system_time_point& timepoint) = 0;
 

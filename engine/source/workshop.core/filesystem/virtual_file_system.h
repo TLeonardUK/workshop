@@ -69,8 +69,20 @@ public:
     // Determines the type of the given filename.
     virtual_file_system_path_type type(const char* path);
 
+    // Determines if the given path exists.
+    bool exists(const char* path);
+
+    // Creates the given directory recursively.
+    bool create_directory(const char* path);
+
     // Removes a given file from the file system, only valid if path is writable.
     bool remove(const char* path);
+
+    // Renames the given filename.
+    bool rename(const char* source, const char* destination);
+
+    // Copies the given file from one path to another.
+    bool copy(const char* source, const char* destination);
 
     // Gets the time a file was modified.
     bool modified_time(const char* path, virtual_file_system_time_point& timepoint);
@@ -88,6 +100,9 @@ public:
 
     // Swaps the protocol attached to the given path.
     static std::string replace_protocol(const char* path, const char* new_protocol);
+
+    // Gets the parent directory of the given path.
+    static std::string get_parent(const char* path);
 
     // Gets a pointer to all the handlers for the given protocol.
     std::vector<virtual_file_system_handler*> get_handlers(const std::string& protocol);
