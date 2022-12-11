@@ -4,7 +4,7 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.render_interface/render_interface.h"
+#include "workshop.render_interface/ri_interface.h"
 
 #include <string>
 
@@ -46,7 +46,7 @@ public:
     void set_mode(window_mode value);
     window_mode get_mode();
 
-    render_interface_type get_compatibility();
+    ri_interface_type get_compatibility();
 
     // Applies any changes to the windows metrics, this will block until
     // the settings have been fully applied.
@@ -59,7 +59,7 @@ protected:
 
     friend class sdl_windowing;
 
-    void set_compatibility(render_interface_type value);
+    void set_compatibility(ri_interface_type value);
 
 protected:
 
@@ -71,7 +71,7 @@ protected:
     size_t m_width;
     size_t m_height;
     window_mode m_mode;
-    render_interface_type m_compatibility;
+    ri_interface_type m_compatibility;
 
 };
 

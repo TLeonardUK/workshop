@@ -14,7 +14,7 @@ SET(SOURCES
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
-util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/windowing")
+util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/windowing")
 
 target_link_libraries(${PROJECT_NAME} 
     sdl2

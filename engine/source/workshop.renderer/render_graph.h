@@ -10,13 +10,11 @@
 
 namespace ws {
 
-class render_command_list;
+class ri_command_list;
 
 // ================================================================================================
-//  The render graph is hierarchical representation of all the render passes that need to be
-//  executed to render the scene.
-// 
-//  The graph is normally built once and used every frame.
+//  The render graph is representation of all the render passes that need to be
+//  executed to draw the scene.
 // ================================================================================================
 class render_graph
 {
@@ -27,32 +25,26 @@ public:
     struct node
     {
         std::unique_ptr<render_pass> pass;
-        std::vector<node_id> dependencies;
+        bool enabled;
     };
 
     // Adds a new node to the graph.    
     // Command lists for each node are generated in parallel. Dependencies are used
     // to ensure ordering between node generation.
-    node_id add_node(std::unique_ptr<render_pass>&& pass, const std::vector<node_id>& dependencies);
+    node_id add_node(std::unique_ptr<render_pass>&& pass);
 
-    void flatten();
+    // Toggles a node on/off.
+    void set_node_enabled(node_id id, bool enabled);
 
-    std::vector<node*>& get_flattened_nodes();
+    // Gets the current list of render graph nodes that are active and 
+    // should currentl participate in rendering.
+    void get_active(std::vector<node*>& nodes);
+
+    // Gets all nodes.
+    void get_nodes(std::vector<node*>& nodes);
 
 private:
     std::vector<node> m_nodes;
-    std::vector<node*> m_flattened;
-
-};
-
-// ================================================================================================
-//  Contains the generated state of a render graph node.
-// ================================================================================================
-class render_graph_node_generated_state
-{
-public:
-
-    std::vector<render_command_list*> graphics_command_lists;
 
 };
 

@@ -4,10 +4,7 @@
 // ================================================================================================
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
-#include "workshop.render_interface/render_interface.h"
-#include "workshop.renderer/renderer.h"
-#include "workshop.renderer/render_effect.h"
-#include "workshop.windowing/windowing.h"
+
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/perf/profile.h"
 #include "workshop.core/async/task_scheduler.h"
@@ -19,15 +16,21 @@
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/app/app.h"
 
-#include "workshop.engine/assets/asset_manager.h"
-#include "workshop.engine/assets/caches/asset_cache_disk.h"
-#include "workshop.engine/assets/types/shader/shader.h"
-#include "workshop.engine/assets/types/shader/shader_loader.h"
+#include "workshop.assets/asset_manager.h"
+#include "workshop.assets/caches/asset_cache_disk.h"
 
+#include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_effect.h"
+#include "workshop.renderer/assets/shader/shader.h"
+#include "workshop.renderer/assets/shader/shader_loader.h"
+
+#include "workshop.windowing/windowing.h"
 #include "workshop.windowing.sdl/sdl_windowing.h"
 
+#include "workshop.render_interface/ri_interface.h"
+
 #ifdef WS_WINDOWS
-#include "workshop.render_interface.dx12/dx12_render_interface.h"
+#include "workshop.render_interface.dx12/dx12_ri_interface.h"
 #endif
 
 namespace ws {
@@ -89,7 +92,7 @@ void engine::register_init(init_list& list)
     );
 }
 
-render_interface& engine::get_render_interface()
+ri_interface& engine::get_render_interface()
 {
     return *m_render_interface.get();
 }
@@ -129,7 +132,7 @@ std::filesystem::path engine::get_asset_cache_dir()
     return m_asset_cache_dir;
 }
 
-void engine::set_render_interface_type(render_interface_type type)
+void engine::set_render_interface_type(ri_interface_type type)
 {
     m_render_interface_type = type;
 }
@@ -260,7 +263,6 @@ result<void> engine::destroy_filesystem()
 result<void> engine::create_asset_manager(init_list& list)
 {
     m_asset_manager = std::make_unique<asset_manager>(get_platform(), get_config());
-    m_asset_manager->register_loader(std::make_unique<shader_loader>(*this));
     m_asset_manager->register_cache(std::make_unique<asset_cache_disk>("local-cache", "cache", false));
 
     return true;
@@ -305,7 +307,7 @@ result<void> engine::create_render_interface(init_list& list)
     switch (m_render_interface_type)
     {
 #ifdef WS_WINDOWS
-    case render_interface_type::dx12:
+    case ri_interface_type::dx12:
         {
             m_render_interface = std::make_unique<dx12_render_interface>();
             m_render_interface->register_init(list);
@@ -331,7 +333,7 @@ result<void> engine::destroy_render_interface()
 
 result<void> engine::create_renderer(init_list& list)
 {
-    m_renderer = std::make_unique<renderer>(*m_render_interface.get(), *m_window.get());
+    m_renderer = std::make_unique<renderer>(*m_render_interface.get(), *m_window.get(), *m_asset_manager.get());
     m_renderer->register_init(list);
 
     return true;
@@ -366,11 +368,6 @@ result<void> engine::create_presenter(init_list& list)
 {
     m_presenter = std::make_unique<presenter>(*this);
     m_presenter->register_init(list);
-
-
-    asset_ptr<shader> instance = m_asset_manager->request_asset<shader>("data:shaders/geometry.yaml", 0);
-    instance.wait_for_load();
-
 
     return true;
 }

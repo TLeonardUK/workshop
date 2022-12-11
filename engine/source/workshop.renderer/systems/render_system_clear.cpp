@@ -1,0 +1,36 @@
+// ================================================================================================
+//  workshop
+//  Copyright (C) 2021 Tim Leonard
+// ================================================================================================
+#include "workshop.renderer/systems/render_system_clear.h"
+#include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_graph.h"
+#include "workshop.renderer/render_pass_fullscreen.h"
+
+namespace ws {
+
+render_system_clear::render_system_clear(renderer& render)
+    : render_system(render, "clear")
+{
+}
+
+void render_system_clear::register_init(init_list& list)
+{
+}
+
+void render_system_clear::create_graph(render_graph& graph)
+{
+    std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
+    pass->name = "clear";
+    pass->technique = m_renderer.get_technique("clear", {});
+    pass->output = m_renderer.get_gbuffer_output();
+//    pass->param_blocks = ;
+  
+    graph.add_node(std::move(pass));
+}
+
+void render_system_clear::step(const render_world_state& state)
+{
+}
+
+}; // namespace ws

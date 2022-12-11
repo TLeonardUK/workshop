@@ -6,7 +6,7 @@
 
 #include "workshop.core/utils/init_list.h"
 
-#include "workshop.render_interface/render_interface.h"
+#include "workshop.render_interface/ri_interface.h"
 #include "workshop.windowing/window.h"
 
 namespace ws {
@@ -44,7 +44,7 @@ public:
         size_t width, 
         size_t height, 
         window_mode mode, 
-        render_interface_type compatibility) = 0;
+        ri_interface_type compatibility) = 0;
 
 };
 

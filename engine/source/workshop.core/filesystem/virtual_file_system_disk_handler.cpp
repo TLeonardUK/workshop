@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
+#include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/disk_stream.h"
 
 #include <filesystem>
@@ -163,13 +164,16 @@ std::vector<std::string> virtual_file_system_disk_handler::list(const char* path
 
     if (std::filesystem::is_directory(fspath))
     {
-        for (auto iter = std::filesystem::directory_iterator(fspath); iter != std::filesystem::directory_iterator(); iter++)
+        for (auto iter = std::filesystem::recursive_directory_iterator(fspath); iter != std::filesystem::recursive_directory_iterator(); iter++)
         {
+            std::string abs_filename = std::string(path) + "/" + std::filesystem::relative(iter->path(), fspath).string();
+            std::string normalized_filename = virtual_file_system::normalize(abs_filename.c_str());
+
             if (static_cast<int>(type) & static_cast<int>(virtual_file_system_path_type::directory))
             {
                 if (iter->is_directory())
                 {
-                    result.push_back(iter->path().filename().string().c_str());
+                    result.push_back(normalized_filename);
                 }
             }
             else if (static_cast<int>(type) & static_cast<int>(virtual_file_system_path_type::file))
@@ -177,7 +181,7 @@ std::vector<std::string> virtual_file_system_disk_handler::list(const char* path
                 if (iter->is_regular_file() ||
                     iter->is_symlink())
                 {
-                    result.push_back(iter->path().filename().string().c_str());
+                    result.push_back(normalized_filename);
                 }
             }
         }

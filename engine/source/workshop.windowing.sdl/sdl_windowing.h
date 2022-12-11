@@ -26,7 +26,7 @@ public:
         size_t width,
         size_t height,
         window_mode mode,
-        render_interface_type compatibility) override;
+        ri_interface_type compatibility) override;
 
 protected:
 

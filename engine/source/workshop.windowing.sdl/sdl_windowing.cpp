@@ -77,7 +77,7 @@ std::unique_ptr<window> sdl_windowing::create_window(
     size_t width,
     size_t height,
     window_mode mode,
-    render_interface_type compatibility)
+    ri_interface_type compatibility)
 {
     std::unique_ptr<sdl_window> window = std::make_unique<sdl_window>(this);
     window->set_title(name);

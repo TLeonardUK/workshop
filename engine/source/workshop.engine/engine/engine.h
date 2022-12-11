@@ -6,10 +6,11 @@
 
 #include "workshop.core/utils/result.h"
 #include "workshop.core/utils/init_list.h"
-#include "workshop.render_interface/render_interface.h"
+#include "workshop.render_interface/ri_interface.h"
 #include "workshop.windowing/windowing.h"
 #include "workshop.engine/presentation/presenter.h"
 #include "workshop.core/utils/frame_time.h"
+#include "workshop.core/utils/singleton.h"
 
 #include <vector>
 #include <memory>
@@ -29,7 +30,8 @@ class task_scheduler;
 //  This is the core engine class, its responsible for owning all the individual pieces (such as
 //  all worlds, the renderer, etc) that make a game run, and binding them into something coherent.
 // ================================================================================================
-class engine
+class engine 
+    : public singleton<engine>
 {
 public:
 
@@ -49,7 +51,7 @@ public:
     void step();
 
     // Gets the renderer instance.
-    render_interface& get_render_interface();
+    ri_interface& get_render_interface();
 
     // Gets the renderer.
     renderer& get_renderer();
@@ -73,7 +75,7 @@ public:
     std::filesystem::path get_asset_cache_dir();
 
     // Sets the renderer system to use, immutable once engine is initialized.
-    void set_render_interface_type(render_interface_type type);
+    void set_render_interface_type(ri_interface_type type);
 
     // Sets the windowing system to use, immutable once engine is initialized.
     void set_windowing_type(windowing_type type);
@@ -113,14 +115,14 @@ protected:
 
     std::unique_ptr<task_scheduler> m_task_scheduler;
     std::unique_ptr<windowing> m_windowing;
-    std::unique_ptr<render_interface> m_render_interface;
+    std::unique_ptr<ri_interface> m_render_interface;
     std::unique_ptr<renderer> m_renderer;
     std::unique_ptr<window> m_window;
     std::unique_ptr<presenter> m_presenter;
     std::unique_ptr<virtual_file_system> m_filesystem;
     std::unique_ptr<asset_manager> m_asset_manager;
 
-    render_interface_type m_render_interface_type = render_interface_type::dx12;
+    ri_interface_type m_render_interface_type = ri_interface_type::dx12;
     windowing_type m_windowing_type = windowing_type::sdl;
 
     frame_time m_frame_time = {};

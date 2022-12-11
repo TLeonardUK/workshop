@@ -45,6 +45,15 @@ void presenter::step(const frame_time& time)
 
     std::unique_ptr<render_world_state> state = std::make_unique<render_world_state>();
     state->time = time;
+    
+    render_view& view = state->views.emplace_back();
+    view.viewport = { 0, 0, (int)m_owner.get_main_window().get_width(), (int)m_owner.get_main_window().get_height() };
+    view.near_clip = 0.01f;
+    view.far_clip = 1000.0f;
+    view.field_of_view = 90.0f;
+    view.aspect_ratio = (float)view.viewport.width / (float)view.viewport.height;
+    view.location = vector3::zero;
+    view.rotation = quat::identity;
 
     // TODO: Build the world state.
 

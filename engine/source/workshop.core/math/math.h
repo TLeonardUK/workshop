@@ -9,35 +9,64 @@
 
 namespace ws::math {
 
-static const float Pi = 3.141592653f;
+inline static constexpr float pi = 3.141592653f;
 
 template <typename T>
 inline T radians(T degrees)
 {
-	static const float factor = Pi / T(180);
+	static constexpr float factor = pi / T(180);
 	return degrees * factor;
 }
 
 template <typename T>
 inline T degrees(T radians)
 {
-	static const float factor = T(180) / Pi;
+	static constexpr float factor = T(180) / pi;
 	return radians * factor;
 }
-	
+
+template <typename T>
+inline T min(T a, T b)
+{
+	return a < b ? a : b;
+}
+
+template <typename T>
+inline T max(T a, T b)
+{
+	return a > b ? a : b;
+}
+
 template <typename T>
 inline T sign(T a)
 {
 	return (a >= 0 ? 1 : -1);
 }
 
+inline float sqrt(float in)
+{
+	return ::sqrtf(in);
+}
+
 inline float inv_sqrt(float in)
 {
-	return 1.0f / sqrtf(in);
+	return 1.0f / ::sqrtf(in);
 }
 
 template <typename T>
-inline T squared(T in)
+inline T ceil(T in)
+{
+	return ::ceil(in);
+}
+
+template <typename T>
+inline T pow(T a, T b)
+{
+	return ::pow(a, b);
+}
+
+template <typename T>
+inline T square(T in)
 {
 	return in * in;
 }
@@ -52,6 +81,27 @@ template <typename T>
 inline T mod(T a, T b)
 {
 	return std::remainder(a, b);
+}
+
+template <typename T>
+inline T abs(T a)
+{
+	return static_cast<T>(::abs(a));
+}
+
+template <typename T>
+inline T round(T a)
+{
+	return static_cast<T>(round(a));
+}
+
+// Rounds up a value to a given multiple.
+// eg. value=8  multiple=16 result=16
+// eg. value=17 multiple=16 result=32 
+template <typename T>
+inline T round_up_multiple(T value, T multiple_of)
+{
+	return static_cast<int>((value + (multiple_of - 1)) / multiple_of) * multiple_of;
 }
 
 template <typename T>

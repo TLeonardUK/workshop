@@ -6,20 +6,27 @@
 project(workshop.render_interface C CXX)
 
 SET(SOURCES
-    "render_interface.h"
-    "render_interface.cpp"
-    "render_swapchain.h"
-    "render_fence.h"
-    "render_command_queue.h"
-    "render_command_list.h"
-    "render_target.h"
-    "render_types.h"
-    "render_shader_compiler.h"
+    "ri_interface.h"
+    "ri_interface.cpp"
+    "ri_swapchain.h"
+    "ri_fence.h"
+    "ri_command_queue.h"
+    "ri_command_list.h"
+    "ri_texture.h"
+    "ri_buffer.h"
+    "ri_sampler.h"
+    "ri_types.h"
+    "ri_types.cpp"
+    "ri_shader_compiler.h"
+    "ri_pipeline.h"
+    "ri_param_block_archetype.h"
+    "ri_layout_factory.h"
+    "ri_layout_factory.cpp"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
-util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/rendering")
+util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 
 # Link appropriate implementation libraries.
 if (WIN32)

@@ -16,7 +16,9 @@ SET(SOURCES
     "async/async.cpp"
     "async/task_scheduler.h"
     "async/task_scheduler.cpp"
-
+    
+    "containers/memory_heap.cpp"
+    "containers/memory_heap.h"
     "containers/byte_queue.cpp"
     "containers/byte_queue.h"
     "containers/json.cpp"
@@ -53,6 +55,8 @@ SET(SOURCES
     "hashing/guid.cpp"
     "hashing/guid.h"
     "hashing/hash.h"
+    "hashing/string_hash.cpp"
+    "hashing/string_hash.h"
     
     "platform/platform.h"
 
@@ -70,6 +74,19 @@ SET(SOURCES
     
     "math/math.h"
     "math/math.cpp"
+    "math/aabb.h"
+    "math/frustum.h"
+    "math/matrix2.h"
+    "math/matrix3.h"
+    "math/matrix4.h"
+    "math/obb.h"
+    "math/plane.h"
+    "math/quat.h"
+    "math/rect.h"
+    "math/sphere.h"
+    "math/vector2.h"
+    "math/vector3.h"
+    "math/vector4.h"
     
     "drawing/color.h"
 
@@ -79,7 +96,7 @@ SET(SOURCES
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
-util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/core")
+util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier0/core")
 
 # Link to appropriate platform implementation.
 if (WIN32)

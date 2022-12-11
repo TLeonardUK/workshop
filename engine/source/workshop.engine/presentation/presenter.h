@@ -6,7 +6,7 @@
 
 #include "workshop.core/utils/init_list.h"
 
-#include "workshop.render_interface/render_swapchain.h"
+#include "workshop.render_interface/ri_swapchain.h"
 
 namespace ws {
 
@@ -37,7 +37,7 @@ protected:
 private:
     engine& m_owner;
 
-    std::unique_ptr<render_swapchain> m_swapchain;
+    std::unique_ptr<ri_swapchain> m_swapchain;
 
 };
 

@@ -104,6 +104,9 @@ public:
     // Gets the parent directory of the given path.
     static std::string get_parent(const char* path);
 
+    // Gets the extension on the given path.
+    static std::string get_extension(const char* path);
+
     // Gets a pointer to all the handlers for the given protocol.
     std::vector<virtual_file_system_handler*> get_handlers(const std::string& protocol);
 

@@ -7,6 +7,8 @@
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/utils/frame_time.h"
 
+#include "workshop.renderer/render_view.h"
+
 namespace ws {
 
 // ================================================================================================
@@ -20,6 +22,9 @@ public:
 
     frame_time time;
 
+    std::vector<render_view> views;
+
+    //std::vector<render_scene_object> scene_objects;
 
 };
 

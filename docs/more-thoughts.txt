@@ -1,0 +1,26 @@
+render_scene_object
+    -> mesh
+    -> material
+
+render_world_state
+    -> scene objects
+    -> scene object per-frame parameters (transform, etc - only store dirty ones)
+    -> views
+
+renderer
+    -> ??? maybe add interpolation here.
+
+    -> render systems are stepped to allow them to update param blocks/etc
+
+    -> run culling, each scene object is given a flag to say which views its visible to.
+
+    P -> iterates through each view in world state
+        P -> renders the view by going through each render pass
+            -> some render pass can be marked as running per-view/globally (eg for clearing)
+                -> each pass generates an ri_command_list
+
+    -> renderer goes through and dispatches each command list in order.
+
+
+each frame engine makes new world state.
+

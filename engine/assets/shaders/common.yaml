@@ -2,17 +2,45 @@
 #  workshop
 #  Copyright (C) 2022 Tim Leonard
 # ================================================================================================
-# This file just contains commonly used param blocks which are generic to specific shaders.
+# This file just contains commonly used structures which are generic to specific shaders.
 # ================================================================================================
-type: Shader
+type: shader
 version: 1
 
-param_blocks:
+render_states:
+  # Default render state but without depth testing enabled. Useful
+  # for things such as fullscreen passes.
+  no_depth_test:
+    depth_test_enabled: false
 
-  # State of the camera being used to render the scene.
-  camera_state:
+vertex_layouts:
+  # Simple layout that contains only vert position and uv. Useful
+  # for things like fullscreen passes.
+  vertex2d_pos_uv:
+    position: float2
+    uv: float2
+
+output_targets:
+  # Main gbuffer target with all MRT targets.
+  gbuffer:
+    color: [ R16G16B16A16_UNORM, R16G16B16A16_FLOAT, R16G16B16A16_FLOAT ]
+    depth: D24_UNORM_S8_UINT
+  # Swapchain output target.
+  swapchain:
+    color: [ R8G8B8A8_UNORM ]
+    depth: D24_UNORM_S8_UINT
+
+param_blocks:
+  # Contains all the parameters needed to read/write from the gbuffer.
+  gbuffer:
     scope: global
     fields:
-      mvp_matrix: matrix4
-      near_clip: float
-      far_clip: float
+      gbuffer0_texture: texture2d
+      gbuffer1_texture: texture2d
+      gbuffer2_texture: texture2d
+      gbuffer_sampler: sampler
+  # Describes the projection information for the view being rendered.
+  view_state:
+    scope: global
+    fields:
+      view_projection: float4x4

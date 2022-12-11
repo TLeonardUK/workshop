@@ -8,6 +8,7 @@
 
 namespace ws {
 
+class renderer;
 class render_graph;
 class render_world_state;
 
@@ -18,6 +19,13 @@ class render_world_state;
 class render_system
 {
 public:
+    
+    // Descriptive name of the system.
+    std::string name;
+
+public:
+
+    render_system(renderer& render, const char* name);
 
     // Registers all the steps required to initialize the system.
     virtual void register_init(init_list& list) = 0;
@@ -28,8 +36,14 @@ public:
 
     // Called each frame. Responsible for doing things like updating uniforms
     // using during rendering.
+    // //
+    // This is run in parallel with all other passes, so care must be taken
+    // with what it accesses.
     virtual void step(const render_world_state& state) = 0;
 
+protected:
+
+    renderer& m_renderer;
 
 };
 

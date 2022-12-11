@@ -50,12 +50,12 @@ window_mode window::get_mode()
     return m_mode;
 }
 
-render_interface_type window::get_compatibility()
+ri_interface_type window::get_compatibility()
 {
     return m_compatibility;
 }
 
-void window::set_compatibility(render_interface_type value)
+void window::set_compatibility(ri_interface_type value)
 {
     m_compatibility = value;
 }

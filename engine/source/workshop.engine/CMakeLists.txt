@@ -15,21 +15,6 @@ SET(SOURCES
     "app/engine_app.cpp"
     "app/engine_app.h"
 
-    "assets/asset.h"
-    "assets/asset.cpp"
-    "assets/asset_cache.h"
-    "assets/asset_cache.cpp"
-    "assets/asset_loader.h"
-    "assets/asset_loader.cpp"
-    "assets/asset_manager.h"
-    "assets/asset_manager.cpp"
-    "assets/caches/asset_cache_disk.h"
-    "assets/caches/asset_cache_disk.cpp"
-    "assets/types/shader/shader.h"
-    "assets/types/shader/shader.cpp"
-    "assets/types/shader/shader_loader.h"
-    "assets/types/shader/shader_loader.cpp"
-
     "engine/engine.cpp"
     "engine/engine.h"
     "engine/world.cpp"
@@ -65,4 +50,4 @@ target_link_libraries(${PROJECT_NAME}
     yamlcpp
 )
 
-util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/engine")
+util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier2/engine")

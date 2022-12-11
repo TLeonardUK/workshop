@@ -9,11 +9,14 @@
 namespace ws {
 
 // Super cheap and simple constexpr string hash.
-constexpr uint32_t const_hash(const char* data, size_t length) 
+constexpr size_t const_hash(const char* data, size_t length) 
 {
-    return length > 0 ?
-        static_cast<unsigned int>(*data) + 33 * const_hash(data + 1, length - 1) :
-        5381;
+    size_t result = 5381;
+    for (size_t i = 0; i < length; i++)
+    {
+        result = (result * 33) + data[i];
+    }
+    return result;
 }
 
 // Hash generator for std::pair types. Allows us to use pairs as keys in std containers.

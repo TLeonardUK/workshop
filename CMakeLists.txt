@@ -17,5 +17,3 @@ project(workshop C CXX)
 add_subdirectory(engine)
 add_subdirectory(games)
 
-
-

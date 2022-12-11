@@ -149,6 +149,20 @@ std::string virtual_file_system::get_parent(const char* path)
     }
 }
 
+std::string virtual_file_system::get_extension(const char* path)
+{
+    const char* colon_chr = strrchr(path, '.');
+    if (colon_chr == nullptr)
+    {
+        return "";
+    }
+    else
+    {
+        size_t pos = std::distance(path, colon_chr);
+        return std::string(path + pos);
+    }
+}
+
 std::vector<virtual_file_system_handler*> virtual_file_system::get_handlers(const std::string& protocol)
 {
     std::scoped_lock lock(m_handlers_mutex);
@@ -287,9 +301,10 @@ std::vector<std::string> virtual_file_system::list(const char* path, virtual_fil
         std::vector<std::string> files = handler->list(filename.c_str(), type);
         for (std::string& file : files)
         {
-            if (std::find(result.begin(), result.end(), file) == result.end())
+            std::string file_with_protocol = protocol + ":" + file;
+            if (std::find(result.begin(), result.end(), file_with_protocol) == result.end())
             {
-                result.push_back(file);
+                result.push_back(file_with_protocol);
             }
         }
         return false;

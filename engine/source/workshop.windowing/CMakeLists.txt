@@ -19,4 +19,4 @@ target_link_libraries(${PROJECT_NAME}
     workshop.windowing.sdl
 )
 
-util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/windowing")
+util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/windowing")

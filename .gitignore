@@ -34,6 +34,7 @@
 bin/
 intermediate/
 tests/
+junk/
 .vs/
 
 # Ignore exclusions

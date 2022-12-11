@@ -22,7 +22,7 @@ std::string rl_game_app::get_name()
 
 void rl_game_app::configure_engine(ws::engine& engine)
 {
-    engine.set_render_interface_type(ws::render_interface_type::dx12);
+    engine.set_render_interface_type(ws::ri_interface_type::dx12);
     engine.set_windowing_type(ws::windowing_type::sdl);
     engine.set_window_mode(get_name(), 1280, 720, ws::window_mode::windowed);
 }

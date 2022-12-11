@@ -69,7 +69,7 @@ result<void> sdl_window::apply_changes()
     {
         int flags = SDL_WINDOW_ALLOW_HIGHDPI;
 
-        if (m_compatibility != render_interface_type::dx12)
+        if (m_compatibility != ri_interface_type::dx12)
         {
             db_error(window, "Requested compatibility of SDL window with unsupported renderer.");
             return standard_errors::invalid_parameter;

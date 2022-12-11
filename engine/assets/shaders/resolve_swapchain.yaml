@@ -1,0 +1,29 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to take all the components rendered during the 
+# frame and composites it all to the final swapchain target.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  resolve_swapchain:
+    techniques:
+      resolve_swapchain: {}
+
+techniques:
+  resolve_swapchain:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/resolve_swapchain.hlsl
+      entry: pshader
+    render_state: no_depth_test
+    vertex_layout: vertex2d_pos_uv
+    output_target: swapchain
+    param_blocks: [ gbuffer, view_state ]
