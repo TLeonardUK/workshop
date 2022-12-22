@@ -9,6 +9,7 @@
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
 #include "workshop.render_interface/ri_buffer.h"
+#include "workshop.render_interface/ri_param_block.h"
 
 namespace ws {
 
@@ -38,6 +39,8 @@ public:
 private:
     std::unique_ptr<ri_buffer> m_vertex_buffer;
     std::unique_ptr<ri_buffer> m_index_buffer;
+
+    std::unique_ptr<ri_param_block> m_vertex_info_param_block;
 
 };
 

@@ -178,6 +178,36 @@ inline static const char* ri_topology_strings[static_cast<int>(ri_topology::COUN
 DEFINE_ENUM_TO_STRING(ri_topology, ri_topology_strings)
 
 // ================================================================================================
+//  Descriptor table type
+// ================================================================================================
+enum class ri_descriptor_table
+{
+    texture_1d,
+    texture_2d,
+    texture_3d,
+    texture_cube,
+    sampler,
+    buffer,
+
+    render_target,
+    depth_stencil,
+
+    COUNT
+};
+
+inline static const char* ri_descriptor_table_strings[static_cast<int>(ri_descriptor_table::COUNT)] = {
+
+    "texture_1d",
+    "texture_2d",
+    "texture_3d",
+    "texture_cube",
+    "sampler",
+    "buffer"
+};
+
+DEFINE_ENUM_TO_STRING(ri_descriptor_table, ri_descriptor_table_strings)
+
+// ================================================================================================
 //  Type of primitive data an index buffer represents.
 // ================================================================================================
 enum class ri_primitive

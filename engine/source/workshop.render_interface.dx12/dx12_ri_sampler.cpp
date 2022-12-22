@@ -21,9 +21,9 @@ dx12_ri_sampler::~dx12_ri_sampler()
 {
     m_renderer.defer_delete([handle = m_handle, renderer = &m_renderer]() 
     {
-        if (handle.ptr != 0)
+        if (handle.is_valid())
         {
-            renderer->get_sampler_descriptor_heap().free(handle);
+            renderer->get_descriptor_table(ri_descriptor_table::sampler).free(handle);
         }
     });
 }
@@ -47,13 +47,17 @@ result<void> dx12_ri_sampler::create_resources()
     desc.MinLOD = m_create_params.min_lod;
     desc.MaxLOD = m_create_params.max_lod;
 
-    m_handle = m_renderer.get_sampler_descriptor_heap().allocate();
+    m_handle = m_renderer.get_descriptor_table(ri_descriptor_table::sampler).allocate();
 
-    m_renderer.get_device()->CreateSampler(&desc, m_handle);
+    m_renderer.get_device()->CreateSampler(&desc, m_handle.cpu_handle);
 
     return true;
 }
 
+size_t dx12_ri_sampler::get_descriptor_table_index() const
+{
+    return m_handle.get_table_index();
+}
 
 ri_texture_filter dx12_ri_sampler::get_filter()
 {

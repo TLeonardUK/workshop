@@ -27,6 +27,7 @@ public:
     virtual ~dx12_ri_layout_factory();
 
     virtual void clear() override;
+    virtual size_t get_instance_size() override;
 
     virtual void add(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
 
@@ -34,18 +35,26 @@ public:
     virtual std::unique_ptr<ri_buffer> create_index_buffer(const char* name, const std::vector<uint16_t>& indices) override;
     virtual std::unique_ptr<ri_buffer> create_index_buffer(const char* name, const std::vector<uint32_t>& indices) override;
 
-private:
-    void validate();
+public:
 
-private:
     struct field
     {
         std::string name;
         ri_data_type type;
         size_t size;
         size_t offset;
+        size_t index;
         bool added = false;
     };
+
+    size_t get_field_count();
+    field get_field(size_t index);
+    bool get_field_info(const char* name, field& info);
+
+private:
+    void validate();
+
+private:
 
     std::unordered_map<std::string, field> m_fields;
 

@@ -15,8 +15,10 @@
 namespace ws {
 
 class engine;
+class ri_param_block;
 class dx12_render_interface;
 class dx12_ri_command_queue;
+class dx12_ri_pipeline;
 
 // ================================================================================================
 //  Implementation of a command list using DirectX 12.
@@ -36,6 +38,7 @@ public:
     virtual void barrier(ri_buffer& resource, ri_resource_state source_state, ri_resource_state destination_state) override;
     virtual void clear(ri_texture& resource, const color& destination) override;
     virtual void set_pipeline(ri_pipeline& pipeline) override;
+    virtual void set_param_blocks(const std::vector<ri_param_block*> param_blocks) override;
     virtual void set_viewport(const recti& rect) override;
     virtual void set_scissor(const recti& rect) override;
     virtual void set_blend_factor(const vector4& factor) override;
@@ -57,6 +60,8 @@ private:
 
     bool m_opened = false;
     size_t m_allocated_frame_index = 0;
+
+    dx12_ri_pipeline* m_active_pipeline = nullptr;
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_command_list;
 

@@ -30,15 +30,19 @@ dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* de
 
 dx12_ri_texture::~dx12_ri_texture()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, rtv = m_rtv, dsv = m_dsv]()
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv_table = m_srv_table, srv = m_srv, rtv = m_rtv, dsv = m_dsv]()
     {
-        if (rtv.ptr != 0)
+        if (srv.is_valid())
         {
-            renderer->get_rtv_descriptor_heap().free(rtv);
+            renderer->get_descriptor_table(srv_table).free(srv);
         }
-        if (dsv.ptr != 0)
+        if (rtv.is_valid())
         {
-            renderer->get_dsv_descriptor_heap().free(dsv);
+            renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
+        }
+        if (dsv.is_valid())
+        {
+            renderer->get_descriptor_table(ri_descriptor_table::depth_stencil).free(dsv);
         }
         CheckedRelease(handle);    
     });
@@ -162,23 +166,61 @@ void dx12_ri_texture::create_views()
     {
         if (ri_is_format_depth_target(m_create_params.format))
         {
-            m_dsv = m_renderer.get_dsv_descriptor_heap().allocate();
-            m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), nullptr, m_dsv);
+            m_dsv = m_renderer.get_descriptor_table(ri_descriptor_table::depth_stencil).allocate();
+            m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), nullptr, m_dsv.cpu_handle);
         }
         else
         {
-            m_rtv = m_renderer.get_rtv_descriptor_heap().allocate();
-            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), nullptr, m_rtv);
+            m_rtv = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
+            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), nullptr, m_rtv.cpu_handle);
         }
+    }
+
+    // Create SRV view for buffer.
+    // TODO: need to create a UAV if writable
+    switch (m_create_params.dimensions)
+    {
+    case ri_texture_dimension::texture_1d:
+        {
+            m_srv_table = ri_descriptor_table::texture_1d;
+            break;
+        }
+    case ri_texture_dimension::texture_2d:
+        {
+            m_srv_table = ri_descriptor_table::texture_2d;
+            break;
+        }
+    case ri_texture_dimension::texture_3d:
+        {
+            m_srv_table = ri_descriptor_table::texture_3d;
+            break;
+        }
+    case ri_texture_dimension::texture_cube:
+        {
+            m_srv_table = ri_descriptor_table::texture_cube;
+            break;
+        }
+    }   
+
+    // TODO: We need to figure out how to handle the format for depth buffer reading. 
+    if (!ri_is_format_depth_target(m_create_params.format))
+    {
+        m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
+        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), nullptr, m_srv.cpu_handle);
     }
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE dx12_ri_texture::get_rtv()
+dx12_ri_descriptor_table::allocation dx12_ri_texture::get_srv() const
+{
+    return m_srv;
+}
+
+dx12_ri_descriptor_table::allocation dx12_ri_texture::get_rtv() const
 {
     return m_rtv;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE dx12_ri_texture::get_dsv()
+dx12_ri_descriptor_table::allocation dx12_ri_texture::get_dsv() const
 {
     return m_dsv;
 }
@@ -203,7 +245,7 @@ size_t dx12_ri_texture::get_mip_levels()
     return m_create_params.mip_levels;
 }
 
-ri_texture_dimension dx12_ri_texture::get_dimensions()
+ri_texture_dimension dx12_ri_texture::get_dimensions() const
 {
     return m_create_params.dimensions;
 }

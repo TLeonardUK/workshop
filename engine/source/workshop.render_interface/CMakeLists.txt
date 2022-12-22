@@ -19,6 +19,8 @@ SET(SOURCES
     "ri_types.cpp"
     "ri_shader_compiler.h"
     "ri_pipeline.h"
+    "ri_param_block.h"
+    "ri_param_block.cpp"
     "ri_param_block_archetype.h"
     "ri_layout_factory.h"
     "ri_layout_factory.cpp"

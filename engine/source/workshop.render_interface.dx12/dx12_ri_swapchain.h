@@ -41,16 +41,19 @@ protected:
     result<void> create_render_targets();
 
 private:    
+    // Minus one to account for the frame currently being generated.
+    constexpr static size_t k_buffer_count = dx12_render_interface::k_max_pipeline_depth - 1;
+
     std::string m_debug_name;
     dx12_render_interface& m_renderer;
     window& m_window;
 
     Microsoft::WRL::ComPtr<IDXGISwapChain4> m_swap_chain = nullptr;
-    std::array<std::unique_ptr<dx12_ri_texture>, dx12_render_interface::k_max_pipeline_depth> m_back_buffer_targets = {};
+    std::array<std::unique_ptr<dx12_ri_texture>, k_buffer_count> m_back_buffer_targets = {};
 
     std::unique_ptr<ri_fence> m_fence;
 
-    std::array<size_t, dx12_render_interface::k_max_pipeline_depth> m_back_buffer_last_used_frame = {};
+    std::array<size_t, k_buffer_count> m_back_buffer_last_used_frame = {};
     size_t m_current_buffer_index = 0;
     size_t m_frame_index = 1;
 

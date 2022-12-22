@@ -101,6 +101,10 @@ inline T round(T a)
 template <typename T>
 inline T round_up_multiple(T value, T multiple_of)
 {
+	if (multiple_of == 0 || multiple_of == 1)
+	{
+		return value;
+	}
 	return static_cast<int>((value + (multiple_of - 1)) / multiple_of) * multiple_of;
 }
 

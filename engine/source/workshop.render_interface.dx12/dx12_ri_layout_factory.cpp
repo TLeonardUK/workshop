@@ -18,6 +18,7 @@ dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, 
     static constexpr size_t vector_size = 16;
 
     size_t offset = 0;
+    size_t index = 0;
     for (ri_data_layout::field& src_field : layout.fields)
     {
         size_t type_size = ri_bytes_for_data_type(src_field.data_type);
@@ -39,6 +40,7 @@ dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, 
         dst_field.offset = offset;
         dst_field.size = type_size;
         dst_field.added = false;
+        dst_field.index = index++;
 
         m_fields[dst_field.name] = dst_field;
 
@@ -56,6 +58,11 @@ dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, 
 
 dx12_ri_layout_factory::~dx12_ri_layout_factory()
 {
+}
+
+size_t dx12_ri_layout_factory::get_instance_size()
+{
+    return m_element_size;
 }
 
 void dx12_ri_layout_factory::clear()
@@ -126,6 +133,38 @@ void dx12_ri_layout_factory::validate()
             std::vector<uint8_t> data(field.size * m_element_count, 0);
             add(pair.second.name.c_str(), std::span(data.data(), data.size()), field.size, field.type);
         }
+    }
+}
+
+size_t dx12_ri_layout_factory::get_field_count()
+{
+    return m_fields.size();
+}
+
+dx12_ri_layout_factory::field dx12_ri_layout_factory::get_field(size_t index)
+{
+    for (auto& pair : m_fields)
+    {
+        if (pair.second.index == index)
+        {
+            return pair.second;
+        }
+    }
+
+    db_assert_message(false, "Index out of range.");
+    return {};
+}
+
+bool dx12_ri_layout_factory::get_field_info(const char* name, field& info)
+{
+    if (auto iter = m_fields.find(name); iter != m_fields.end())
+    {
+        info = iter->second;
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 

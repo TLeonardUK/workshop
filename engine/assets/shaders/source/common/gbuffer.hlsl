@@ -9,8 +9,8 @@ struct gbuffer_fragment
 {
     float3 albedo;
     float metallic;
-    float roughness;
     float3 world_normal;
+    float roughness;
     float3 world_position;
     uint flags;
 };

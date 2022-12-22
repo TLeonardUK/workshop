@@ -30,7 +30,7 @@ void dx12_ri_swapchain::destroy_resources()
 {
     drain();
 
-    for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
+    for (size_t i = 0; i < k_buffer_count; i++)
     {
         m_back_buffer_targets[i] = nullptr;
         m_back_buffer_last_used_frame[i] = 0;
@@ -55,7 +55,7 @@ result<void> dx12_ri_swapchain::create_resources()
     swap_chain_desc.Stereo = FALSE;
     swap_chain_desc.SampleDesc = { 1, 0 };
     swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.BufferCount = dx12_render_interface::k_max_pipeline_depth;
+    swap_chain_desc.BufferCount = k_buffer_count;
     swap_chain_desc.Scaling = DXGI_SCALING_STRETCH;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swap_chain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
@@ -113,7 +113,7 @@ result<void> dx12_ri_swapchain::create_resources()
 
 result<void> dx12_ri_swapchain::create_render_targets()
 {
-    for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
+    for (size_t i = 0; i < k_buffer_count; i++)
     {
         Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
 
@@ -145,14 +145,14 @@ result<void> dx12_ri_swapchain::create_render_targets()
 
 result<void> dx12_ri_swapchain::resize_buffers()
 {
-    for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
+    for (size_t i = 0; i < k_buffer_count; i++)
     {
         m_back_buffer_targets[i] = nullptr;
         m_back_buffer_last_used_frame[i] = 0;
     }
 
     HRESULT hr = m_swap_chain->ResizeBuffers(
-        dx12_render_interface::k_max_pipeline_depth,
+        k_buffer_count,
         static_cast<UINT>(m_window.get_width()),
         static_cast<UINT>(m_window.get_height()),
         DXGI_FORMAT_R8G8B8A8_UNORM,

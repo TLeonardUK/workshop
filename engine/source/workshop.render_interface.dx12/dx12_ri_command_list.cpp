@@ -8,6 +8,9 @@
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_ri_pipeline.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
+#include "workshop.render_interface.dx12/dx12_ri_param_block.h"
+#include "workshop.render_interface.dx12/dx12_ri_param_block_archetype.h"
+#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.core/drawing/color.h"
 #include "workshop.windowing/window.h"
@@ -145,15 +148,74 @@ void dx12_ri_command_list::clear(ri_texture& resource, const color& destination)
     dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(resource);
 
     FLOAT color[] = { destination.r, destination.g, destination.b, destination.a };
-    m_command_list->ClearRenderTargetView(dx12_resource.get_rtv(), color, 0, nullptr);
+    m_command_list->ClearRenderTargetView(dx12_resource.get_rtv().cpu_handle, color, 0, nullptr);
 }
 
 void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
 {
     dx12_ri_pipeline& dx12_pipeline = static_cast<dx12_ri_pipeline&>(pipeline);
-    
+    m_active_pipeline = &dx12_pipeline;
+
     m_command_list->SetGraphicsRootSignature(dx12_pipeline.get_root_signature());
     m_command_list->SetPipelineState(dx12_pipeline.get_pipeline_state());
+
+    std::array<ID3D12DescriptorHeap*, 2> heaps = {
+        m_renderer.get_sampler_descriptor_heap().get_resource(),
+        m_renderer.get_srv_descriptor_heap().get_resource()
+    };
+    m_command_list->SetDescriptorHeaps(2, heaps.data());
+
+    size_t table_index = 0;
+
+    // Bind all the bindless descriptor tables.
+    ri_pipeline::create_params create_params = pipeline.get_create_params();
+    for (size_t i = 0; i < create_params.descriptor_tables.size(); i++)
+    {
+        ri_descriptor_table& table = create_params.descriptor_tables[i];        
+
+        dx12_ri_descriptor_table& descriptor_table = m_renderer.get_descriptor_table(table);
+        m_command_list->SetGraphicsRootDescriptorTable(table_index++, descriptor_table.get_base_allocation().gpu_handle);
+    }
+}
+
+void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> param_blocks)
+{
+    db_assert(m_active_pipeline != nullptr);
+
+    const auto& archetype_list = m_active_pipeline->get_create_params().param_block_archetypes;
+
+    if (param_blocks.size() != archetype_list.size())
+    {
+        db_warning(renderer, "set_param_blocks passed in differing number of param blocks compared to what pipeline expected.");
+    }
+
+    // Param blocks immediately follow the descriptor tables in the root sig.
+    size_t base_param_block_root_parameter = m_active_pipeline->get_create_params().descriptor_tables.size();
+
+    for (size_t i = 0; i < archetype_list.size(); i++)
+    {
+        ri_param_block_archetype* archetype = archetype_list[i];
+
+        // Find appropriate param block in input.
+        bool found = false;
+
+        for (ri_param_block* base : param_blocks)
+        {
+            dx12_ri_param_block* input = static_cast<dx12_ri_param_block*>(base);
+            if (input->get_archetype() == archetype)
+            {
+                m_command_list->SetGraphicsRootConstantBufferView(base_param_block_root_parameter + i, reinterpret_cast<UINT64>(input->consume()));
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            db_error(renderer, "set_param_blocks didn't include param block expected by pipeline '%s'.", archetype->get_name());
+            return;
+        }
+    }
 }
 
 void dx12_ri_command_list::set_viewport(const recti& rect)
@@ -233,14 +295,14 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture*>& co
     for (ri_texture* value : colors)
     {
         dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(value);
-        color_handles.push_back(dx12_tex->get_rtv());
+        color_handles.push_back(dx12_tex->get_rtv().cpu_handle);
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE depth_handle = {};
     if (depth != nullptr)
     {
         dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(depth);
-        depth_handle = dx12_tex->get_dsv();
+        depth_handle = dx12_tex->get_dsv().cpu_handle;
     }
 
     m_command_list->OMSetRenderTargets(

@@ -19,6 +19,7 @@
 #include "workshop.render_interface/ri_command_list.h"
 #include "workshop.render_interface/ri_texture.h"
 #include "workshop.render_interface/ri_sampler.h"
+#include "workshop.render_interface/ri_param_block.h"
 
 #include "workshop.assets/asset_manager.h"
 
@@ -134,6 +135,7 @@ result<void> renderer::destroy_resources()
     m_render_job_task.wait();
 
     // Nuke all resizable targets.
+    m_gbuffer_param_block = nullptr;
     m_gbuffer_sampler = nullptr;
     m_depth_texture = nullptr;
     for (size_t i = 0; i < k_gbuffer_count; i++)
@@ -170,8 +172,12 @@ result<void> renderer::recreate_resizable_targets()
     ri_sampler::create_params sampler_params;
     m_gbuffer_sampler = m_render_interface.create_sampler(sampler_params, "gbuffer sampler");
 
-    // TODO: create our bindless arrays.
-    //m_render_interface.create_bindless_array(ri_bindless_array_type::texture_1d, "bindless table: texture1d");
+    // Create param block describing the above.
+    m_gbuffer_param_block = create_param_block("gbuffer");
+    m_gbuffer_param_block->set("gbuffer0_texture", *m_gbuffer_textures[0]);
+    m_gbuffer_param_block->set("gbuffer1_texture", *m_gbuffer_textures[1]);
+    m_gbuffer_param_block->set("gbuffer2_texture", *m_gbuffer_textures[2]);
+    m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
 
     return true;
 }
@@ -196,8 +202,15 @@ render_output renderer::get_gbuffer_output()
     return output;
 }
 
+ri_param_block* renderer::get_gbuffer_param_block()
+{
+    return m_gbuffer_param_block.get();
+}
+
 renderer::effect_id renderer::register_effect(std::unique_ptr<render_effect>&& effect)
 {
+    std::scoped_lock lock(m_resource_mutex);
+
     effect_id id = m_id_counter++;
     m_effects[id] = std::move(effect);
     return id;
@@ -205,6 +218,8 @@ renderer::effect_id renderer::register_effect(std::unique_ptr<render_effect>&& e
 
 void renderer::unregister_effect(effect_id id)
 {
+    std::scoped_lock lock(m_resource_mutex);
+
     // TODO: Handle if the effect is in use.
 
     if (auto iter = m_effects.find(id); iter != m_effects.end())
@@ -215,6 +230,8 @@ void renderer::unregister_effect(effect_id id)
 
 render_effect* renderer::get_effect(effect_id id)
 {
+    std::scoped_lock lock(m_resource_mutex);
+
     if (auto iter = m_effects.find(id); iter != m_effects.end())
     {
         return iter->second.get();
@@ -224,6 +241,8 @@ render_effect* renderer::get_effect(effect_id id)
 
 render_effect::technique* renderer::get_technique(const char* name, const std::unordered_map<std::string, std::string>& parameters)
 {
+    std::scoped_lock lock(m_resource_mutex);
+
     // Start with list of all techniques.
     std::vector<render_effect::technique*> techniques;
 
@@ -309,6 +328,8 @@ render_effect::technique* renderer::get_technique(const char* name, const std::u
 
 renderer::param_block_archetype_id renderer::register_param_block_archetype(const char* name, ri_data_scope scope, const ri_data_layout& layout)
 {
+    std::scoped_lock lock(m_resource_mutex);
+
     // Generate a hash for the archetype so we can 
     // do a quick look up to determine if it already exists.
     size_t hash = 0;
@@ -346,17 +367,24 @@ renderer::param_block_archetype_id renderer::register_param_block_archetype(cons
 
     param_block_archetype_id id = m_id_counter++;
     m_param_block_archetypes[id] = std::move(state);
+    m_param_block_archetype_by_name[name] = id;
+
     return id;
 }
 
 void renderer::unregister_param_block_archetype(param_block_archetype_id id)
 {
-    // TODO: Handle if the param block archetype is in use.
+    std::scoped_lock lock(m_resource_mutex);
 
     if (auto iter = m_param_block_archetypes.find(id); iter != m_param_block_archetypes.end())
     {
         if (--iter->second.register_count == 0)
         {
+            if (auto by_name_iter = m_param_block_archetype_by_name.find(iter->second.name); by_name_iter != m_param_block_archetype_by_name.end())
+            {
+                m_param_block_archetype_by_name.erase(by_name_iter);
+            }
+
             m_param_block_archetypes.erase(iter);
         }
     }
@@ -364,6 +392,8 @@ void renderer::unregister_param_block_archetype(param_block_archetype_id id)
 
 ri_param_block_archetype* renderer::get_param_block_archetype(param_block_archetype_id id)
 {
+    std::scoped_lock lock(m_resource_mutex);
+
     if (auto iter = m_param_block_archetypes.find(id); iter != m_param_block_archetypes.end())
     {
         return iter->second.instance.get();
@@ -371,9 +401,31 @@ ri_param_block_archetype* renderer::get_param_block_archetype(param_block_archet
     return nullptr;    
 }
 
+std::unique_ptr<ri_param_block> renderer::create_param_block(const char* name)
+{
+    std::scoped_lock lock(m_resource_mutex);
+
+    if (auto iter = m_param_block_archetype_by_name.find(name); iter != m_param_block_archetype_by_name.end())
+    {
+        param_block_archetype_id id = iter->second;
+        param_block_state& state = m_param_block_archetypes[id];
+
+        return state.instance->create_param_block();
+    }
+    else
+    {
+        db_fatal(renderer, "Failed to create param block. Param block archetype '%s' isn't registered.");
+        return nullptr;
+    }
+}
+
 void renderer::render_state(render_world_state& state)
 {
     profile_marker(profile_colors::render, "render frame %zi", (size_t)state.time.frame_count);
+
+    // TODO: This is just used for syncronization right now, we can get rid of this
+    // when we handle this correctly.
+    get_next_backbuffer();
 
     // Update all systems in parallel.
     parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {

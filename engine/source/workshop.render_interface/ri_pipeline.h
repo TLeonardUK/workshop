@@ -33,7 +33,7 @@ public:
         std::vector<ri_param_block_archetype*> param_block_archetypes;
         ri_data_layout vertex_layout;
 
-        std::vector<ri_data_type> bindless_arrays_types;
+        std::vector<ri_descriptor_table> descriptor_tables;
 
         std::vector<ri_texture_format> color_formats;
         ri_texture_format depth_format;

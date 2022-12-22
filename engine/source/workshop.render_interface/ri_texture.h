@@ -48,7 +48,7 @@ public:
     virtual size_t get_depth() = 0;
     virtual size_t get_mip_levels() = 0;
     
-    virtual ri_texture_dimension get_dimensions() = 0;
+    virtual ri_texture_dimension get_dimensions() const = 0;
     virtual ri_texture_format get_format() = 0;
 
     virtual size_t get_multisample_count() = 0;

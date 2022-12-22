@@ -20,8 +20,12 @@ dx12_ri_buffer::dx12_ri_buffer(dx12_render_interface& renderer, const char* debu
 
 dx12_ri_buffer::~dx12_ri_buffer()
 {
-    m_renderer.defer_delete([handle = m_handle]() 
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv]()
     {
+        if (srv.is_valid())
+        {
+            renderer->get_descriptor_table(ri_descriptor_table::buffer).free(srv);
+        }
         CheckedRelease(handle);    
     });
 }
@@ -90,6 +94,20 @@ result<void> dx12_ri_buffer::create_resources()
         );
     }
 
+    // Create SRV view for buffer.
+    // TODO: need to create a UAV if writable
+    D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
+    view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+    view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+    view_desc.Buffer.FirstElement = 0;
+    view_desc.Buffer.NumElements = (m_create_params.element_count * m_create_params.element_size) / 4;
+    view_desc.Buffer.StructureByteStride = 0;
+    view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+
+    m_srv = m_renderer.get_descriptor_table(ri_descriptor_table::buffer).allocate();
+    m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &view_desc, m_srv.cpu_handle);
+
     return true;
 }
 
@@ -111,6 +129,11 @@ ID3D12Resource* dx12_ri_buffer::get_resource()
 ri_resource_state dx12_ri_buffer::get_initial_state()
 {
     return m_common_state;
+}
+
+dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_srv() const
+{
+    return m_srv;
 }
 
 }; // namespace ws

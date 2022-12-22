@@ -46,13 +46,16 @@ size_t ri_bytes_for_data_type(ri_data_type value)
         64,  // t_float4x4,
         128, // t_double4x4,
 
-        0, // t_texture1d,
-        0, // t_texture2d,
-        0, // t_texture3d,
-        0, // t_texturecube,
+        // Resources below are all 4 bytes as they are expected to be converted
+        // into uint descriptor table indexes.
 
-        0, // t_sampler,
-        0, // t_byteaddressbuffer,
+        4, // t_texture1d,
+        4, // t_texture2d,
+        4, // t_texture3d,
+        4, // t_texturecube,
+
+        4, // t_sampler,
+        4, // t_byteaddressbuffer,
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

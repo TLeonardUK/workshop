@@ -14,6 +14,7 @@ namespace ws {
 class ri_pipeline;
 class ri_texture;
 class ri_buffer;
+class ri_param_block;
 class color;
 
 // Describes the current access-state of a resource on the gpu.
@@ -89,6 +90,11 @@ public:
 
     // Changes the rendering pipeline state.
     virtual void set_pipeline(ri_pipeline& pipeline) = 0;
+
+    // Sets the param blocks to use for next draw call. These should match
+    // the param blocks expected by the pipeline. This should always be called
+    // after set_pipeline not before as it uses the context for validation.
+    virtual void set_param_blocks(const std::vector<ri_param_block*> param_blocks) = 0;
 
     // Sets the viewport in pixels that determines the 
     // bounds that are rendering within.

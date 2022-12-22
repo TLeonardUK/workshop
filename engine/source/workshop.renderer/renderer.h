@@ -14,6 +14,7 @@
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
 #include "workshop.render_interface/ri_types.h"
+#include "workshop.render_interface/ri_param_block.h"
 
 #include "workshop.assets/asset_manager.h"
 
@@ -25,7 +26,7 @@ class ri_swapchain;
 class ri_interface;
 class ri_texture;
 class ri_sampler;
-class ri_param_block_archetype;
+class ri_param_block_archetype; 
 class render_view;
 class asset_manager;
 class window;
@@ -83,6 +84,10 @@ public:
     // Gets render output for drawing to the gbuffer.
     render_output get_gbuffer_output();
 
+    // Gets the param block that contains all the information needed for reading
+    // and writing to the gbuffer.
+    ri_param_block* get_gbuffer_param_block();
+
     // TODO: Move all this to an effect manager.
 
     // Registers an effect for use by the renderer. Ownership is transfered to renderer.
@@ -110,6 +115,9 @@ public:
 
     // Gets a param block archetype from its id.
     ri_param_block_archetype* get_param_block_archetype(param_block_archetype_id id);
+
+    // Shortcut for creating a param block from a registered archetype.
+    std::unique_ptr<ri_param_block> create_param_block(const char* name);
 
 private:
 
@@ -173,9 +181,12 @@ private:
 
     // Shader / effect management.
 
+    std::mutex m_resource_mutex;
+
     size_t m_id_counter = 1;
     std::unordered_map<effect_id, std::unique_ptr<render_effect>> m_effects;
     std::unordered_map<param_block_archetype_id, param_block_state> m_param_block_archetypes;
+    std::unordered_map<std::string, param_block_archetype_id> m_param_block_archetype_by_name;
     std::vector<asset_ptr<shader>> m_shader_assets;
 
     // Render interface resources.
@@ -186,6 +197,8 @@ private:
     std::unique_ptr<ri_texture> m_depth_texture;
     std::array<std::unique_ptr<ri_texture>, k_gbuffer_count> m_gbuffer_textures;
     std::unique_ptr<ri_sampler> m_gbuffer_sampler;
+
+    std::unique_ptr<ri_param_block> m_gbuffer_param_block;
 
 };
 

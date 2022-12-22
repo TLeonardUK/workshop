@@ -26,6 +26,12 @@ result<void> render_pass_fullscreen::create_resources(renderer& renderer)
     m_vertex_buffer = factory->create_vertex_buffer("Fullscreen Pass - Vertex buffer");
     m_index_buffer  = factory->create_index_buffer("Fullscreen Pass - Index buffer", std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
 
+    // TODO: Add render_pass_graphics which holds all the vertex data / validation code.
+    // TODO: Add a method for attaching the param blocks to a render pass.
+    m_vertex_info_param_block = renderer.create_param_block("vertex_info");
+    m_vertex_info_param_block->set("vertex_buffer", *m_vertex_buffer);
+    m_vertex_info_param_block->set("vertex_buffer_offset", 0u);
+
     // Validate the parameters we've been passed.
     if (result<void> ret = validate_parameters(); !ret)
     {
@@ -113,7 +119,12 @@ result<void> render_pass_fullscreen::validate_parameters()
     }
 
     // Check param block types match.
-    // TODO
+    // 
+    //for (ri_param_block_archetype* archetype : pipeline_params.param_block_archetypes)
+    //{
+    //}
+
+    return true;
 }
 
 void render_pass_fullscreen::generate(renderer& renderer, generated_state& state_output, render_view& view)
@@ -122,12 +133,12 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
     list.open();
     list.set_pipeline(*technique->pipeline.get());
     list.set_render_targets(output.color_targets, output.depth_target);
+    list.set_param_blocks({ 
+        m_vertex_info_param_block.get(), 
+        renderer.get_gbuffer_param_block()
+    });
     list.set_viewport(view.viewport);
     list.set_scissor(view.viewport);
-
-    // Needs to bind gbuffer / vertex data.
-    //list.set_param_blocks();
-
     list.set_primitive_topology(ri_primitive::triangle_list);
     list.set_index_buffer(*m_index_buffer);
     list.draw(6, 1);

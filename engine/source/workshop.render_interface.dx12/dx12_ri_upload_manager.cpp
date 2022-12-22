@@ -159,6 +159,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     }
 
     // Generate copy command list.
+    db_log(renderer, "Allocating upload texture upload cmdlist");
     dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
     list.open();
 
@@ -200,6 +201,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
 
     memcpy(m_upload_heap_ptr + upload.heap_offset, data.data(), data.size());
 
+    db_log(renderer, "Allocating upload buffer upload cmdlist");
     dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
     list.open();
     list.get_dx_command_list()->CopyBufferRegion(

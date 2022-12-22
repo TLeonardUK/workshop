@@ -7,6 +7,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_fence.h"
 #include "workshop.render_interface.dx12/dx12_ri_command_queue.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_heap.h"
+#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include "workshop.render_interface.dx12/dx12_ri_shader_compiler.h"
 #include "workshop.render_interface.dx12/dx12_ri_pipeline.h"
 #include "workshop.render_interface.dx12/dx12_ri_param_block_archetype.h"
@@ -170,9 +171,9 @@ Microsoft::WRL::ComPtr<ID3D12Device> dx12_render_interface::get_device()
     return m_device;
 }
 
-dx12_ri_descriptor_heap& dx12_render_interface::get_uav_descriptor_heap()
+dx12_ri_descriptor_heap& dx12_render_interface::get_srv_descriptor_heap()
 {
-    return *m_uav_descriptor_heap;
+    return *m_srv_descriptor_heap;
 }
 
 dx12_ri_descriptor_heap& dx12_render_interface::get_sampler_descriptor_heap()
@@ -188,6 +189,11 @@ dx12_ri_descriptor_heap& dx12_render_interface::get_rtv_descriptor_heap()
 dx12_ri_descriptor_heap& dx12_render_interface::get_dsv_descriptor_heap()
 {
     return *m_dsv_descriptor_heap;
+}
+
+dx12_ri_descriptor_table& dx12_render_interface::get_descriptor_table(ri_descriptor_table table)
+{
+    return *m_descriptor_tables[static_cast<size_t>(table)];
 }
 
 size_t dx12_render_interface::get_pipeline_depth()
@@ -421,28 +427,40 @@ result<void> dx12_render_interface::destroy_command_queues()
 
 result<void> dx12_render_interface::create_heaps()
 {
-    m_uav_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100'000);
-    if (!m_uav_descriptor_heap->create_resources())
+    m_srv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, k_srv_heap_size);
+    if (!m_srv_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_sampler_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 100'000);
+    m_sampler_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, k_sampler_heap_size);
     if (!m_sampler_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_rtv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 1'000);
+    m_rtv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, k_rtv_heap_size);
     if (!m_rtv_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_dsv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1'000);
+    m_dsv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, k_dsv_heap_size);
     if (!m_dsv_descriptor_heap->create_resources())
     {
         return false;
+    }
+
+    // Create tables for each resource type.
+    for (size_t i = 0; i < static_cast<size_t>(ri_descriptor_table::COUNT); i++)
+    {
+        std::unique_ptr<dx12_ri_descriptor_table>& table = m_descriptor_tables[i];
+        
+        table = std::make_unique<dx12_ri_descriptor_table>(*this, static_cast<ri_descriptor_table>(i));
+        if (!table->create_resources())
+        {
+            return false;
+        }
     }
 
     return true;
@@ -450,7 +468,7 @@ result<void> dx12_render_interface::create_heaps()
 
 result<void> dx12_render_interface::destroy_heaps()
 {
-    m_uav_descriptor_heap = nullptr;
+    m_srv_descriptor_heap = nullptr;
     m_sampler_descriptor_heap = nullptr;
     m_rtv_descriptor_heap = nullptr;
     m_dsv_descriptor_heap = nullptr;
@@ -482,6 +500,9 @@ void dx12_render_interface::new_frame()
     m_frame_index++;
 
     process_pending_deletes();
+
+    m_graphics_queue->new_frame();
+    m_copy_queue->new_frame();
 
     m_upload_manager->new_frame(m_frame_index);
 }

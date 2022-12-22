@@ -38,6 +38,29 @@ public:
     // Gets the command allocator for the current frame begin built.
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> get_current_command_allocator();
 
+    // Called at the start of a new frame, switches the command list allocators in use
+    // and resets recycled allocators.
+    void new_frame();
+
+protected:
+    struct frame_resources
+    {
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> allocator;
+
+        std::vector<size_t> command_list_indices;
+        size_t next_free_index = 0;
+        size_t last_used_frame_index = 0;
+    };
+
+    struct thread_context
+    {
+        std::array<frame_resources, dx12_render_interface::k_max_pipeline_depth> frame_resources;
+        std::vector<std::unique_ptr<dx12_ri_command_list>> command_lists;
+    };
+
+    // Gets the allocation context for the current thread.
+    thread_context& get_thread_context();
+
 private:
     dx12_render_interface& m_renderer;
     std::string m_debug_name;
@@ -45,18 +68,11 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_queue = nullptr;
 
-    struct frame_command_lists
-    {
-        std::vector<size_t> command_list_indices;
-        size_t next_free_index = 0;
-        size_t last_used_frame_index = 0;
-    };
+    std::recursive_mutex m_thread_context_mutex;
+    std::vector<std::unique_ptr<thread_context>> m_thread_contexts;
+    inline static thread_local int32_t m_thread_context_tls = -1;
 
-    std::mutex m_command_list_mutex;
-    std::vector<std::unique_ptr<dx12_ri_command_list>> m_command_lists;
-    std::array<frame_command_lists, dx12_render_interface::k_max_pipeline_depth> m_frame_command_lists;
-
-    std::array<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, dx12_render_interface::k_max_pipeline_depth> m_command_allocators;
+    size_t m_frame_index = 0;
 
 };
 

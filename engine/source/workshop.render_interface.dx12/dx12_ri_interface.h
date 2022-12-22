@@ -13,6 +13,7 @@ namespace ws {
 
 class dx12_ri_command_queue;
 class dx12_ri_upload_manager;
+class dx12_ri_descriptor_table;
 
 // ================================================================================================
 //  Implementation of a renderer using DirectX 12.
@@ -20,7 +21,34 @@ class dx12_ri_upload_manager;
 class dx12_render_interface : public ri_interface
 {
 public:
+    // How many frames can be in the pipeline at a given time, including
+    // the one currently being built. 
+    // The number of swap chain targets is one lower than this.
     constexpr static size_t k_max_pipeline_depth = 3;
+
+    // Size of the SRV/UAV/CBV heap.
+    constexpr static size_t k_srv_heap_size = 1'000'000;
+
+    // Size of the sampler heap.
+    constexpr static size_t k_sampler_heap_size = 2048;
+
+    // Size of the render target heap.
+    constexpr static size_t k_rtv_heap_size = 1000;
+
+    // Size of the depth stencil target heap.
+    constexpr static size_t k_dsv_heap_size = 1000;
+
+    // Maximum amount of descriptors each srv table can use.
+    constexpr static size_t k_srv_descriptor_table_size = 200'000;
+
+    // Maximum amount of descriptors each sampler table can use.
+    constexpr static size_t k_sampler_descriptor_table_size = k_sampler_heap_size;
+
+    // Maximum amount of descriptors each rtv table can use.
+    constexpr static size_t k_rtv_descriptor_table_size = k_rtv_heap_size;
+
+    // Maximum amount of descriptors each dsv table can use.
+    constexpr static size_t k_dsv_descriptor_table_size = k_dsv_heap_size;
 
     using deferred_delete_function_t = std::function<void()>;
  
@@ -48,10 +76,12 @@ public:
     Microsoft::WRL::ComPtr<IDXGIFactory4> get_dxgi_factory();
     Microsoft::WRL::ComPtr<ID3D12Device> get_device();
 
-    dx12_ri_descriptor_heap& get_uav_descriptor_heap();
+    dx12_ri_descriptor_heap& get_srv_descriptor_heap();
     dx12_ri_descriptor_heap& get_sampler_descriptor_heap();
     dx12_ri_descriptor_heap& get_rtv_descriptor_heap();
     dx12_ri_descriptor_heap& get_dsv_descriptor_heap();
+
+    dx12_ri_descriptor_table& get_descriptor_table(ri_descriptor_table table);
 
     size_t get_frame_index();
 
@@ -85,10 +115,12 @@ private:
     std::unique_ptr<dx12_ri_command_queue> m_copy_queue = nullptr;
     std::unique_ptr<dx12_ri_upload_manager> m_upload_manager = nullptr;
 
-    std::unique_ptr<dx12_ri_descriptor_heap> m_uav_descriptor_heap = nullptr;
+    std::unique_ptr<dx12_ri_descriptor_heap> m_srv_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_sampler_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_rtv_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_dsv_descriptor_heap = nullptr;
+
+    std::array<std::unique_ptr<dx12_ri_descriptor_table>, static_cast<int>(ri_descriptor_table::COUNT)> m_descriptor_tables;
 
     Microsoft::WRL::ComPtr<IDXGIFactory4> m_dxgi_factory = nullptr;
     Microsoft::WRL::ComPtr<IDXGIFactory5> m_dxgi_factory_5 = nullptr;

@@ -19,10 +19,15 @@ dx12_ri_command_queue::dx12_ri_command_queue(dx12_render_interface& renderer, co
 
 dx12_ri_command_queue::~dx12_ri_command_queue()
 {
-    for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
+    for (auto& context : m_thread_contexts)
     {
-        SafeRelease(m_command_allocators[i]);
+        for (auto& resources : context->frame_resources)
+        {
+            SafeRelease(resources.allocator);
+        }
     }
+
+    m_thread_contexts.clear();
 
     SafeRelease(m_queue);
 }
@@ -44,17 +49,35 @@ result<void> dx12_ri_command_queue::create_resources()
         return false;
     }
 
-    for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
+    return true;
+}
+
+dx12_ri_command_queue::thread_context& dx12_ri_command_queue::get_thread_context()
+{
+    std::scoped_lock lock(m_thread_context_mutex);
+
+    // Create allocator if one is not already assigned to this thread.
+    if (m_thread_context_tls == -1)
     {
-        m_renderer.get_device()->CreateCommandAllocator(m_queue_type, IID_PPV_ARGS(&m_command_allocators[i]));
-        if (FAILED(hr))
+        std::unique_ptr<thread_context> context = std::make_unique<thread_context>();
+
+        for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
         {
-            db_error(render_interface, "CreateCommandAllocator failed with error 0x%08x.", hr);
-            return false;
+            HRESULT hr = m_renderer.get_device()->CreateCommandAllocator(m_queue_type, IID_PPV_ARGS(&context->frame_resources[i].allocator));
+            if (FAILED(hr))
+            {
+                db_fatal(render_interface, "CreateCommandAllocator failed with error 0x%08x.", hr);
+            }
         }
+
+        frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
+        resources.last_used_frame_index = m_frame_index;
+
+        m_thread_context_tls = m_thread_contexts.size();
+        m_thread_contexts.push_back(std::move(context));        
     }
 
-    return true;
+    return *m_thread_contexts[m_thread_context_tls].get();
 }
 
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> dx12_ri_command_queue::get_queue()
@@ -69,37 +92,51 @@ D3D12_COMMAND_LIST_TYPE dx12_ri_command_queue::get_dx_queue_type()
 
 Microsoft::WRL::ComPtr<ID3D12CommandAllocator> dx12_ri_command_queue::get_current_command_allocator()
 {
-    // TODO: we need to make this thread-local when multithreading command list generation.
-    return m_command_allocators[m_renderer.get_frame_index() % dx12_render_interface::k_max_pipeline_depth];
+    thread_context& context = get_thread_context();
+    frame_resources& resources = context.frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
+    return resources.allocator;
+}
+
+void dx12_ri_command_queue::new_frame()
+{
+    std::scoped_lock lock(m_thread_context_mutex);
+
+    m_frame_index = m_renderer.get_frame_index();
+
+    // Reset resources of all previous frames.
+    for (auto& context : m_thread_contexts)
+    {
+        frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
+
+        if (resources.last_used_frame_index != m_frame_index)
+        {
+            resources.allocator->Reset();
+
+            for (size_t i = 0; i < resources.next_free_index; i++)
+            {
+                db_assert_message(!context->command_lists[i]->is_open(), "Reusing command list that hasn't been closed. Command lists should only remain open for the duration of the frame they are allocated on.");
+            }
+
+            resources.next_free_index = 0;
+            resources.last_used_frame_index = m_frame_index;
+        }
+    }
 }
 
 ri_command_list& dx12_ri_command_queue::alloc_command_list()
 {
-    std::scoped_lock lock(m_command_list_mutex);
+    thread_context& context = get_thread_context();
+    frame_resources& resources = context.frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
 
     size_t frame_index = m_renderer.get_frame_index();
 
-    frame_command_lists& command_lists = m_frame_command_lists[frame_index % dx12_render_interface::k_max_pipeline_depth];
-
-    // If we are reusing a previous frames command lists, make all command lists free again
-    // and reset the command allocator.
-    if (command_lists.last_used_frame_index != frame_index)
-    {
-        m_command_allocators[frame_index % dx12_render_interface::k_max_pipeline_depth]->Reset();
-
-        for (size_t i = 0; i < command_lists.next_free_index; i++)
-        {
-            db_assert_message(!m_command_lists[i]->is_open(), "Reusing command list that hasn't been closed. Command lists should only remain open for the duration of the frame they are allocated on.");
-        }
-
-        command_lists.next_free_index = 0;
-        command_lists.last_used_frame_index = frame_index;
-    }
+    // Ensure allocator has been reset to this frame.
+    db_assert(resources.last_used_frame_index == m_frame_index);
 
     // Allocate new command list if we have no more available.
-    if (command_lists.next_free_index >= command_lists.command_list_indices.size())
+    if (resources.next_free_index >= resources.command_list_indices.size())
     {
-        std::string debug_name = string_format("Command List [%i]", m_command_lists.size());
+        std::string debug_name = string_format("Command List [thread=%zi index=%zi]", m_thread_context_tls, context.command_lists.size());
 
         std::unique_ptr<dx12_ri_command_list> list = std::make_unique<dx12_ri_command_list>(m_renderer, debug_name.c_str(), *this);
         if (!list->create_resources())
@@ -107,15 +144,15 @@ ri_command_list& dx12_ri_command_queue::alloc_command_list()
             db_fatal(render_interface, "Failed to create command list resources.");
         }
 
-        m_command_lists.push_back(std::move(list));
-        command_lists.command_list_indices.push_back(m_command_lists.size() - 1);
+        context.command_lists.push_back(std::move(list));
+        resources.command_list_indices.push_back(context.command_lists.size() - 1);
     }
 
     // Return next command list in the frame list.
-    size_t list_index = command_lists.command_list_indices[command_lists.next_free_index];
-    dx12_ri_command_list& list = *m_command_lists[list_index];
+    size_t list_index = resources.command_list_indices[resources.next_free_index];
+    dx12_ri_command_list& list = *context.command_lists[list_index];
     list.set_allocated_frame(frame_index);
-    command_lists.next_free_index++;
+    resources.next_free_index++;
 
     return list;
 }

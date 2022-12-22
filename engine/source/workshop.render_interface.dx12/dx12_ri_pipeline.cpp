@@ -29,40 +29,47 @@ bool dx12_ri_pipeline::create_root_signature()
     // TODO: We should cache these in the dx12_interface, most of our root signatures will be near identical.
 
     std::vector<D3D12_DESCRIPTOR_RANGE> descriptor_ranges;
-    descriptor_ranges.reserve(m_create_params.bindless_arrays_types.size() + 1);
+    descriptor_ranges.reserve(m_create_params.descriptor_tables.size() + 1);
 
     std::vector<D3D12_ROOT_PARAMETER> parameters;
-    parameters.reserve(m_create_params.bindless_arrays_types.size() + 1);
+    parameters.reserve(m_create_params.descriptor_tables.size() + 1);
 
     // Add parameters for each bindless array.    
-    for (size_t i = 0; i < m_create_params.bindless_arrays_types.size(); i++)
+    for (size_t i = 0; i < m_create_params.descriptor_tables.size(); i++)
     {
-        ri_data_type& type = m_create_params.bindless_arrays_types[i];
+        ri_descriptor_table& type = m_create_params.descriptor_tables[i];
 
         D3D12_DESCRIPTOR_RANGE& range = descriptor_ranges.emplace_back();
-        range.NumDescriptors = UINT_MAX;
         range.BaseShaderRegister = 0;
         range.RegisterSpace = static_cast<UINT>(i + 1); // space0 is reserved for non-bindless stuff.
         range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         switch (type)
         {
-        case ri_data_type::t_texture1d:
-        case ri_data_type::t_texture2d:
-        case ri_data_type::t_texture3d:
-        case ri_data_type::t_texturecube:
+        case ri_descriptor_table::texture_1d:
+        case ri_descriptor_table::texture_2d:
+        case ri_descriptor_table::texture_3d:
+        case ri_descriptor_table::texture_cube:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+                range.NumDescriptors = dx12_render_interface::k_srv_descriptor_table_size;
                 break;
             }
-        case ri_data_type::t_sampler:
+        case ri_descriptor_table::sampler:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+                range.NumDescriptors = dx12_render_interface::k_sampler_descriptor_table_size;
                 break;
             }
-        case ri_data_type::t_byteaddressbuffer:
+        case ri_descriptor_table::buffer:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+                range.NumDescriptors = dx12_render_interface::k_srv_descriptor_table_size;
+                break;
+            }
+        default:
+            {
+                db_fatal(renderer, "Attempted to bind unsupported descriptor table to root parameter.");
                 break;
             }
         }
@@ -74,7 +81,17 @@ bool dx12_ri_pipeline::create_root_signature()
         table.DescriptorTable.pDescriptorRanges = &range;
     }
 
-    // Add parameters for each cbuffer.
+    // Create root parameters for each param block. This is recommended over putting them in the descriptor heap.
+    for (size_t i = 0; i < m_create_params.param_block_archetypes.size(); i++)
+    {
+        D3D12_ROOT_PARAMETER& table = parameters.emplace_back();
+        table.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        table.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        table.Descriptor.RegisterSpace = 0;
+        table.Descriptor.ShaderRegister = i;
+    }
+
+    /*
     D3D12_ROOT_PARAMETER& cbuffer_table = parameters.emplace_back();
     cbuffer_table.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     cbuffer_table.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -87,6 +104,7 @@ bool dx12_ri_pipeline::create_root_signature()
     range.BaseShaderRegister = 0;
     range.RegisterSpace = 0;
     range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    */
 
     // Now tie everything together and serialize our new root sig ...
     D3D12_ROOT_SIGNATURE_DESC root_sig_desc;

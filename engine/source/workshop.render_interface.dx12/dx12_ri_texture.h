@@ -8,6 +8,7 @@
 #include "workshop.render_interface/ri_command_list.h"
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
+#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include <array>
 #include <string>
 
@@ -32,7 +33,7 @@ public:
     virtual size_t get_height() override;
     virtual size_t get_depth() override;
     virtual size_t get_mip_levels() override;
-    virtual ri_texture_dimension get_dimensions() override;
+    virtual ri_texture_dimension get_dimensions() const override;
     virtual ri_texture_format get_format() override;
     virtual size_t get_multisample_count() override;
     virtual color get_optimal_clear_color() override;
@@ -41,8 +42,9 @@ public:
     virtual bool is_render_target() override;
 
 public:
-    D3D12_CPU_DESCRIPTOR_HANDLE get_rtv();
-    D3D12_CPU_DESCRIPTOR_HANDLE get_dsv();
+    dx12_ri_descriptor_table::allocation get_srv() const;
+    dx12_ri_descriptor_table::allocation get_rtv() const;
+    dx12_ri_descriptor_table::allocation get_dsv() const;
 
     ID3D12Resource* get_resource();
 
@@ -56,8 +58,12 @@ private:
     ri_texture::create_params m_create_params;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
-    D3D12_CPU_DESCRIPTOR_HANDLE m_rtv = {};
-    D3D12_CPU_DESCRIPTOR_HANDLE m_dsv = {};
+
+    dx12_ri_descriptor_table::allocation m_rtv;
+    dx12_ri_descriptor_table::allocation m_dsv;
+    dx12_ri_descriptor_table::allocation m_srv;
+
+    ri_descriptor_table m_srv_table;
 
     ri_resource_state m_common_state;
 

@@ -6,6 +6,7 @@
 
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_command_list.h"
+#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
@@ -31,6 +32,7 @@ public:
     virtual size_t get_element_size() override;
 
 public:
+    dx12_ri_descriptor_table::allocation get_srv() const;
 
     ID3D12Resource* get_resource();
 
@@ -44,6 +46,8 @@ private:
     ri_resource_state m_common_state;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
+
+    dx12_ri_descriptor_table::allocation m_srv;
 
 };
 

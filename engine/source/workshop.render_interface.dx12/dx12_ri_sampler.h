@@ -7,6 +7,7 @@
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
+#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include <array>
 #include <string>
 
@@ -36,12 +37,15 @@ public:
 	virtual float get_mip_lod_bias() override;
 	virtual int get_max_anisotropy() override;
 
+public:
+	size_t get_descriptor_table_index() const;
+
 private:
     dx12_render_interface& m_renderer;
     std::string m_debug_name;
     ri_sampler::create_params m_create_params;
 
-    D3D12_CPU_DESCRIPTOR_HANDLE m_handle;
+    dx12_ri_descriptor_table::allocation m_handle;
 
 };
 
