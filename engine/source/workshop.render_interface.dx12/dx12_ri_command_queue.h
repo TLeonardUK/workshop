@@ -31,6 +31,8 @@ public:
 
     virtual ri_command_list& alloc_command_list() override;
     virtual void execute(ri_command_list& list) override;
+    virtual void begin_event(const color& color, const char* name, ...) override;
+    virtual void end_event() override;
 
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> get_queue();
     D3D12_COMMAND_LIST_TYPE get_dx_queue_type();
@@ -40,7 +42,10 @@ public:
 
     // Called at the start of a new frame, switches the command list allocators in use
     // and resets recycled allocators.
-    void new_frame();
+    void begin_frame();
+
+    // Called when a frame finishes rendering.
+    void end_frame();
 
 protected:
     struct frame_resources

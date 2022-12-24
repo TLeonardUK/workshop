@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_pass_fullscreen.h"
 #include "workshop.renderer/render_world_state.h"
+#include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/common_types.h"
 #include "workshop.render_interface/ri_interface.h"
@@ -23,14 +24,14 @@ result<void> render_pass_fullscreen::create_resources(renderer& renderer)
     factory->add("position", { vector2(-1.0f, -1.0f), vector2( 1.0f, -1.0f), vector2(-1.0f,  1.0f), vector2( 1.0f,  1.0f) });    
     factory->add("uv",       { vector2( 0.0f,  0.0f), vector2( 1.0f,  0.0f), vector2( 0.0f,  1.0f), vector2( 1.0f,  1.0f) });
 
-    m_vertex_buffer = factory->create_vertex_buffer("Fullscreen Pass - Vertex buffer");
-    m_index_buffer  = factory->create_index_buffer("Fullscreen Pass - Index buffer", std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
+    m_vertex_buffer = factory->create_vertex_buffer(string_format("%s - Vertex buffer", name.c_str()).c_str());
+    m_index_buffer  = factory->create_index_buffer(string_format("%s - Index buffer", name.c_str()).c_str(), std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
 
-    // TODO: Add render_pass_graphics which holds all the vertex data / validation code.
-    // TODO: Add a method for attaching the param blocks to a render pass.
-    m_vertex_info_param_block = renderer.create_param_block("vertex_info");
+    // Create the main vertex info param block.
+    m_vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
     m_vertex_info_param_block->set("vertex_buffer", *m_vertex_buffer);
     m_vertex_info_param_block->set("vertex_buffer_offset", 0u);
+    param_blocks.push_back(m_vertex_info_param_block.get());
 
     // Validate the parameters we've been passed.
     if (result<void> ret = validate_parameters(); !ret)
@@ -43,86 +44,10 @@ result<void> render_pass_fullscreen::create_resources(renderer& renderer)
 
 result<void> render_pass_fullscreen::destroy_resources(renderer& renderer)
 {
+    m_vertex_info_param_block = nullptr;
+
     m_index_buffer = nullptr;
     m_vertex_buffer = nullptr;
-
-    return true;
-}
-
-result<void> render_pass_fullscreen::validate_parameters()
-{
-    ri_pipeline::create_params pipeline_params = technique->pipeline->get_create_params();
-
-    // Check color targets match.
-    if (output.color_targets.size() != pipeline_params.color_formats.size())
-    {
-        db_error(renderer, "Incorrect number of color output targets in render pass '%s' for technique '%s', got %zi expected %zi.", 
-            name.c_str(), 
-            technique->name.c_str(),
-            output.color_targets.size(),
-            pipeline_params.color_formats.size()
-        );
-        return false;
-    }
-
-    for (size_t i = 0; i < output.color_targets.size(); i++)
-    {
-        ri_texture_format format = output.color_targets[i]->get_format();
-        ri_texture_format expected_format = pipeline_params.color_formats[i];
-
-        if (format != expected_format)
-        {
-            db_error(renderer, "Render pass '%s' using technique '%s' expected color target %zi to be format '%s' but got '%s'.",
-                name.c_str(),
-                technique->name.c_str(),
-                i,
-                to_string<ri_texture_format>(expected_format).c_str(),
-                to_string<ri_texture_format>(format).c_str()
-            );
-            return false;
-        }
-    }
-
-    // Check depth target matches.
-    if (pipeline_params.depth_format != ri_texture_format::Undefined)
-    {
-        if (output.depth_target == nullptr)
-        {
-            db_error(renderer, "Render pass '%s' has no depth target assigned, but one is expected by technique '%s'.",
-                name.c_str(),
-                technique->name.c_str()
-            );
-            return false;
-        }
-
-        if (output.depth_target->get_format() != pipeline_params.depth_format)
-        {
-            db_error(renderer, "Render pass '%s' using technique '%s' expected depth format '%s' but got '%s'.",
-                name.c_str(),
-                technique->name.c_str(),
-                to_string<ri_texture_format>(pipeline_params.depth_format).c_str(),
-                to_string<ri_texture_format>(output.depth_target->get_format()).c_str()
-            );
-            return false;
-        }
-    }
-    else
-    {
-        if (output.depth_target != nullptr)
-        {
-            db_error(renderer, "Render pass '%s' has depth target assigned, but no depth target is expected by technique '%s'.",
-                name.c_str(),
-                technique->name.c_str()
-            );
-            return false;
-        }
-    }
-
-    // Check param block types match.
-    // 
-    //for (ri_param_block_archetype* archetype : pipeline_params.param_block_archetypes)
-    //{
-    //}
 
     return true;
 }
@@ -131,17 +56,38 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
 {
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
-    list.set_pipeline(*technique->pipeline.get());
-    list.set_render_targets(output.color_targets, output.depth_target);
-    list.set_param_blocks({ 
-        m_vertex_info_param_block.get(), 
-        renderer.get_gbuffer_param_block()
-    });
-    list.set_viewport(view.viewport);
-    list.set_scissor(view.viewport);
-    list.set_primitive_topology(ri_primitive::triangle_list);
-    list.set_index_buffer(*m_index_buffer);
-    list.draw(6, 1);
+    {
+        profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
+
+        // Transition targets to the relevant state.
+        for (ri_texture* texture : output.color_targets)
+        {
+            list.barrier(*texture, ri_resource_state::initial, ri_resource_state::render_target);
+        }
+        if (output.depth_target)
+        {
+            list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_write);
+        }
+
+        list.set_pipeline(*technique->pipeline.get());
+        list.set_render_targets(output.color_targets, output.depth_target);
+        list.set_param_blocks(param_blocks);
+        list.set_viewport(view.viewport);
+        list.set_scissor(view.viewport);
+        list.set_primitive_topology(ri_primitive::triangle_list);
+        list.set_index_buffer(*m_index_buffer);
+        list.draw(6, 1);
+
+        // Transition targets back to initial state.
+        for (ri_texture* texture : output.color_targets)
+        {
+            list.barrier(*texture, ri_resource_state::render_target, ri_resource_state::initial);
+        }
+        if (output.depth_target)
+        {
+            list.barrier(*output.depth_target, ri_resource_state::depth_write, ri_resource_state::initial);
+        }
+    }
     list.close();
 
     state_output.graphics_command_lists.push_back(&list);

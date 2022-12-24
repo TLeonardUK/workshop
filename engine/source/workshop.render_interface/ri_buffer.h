@@ -41,6 +41,8 @@ public:
 
     virtual size_t get_element_count() = 0;
     virtual size_t get_element_size() = 0;
+
+    virtual ri_resource_state get_initial_state() = 0;
     
 };
 

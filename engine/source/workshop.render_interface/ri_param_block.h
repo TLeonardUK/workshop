@@ -20,6 +20,7 @@ namespace ws {
 class ri_texture;
 class ri_sampler;
 class ri_buffer;
+class ri_param_block_archetype;
 
 // ================================================================================================
 //  Represents a block of parameters that can be passed into a shader as a constant buffer.
@@ -69,9 +70,10 @@ public:
 	virtual void set(const char* field_name, const ri_sampler& resource) = 0;
 	virtual void set(const char* field_name, const ri_buffer& resource) = 0;
 
+	virtual ri_param_block_archetype* get_archetype() = 0;
+
 private:
 	virtual void set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) = 0;
-
 
 };
 

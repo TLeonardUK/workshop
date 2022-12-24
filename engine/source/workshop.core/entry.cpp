@@ -5,8 +5,8 @@
 #include "workshop.core/debug/log_handler_console.h"
 #include "workshop.core/debug/log_handler_file.h"
 #include "workshop.core/utils/version.h"
-
 #include "workshop.core/filesystem/file.h"
+#include "workshop.core/perf/profile.h"
 
 #include "workshop.core/app/app.h"
 
@@ -47,6 +47,9 @@ int entry_point(int argc, char* argv[])
     db_log(core, "Workshop: %s", app->get_name().c_str());
     db_log(core, "Version %s", version.string.c_str());
     db_log(core, "");
+
+    // Initialize the profiling library.
+    platform_perf_init();
 
     // Call the applications entry point.
     if (result<void> ret = app->run(); !ret)

@@ -31,12 +31,12 @@ public:
     virtual size_t get_element_count() override;
     virtual size_t get_element_size() override;
 
+    virtual ri_resource_state get_initial_state() override;
+
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
 
     ID3D12Resource* get_resource();
-
-    ri_resource_state get_initial_state();
 
 private:
     dx12_render_interface& m_renderer;

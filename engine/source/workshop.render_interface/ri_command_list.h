@@ -17,56 +17,6 @@ class ri_buffer;
 class ri_param_block;
 class color;
 
-// Describes the current access-state of a resource on the gpu.
-enum class ri_resource_state
-{
-    // This is a special state, it returns the resource to whatever state it expects
-    // to be in between command lists (defined by the resource). Parallel generation of 
-    // command lists should always return the resource to this state before finishing.
-    initial,
-
-    // Common state for sharing resource between multiple gpu engines.
-    common_state,
-
-    // Resource is usable as a render target.
-    render_target,
-
-    // Resource is only usable for presentation.
-    present,
-
-    // Destination for copying data to.
-    copy_dest,
-
-    // Source for copying data from.
-    copy_source,
-
-    // Destination for resolve operation.
-    resolve_dest,
-
-    // Source for resolve operation.
-    resolve_source,
-
-    // Resource used for pixel shader.
-    pixel_shader_resource,
-
-    // Resource used for non-pixel shader.
-    non_pixel_shader_resource,
-
-    // For writing depth to.
-    depth_write,
-
-    // For reading depth from.
-    depth_read,
-
-    // For storing index buffers.
-    index_buffer,
-
-    // For reading in shaders as a UAV.
-    unordered_access,
-
-    COUNT
-};
-
 // ================================================================================================
 //  Represents a list of commands that can be sent to a command_queue to execute.
 // ================================================================================================
@@ -128,6 +78,12 @@ public:
     // Note: Vertex buffers are accessed bindlessly, so offsets for
     // selecting instance specific data is handled in the shader.
     virtual void draw(size_t indexes_per_instance, size_t instance_count) = 0;
+
+    // Begins a profiling scope within the queue.
+    virtual void begin_event(const color& color, const char* name, ...) = 0;
+
+    // End a profiling scope within the queue.
+    virtual void end_event() = 0;
 
 };
 

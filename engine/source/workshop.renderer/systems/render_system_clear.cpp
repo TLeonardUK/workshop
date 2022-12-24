@@ -6,11 +6,12 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_pass_fullscreen.h"
+#include "workshop.renderer/render_effect_manager.h"
 
 namespace ws {
 
 render_system_clear::render_system_clear(renderer& render)
-    : render_system(render, "clear")
+    : render_system(render, "clear gbuffer")
 {
 }
 
@@ -21,10 +22,10 @@ void render_system_clear::register_init(init_list& list)
 void render_system_clear::create_graph(render_graph& graph)
 {
     std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
-    pass->name = "clear";
-    pass->technique = m_renderer.get_technique("clear", {});
+    pass->name = "clear gbuffer";
+    pass->technique = m_renderer.get_effect_manager().get_technique("clear", {});
     pass->output = m_renderer.get_gbuffer_output();
-//    pass->param_blocks = ;
+    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
   
     graph.add_node(std::move(pass));
 }

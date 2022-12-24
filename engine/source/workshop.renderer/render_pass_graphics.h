@@ -5,7 +5,7 @@
 #pragma once
 
 #include "workshop.renderer/renderer.h"
-#include "workshop.renderer/render_pass_graphics.h"
+#include "workshop.renderer/render_pass.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
 #include "workshop.render_interface/ri_buffer.h"
@@ -14,23 +14,24 @@
 namespace ws {
 
 // ================================================================================================
-//  Render pass that executes a full screen pass with the given effect.
+//  Base class for all graphics render passes.
 // ================================================================================================
-class render_pass_fullscreen
-    : public render_pass_graphics
+class render_pass_graphics
+    : public render_pass
 {
 public:
 
-    virtual result<void> create_resources(renderer& renderer) override;
-    virtual result<void> destroy_resources(renderer& renderer) override;
+    // The effect technique to use for rendering this pass.
+    render_effect::technique* technique;
 
-    virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
+    // The output targets to render to.
+    render_output output;
 
-private:
-    std::unique_ptr<ri_buffer> m_vertex_buffer;
-    std::unique_ptr<ri_buffer> m_index_buffer;
+    // The param blocks required by the technique being rendered.
+    std::vector<ri_param_block*> param_blocks;
 
-    std::unique_ptr<ri_param_block> m_vertex_info_param_block;
+public:
+    result<void> validate_parameters();
 
 };
 

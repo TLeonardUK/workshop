@@ -4,6 +4,10 @@
 // ================================================================================================
 #pragma once
 
+#include "workshop.core/perf/profile.h"
+
+#include "workshop.render_interface/ri_command_list.h"
+
 namespace ws {
 
 class ri_command_list;
@@ -22,6 +26,51 @@ public:
     // Inserts a command list for execution on this queue.
     virtual void execute(ri_command_list& list) = 0;
 
+    // Begins a profiling scope within the queue.
+    virtual void begin_event(const color& color, const char* name, ...) = 0;
+
+    // End a profiling scope within the queue.
+    virtual void end_event() = 0;
+
 };
+
+// RAII gpu marker class. 
+template <typename... Args>
+struct ri_scoped_gpu_profile_marker
+{
+    ri_scoped_gpu_profile_marker(ri_command_queue& queue, const color& color, const char* format, Args... args)
+        : m_queue(&queue)
+    {
+        m_queue->begin_event(color, format, std::forward<Args>(args)...);
+    }
+
+    ri_scoped_gpu_profile_marker(ri_command_list& list, const color& color, const char* format, Args... args)
+        : m_list(&list)
+    {
+        m_list->begin_event(color, format, std::forward<Args>(args)...);
+    }
+
+    ~ri_scoped_gpu_profile_marker()
+    {
+        if (m_queue)
+        {
+            m_queue->end_event();
+        }
+        else
+        {
+            m_list->end_event();
+        }
+    }
+
+private:
+    ri_command_queue* m_queue = nullptr;
+    ri_command_list* m_list = nullptr;
+};
+
+#ifdef WS_RELEASE
+#define profile_gpu_marker(queue, color, name, ...)
+#else
+#define profile_gpu_marker(queue, color, name, ...) ri_scoped_gpu_profile_marker pm_gpu_##__LINE__(queue, color, name, __VA_ARGS__)
+#endif
 
 }; // namespace ws

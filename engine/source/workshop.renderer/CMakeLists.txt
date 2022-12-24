@@ -21,6 +21,8 @@ SET(SOURCES
     "render_output.cpp"
     "render_pass.h"
     "render_pass.cpp"
+    "render_pass_graphics.h"
+    "render_pass_graphics.cpp"
     "render_pass_fullscreen.h"
     "render_pass_fullscreen.cpp"
     "render_system.h"
@@ -29,11 +31,28 @@ SET(SOURCES
     "render_world_state.cpp"    
     "render_view.h"
     "render_view.cpp"
+
+    "render_effect_manager.h"
+    "render_effect_manager.cpp"    
+    "render_param_block_manager.h"
+    "render_param_block_manager.cpp"
+    "render_scene_manager.h"
+    "render_scene_manager.cpp"
     
+    #"render_object.h"
+    #"render_object.cpp"
+        
+    #"objects/static_mesh_object.h"
+    #"objects/skinned_mesh_object.h"
+
     "systems/render_system_clear.h"
     "systems/render_system_clear.cpp"
     "systems/render_system_resolve_backbuffer.h"
-    "systems/render_system_resolve_backbuffer.cpp"
+    "systems/render_system_resolve_backbuffer.cpp"    
+    "systems/render_system_imgui.h"
+    "systems/render_system_imgui.cpp"
+    "systems/render_system_geometry.h"
+    "systems/render_system_geometry.cpp"
     
     "assets/shader/shader.h"
     "assets/shader/shader.cpp"

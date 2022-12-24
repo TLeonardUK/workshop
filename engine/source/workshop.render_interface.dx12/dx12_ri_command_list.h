@@ -47,6 +47,8 @@ public:
     virtual void set_index_buffer(ri_buffer& buffer) override;
     virtual void set_render_targets(const std::vector<ri_texture*>& colors, ri_texture* depth) override;
     virtual void draw(size_t indexes_per_instance, size_t instance_count) override;
+    virtual void begin_event(const color& color, const char* name, ...) override;
+    virtual void end_event() override;
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> get_dx_command_list();
 

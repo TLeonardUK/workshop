@@ -5,27 +5,25 @@
 #pragma once
 
 #include "workshop.renderer/render_system.h"
-#include "workshop.renderer/render_pass_fullscreen.h"
 
 namespace ws {
 
 class renderer;
 
 // ================================================================================================
-//  Resolves the gbuffer to the final image on the backbuffer.
+//  Renders the scenes geometry to the gbuffer.
 // ================================================================================================
-class render_system_resolve_backbuffer
+class render_system_geometry
     : public render_system
 {
 public:
-    render_system_resolve_backbuffer(renderer& render);
+    render_system_geometry(renderer& render);
 
     virtual void register_init(init_list& list) override;
     virtual void create_graph(render_graph& graph) override;
     virtual void step(const render_world_state& state) override;
 
 private:
-    render_pass_fullscreen* m_render_pass;
 
 };
 

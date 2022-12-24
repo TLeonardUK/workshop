@@ -48,7 +48,10 @@ public:
     // Informs the renderer that a new frame is starting to be rendered. The 
     // render can use this notification to update per-frame allocations and do
     // any general bookkeeping required.
-    virtual void new_frame() = 0;
+    virtual void begin_frame() = 0;
+
+    // Informs the renderer that the frame has finished rendering.
+    virtual void end_frame() = 0;
 
     // Creates a swapchain for rendering to the given window.
     virtual std::unique_ptr<ri_swapchain> create_swapchain(window& for_window, const char* debug_name = nullptr) = 0;

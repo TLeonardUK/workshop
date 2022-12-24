@@ -476,14 +476,14 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
             if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, compiled_cache_key, header.dependencies))
             {
                 // This can fail if one of our dependencies has been deleted, in which case we know we need to rebuild.
-                db_error(asset, "[%s] Failed to calculate dependency cache key for asset, recompile required.", state->path.c_str());
+                db_warning(asset, "[%s] Failed to calculate dependency cache key for asset, recompile required.", state->path.c_str());
                 needs_compile = true;
             }
             else
             {
                 if (compiled_cache_key.hash() != header.compiled_hash)
                 {
-                    db_error(asset, "[%s] Compiled asset looks to be out of date, recompile required.", state->path.c_str());
+                    db_warning(asset, "[%s] Compiled asset looks to be out of date, recompile required.", state->path.c_str());
                     needs_compile = true;
                 }
             }
@@ -549,7 +549,7 @@ void asset_manager::do_unload(asset_state* state)
 
 void asset_manager::set_load_state(asset_state* state, asset_loading_state new_state)
 {
-    db_log(asset, "[%s] %s", state->path.c_str(), k_loading_state_strings[static_cast<int>(new_state)]);
+    //db_log(asset, "[%s] %s", state->path.c_str(), k_loading_state_strings[static_cast<int>(new_state)]);
     state->loading_state = new_state;
 }
 

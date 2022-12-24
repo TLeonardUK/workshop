@@ -5,6 +5,8 @@
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
+#include "workshop.renderer/render_pass_fullscreen.h"
+#include "workshop.renderer/render_effect_manager.h"
 
 namespace ws {
 
@@ -15,24 +17,25 @@ render_system_resolve_backbuffer::render_system_resolve_backbuffer(renderer& ren
 
 void render_system_resolve_backbuffer::register_init(init_list& list)
 {   
-    // param_block = create_param_block();
 }
 
 void render_system_resolve_backbuffer::create_graph(render_graph& graph)
 {
-//    std::unique_ptr<render_pass_graphics> graphics_pass = std::make_unique<render_pass_graphics>();
-//    graphics_pass->name = "copy to backbuffer";
-//    graphics_pass->effect = m_renderer.get_effect("copy_to_backbuffer", { "draw_mode": "Opaque" });
-//    graphics_pass->target_clear = true;
-//    graphics_pass->target_use_backbuffer = true;
-//    graphics_pass->target_set.color[0] = ;
-//    graphics_pass->param_blocks.add();
+    std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
+    pass->name = "resolve swapchain";
+    pass->technique = m_renderer.get_effect_manager().get_technique("resolve_swapchain", {});
+    pass->output = m_renderer.get_swapchain_output();
+    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
 
-//    graph.add_node(std::move(graphics_pass), { });
+    m_render_pass = pass.get();
+
+    graph.add_node(std::move(pass));
 }
 
 void render_system_resolve_backbuffer::step(const render_world_state& state)
 {
+    // Update the target we are outputting to to the current swapchain backbuffer.
+     m_render_pass->output = m_renderer.get_swapchain_output();
 }
 
 }; // namespace ws

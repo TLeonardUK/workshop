@@ -196,6 +196,7 @@ ri_texture& dx12_ri_swapchain::next_backbuffer()
 void dx12_ri_swapchain::present()
 {
     profile_marker(profile_colors::wait, "present");
+    profile_gpu_marker(m_renderer.get_graphics_queue(), profile_colors::gpu_frame, "present");
 
     HRESULT hr = m_swap_chain->Present(0, m_renderer.is_tearing_allowed() ? DXGI_PRESENT_ALLOW_TEARING : 0);
     if (FAILED(hr))

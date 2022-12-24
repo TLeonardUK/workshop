@@ -10,6 +10,58 @@
 namespace ws {
 
 // ================================================================================================
+//  Describes the current access-state of a resource on the gpu.
+// ================================================================================================
+enum class ri_resource_state
+{
+    // This is a special state, it returns the resource to whatever state it expects
+    // to be in between command lists (defined by the resource). Parallel generation of 
+    // command lists should always return the resource to this state before finishing.
+    initial,
+
+    // Common state for sharing resource between multiple gpu engines.
+    common_state,
+
+    // Resource is usable as a render target.
+    render_target,
+
+    // Resource is only usable for presentation.
+    present,
+
+    // Destination for copying data to.
+    copy_dest,
+
+    // Source for copying data from.
+    copy_source,
+
+    // Destination for resolve operation.
+    resolve_dest,
+
+    // Source for resolve operation.
+    resolve_source,
+
+    // Resource used for pixel shader.
+    pixel_shader_resource,
+
+    // Resource used for non-pixel shader.
+    non_pixel_shader_resource,
+
+    // For writing depth to.
+    depth_write,
+
+    // For reading depth from.
+    depth_read,
+
+    // For storing index buffers.
+    index_buffer,
+
+    // For reading in shaders as a UAV.
+    unordered_access,
+
+    COUNT
+};
+
+// ================================================================================================
 //  Data types for interop with gpu data.
 // ================================================================================================
 enum class ri_data_type

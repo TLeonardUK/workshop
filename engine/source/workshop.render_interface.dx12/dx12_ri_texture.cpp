@@ -287,7 +287,7 @@ ID3D12Resource* dx12_ri_texture::get_resource()
 
 ri_resource_state dx12_ri_texture::get_initial_state()
 {
-    return ri_resource_state::pixel_shader_resource;
+    return m_common_state;
 }
 
 }; // namespace ws

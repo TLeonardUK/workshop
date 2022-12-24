@@ -159,7 +159,6 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     }
 
     // Generate copy command list.
-    db_log(renderer, "Allocating upload texture upload cmdlist");
     dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
     list.open();
 
@@ -201,7 +200,6 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
 
     memcpy(m_upload_heap_ptr + upload.heap_offset, data.data(), data.size());
 
-    db_log(renderer, "Allocating upload buffer upload cmdlist");
     dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
     list.open();
     list.get_dx_command_list()->CopyBufferRegion(
@@ -308,21 +306,34 @@ void dx12_ri_upload_manager::perform_uploads()
     transition_list.close();
 
     // Start transitioning resources on graphics queue.
-    graphics_queue.execute(transition_list);
+    {
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources for upload");
+        graphics_queue.execute(transition_list);
+    }
 
     // Signal copy queue on graphics queue when we have finished transitioning.
     m_graphics_queue_fence->signal(graphics_queue, fence_value);
 
     // Wait on graphics queue for copy queue to finish copying.
-    m_copy_queue_fence->wait(graphics_queue, fence_value);
+    {
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "wait for uploads to complete");
+        m_copy_queue_fence->wait(graphics_queue, fence_value);
+    }
 
     // Wait on copy queue for graphics queue to finish transitioning.
-    m_graphics_queue_fence->wait(copy_queue, fence_value);
+    {
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "wait for transitions");
+        m_graphics_queue_fence->wait(copy_queue, fence_value);
+    }
 
     // Perform actual copies on the copy queue.
-    for (upload_state& state : uploads)
     {
-        copy_queue.execute(*state.list);
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "upload resources");
+
+        for (upload_state& state : uploads)
+        {
+            copy_queue.execute(*state.list);
+        }
     }
 
     // Signal graphics queue that we have finished.

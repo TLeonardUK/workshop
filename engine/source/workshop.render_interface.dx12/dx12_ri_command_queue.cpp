@@ -8,6 +8,8 @@
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.windowing/window.h"
 
+#include "thirdparty/pix/include/pix3.h"
+
 namespace ws {
 
 dx12_ri_command_queue::dx12_ri_command_queue(dx12_render_interface& renderer, const char* debug_name, D3D12_COMMAND_LIST_TYPE queue_type)
@@ -97,11 +99,13 @@ Microsoft::WRL::ComPtr<ID3D12CommandAllocator> dx12_ri_command_queue::get_curren
     return resources.allocator;
 }
 
-void dx12_ri_command_queue::new_frame()
+void dx12_ri_command_queue::begin_frame()
 {
     std::scoped_lock lock(m_thread_context_mutex);
 
     m_frame_index = m_renderer.get_frame_index();
+
+    begin_event(profile_colors::gpu_frame, "frame %zi", m_frame_index);
 
     // Reset resources of all previous frames.
     for (auto& context : m_thread_contexts)
@@ -121,6 +125,12 @@ void dx12_ri_command_queue::new_frame()
             resources.last_used_frame_index = m_frame_index;
         }
     }
+}
+
+
+void dx12_ri_command_queue::end_frame()
+{
+    end_event();
 }
 
 ri_command_list& dx12_ri_command_queue::alloc_command_list()
@@ -163,6 +173,33 @@ void dx12_ri_command_queue::execute(ri_command_list& list)
         static_cast<dx12_ri_command_list&>(list).get_dx_command_list().Get()
     };
     m_queue->ExecuteCommandLists(1, commandLists);
+}
+
+void dx12_ri_command_queue::begin_event(const color& color, const char* format, ...)
+{
+    uint8_t r, g, b, a;
+    color.get(r, g, b, a);
+
+    char buffer[1024];
+
+    va_list list;
+    va_start(list, format);
+
+    int ret = vsnprintf(buffer, sizeof(buffer), format, list);
+    int space_required = ret + 1;
+    if (ret >= sizeof(buffer))
+    {
+        return;
+    }
+
+    PIXBeginEvent(m_queue.Get(), PIX_COLOR(r, g, b), "%s", buffer);
+
+    va_end(list);
+}
+
+void dx12_ri_command_queue::end_event()
+{
+    PIXEndEvent(m_queue.Get());
 }
 
 }; // namespace ws

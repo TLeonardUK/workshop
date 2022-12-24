@@ -7,8 +7,13 @@
 
 #include "workshop.renderer/systems/render_system_clear.h"
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
+#include "workshop.renderer/systems/render_system_imgui.h"
+#include "workshop.renderer/systems/render_system_geometry.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_effect.h"
+#include "workshop.renderer/render_effect_manager.h"
+#include "workshop.renderer/render_param_block_manager.h"
+#include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
 
@@ -41,16 +46,21 @@ renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_
     // Note: Order is important here, this is the order the 
     //       stages will be added to the render graph in.
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
+    m_systems.push_back(std::make_unique<render_system_geometry>(*this));
+    m_systems.push_back(std::make_unique<render_system_imgui>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
+
+    m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
+    m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
+    m_scene_manager = std::make_unique<render_scene_manager>(*this);
 }
 
 void renderer::register_init(init_list& list)
 {
-    list.add_step(
-        "Load Shaders",
-        [this, &list]() -> result<void> { return create_shaders(); },
-        [this, &list]() -> result<void> { return destroy_shaders(); }
-    );
+    m_param_block_manager->register_init(list);
+    m_effect_manager->register_init(list);
+    m_scene_manager->register_init(list);
+
     list.add_step(
         "Renderer Resources",
         [this, &list]() -> result<void> { return create_resources(); },
@@ -69,47 +79,6 @@ void renderer::register_init(init_list& list)
     );
 }
 
-result<void> renderer::create_shaders()
-{
-    // Register the shader loader with the asset manager.
-    m_asset_manager.register_loader(std::make_unique<shader_loader>(m_render_interface, *this));
-
-    // Queue all shader assets for load.
-    std::vector<std::string> potential_files = virtual_file_system::get().list("data:shaders", virtual_file_system_path_type::file);
-    for (std::string& file : potential_files)
-    {
-        std::string extension = virtual_file_system::get_extension(file.c_str());
-        if (extension == asset_manager::k_asset_extension)
-        {
-            m_shader_assets.push_back(m_asset_manager.request_asset<shader>(file.c_str(), 0));
-        }
-    }    
-
-    // Wait for all loads to complete.
-    for (auto& shader_ptr : m_shader_assets)
-    {
-        shader_ptr.wait_for_load();
-        if (shader_ptr.get_state() == asset_loading_state::failed)
-        {
-            db_fatal(renderer, "Failed to load required shader: %s", shader_ptr.get_path().c_str());
-        }
-    }
-
-    return true;
-}
-
-result<void> renderer::destroy_shaders()
-{
-    db_assert_message(m_effects.empty(), "Resource leak, destroying register but all effects have not been unregistered.");
-    db_assert_message(m_param_block_archetypes.empty(), "Resource leak, destroying register but all param block archetypes have not been unregistered.");
-
-    // Ensure all render jobs have completed.
-    m_render_job_task.wait();
-    m_swapchain = nullptr;
-
-    return true;
-}
-
 result<void> renderer::create_resources()
 { 
     m_swapchain = m_render_interface.create_swapchain(m_window, "Renderer Swapchain");
@@ -123,8 +92,6 @@ result<void> renderer::create_resources()
     {
         return ret;
     }
-
-    // TODO: create our bindless arrays.
 
     return true;
 }
@@ -173,7 +140,7 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_sampler = m_render_interface.create_sampler(sampler_params, "gbuffer sampler");
 
     // Create param block describing the above.
-    m_gbuffer_param_block = create_param_block("gbuffer");
+    m_gbuffer_param_block = m_param_block_manager->create_param_block("gbuffer");
     m_gbuffer_param_block->set("gbuffer0_texture", *m_gbuffer_textures[0]);
     m_gbuffer_param_block->set("gbuffer1_texture", *m_gbuffer_textures[1]);
     m_gbuffer_param_block->set("gbuffer2_texture", *m_gbuffer_textures[2]);
@@ -192,6 +159,19 @@ ri_texture& renderer::get_next_backbuffer()
     return m_swapchain->next_backbuffer();
 }
 
+render_output renderer::get_swapchain_output()
+{
+    if (m_current_backbuffer == nullptr)
+    {
+        m_current_backbuffer = &get_next_backbuffer();
+    }
+
+    render_output output;
+    output.depth_target = nullptr;
+    output.color_targets.push_back(m_current_backbuffer);
+    return output;
+}
+
 render_output renderer::get_gbuffer_output()
 {
     render_output output;
@@ -207,225 +187,30 @@ ri_param_block* renderer::get_gbuffer_param_block()
     return m_gbuffer_param_block.get();
 }
 
-renderer::effect_id renderer::register_effect(std::unique_ptr<render_effect>&& effect)
+render_param_block_manager& renderer::get_param_block_manager()
 {
-    std::scoped_lock lock(m_resource_mutex);
-
-    effect_id id = m_id_counter++;
-    m_effects[id] = std::move(effect);
-    return id;
+    return *m_param_block_manager;
 }
 
-void renderer::unregister_effect(effect_id id)
+render_effect_manager& renderer::get_effect_manager()
 {
-    std::scoped_lock lock(m_resource_mutex);
-
-    // TODO: Handle if the effect is in use.
-
-    if (auto iter = m_effects.find(id); iter != m_effects.end())
-    {
-        m_effects.erase(iter);
-    }
+    return *m_effect_manager;
 }
 
-render_effect* renderer::get_effect(effect_id id)
+render_scene_manager& renderer::get_scene_manager()
 {
-    std::scoped_lock lock(m_resource_mutex);
-
-    if (auto iter = m_effects.find(id); iter != m_effects.end())
-    {
-        return iter->second.get();
-    }
-    return nullptr;
-}
-
-render_effect::technique* renderer::get_technique(const char* name, const std::unordered_map<std::string, std::string>& parameters)
-{
-    std::scoped_lock lock(m_resource_mutex);
-
-    // Start with list of all techniques.
-    std::vector<render_effect::technique*> techniques;
-
-    // Get a list of all potential techniques for matching effect names. We can have
-    // multiple effects with the same name, but different techniques (eg. the game extending
-    // an effect defined in the engine).
-    for (auto& pair : m_effects)
-    {
-        if (pair.second->name == name)
-        {
-            for (render_effect::technique& technique : pair.second->techniques)
-            {
-                techniques.push_back(&technique);
-            }
-        }
-    }
-
-    // Remove all techniques that do not accept the parameters we are passing.
-    auto iter = std::remove_if(techniques.begin(), techniques.end(), [&parameters](const render_effect::technique* technique) -> bool {
-
-        bool valid = true;
-
-        // Go through all expected parameters.
-        for (auto& expected_value : parameters)
-        {
-            // Find parameter in the techniques variation list.
-            for (const render_effect::variation_parameter& param : technique->variation_parameters)
-            {
-                if (param.name == expected_value.first)
-                {
-                    // Check the value provided is in the list of accepted values.
-                    valid = (std::find(param.values.begin(), param.values.end(), expected_value.second) != param.values.end());
-                    break;
-                }
-            }
-
-            if (!valid)
-            {
-                valid = false;
-                break;
-            }
-        }
-
-        return !valid;
-
-    });
-
-    techniques.erase(iter, techniques.end());
-
-    // If we have none left we have failed.
-    if (techniques.size() == 0)
-    {
-        return nullptr;
-    }
-    // If we have one left, we are done.
-    else if (techniques.size() == 1)
-    {
-        return techniques[0];
-    }
-    // Otherwise we don't have enough information to disambiguate the correct
-    // effect so provide an error log to track things down.
-    else
-    {
-        db_warning(renderer, "Attempt to find technique for effect '%s' with the following parameters:", name);
-        for (auto& pair : parameters)
-        {
-            db_warning(renderer, "\t%s = %s", pair.first.c_str(), pair.second.c_str());
-        }
-
-        db_warning(renderer, "Provided ambiguous results. Could select any of the following:");
-        for (render_effect::technique* instance : techniques)
-        {
-            db_warning(renderer, "\t%s", instance->name.c_str());
-            for (auto& pair : instance->variation_parameters)
-            {
-                db_warning(renderer, "\t\t%s = [%s]", pair.name.c_str(), string_join(pair.values, ", ").c_str());
-            }
-        }
-        
-        return nullptr;
-    }
-}
-
-renderer::param_block_archetype_id renderer::register_param_block_archetype(const char* name, ri_data_scope scope, const ri_data_layout& layout)
-{
-    std::scoped_lock lock(m_resource_mutex);
-
-    // Generate a hash for the archetype so we can 
-    // do a quick look up to determine if it already exists.
-    size_t hash = 0;
-    hash_combine(hash, scope);
-    for (const ri_data_layout::field& field : layout.fields)
-    {
-        hash_combine(hash, field.data_type);
-        hash_combine(hash, field.name);
-    }
-
-    for (auto& pair : m_param_block_archetypes)
-    {
-        if (pair.second.hash == hash)
-        {
-            pair.second.register_count++;
-            return pair.first;
-        }
-    }
-
-    param_block_state state;
-    state.name = name;
-    state.hash = hash;
-    state.register_count = 1;
-
-    ri_param_block_archetype::create_params params;
-    params.layout = layout;
-    params.scope = scope;
-
-    state.instance = m_render_interface.create_param_block_archetype(params, name);
-    if (state.instance == nullptr)
-    {
-        db_error(asset, "Failed to create param block archetype '%s'.", name);
-        return invalid_id;
-    }
-
-    param_block_archetype_id id = m_id_counter++;
-    m_param_block_archetypes[id] = std::move(state);
-    m_param_block_archetype_by_name[name] = id;
-
-    return id;
-}
-
-void renderer::unregister_param_block_archetype(param_block_archetype_id id)
-{
-    std::scoped_lock lock(m_resource_mutex);
-
-    if (auto iter = m_param_block_archetypes.find(id); iter != m_param_block_archetypes.end())
-    {
-        if (--iter->second.register_count == 0)
-        {
-            if (auto by_name_iter = m_param_block_archetype_by_name.find(iter->second.name); by_name_iter != m_param_block_archetype_by_name.end())
-            {
-                m_param_block_archetype_by_name.erase(by_name_iter);
-            }
-
-            m_param_block_archetypes.erase(iter);
-        }
-    }
-}
-
-ri_param_block_archetype* renderer::get_param_block_archetype(param_block_archetype_id id)
-{
-    std::scoped_lock lock(m_resource_mutex);
-
-    if (auto iter = m_param_block_archetypes.find(id); iter != m_param_block_archetypes.end())
-    {
-        return iter->second.instance.get();
-    }
-    return nullptr;    
-}
-
-std::unique_ptr<ri_param_block> renderer::create_param_block(const char* name)
-{
-    std::scoped_lock lock(m_resource_mutex);
-
-    if (auto iter = m_param_block_archetype_by_name.find(name); iter != m_param_block_archetype_by_name.end())
-    {
-        param_block_archetype_id id = iter->second;
-        param_block_state& state = m_param_block_archetypes[id];
-
-        return state.instance->create_param_block();
-    }
-    else
-    {
-        db_fatal(renderer, "Failed to create param block. Param block archetype '%s' isn't registered.");
-        return nullptr;
-    }
+    return *m_scene_manager;
 }
 
 void renderer::render_state(render_world_state& state)
 {
-    profile_marker(profile_colors::render, "render frame %zi", (size_t)state.time.frame_count);
+    ri_command_queue& graphics_command_queue = m_render_interface.get_graphics_queue();
+    ri_command_queue& copy_command_queue = m_render_interface.get_copy_queue();
 
-    // TODO: This is just used for syncronization right now, we can get rid of this
-    // when we handle this correctly.
-    get_next_backbuffer();
+    profile_marker(profile_colors::render, "frame %zi", (size_t)state.time.frame_count);
+
+    // Grab the next backbuffer, and wait for gpu if pipeline is full.
+    m_current_backbuffer = &get_next_backbuffer();
 
     // Update all systems in parallel.
     parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {
@@ -434,7 +219,7 @@ void renderer::render_state(render_world_state& state)
     });
 
     // Begin the new frame.
-    m_render_interface.new_frame();
+    m_render_interface.begin_frame();
 
     // Render each view.
     std::vector<std::vector<render_pass::generated_state>> view_generated_states;
@@ -449,10 +234,13 @@ void renderer::render_state(render_world_state& state)
     {
         profile_marker(profile_colors::render, "dispatch command lists");
 
-        ri_command_queue& graphics_command_queue = m_render_interface.get_graphics_queue();
+        for (size_t i = 0; i < state.views.size(); i++)
+        {            
+            std::vector<render_pass::generated_state>& generated_state_list = view_generated_states[i];
+            render_view& view = state.views[i];
 
-        for (std::vector<render_pass::generated_state>& generated_state_list : view_generated_states)
-        {
+            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", view.name.c_str());
+
             for (render_pass::generated_state& state : generated_state_list)
             {
                 for (auto& graphics_list : state.graphics_command_lists)
@@ -468,6 +256,9 @@ void renderer::render_state(render_world_state& state)
         profile_marker(profile_colors::render, "present");
         m_swapchain->present();
     }
+
+    // End the frame.
+    m_render_interface.end_frame();
 }
 
 void renderer::render_single_view(render_world_state& state, render_view& view, std::vector<render_pass::generated_state>& output)

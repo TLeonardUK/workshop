@@ -11,6 +11,8 @@
 #include "workshop.render_interface/ri_pipeline.h"
 
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_param_block_manager.h"
+#include "workshop.renderer/render_effect_manager.h"
 
 #include <array>
 #include <unordered_map>
@@ -37,7 +39,7 @@ public:
 
         std::unique_ptr<ri_param_block_archetype> archetype;
 
-        renderer::param_block_archetype_id renderer_id;
+        render_param_block_manager::param_block_archetype_id renderer_id;
     };
 
     struct render_state
@@ -76,7 +78,7 @@ public:
         std::string name;
         std::vector<technique> techniques;
 
-        renderer::effect_id renderer_id;
+        render_effect_manager::effect_id renderer_id;
     };
 
     struct technique

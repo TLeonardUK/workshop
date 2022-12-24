@@ -28,6 +28,9 @@ class ri_texture;
 class ri_sampler;
 class ri_param_block_archetype; 
 class render_view;
+class render_param_block_manager;
+class render_effect_manager;
+class render_scene_manager;
 class asset_manager;
 class window;
 class shader;
@@ -37,17 +40,6 @@ class shader;
 // ================================================================================================
 class renderer
 {
-public:
-
-    // Identifies an effect type that has been registered to the renderer. 
-    using effect_id = size_t;
-
-    // Identifies a parameter block archetype that has been registered to the renderer.
-    using param_block_archetype_id = size_t;
-
-    // Invalid id value for any of the above.
-    constexpr static inline size_t invalid_id = 0;
-
 public:
 
     renderer() = delete;
@@ -81,6 +73,9 @@ public:
     // buffers are in use.
     ri_texture& get_next_backbuffer();
 
+    // Gets render output for swapchain for the current frame. This will change each frame.
+    render_output get_swapchain_output();
+
     // Gets render output for drawing to the gbuffer.
     render_output get_gbuffer_output();
 
@@ -88,44 +83,19 @@ public:
     // and writing to the gbuffer.
     ri_param_block* get_gbuffer_param_block();
 
-    // TODO: Move all this to an effect manager.
+    // Gets the param block archetype repository.
+    render_param_block_manager& get_param_block_manager();
 
-    // Registers an effect for use by the renderer. Ownership is transfered to renderer.
-    effect_id register_effect(std::unique_ptr<render_effect>&& effect);
+    // Gets the effect repository.
+    render_effect_manager& get_effect_manager();
 
-    // Unregisters a previous registered effect. This may not take immediately effect
-    // if parts of the renderer are still using the effect.
-    void unregister_effect(effect_id id);
-
-    // Gets an effect from its id.
-    render_effect* get_effect(effect_id id);
-
-    // Gets a renderer technique by its name and a set of parameter values.
-    render_effect::technique* get_technique(const char* name, const std::unordered_map<std::string, std::string>& parameters);
-
-    // TODO: Move all this to a param block manager. 
-
-    // Registers a param block archetype that may be used for renderering. If
-    // a param block with the same layout/scope is available it will be returned.
-    param_block_archetype_id register_param_block_archetype(const char* name, ri_data_scope scope, const ri_data_layout& layout);
-
-    // Unregisters a previous param block archetype. This may not take immediately effect
-    // if parts of the renderer are still using the param block archetype.
-    void unregister_param_block_archetype(param_block_archetype_id id);
-
-    // Gets a param block archetype from its id.
-    ri_param_block_archetype* get_param_block_archetype(param_block_archetype_id id);
-
-    // Shortcut for creating a param block from a registered archetype.
-    std::unique_ptr<ri_param_block> create_param_block(const char* name);
+    // Gets the manager that handles the objects contained in the render scene.
+    render_scene_manager& get_scene_manager();
 
 private:
 
     result<void> create_resources();
     result<void> destroy_resources();
-
-    result<void> create_shaders();
-    result<void> destroy_shaders();
 
     result<void> recreate_resizable_targets();
 
@@ -149,16 +119,6 @@ private:
 
 private:
 
-    struct param_block_state
-    {
-        std::string name;
-        size_t register_count = 0;
-        size_t hash = 0;
-        std::unique_ptr<ri_param_block_archetype> instance;
-    };
-
-private:
-
     constexpr static inline size_t k_frame_depth = 3;
 
     ri_interface& m_render_interface;
@@ -167,6 +127,10 @@ private:
 
     std::vector<std::unique_ptr<render_system>> m_systems;
     std::unique_ptr<render_graph> m_render_graph;
+
+    std::unique_ptr<render_param_block_manager> m_param_block_manager;
+    std::unique_ptr<render_effect_manager> m_effect_manager;
+    std::unique_ptr<render_scene_manager> m_scene_manager;
 
     // Render job dispatch management.
 
@@ -179,19 +143,12 @@ private:
 
     task_handle m_render_job_task;
 
-    // Shader / effect management.
-
-    std::mutex m_resource_mutex;
-
-    size_t m_id_counter = 1;
-    std::unordered_map<effect_id, std::unique_ptr<render_effect>> m_effects;
-    std::unordered_map<param_block_archetype_id, param_block_state> m_param_block_archetypes;
-    std::unordered_map<std::string, param_block_archetype_id> m_param_block_archetype_by_name;
-    std::vector<asset_ptr<shader>> m_shader_assets;
-
-    // Render interface resources.
+    // Swapchain
 
     std::unique_ptr<ri_swapchain> m_swapchain;
+    ri_texture* m_current_backbuffer = nullptr;
+
+    // gbuffer
 
     static inline constexpr size_t k_gbuffer_count = 3;
     std::unique_ptr<ri_texture> m_depth_texture;

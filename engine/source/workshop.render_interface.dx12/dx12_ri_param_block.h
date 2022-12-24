@@ -27,21 +27,21 @@ public:
     dx12_ri_param_block(dx12_render_interface& renderer, dx12_ri_param_block_archetype& archetype);
     virtual ~dx12_ri_param_block();
 
+    virtual void set(const char* field_name, const ri_texture& resource) override;
+    virtual void set(const char* field_name, const ri_sampler& resource) override;
+    virtual void set(const char* field_name, const ri_buffer& resource) override;
+
+    virtual ri_param_block_archetype* get_archetype() override;
+
 public:
     // Gets the gpu address and also increments the use count
     // for the param block, the next set will cause it to mutate.
     void* consume();
 
-    dx12_ri_param_block_archetype* get_archetype();
-
 private:
     void mutate();
 
     virtual void set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
-
-    virtual void set(const char* field_name, const ri_texture& resource) override;
-    virtual void set(const char* field_name, const ri_sampler& resource) override;
-    virtual void set(const char* field_name, const ri_buffer& resource) override;
 
 private:
     dx12_render_interface& m_renderer;

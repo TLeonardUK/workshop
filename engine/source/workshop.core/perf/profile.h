@@ -31,7 +31,24 @@ inline static const color task = color::grey;
 // Color to use for wait/stall events.
 inline static const color wait = color::black;
 
+// Base color for an individual view in the gpu pipeline.
+inline static const color gpu_view = color::blue;
+
+// Base color for transitions / barriers in the gpu pipeline.
+inline static const color gpu_transition = color::red;
+
+// Base color for an individual render pass in the gpu pipeline.
+inline static const color gpu_pass = color::green;
+
+// Base color for an individual frame in the gpu pipeline.
+inline static const color gpu_frame = color::grey;
+
 }; // namespace profile_color.
+
+// ================================================================================================
+//  Loads/initializes whatever library is being used for profiling on the platform.
+// ================================================================================================
+void platform_perf_init();
 
 // ================================================================================================
 //  Emits a profile marker start using the platforms supported profiler api.

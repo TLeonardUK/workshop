@@ -56,7 +56,8 @@ public:
     virtual ~dx12_render_interface();
 
     virtual void register_init(init_list& list) override;
-    virtual void new_frame() override;
+    virtual void begin_frame() override;
+    virtual void end_frame() override;
     virtual std::unique_ptr<ri_swapchain> create_swapchain(window& for_window, const char* debug_name) override;
     virtual std::unique_ptr<ri_fence> create_fence(const char* debug_name) override;
     virtual std::unique_ptr<ri_shader_compiler> create_shader_compiler() override;

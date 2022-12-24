@@ -59,6 +59,9 @@ public:
 
     virtual bool is_render_target() = 0;
 
+    virtual ri_resource_state get_initial_state() = 0;
+
+
 };
 
 }; // namespace ws

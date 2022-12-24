@@ -19,6 +19,8 @@ SET(SOURCES
     
     "containers/memory_heap.cpp"
     "containers/memory_heap.h"
+    "containers/command_queue.cpp"
+    "containers/command_queue.h"
     "containers/byte_queue.cpp"
     "containers/byte_queue.h"
     "containers/json.cpp"

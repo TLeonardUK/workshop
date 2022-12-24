@@ -84,7 +84,7 @@ void* dx12_ri_param_block::consume()
     return m_allocation.gpu_address;
 }
 
-dx12_ri_param_block_archetype* dx12_ri_param_block::get_archetype()
+ri_param_block_archetype* dx12_ri_param_block::get_archetype()
 {
     return &m_archetype;
 }

@@ -15,6 +15,8 @@
 #include "workshop.core/drawing/color.h"
 #include "workshop.windowing/window.h"
 
+#include "thirdparty/pix/include/pix3.h"
+
 namespace ws {
 
 dx12_ri_command_list::dx12_ri_command_list(dx12_render_interface& renderer, const char* debug_name, dx12_ri_command_queue& queue)
@@ -108,6 +110,11 @@ void dx12_ri_command_list::barrier(ri_texture& resource, ri_resource_state sourc
     if (destination_state == ri_resource_state::initial)
     {
         destination_state = dx12_resource.get_initial_state();
+    }
+
+    if (source_state == destination_state)
+    {
+        return;
     }
 
     D3D12_RESOURCE_BARRIER barrier;
@@ -315,7 +322,34 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture*>& co
 
 void dx12_ri_command_list::draw(size_t indexes_per_instance, size_t instance_count)
 {
-    m_command_list->DrawInstanced(indexes_per_instance, instance_count, 0, 0);
+    m_command_list->DrawIndexedInstanced(indexes_per_instance, instance_count, 0, 0, 0);
+}
+
+void dx12_ri_command_list::begin_event(const color& color, const char* format, ...)
+{
+    uint8_t r, g, b, a;
+    color.get(r, g, b, a);
+
+    char buffer[1024];
+
+    va_list list;
+    va_start(list, format);
+
+    int ret = vsnprintf(buffer, sizeof(buffer), format, list);
+    int space_required = ret + 1;
+    if (ret >= sizeof(buffer))
+    {
+        return;
+    }
+
+    PIXBeginEvent(m_command_list.Get(), PIX_COLOR(r, g, b), "%s", buffer);
+
+    va_end(list);
+}
+
+void dx12_ri_command_list::end_event()
+{
+    PIXEndEvent(m_command_list.Get());
 }
 
 }; // namespace ws

@@ -7,28 +7,17 @@
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/utils/frame_time.h"
 
-#include "workshop.renderer/render_view.h"
+#include "workshop.core/math/rect.h"
+#include "workshop.core/math/frustum.h"
 
 namespace ws {
 
 // ================================================================================================
-//  Represents the state of all renderable objects at a given point in time. 
-//  This is filled in by the main thread and passed to the renderer to being rendering the world
-//  in parallel.
+//  Base type for all object types that represent an arbitrary geometric object in the scene.
 // ================================================================================================
-class render_world_state
+class render_scene_object
 {
 public:
-
-    frame_time time;
-
-    std::vector<render_view> views;
-
-    // add/remove/modify objects.
-    //command_queue events;
-
-    //std::vector<render_scene_object> scene_objects;
-
 };
 
 }; // namespace ws

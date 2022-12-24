@@ -495,16 +495,22 @@ result<void> dx12_render_interface::destroy_misc()
     return true;
 }
 
-void dx12_render_interface::new_frame()
+void dx12_render_interface::begin_frame()
 {
     m_frame_index++;
 
     process_pending_deletes();
 
-    m_graphics_queue->new_frame();
-    m_copy_queue->new_frame();
+    m_graphics_queue->begin_frame();
+    m_copy_queue->begin_frame();
 
     m_upload_manager->new_frame(m_frame_index);
+}
+
+void dx12_render_interface::end_frame()
+{
+    m_graphics_queue->end_frame();
+    m_copy_queue->end_frame();
 }
 
 void dx12_render_interface::process_pending_deletes()

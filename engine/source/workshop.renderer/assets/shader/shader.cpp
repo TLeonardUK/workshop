@@ -7,6 +7,8 @@
 #include "workshop.render_interface/ri_pipeline.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_effect.h"
+#include "workshop.renderer/render_effect_manager.h"
+#include "workshop.renderer/render_param_block_manager.h"
 
 namespace ws {
 
@@ -22,7 +24,7 @@ shader::~shader()
     {
         if (instance.renderer_id)
         {
-            m_renderer.unregister_param_block_archetype(instance.renderer_id);
+            m_renderer.get_param_block_manager().unregister_param_block_archetype(instance.renderer_id);
         }
     }
 
@@ -30,7 +32,7 @@ shader::~shader()
     {
         if (instance.renderer_id)
         {
-            m_renderer.unregister_effect(instance.renderer_id);
+            m_renderer.get_effect_manager().unregister_effect(instance.renderer_id);
         }
     }
 }
@@ -58,7 +60,7 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
     {
         param_block& block = param_blocks[block_index];
 
-        ri_param_block_archetype* archetype = m_renderer.get_param_block_archetype(block.renderer_id);
+        ri_param_block_archetype* archetype = m_renderer.get_param_block_manager().get_param_block_archetype(block.renderer_id);
         db_assert(archetype != nullptr);
 
         params.param_block_archetypes.push_back(archetype);
@@ -85,7 +87,7 @@ bool shader::post_load()
 {
     for (param_block& instance : param_blocks)
     {
-        instance.renderer_id = m_renderer.register_param_block_archetype(instance.name.c_str(), instance.scope, instance.layout);
+        instance.renderer_id = m_renderer.get_param_block_manager().register_param_block_archetype(instance.name.c_str(), instance.scope, instance.layout);
         if (instance.renderer_id == 0)
         {
             db_error(asset, "Failed to create param block archetype '%s' for shader '%s'.", instance.name.c_str(), name.c_str());
@@ -124,7 +126,7 @@ bool shader::post_load()
             tech.pipeline = make_technique_pipeline(*iter);
         }
 
-        instance.renderer_id = m_renderer.register_effect(std::move(effect));
+        instance.renderer_id = m_renderer.get_effect_manager().register_effect(std::move(effect));
     }
 
     return true;

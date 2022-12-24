@@ -63,6 +63,19 @@ inline std::string string_format(const char* format, Args... args)
 }
 
 // ================================================================================================
+//  Formats a string using the same syntax as printf.
+// ================================================================================================
+inline std::string string_format_va(const char* format, va_list list)
+{
+    size_t size = static_cast<size_t>(vsnprintf(nullptr, 0, format, list)) + 1; // Extra space for '\0'
+
+    std::unique_ptr<char[]> buffer(new char[size]);
+    vsnprintf(buffer.get(), size, format, list);
+
+    return std::string(buffer.get(), buffer.get() + size - 1); // We don't want the '\0' inside
+}
+
+// ================================================================================================
 //  Converts a wide utf-16 string to utf-8.
 // ================================================================================================
 std::string narrow_string(const std::wstring& input);

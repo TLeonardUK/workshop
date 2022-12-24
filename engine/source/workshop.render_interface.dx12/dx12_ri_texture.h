@@ -41,14 +41,14 @@ public:
     virtual uint8_t get_optimal_clear_stencil() override;
     virtual bool is_render_target() override;
 
+    virtual ri_resource_state get_initial_state() override;
+
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
     dx12_ri_descriptor_table::allocation get_rtv() const;
     dx12_ri_descriptor_table::allocation get_dsv() const;
 
     ID3D12Resource* get_resource();
-
-    ri_resource_state get_initial_state();
 
     void create_views();
 
