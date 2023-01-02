@@ -1,0 +1,36 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source:
+  file: data:assets/models/test_scenes/sponza/sponza.obj
+
+material_mapping:
+  "leaf":           "data:assets/models/test_scenes/sponza/materials/leaf.yaml"
+  "vase_round":     "data:assets/models/test_scenes/sponza/materials/vase_round.yaml"
+  "Material__57":   "data:assets/models/test_scenes/sponza/materials/material__57.yaml"
+  "Material__298":  "data:assets/models/test_scenes/sponza/materials/material__298.yaml"
+  "bricks":         "data:assets/models/test_scenes/sponza/materials/bricks.yaml"
+  "arch":           "data:assets/models/test_scenes/sponza/materials/arch.yaml"
+  "ceiling":        "data:assets/models/test_scenes/sponza/materials/ceiling.yaml"
+  "column_a":       "data:assets/models/test_scenes/sponza/materials/column_a.yaml"
+  "floor":          "data:assets/models/test_scenes/sponza/materials/floor.yaml"
+  "column_c":       "data:assets/models/test_scenes/sponza/materials/column_c.yaml"
+  "details":        "data:assets/models/test_scenes/sponza/materials/details.yaml"
+  "column_b":       "data:assets/models/test_scenes/sponza/materials/column_b.yaml"
+  "Material__47":   "data:assets/models/test_scenes/sponza/materials/Material__47.yaml"
+  "flagpole":       "data:assets/models/test_scenes/sponza/materials/flagpole.yaml"
+  "fabric_e":       "data:assets/models/test_scenes/sponza/materials/fabric_e.yaml"
+  "fabric_d":       "data:assets/models/test_scenes/sponza/materials/fabric_d.yaml"
+  "fabric_a":       "data:assets/models/test_scenes/sponza/materials/fabric_a.yaml"
+  "fabric_g":       "data:assets/models/test_scenes/sponza/materials/fabric_g.yaml"
+  "fabric_c":       "data:assets/models/test_scenes/sponza/materials/fabric_c.yaml"
+  "fabric_f":       "data:assets/models/test_scenes/sponza/materials/fabric_f.yaml"
+  "chain":          "data:assets/models/test_scenes/sponza/materials/chain.yaml"
+  "vase_hanging":   "data:assets/models/test_scenes/sponza/materials/vase_hanging.yaml"
+  "vase":           "data:assets/models/test_scenes/sponza/materials/vase.yaml"
+  "Material__25":   "data:assets/models/test_scenes/sponza/materials/Material__25.yaml"
+  "roof":           "data:assets/models/test_scenes/sponza/materials/roof.yaml"

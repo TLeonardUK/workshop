@@ -150,13 +150,13 @@ void dx12_ri_shader_compiler::parse_output(ri_shader_compiler_output& output, co
 
     auto push_output = [&]() 
     {
-        if (stricmp(log_type.c_str(), "error") == 0 ||
-            stricmp(log_type.c_str(), "fatal") == 0 ||
-            stricmp(log_type.c_str(), "fatal error") == 0)
+        if (_stricmp(log_type.c_str(), "error") == 0 ||
+            _stricmp(log_type.c_str(), "fatal") == 0 ||
+            _stricmp(log_type.c_str(), "fatal error") == 0)
         {
             output.push_error(log);
         }
-        else if (stricmp(log_type.c_str(), "warning") == 0)
+        else if (_stricmp(log_type.c_str(), "warning") == 0)
         {
             output.push_warning(log);
         }
@@ -296,9 +296,9 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
         wide_entrypoint.c_str(), 
         wide_target_profile.c_str(), 
         argument_ptrs.data(),
-        argument_ptrs.size(),
+        static_cast<UINT32>(argument_ptrs.size()),
         dxc_defines.data(),
-        dxc_defines.size(),
+        static_cast<UINT32>(dxc_defines.size()),
         &include_handler,
         &compile_result);
 

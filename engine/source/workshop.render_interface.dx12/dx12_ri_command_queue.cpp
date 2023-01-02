@@ -75,7 +75,7 @@ dx12_ri_command_queue::thread_context& dx12_ri_command_queue::get_thread_context
         frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
         resources.last_used_frame_index = m_frame_index;
 
-        m_thread_context_tls = m_thread_contexts.size();
+        m_thread_context_tls = static_cast<int32_t>(m_thread_contexts.size());
         m_thread_contexts.push_back(std::move(context));        
     }
 

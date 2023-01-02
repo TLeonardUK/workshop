@@ -29,9 +29,6 @@ void render_effect_manager::register_init(init_list& list)
 
 result<void> render_effect_manager::create_shaders()
 {
-    // Register the shader loader with the asset manager.
-    m_asset_manager.register_loader(std::make_unique<shader_loader>(m_renderer.get_render_interface(), m_renderer));
-
     // Queue all shader assets for load.
     std::vector<std::string> potential_files = virtual_file_system::get().list("data:shaders", virtual_file_system_path_type::file);
     for (std::string& file : potential_files)

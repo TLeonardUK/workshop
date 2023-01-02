@@ -2,112 +2,82 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "workshop.core/containers/memory_heap.h"
+#include "workshop.core/containers/command_queue.h"
 
 namespace ws {
 
-memory_heap::memory_heap(size_t size)
+command_queue::command_queue(size_t capacity)
 {
-    m_blocks.push_back({ 0, size, false });
+    m_buffer.resize(capacity);
 }
 
-memory_heap::~memory_heap()
+command_queue::~command_queue()
 {
 }
 
-bool memory_heap::alloc(size_t size, size_t alignment, size_t& offset)
+void command_queue::reset()
 {
-    for (size_t i = 0; i < m_blocks.size(); i++)
-    {
-        block& curr_block = m_blocks[i];
-        if (!curr_block.used && curr_block.size >= size)
-        {
-            size_t alignment_padding = math::round_up_multiple(curr_block.offset, alignment) - curr_block.offset;
-            size_t size_required = size + alignment_padding;
-            if (curr_block.size >= size_required)
-            {
-                offset = curr_block.offset + alignment_padding;
-                curr_block.used = true;
-
-                if (curr_block.size > size_required)
-                {
-                    block new_block;
-                    new_block.offset = curr_block.offset + size_required;
-                    new_block.size = curr_block.size - size_required;
-                    new_block.used = false;
-
-                    curr_block.size = size_required;
-
-                    m_blocks.insert(m_blocks.begin() + i + 1, new_block);
-                }
-
-                return true;
-            }
-        }
-    }
-
-    return false;
+    m_write_offset = 0;
+    m_read_offset = 0;
+    m_non_data_command_read = 0;
+    m_non_data_command_written = 0;
 }
 
-bool memory_heap::get_block_index(size_t offset, size_t& index)
+bool command_queue::empty()
 {
-    for (size_t i = 0; i < m_blocks.size(); i++)
-    {
-        block& block = m_blocks[i];
-        if (offset >= block.offset && offset < block.offset + block.size && block.used)
-        {
-            index = i;
-            return true;
-        }
-    }
-    return false;
+    return (m_non_data_command_read >= m_non_data_command_written);
 }
 
-void memory_heap::coalesce(size_t index)
+size_t command_queue::size_bytes()
 {
-    // Compact current block into previous block.
-    while (index > 0 && index < m_blocks.size())
-    {
-        block& prev_block = m_blocks[index - 1];
-        block& curr_block = m_blocks[index];
-
-        if (!prev_block.used && !curr_block.used)
-        {
-            prev_block.size += curr_block.size;
-            m_blocks.erase(m_blocks.begin() + index);
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    // Compact current block into next block.
-    while (index >= 0 && index < m_blocks.size() - 1)
-    {
-        block& curr_block = m_blocks[index];
-        block& next_block = m_blocks[index + 1];
-
-        if (!curr_block.used && !next_block.used)
-        {
-            curr_block.size += next_block.size;
-            m_blocks.erase(m_blocks.begin() + index + 1);
-        }
-        else
-        {
-            break;
-        }
-    }
+    return m_write_offset.load();
 }
 
-void memory_heap::free(size_t offset)
+std::span<uint8_t> command_queue::allocate(size_t size)
 {
-    size_t index;
-    if (get_block_index(offset, index))
+    std::span<uint8_t> span = allocate_raw(size + sizeof(command_header));
+    
+    command_header* header = reinterpret_cast<command_header*>(span.data());
+    header->type_id = k_data_command_id;
+    header->size = size;
+
+    return { span.data() + sizeof(command_header), size };
+}
+
+std::span<uint8_t> command_queue::allocate_raw(size_t size)
+{
+    size_t offset = m_write_offset.fetch_add(size);
+    if (offset + size > m_buffer.size())
     {
-        m_blocks[index].used = false;
-        coalesce(index);
+        db_fatal(core, "Ran out of space in command queue.");
     }
+    return { m_buffer.data() + offset, size };
+}
+
+const char* command_queue::allocate_copy(const char* value)
+{
+    size_t required_space = strlen(value) + 1;
+    std::span<uint8_t> buffer = allocate(required_space);
+    memcpy(buffer.data(), value, required_space);
+    return reinterpret_cast<const char*>(buffer.data());
+}
+
+void command_queue::skip_command()
+{
+    command_header* header = reinterpret_cast<command_header*>(m_buffer.data() + m_read_offset.load());
+    consume(sizeof(command_header) + header->size);
+}
+
+command_queue::command_header& command_queue::peek_header()
+{
+    command_header* header = reinterpret_cast<command_header*>(m_buffer.data() + m_read_offset.load());
+    return *header;
+}
+
+void command_queue::consume(size_t bytes)
+{
+    m_read_offset.fetch_add(bytes);
+    db_assert(m_read_offset.load() <= m_write_offset.load());
 }
 
 }; // namespace workshop

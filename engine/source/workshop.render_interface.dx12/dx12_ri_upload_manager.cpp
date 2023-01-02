@@ -110,9 +110,9 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
 
     m_renderer.get_device()->GetCopyableFootprints(
         &desc,
-        0,
-        source.get_mip_levels() * source.get_depth(),
-        0,
+        0u,
+        static_cast<UINT>(source.get_mip_levels() * source.get_depth()),
+        0u,
         footprints.data(),
         row_count.data(),
         row_size.data(),

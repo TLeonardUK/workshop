@@ -26,7 +26,7 @@ public:
         size_t depth = 1;
         size_t mip_levels = 0;
         ri_texture_dimension dimensions = ri_texture_dimension::texture_2d;
-        ri_texture_format format = ri_texture_format::R8G8B8A8_UNORM;
+        ri_texture_format format = ri_texture_format::R8G8B8A8;
         bool is_render_target = false;
 
         // Set to 0 to disable msaa.

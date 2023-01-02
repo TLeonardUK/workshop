@@ -229,8 +229,8 @@ result<void> engine::create_filesystem(init_list& list)
 
     // Create the main data protocol, engine and game assets are mounted to the same path, 
     // with game assets taking priority.
-    m_filesystem->register_handler("data", 0, std::make_unique<virtual_file_system_disk_handler>(get_engine_asset_dir().string().c_str(), true));
-    m_filesystem->register_handler("data", 1, std::make_unique<virtual_file_system_disk_handler>(get_game_asset_dir().string().c_str(), true));
+    m_filesystem->register_handler("data", 0, std::make_unique<virtual_file_system_disk_handler>(get_engine_asset_dir().string().c_str(), false));
+    m_filesystem->register_handler("data", 1, std::make_unique<virtual_file_system_disk_handler>(get_game_asset_dir().string().c_str(), false));
 
     // Points to the local asset cache disk folder.
     m_filesystem->register_handler("local-cache", 0, std::make_unique<virtual_file_system_disk_handler>(get_asset_cache_dir().string().c_str(), false));

@@ -172,7 +172,7 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
     };
     m_command_list->SetDescriptorHeaps(2, heaps.data());
 
-    size_t table_index = 0;
+    UINT table_index = 0;
 
     // Bind all the bindless descriptor tables.
     ri_pipeline::create_params create_params = pipeline.get_create_params();
@@ -211,7 +211,10 @@ void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> p
             dx12_ri_param_block* input = static_cast<dx12_ri_param_block*>(base);
             if (input->get_archetype() == archetype)
             {
-                m_command_list->SetGraphicsRootConstantBufferView(base_param_block_root_parameter + i, reinterpret_cast<UINT64>(input->consume()));
+                m_command_list->SetGraphicsRootConstantBufferView(
+                    static_cast<UINT>(base_param_block_root_parameter + i),
+                    reinterpret_cast<UINT64>(input->consume())
+                );
                 found = true;
                 break;
             }
@@ -291,7 +294,7 @@ void dx12_ri_command_list::set_index_buffer(ri_buffer& buffer)
     D3D12_INDEX_BUFFER_VIEW view;
     view.BufferLocation = dx12_buffer->get_resource()->GetGPUVirtualAddress();
     view.Format = format;
-    view.SizeInBytes = (dx12_buffer->get_element_count() * element_size);
+    view.SizeInBytes = static_cast<UINT>(dx12_buffer->get_element_count() * element_size);
 
     m_command_list->IASetIndexBuffer(&view);
 }
@@ -313,7 +316,7 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture*>& co
     }
 
     m_command_list->OMSetRenderTargets(
-        color_handles.size(),
+        static_cast<UINT>(color_handles.size()),
         color_handles.data(),
         false,
         depth == nullptr ? nullptr : &depth_handle

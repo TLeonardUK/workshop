@@ -45,6 +45,48 @@ public:
         , a(in_a)
     {
     }
+    
+    float& operator[](size_t idx)
+    {
+        if (idx == 0)
+        {
+            return r;
+        }
+        else if (idx == 1)
+        {
+            return g;
+        }
+        else if (idx == 2)
+        {
+            return b;
+        }
+        else if (idx == 3)
+        {
+            return a;
+        }
+        throw new std::out_of_range("Color channel index out of range.");
+    }
+
+    const float& operator[](std::size_t idx) const 
+    {
+        if (idx == 0)
+        {
+            return r;
+        }
+        else if (idx == 1)
+        {
+            return g;
+        }
+        else if (idx == 2)
+        {
+            return b;
+        }
+        else if (idx == 3)
+        {
+            return a;
+        }
+        throw new std::out_of_range("Color channel index out of range.");
+    }
 
     inline void get(uint8_t& out_r, uint8_t& out_g, uint8_t& out_b, uint8_t& out_a) const
     {

@@ -5,14 +5,16 @@
 #pragma once
 
 #include "workshop.core/utils/init_list.h"
-
 #include "workshop.core/async/task_scheduler.h"
+#include "workshop.core/containers/command_queue.h"
 
 #include "workshop.renderer/render_world_state.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_system.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
+#include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_command_queue.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
 
@@ -92,10 +94,20 @@ public:
     // Gets the manager that handles the objects contained in the render scene.
     render_scene_manager& get_scene_manager();
 
+    // Gets the current command queue that should be written to.
+    // This is only valid for the current frame, do not try to cache this.
+    render_command_queue& get_command_queue();
+
+    // Gets the next opaque id of a render object. This is thread safe.
+    render_object_id next_render_object_id();
+
 private:
 
     result<void> create_resources();
     result<void> destroy_resources();
+
+    result<void> register_asset_loaders();
+    result<void> unregister_asset_loaders();
 
     result<void> recreate_resizable_targets();
 
@@ -114,12 +126,19 @@ private:
     // Renders the given world state.
     void render_state(render_world_state& state);
 
+    // Executes all the commands stored in the given world state.
+    void process_render_commands(render_world_state& state);
+
     // Renders the give view.
     void render_single_view(render_world_state& state, render_view& view, std::vector<render_pass::generated_state>& output);
 
 private:
 
+    // How many frames can be in the pipeline at a given time.
     constexpr static inline size_t k_frame_depth = 3;
+
+    // How much data we need to store in each command queue per frame.
+    constexpr static inline size_t k_command_queue_size = 16'000'000;
 
     ri_interface& m_render_interface;
     window& m_window;
@@ -131,6 +150,13 @@ private:
     std::unique_ptr<render_param_block_manager> m_param_block_manager;
     std::unique_ptr<render_effect_manager> m_effect_manager;
     std::unique_ptr<render_scene_manager> m_scene_manager;
+
+    // Command queue.
+
+    std::array<std::unique_ptr<render_command_queue>, k_frame_depth> m_command_queues;
+    size_t m_command_queue_active_index = 0;
+
+    std::atomic_size_t m_next_render_object_id { 1 };
 
     // Render job dispatch management.
 

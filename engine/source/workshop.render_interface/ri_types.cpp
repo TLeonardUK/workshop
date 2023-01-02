@@ -71,7 +71,7 @@ size_t ri_bytes_for_data_type(ri_data_type value)
 
 bool ri_is_format_depth_target(ri_texture_format format)
 {
-    return  format == ri_texture_format::D16_UNORM ||
+    return  format == ri_texture_format::D16 ||
             format == ri_texture_format::D24_UNORM_S8_UINT ||
             format == ri_texture_format::D32_FLOAT;
 }
@@ -82,73 +82,73 @@ size_t ri_bytes_per_texel(ri_texture_format value)
         0, // Undefined,
 
         32, // R32G32B32A32_FLOAT,
-        32, // R32G32B32A32_UINT,
+        32, // R32G32B32A32,
         32, // R32G32B32A32_SINT,
 
         12, // R32G32B32_FLOAT,
-        12, // R32G32B32_UINT,
+        12, // R32G32B32,
         12, // R32G32B32_SINT,
 
         8, // R16G16B16A16_FLOAT,
-        8, // R16G16B16A16_UNORM,
+        8, // R16G16B16A16,
         8, // R16G16B16A16_UINT,
         8, // R16G16B16A16_SNORM,
         8, // R16G16B16A16_SINT,
 
         8, // R32G32_FLOAT,
-        8, // R32G32_UINT,
+        8, // R32G32,
         8, // R32G32_SINT,
 
-        4, // R8G8B8A8_UNORM,
-        4, // R8G8B8A8_UNORM_SRGB,
+        4, // R8G8B8A8,
+        4, // R8G8B8A8_SRGB,
         4, // R8G8B8A8_UINT,
         4, // R8G8B8A8_SNORM,
         4, // R8G8B8A8_SINT,
 
         4, // R16G16_FLOAT,
-        4, // R16G16_UNORM,
+        4, // R16G16,
         4, // R16G16_UINT,
         4, // R16G16_SNORM,
         4, // R16G16_SINT,
 
         4, // R32_FLOAT,
-        4, // R32_UINT,
+        4, // R32,
         4, // R32_SINT,
 
         4, // D32_FLOAT,
         4, // D24_UNORM_S8_UINT,
 
-        2, // R8G8_UNORM,
+        2, // R8G8,
         2, // R8G8_UINT,
         2, // R8G8_SNORM,
         2, // R8G8_SINT,
 
         2, // R16_FLOAT,
-        2, // D16_UNORM,
-        2, // R16_UNORM,
+        2, // D16,
+        2, // R16,
         2, // R16_UINT,
         2, // R16_SNORM,
         2, // R16_SINT,
 
-        1, // R8_UNORM,
+        1, // R8,
         1, // R8_UINT,
         1, // R8_SNORM,
         1, // R8_SINT,
 
-        1, // BC1_UNORM,                // These are all compressed formats and need to be handled differently.
-        1, // BC1_UNORM_SRGB,
-        1, // BC2_UNORM,
-        1, // BC2_UNORM_SRGB,
-        1, // BC3_UNORM,
-        1, // BC3_UNORM_SRGB,
-        1, // BC4_UNORM,
-        1, // BC4_SNORM,
-        1, // BC5_UNORM,
-        1, // BC5_SNORM,
+        1, // BC1,                // These are all compressed formats and need to be handled differently.
+        1, // BC1_SRGB,
+        1, // BC2,
+        1, // BC2_SRGB,
+        1, // BC3,
+        1, // BC3_SRGB,
+        1, // BC4,
+        1, // BC4_SIGNED,
+        1, // BC5,
+        1, // BC5_SIGNED,
         1, // BC6H_UF16,
         1, // BC6H_SF16,
-        1, // BC7_UNORM,
-        1  // BC7_UNORM_SRGB,
+        1, // BC7,
+        1  // BC7_SRGB,
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

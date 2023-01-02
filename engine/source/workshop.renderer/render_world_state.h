@@ -6,28 +6,25 @@
 
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/utils/frame_time.h"
-
-#include "workshop.renderer/render_view.h"
+#include "workshop.core/containers/command_queue.h"
 
 namespace ws {
 
+class render_command_queue;
+
 // ================================================================================================
-//  Represents the state of all renderable objects at a given point in time. 
-//  This is filled in by the main thread and passed to the renderer to being rendering the world
-//  in parallel.
+//  Represents all state that needs to be passed into the renderer to advance the rende rframe.
 // ================================================================================================
 class render_world_state
 {
 public:
 
+    // The delta/frame-timing for the frame this state refers to.
     frame_time time;
 
-    std::vector<render_view> views;
-
-    // add/remove/modify objects.
-    //command_queue events;
-
-    //std::vector<render_scene_object> scene_objects;
+    // Command queue that contains all the gameplay frames render commands.
+    // Note: This is auto-populated by renderer::step.
+    render_command_queue* command_queue;
 
 };
 

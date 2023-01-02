@@ -63,7 +63,10 @@ SET(SOURCES
     "platform/platform.h"
 
     "perf/profile.h"
-
+    "perf/timer.h"
+    "perf/timer.cpp"
+    
+    "utils/traits.h"
     "utils/event.h"
     "utils/init_list.cpp"
     "utils/init_list.h"
@@ -91,6 +94,10 @@ SET(SOURCES
     "math/vector4.h"
     
     "drawing/color.h"
+    "drawing/pixmap.h"
+    "drawing/pixmap.cpp"
+    "drawing/pixmap_png_loader.h"
+    "drawing/pixmap_png_loader.cpp"
 
     "entry.cpp"
     "entry.h"
@@ -100,7 +107,15 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier0/core")
 
+set(PLATFORM_LIB "")
+
 # Link to appropriate platform implementation.
 if (WIN32)
-    target_link_libraries(${PROJECT_NAME} workshop.core.win32)
+    set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.win32)
 endif()
+
+target_link_libraries(${PROJECT_NAME} 
+    lodepng
+    bc7enc
+    ${PLATFORM_LIB}
+)

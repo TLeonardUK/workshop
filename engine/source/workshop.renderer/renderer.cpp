@@ -14,8 +14,13 @@
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
+#include "workshop.renderer/assets/model/model_loader.h"
+#include "workshop.renderer/assets/texture/texture_loader.h"
+#include "workshop.renderer/assets/material/material_loader.h"
 
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_swapchain.h"
@@ -34,7 +39,10 @@
 
 #include "workshop.core/async/async.h"
 #include "workshop.core/perf/profile.h"
+#include "workshop.core/perf/timer.h"
 #include "workshop.core/hashing/hash.h"
+#include "workshop.core/containers/command_queue.h"
+#include "workshop.core/drawing/pixmap.h"
 
 namespace ws {
 
@@ -53,10 +61,21 @@ renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_
     m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
     m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
     m_scene_manager = std::make_unique<render_scene_manager>(*this);
+
+    for (size_t i = 0; i < k_frame_depth; i++)
+    {
+        m_command_queues[i] = std::make_unique<render_command_queue>(*this, k_command_queue_size);
+    }
 }
 
 void renderer::register_init(init_list& list)
 {
+    list.add_step(
+        "Register Asset Loaders",
+        [this, &list]() -> result<void> { return register_asset_loaders(); },
+        [this, &list]() -> result<void> { return unregister_asset_loaders(); }
+    );
+
     m_param_block_manager->register_init(list);
     m_effect_manager->register_init(list);
     m_scene_manager->register_init(list);
@@ -93,6 +112,14 @@ result<void> renderer::create_resources()
         return ret;
     }
 
+    // Debug 
+//    asset_ptr<texture> test_texture = m_asset_manager.request_asset<texture>("data:tests/test_texture.yaml", 0);
+//    test_texture.wait_for_load();
+
+//    asset_ptr<material> test_material = m_asset_manager.request_asset<material>("data:tests/test_material.yaml", 0);
+//    test_material.wait_for_load();
+    // End debug
+
     return true;
 }
 
@@ -116,6 +143,21 @@ result<void> renderer::destroy_resources()
     return true;
 }
 
+result<void> renderer::register_asset_loaders()
+{
+    m_asset_manager.register_loader(std::make_unique<shader_loader>(get_render_interface(), *this));
+    m_asset_manager.register_loader(std::make_unique<model_loader>(get_render_interface(), *this));
+    m_asset_manager.register_loader(std::make_unique<material_loader>(get_render_interface(), *this));
+    m_asset_manager.register_loader(std::make_unique<texture_loader>(get_render_interface(), *this));
+
+    return true;
+}
+
+result<void> renderer::unregister_asset_loaders()
+{
+    return true;
+}
+
 result<void> renderer::recreate_resizable_targets()
 {
     // Create depth buffer.
@@ -128,7 +170,7 @@ result<void> renderer::recreate_resizable_targets()
     m_depth_texture = m_render_interface.create_texture(params, "depth buffer");
 
     // Create each gbuffer.
-    params.format = ri_texture_format::R16G16B16A16_UNORM;
+    params.format = ri_texture_format::R16G16B16A16;
     m_gbuffer_textures[0] = m_render_interface.create_texture(params, "gbuffer[0] rgb:diffuse a:flags");
 
     params.format = ri_texture_format::R16G16B16A16_FLOAT;
@@ -202,6 +244,32 @@ render_scene_manager& renderer::get_scene_manager()
     return *m_scene_manager;
 }
 
+render_command_queue& renderer::get_command_queue()
+{
+    return *m_command_queues[m_command_queue_active_index];
+}
+
+render_object_id renderer::next_render_object_id()
+{
+    return static_cast<render_object_id>(m_next_render_object_id.fetch_add(1));
+}
+
+void renderer::process_render_commands(render_world_state& state)
+{
+    render_command_queue& queue = *state.command_queue;
+
+    while (!queue.empty())
+    {
+        render_command* command = queue.read_forced<render_command>();
+        if (command)
+        {
+            command->execute(*this);
+        }
+    }
+
+    queue.reset();
+}
+
 void renderer::render_state(render_world_state& state)
 {
     ri_command_queue& graphics_command_queue = m_render_interface.get_graphics_queue();
@@ -211,6 +279,9 @@ void renderer::render_state(render_world_state& state)
 
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
     m_current_backbuffer = &get_next_backbuffer();
+
+    // Process the command queue.
+    process_render_commands(state);
 
     // Update all systems in parallel.
     parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {
@@ -222,22 +293,24 @@ void renderer::render_state(render_world_state& state)
     m_render_interface.begin_frame();
 
     // Render each view.
-    std::vector<std::vector<render_pass::generated_state>> view_generated_states;
-    view_generated_states.resize(state.views.size());
+    std::vector<render_view*> views = m_scene_manager->get_views();
 
-    parallel_for("render views", task_queue::standard, state.views.size(), [this, &state, &view_generated_states](size_t index) {
-        profile_marker(profile_colors::render, "render view: %s", state.views[index].name.c_str());
-        render_single_view(state, state.views[index], view_generated_states[index]);
+    std::vector<std::vector<render_pass::generated_state>> view_generated_states;
+    view_generated_states.resize(views.size());
+
+    parallel_for("render views", task_queue::standard, views.size(), [this, &state, &views, &view_generated_states](size_t index) {
+        profile_marker(profile_colors::render, "render view: %s", views[index]->name.c_str());
+        render_single_view(state, *views[index], view_generated_states[index]);
     });
 
     // Dispatch all generated command lists.
     {
         profile_marker(profile_colors::render, "dispatch command lists");
 
-        for (size_t i = 0; i < state.views.size(); i++)
+        for (size_t i = 0; i < views.size(); i++)
         {            
             std::vector<render_pass::generated_state>& generated_state_list = view_generated_states[i];
-            render_view& view = state.views[i];
+            render_view& view = *views[i];
 
             profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", view.name.c_str());
 
@@ -321,6 +394,7 @@ void renderer::step(std::unique_ptr<render_world_state>&& state)
     {
         std::unique_lock lock(m_pending_frames_mutex);
         m_pending_frames.push(std::move(state));
+        m_pending_frames.back()->command_queue = m_command_queues[m_command_queue_active_index].get();
         m_frames_in_flight.fetch_add(1);
 
         // Wait for previous frames to complete if depth is high enough.
@@ -346,6 +420,9 @@ void renderer::step(std::unique_ptr<render_world_state>&& state)
             render_job();    
         });
     }
+
+    // Cycle the command queue to write to.
+    m_command_queue_active_index = (m_command_queue_active_index + 1) % m_command_queues.size();
 }
 
 result<void> renderer::create_render_graph()

@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/common_types.h"
+#include "workshop.renderer/objects/render_view.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_command_queue.h"
 #include "workshop.render_interface/ri_command_list.h"
