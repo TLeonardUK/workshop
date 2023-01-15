@@ -3,7 +3,7 @@
 # What is this project?
 This is very in-progress game engine with the aim to have a modern C++20, parallel-first design, and be very quick to hack together and prototype things.
 
-The renderer uses a modern DX12/Vulkan bindless architecture and will (hopefully soon ...) support a lot of modern rendering features.
+The renderer uses a modern DX12/Vulkan deferred bindless architecture and will (hopefully soon ...) support a lot of modern rendering features.
 
 Its main purpose is mostly to build my own knowledge of render programming and to try out some engine architecture ideas I've been toying with.
 
