@@ -54,9 +54,13 @@ static std::array<const char*, static_cast<int>(asset_loading_state::COUNT)> k_l
     "Unloaded",
     "Unloading",
     "Loading",
+    "Waiting For Dependencies",
     "Loaded",
     "Failed"
 };
+
+// Holds the current asset being post-loaded on the current thread.
+static thread_local asset_state* g_tls_current_post_load_asset = nullptr;
 
 };
 
@@ -162,25 +166,94 @@ void asset_manager::drain_queue()
     }
 }
 
+void asset_manager::increment_ref(asset_state* state, bool state_lock_held)
+{
+    size_t result = state->references.fetch_add(1);
+    if (result == 0)
+    {
+        if (state_lock_held)
+        {
+            request_load_lockless(state);
+        }
+        else
+        {
+            request_load(state);
+        }
+    }
+}
+
+void asset_manager::decrement_ref(asset_state* state, bool state_lock_held)
+{
+    size_t result = state->references.fetch_sub(1);
+    if (result == 1)
+    {
+        if (state_lock_held)
+        {
+            request_unload_lockless(state);
+        }
+        else
+        {
+            request_unload(state);
+        }
+    }
+}
+
 asset_state* asset_manager::create_asset_state(const std::type_info& id, const char* path, int32_t priority)
 {
     std::unique_lock lock(m_states_mutex);
+  
+    asset_state* state = nullptr;
 
-    asset_state* state = new asset_state();
-    state->default_asset = nullptr;
-    state->loading_state = asset_loading_state::unloaded;
-    state->priority = priority;
-    state->references = 0;
-    state->type_id = &id;
-    state->path = path;
+    // See if the asset already exists.
+    auto iter = std::find_if(m_states.begin(), m_states.end(), [&path](asset_state* state) {
+        return (_stricmp(state->path.c_str(), path) == 0);
+    });
 
-    asset_loader* loader = get_loader_for_type(state->type_id);
-    if (loader != nullptr)
+    if (iter != m_states.end())
     {
-        state->default_asset = loader->get_default_asset();
+        state = *iter;
+        state->priority = priority; 
+    }
+  
+    // Create a new state if one didn't already exist.
+    if (state == nullptr)
+    {
+        state = new asset_state();
+        state->default_asset = nullptr;
+        state->loading_state = asset_loading_state::unloaded;
+        state->priority = priority;
+        state->references = 0;
+        state->type_id = &id;
+        state->path = path;
+
+        asset_loader* loader = get_loader_for_type(state->type_id);
+        if (loader != nullptr)
+        {
+            state->default_asset = loader->get_default_asset();
+        }
+
+        m_states.push_back(state);
     }
 
-    m_states.push_back(state);
+    // If we are loading this as a dependent asset, keep track of the references so
+    // we don't mark our state as completed.
+    asset_state* parent_state = g_tls_current_post_load_asset;
+    if (parent_state != nullptr)
+    {
+        auto dependent_iter = std::find(parent_state->dependencies.begin(), parent_state->dependencies.end(), state);
+        if (dependent_iter == parent_state->dependencies.end())
+        {
+            parent_state->dependencies.push_back(state);
+            state->depended_on_by.push_back(parent_state);
+
+            // Parent holds a ref to child until its fully unloaded.
+            increment_ref(state, true);
+        }
+    }
+
+    // Increment the states reference to avoid anything happening between this being returned
+    // and the asset_ptr being created.
+    increment_ref(state, true);
 
     return state;
 }
@@ -188,28 +261,48 @@ asset_state* asset_manager::create_asset_state(const std::type_info& id, const c
 void asset_manager::request_load(asset_state* state)
 {
     std::unique_lock lock(m_states_mutex);
-    
-    state->should_be_loaded = true;
-
-    if (!state->is_pending)
-    {
-        state->is_pending = true;
-        m_pending_queue.push(state);
-
-        m_states_convar.notify_all();
-    }
+    return request_load_lockless(state);
 }
 
 void asset_manager::request_unload(asset_state* state)
 {
     std::unique_lock lock(m_states_mutex);
+    return request_unload_lockless(state);
+}
 
+void asset_manager::request_load_lockless(asset_state* state)
+{
+    state->should_be_loaded = true;
+
+    if (!state->is_pending)
+    {
+        state->is_pending = true;
+
+        // Insert into queue in priority order.
+        auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
+        {
+            return info->priority < value;
+        });
+        m_pending_queue.insert(iter, state);
+
+        m_states_convar.notify_all();
+    }
+}
+
+void asset_manager::request_unload_lockless(asset_state* state)
+{
     state->should_be_loaded = false;
 
     if (!state->is_pending)
     {
         state->is_pending = true;
-        m_pending_queue.push(state);
+
+        // Insert into queue in priority order.
+        auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
+        {
+            return info->priority < value;
+        });
+        m_pending_queue.insert(iter, state);
 
         m_states_convar.notify_all();
     }
@@ -242,8 +335,8 @@ void asset_manager::do_work()
         {
             if (m_pending_queue.size() > 0)
             {
-                asset_state* state = m_pending_queue.front();
-                m_pending_queue.pop();
+                asset_state* state = m_pending_queue.back();
+                m_pending_queue.pop_back();
 
                 process_asset(state);
 
@@ -281,6 +374,11 @@ void asset_manager::process_asset(asset_state* state)
             // this state and return a default asset if available.
             break;
         }
+    case asset_loading_state::waiting_for_dependencies:
+        {
+            // Do nothing while waiting for dependencies, the assets we depend on will move us out of this state.
+            break;
+        }
     default:
         {
             db_assert(false);
@@ -300,7 +398,44 @@ void asset_manager::begin_load(asset_state* state)
 
         {
             std::unique_lock lock(m_states_mutex);
-            set_load_state(state, state->instance ? asset_loading_state::loaded : asset_loading_state::failed);
+
+            asset_loading_state new_state;
+            if (state->instance)
+            {
+                // See if our dependencies are all loaded yet.
+                bool all_loaded = true;
+                for (asset_state* child : state->dependencies)
+                {
+                    if (child->loading_state != asset_loading_state::loaded)
+                    {
+                        all_loaded = false;
+                    }
+                }
+
+                if (all_loaded)
+                {
+                    new_state = asset_loading_state::loaded;
+                }
+                else
+                {
+                    new_state = asset_loading_state::waiting_for_dependencies;
+                }
+            }
+            else
+            {
+                new_state = asset_loading_state::failed;
+            }
+
+            set_load_state(state, new_state);
+
+            // Let anything we depend on know that we have loaded.
+            for (asset_state* parent : state->depended_on_by)
+            {
+                if (parent->loading_state == asset_loading_state::waiting_for_dependencies)
+                {
+                    check_dependency_load_state(parent);
+                }
+            }
 
             // Process the asset again incase the requested state
             // has changed during this process.
@@ -310,6 +445,40 @@ void asset_manager::begin_load(asset_state* state)
         }
     
     });
+}
+
+void asset_manager::check_dependency_load_state(asset_state* state)
+{
+    db_assert(state->loading_state == asset_loading_state::waiting_for_dependencies);
+
+    bool all_loaded = true;
+    for (asset_state* child : state->dependencies)
+    {
+        if (child->loading_state != asset_loading_state::loaded)
+        {
+            all_loaded = false;
+        }
+    }
+
+    if (all_loaded)
+    {
+        set_load_state(state, asset_loading_state::loaded);
+
+        // Propogate the load upwards to any parents that depend on us.
+        for (asset_state* parent : state->depended_on_by)
+        {
+            if (parent->loading_state == asset_loading_state::waiting_for_dependencies)
+            {
+                check_dependency_load_state(parent);
+            }
+        }
+
+        // Process the asset again incase the requested state
+        // has changed during this process.
+        process_asset(state);
+
+        m_states_convar.notify_all();
+    }
 }
 
 void asset_manager::begin_unload(asset_state* state)
@@ -323,11 +492,36 @@ void asset_manager::begin_unload(asset_state* state)
 
         {
             std::unique_lock lock(m_states_mutex);
-            set_load_state(state, asset_loading_state::unloaded);
 
-            // Process the asset again incase the requested state
-            // has changed during this process.
-            process_asset(state);
+            // This is the final unload, nuke the state completely.
+            if (state->references == 0)
+            {
+                // Remove reference from all assets we depend on.
+                for (asset_state* dependent : state->dependencies)
+                {
+                    auto iter = std::find(dependent->depended_on_by.begin(), dependent->depended_on_by.end(), state);
+                    db_assert(iter != dependent->depended_on_by.end());
+
+                    // Release the ref the parent gained on the child in create_asset_state.
+                    decrement_ref(*iter, true);
+
+                    dependent->depended_on_by.erase(iter);
+                }
+
+                state->dependencies.clear();
+
+                // Nuke the state.
+                m_states.erase(std::find(m_states.begin(), m_states.end(), state));
+                delete state;
+            }
+            else
+            {
+                set_load_state(state, asset_loading_state::unloaded);
+
+                // Process the asset again incase the requested state
+                // has changed during this process.
+                process_asset(state);
+            }
 
             m_states_convar.notify_all();
         }
@@ -521,6 +715,11 @@ void asset_manager::do_load(asset_state* state)
 
             if (state->instance)
             {
+                // Mark which asset is being post_load'd so we can handle things
+                // differently in dependent assets are loaded during post_load.
+                asset_state* old_state = g_tls_current_post_load_asset;
+                g_tls_current_post_load_asset = state;
+
                 if (!state->instance->post_load())
                 {
                     db_error(asset, "[%s] Failed to post load asset.", state->path.c_str());
@@ -528,6 +727,8 @@ void asset_manager::do_load(asset_state* state)
                     loader->unload(state->instance);
                     state->instance = nullptr;
                 }
+
+                g_tls_current_post_load_asset = old_state;
             }
         }
         else

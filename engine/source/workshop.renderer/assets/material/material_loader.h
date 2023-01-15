@@ -21,7 +21,7 @@ class renderer;
 class material_loader : public asset_loader
 {
 public:
-    material_loader(ri_interface& instance, renderer& renderer);
+    material_loader(ri_interface& instance, renderer& renderer, asset_manager& ass_manager);
 
     virtual const std::type_info& get_type() override;
     virtual asset* get_default_asset() override;
@@ -33,6 +33,11 @@ public:
 private:
     bool serialize(const char* path, material& asset, bool isSaving);
 
+    bool parse_textures(const char* path, YAML::Node& node, material& asset);
+    bool parse_samplers(const char* path, YAML::Node& node, material& asset);
+    bool parse_sampler(const char* path, const char* name, YAML::Node& node, material& asset);
+    bool parse_parameters(const char* path, YAML::Node& node, material& asset);
+
     bool save(const char* path, material& asset);
 
     bool parse_file(const char* path, material& asset);
@@ -40,6 +45,7 @@ private:
 private:
     ri_interface& m_ri_interface;
     renderer& m_renderer;
+    asset_manager& m_asset_manager;
 
 };
 

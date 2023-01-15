@@ -21,7 +21,7 @@ dx12_ri_command_queue::dx12_ri_command_queue(dx12_render_interface& renderer, co
 
 dx12_ri_command_queue::~dx12_ri_command_queue()
 {
-    for (auto& context : m_thread_contexts)
+    for (auto& [thread_id, context] : m_thread_contexts)
     {
         for (auto& resources : context->frame_resources)
         {
@@ -58,8 +58,10 @@ dx12_ri_command_queue::thread_context& dx12_ri_command_queue::get_thread_context
 {
     std::scoped_lock lock(m_thread_context_mutex);
 
+    std::thread::id thread_id = std::this_thread::get_id();
+
     // Create allocator if one is not already assigned to this thread.
-    if (m_thread_context_tls == -1)
+    if (auto iter = m_thread_contexts.find(thread_id); iter == m_thread_contexts.end())
     {
         std::unique_ptr<thread_context> context = std::make_unique<thread_context>();
 
@@ -75,11 +77,10 @@ dx12_ri_command_queue::thread_context& dx12_ri_command_queue::get_thread_context
         frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
         resources.last_used_frame_index = m_frame_index;
 
-        m_thread_context_tls = static_cast<int32_t>(m_thread_contexts.size());
-        m_thread_contexts.push_back(std::move(context));        
+        m_thread_contexts.emplace(thread_id, std::move(context));
     }
 
-    return *m_thread_contexts[m_thread_context_tls].get();
+    return *m_thread_contexts[thread_id].get();
 }
 
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> dx12_ri_command_queue::get_queue()
@@ -108,7 +109,7 @@ void dx12_ri_command_queue::begin_frame()
     begin_event(profile_colors::gpu_frame, "frame %zi", m_frame_index);
 
     // Reset resources of all previous frames.
-    for (auto& context : m_thread_contexts)
+    for (auto& [thread_id, context] : m_thread_contexts)
     {
         frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
 
@@ -146,7 +147,7 @@ ri_command_list& dx12_ri_command_queue::alloc_command_list()
     // Allocate new command list if we have no more available.
     if (resources.next_free_index >= resources.command_list_indices.size())
     {
-        std::string debug_name = string_format("Command List [thread=%zi index=%zi]", m_thread_context_tls, context.command_lists.size());
+        std::string debug_name = string_format("Command List [index=%zi]", context.command_lists.size());
 
         std::unique_ptr<dx12_ri_command_list> list = std::make_unique<dx12_ri_command_list>(m_renderer, debug_name.c_str(), *this);
         if (!list->create_resources())

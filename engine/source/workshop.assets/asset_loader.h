@@ -7,6 +7,8 @@
 #include "workshop.core/utils/result.h"
 #include "workshop.core/hashing/guid.h"
 #include "workshop.core/platform/platform.h"
+#include "workshop.core/containers/string.h"
+#include "workshop.core/utils/traits.h"
 
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
 
@@ -78,6 +80,38 @@ protected:
     // When reading header the values read are validated to match those in the passed in header
     // if any are abnormal (eg. version missmatch) an error is logged and it returns false.
     bool serialize_header(stream& out, compiled_asset_header& header, const char* path);
+
+    // Handy function for parsing and marshaling individual properties out of a YAML file.
+    template <typename T>
+    bool parse_property(const char* path, const char* property_name, YAML::Node node, T& value, bool required = false)
+    {
+        if (node.IsDefined())
+        {
+            if (node.IsScalar())
+            {
+                if (auto ret = from_string<T>(node.as<std::string>()); ret)
+                {
+                    value = ret.get();
+                }
+                else
+                {
+                    db_error(asset, "[%s] field '%s' was not parsable as type '%s'.", path, property_name, type_name<T>().data());
+                    return false;
+                }
+            }
+            else
+            {
+                db_error(asset, "[%s] field '%s' was not scalar type.", path, property_name);
+                return false;
+            }
+        }
+        else if (required)
+        {
+            db_error(asset, "[%s] field '%s' was not defined and is required.", path, property_name);
+            return false;
+        }
+        return true;
+    }
 
 };
 

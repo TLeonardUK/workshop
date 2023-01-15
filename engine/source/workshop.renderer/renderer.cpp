@@ -5,6 +5,7 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.render_interface/ri_interface.h"
 
+#include "workshop.renderer/systems/render_system_test.h"
 #include "workshop.renderer/systems/render_system_clear.h"
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
 #include "workshop.renderer/systems/render_system_imgui.h"
@@ -54,6 +55,7 @@ renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_
     // Note: Order is important here, this is the order the 
     //       stages will be added to the render graph in.
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
+    m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
@@ -112,14 +114,6 @@ result<void> renderer::create_resources()
         return ret;
     }
 
-    // Debug 
-//    asset_ptr<texture> test_texture = m_asset_manager.request_asset<texture>("data:tests/test_texture.yaml", 0);
-//    test_texture.wait_for_load();
-
-//    asset_ptr<material> test_material = m_asset_manager.request_asset<material>("data:tests/test_material.yaml", 0);
-//    test_material.wait_for_load();
-    // End debug
-
     return true;
 }
 
@@ -147,7 +141,7 @@ result<void> renderer::register_asset_loaders()
 {
     m_asset_manager.register_loader(std::make_unique<shader_loader>(get_render_interface(), *this));
     m_asset_manager.register_loader(std::make_unique<model_loader>(get_render_interface(), *this));
-    m_asset_manager.register_loader(std::make_unique<material_loader>(get_render_interface(), *this));
+    m_asset_manager.register_loader(std::make_unique<material_loader>(get_render_interface(), *this, m_asset_manager));
     m_asset_manager.register_loader(std::make_unique<texture_loader>(get_render_interface(), *this));
 
     return true;

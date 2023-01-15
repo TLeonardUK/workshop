@@ -49,10 +49,6 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         pixmap_format_metrics { .pixel_size=8, .channels={0, 1, 2, 3}, .channel_size=2, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },               // R16G16B16A16_SIGNED,
         pixmap_format_metrics { .pixel_size=8, .channels={0, 1, 2, 3}, .channel_size=2, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },             // R16G16B16A16,
         
-        pixmap_format_metrics { .pixel_size=6, .channels={0, 1, 2}, .channel_size=2, .channel_format=pixmap_channel_format::t_float, .is_mutable=true },                       // R16G16B16_FLOAT,
-        pixmap_format_metrics { .pixel_size=6, .channels={0, 1, 2}, .channel_size=2, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },                  // R16G16B16_SIGNED,
-        pixmap_format_metrics { .pixel_size=6, .channels={0, 1, 2}, .channel_size=2, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },                // R16G16B16,
-        
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1}, .channel_size=2, .channel_format=pixmap_channel_format::t_float, .is_mutable=true },                          // R16G16_FLOAT,
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1}, .channel_size=2, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },                     // R16G16_SIGNED,
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1}, .channel_size=2, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },                   // R16G16,
@@ -63,9 +59,6 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1, 2, 3}, .channel_size=1, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },               // R8G8B8A8_SIGNED,
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1, 2, 3}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },             // R8G8B8A8,
-        
-        pixmap_format_metrics { .pixel_size=3, .channels={0, 1, 2}, .channel_size=1, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },                  // R8G8B8,
-        pixmap_format_metrics { .pixel_size=3, .channels={0, 1, 2}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },                // R8G8B8_SIGNED,
         
         pixmap_format_metrics { .pixel_size=2, .channels={0, 1}, .channel_size=1, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },                     // R8G8,
         pixmap_format_metrics { .pixel_size=2, .channels={0, 1}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },                   // R8G8_SIGNED,
@@ -382,6 +375,24 @@ bool pixmap::is_channel_constant(size_t channel_index, const color& constant) co
     return true;
 }
 
+bool pixmap::is_channel_one_bit(size_t channel_index) const
+{
+    for (size_t y = 0; y < m_height; y++)
+    {
+        for (size_t x = 0; x < m_width; x++)
+        {
+            color pixel_color = get(x, y);
+            if (pixel_color[channel_index] != 0.0f &&
+                pixel_color[channel_index] != 1.0f)
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const encode_block_function_t& block_callback)
 {
     pixmap_format_metrics metrics = get_pixmap_format_metrics(new_format);
@@ -417,6 +428,8 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
                     source_color.get(pixels_rgba[pixel_data_offset + 0], pixels_rgba[pixel_data_offset + 1], pixels_rgba[pixel_data_offset + 2], pixels_rgba[pixel_data_offset + 3]);
                 }
             }
+
+            // TODO: Do we need to split into rows for output?
 
             block_callback(output_data.data() + output_offset, pixels_rgba.data());
             output_offset += output_block_size;

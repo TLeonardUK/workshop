@@ -100,18 +100,37 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
 {
     ri_command_queue& queue = m_renderer.get_copy_queue();
 
-    size_t sub_resource_count = source.get_mip_levels() * source.get_depth();
+    // Calculate the offsets of each face in the stored data.
+    size_t block_size = ri_format_block_size(source.get_format());
+    size_t face_count = source.get_depth();
+    size_t slice_count = source.get_depth();
+    size_t mip_count = source.get_mip_levels();
+    size_t array_count = 1;
+    if (source.get_dimensions() == ri_texture_dimension::texture_cube)
+    {
+        face_count = 6;
+        array_count = 6;
+        slice_count = 1;
+    }
+
+    size_t sub_resource_count = mip_count * array_count;
     uint64_t total_memory = 0;
+
     std::vector<UINT> row_count;
+    row_count.resize(sub_resource_count);
+
     std::vector<UINT64> row_size;
+    row_size.resize(sub_resource_count);
+
     std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> footprints;
+    footprints.resize(sub_resource_count);
 
     D3D12_RESOURCE_DESC desc = source.get_resource()->GetDesc();
 
     m_renderer.get_device()->GetCopyableFootprints(
         &desc,
         0u,
-        static_cast<UINT>(source.get_mip_levels() * source.get_depth()),
+        static_cast<UINT>(sub_resource_count),
         0u,
         footprints.data(),
         row_count.data(),
@@ -119,18 +138,43 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
         &total_memory
     );
 
-    upload_state upload = allocate_upload(total_memory, 1);
+    upload_state upload = allocate_upload(total_memory, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
     upload.texture = &source;
+
+    // TODO: All the below is pretty grim, this needs cleaning up and simplifying.
 
     // Copy source data into copy data. Source data is expected to be tightly packed
     // and stored linearly.
     uint8_t* source_data = data.data();
 
-    for (size_t array_index = 0; array_index < source.get_depth(); array_index++)
-    {
-        for (size_t mip_index = 0; mip_index < source.get_mip_levels(); mip_index++)
+    std::vector<uint8_t*> face_mip_data;
+    face_mip_data.resize(face_count * mip_count);
+
+    size_t data_offset = 0;
+    for (size_t face = 0; face < face_count; face++)
+    {   
+        size_t mip_width  = source.get_width();
+        size_t mip_height = source.get_height();
+
+        for (size_t mip = 0; mip < source.get_mip_levels(); mip++)
         {
-            const size_t sub_resource_index = mip_index + (array_index * source.get_mip_levels());
+            const size_t mip_index = mip + (face * mip_count);
+            const size_t mip_size = (ri_bytes_per_texel(source.get_format()) * mip_width * mip_height) / block_size;
+            face_mip_data[mip_index] = source_data + data_offset;
+
+            data_offset += mip_size;
+
+            mip_width = std::max(1llu, mip_width / 2);
+            mip_height = std::max(1llu, mip_height / 2);
+        }
+    }
+
+    // Copy the source data into each subresource.
+    for (size_t array_index = 0; array_index < array_count; array_index++)
+    {
+        for (size_t mip_index = 0; mip_index < mip_count; mip_index++)
+        {
+            const size_t sub_resource_index = mip_index + (array_index * mip_count);
 
             D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint = footprints[sub_resource_index];
             size_t height = row_count[sub_resource_index];
@@ -141,18 +185,27 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
 
             for (size_t slice_index = 0; slice_index < depth; slice_index++)
             {
+                // We don't support 3d texture arrays yet so either slice_index or array_index will be 0.
+                const size_t source_face_index = (array_index + slice_index);
+                const size_t source_mip_index = (source_face_index * mip_count) + mip_index;
+                uint8_t* source_data = face_mip_data[source_mip_index];
+                size_t source_data_offset = 0;
+
+                // Copy source data into each row.
                 for (size_t height_index = 0; height_index < height; height_index++)
                 {
-                    size_t source_row_size = source.get_width() * ri_bytes_per_texel(source.get_format());
+                    size_t source_row_size = footprint.Footprint.Width * ri_bytes_per_texel(source.get_format());
+                    db_assert(source_row_size == row_size[sub_resource_index]);
 
-                    memcpy(destination, source_data, source_row_size);
+                    memcpy(destination, source_data + source_data_offset, source_row_size);
                     if (source_row_size < pitch)
                     {
                         // Zero out the padding space.
                         memset(destination + source_row_size, 0, pitch - source_row_size);
                     }
 
-                    source_data += source_row_size;
+                    source_data_offset += source_row_size;
+                    destination += pitch;
                 }
             }
         }
@@ -167,7 +220,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
         D3D12_TEXTURE_COPY_LOCATION dest = {};
         dest.pResource = source.get_resource();
         dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-        dest.SubresourceIndex = 0;
+        dest.SubresourceIndex = i;
 
         D3D12_TEXTURE_COPY_LOCATION src = {};
         src.pResource = m_heap_handle.Get();
@@ -287,27 +340,29 @@ void dx12_ri_upload_manager::perform_uploads()
         return;
     }
 
-    // Transition all pending resources on graphics queue.
-    dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
-    transition_list.open();
-    for (upload_state& state : uploads)
-    {
-        if (state.texture)
-        {
-            transition_list.barrier(*state.texture, state.texture->get_initial_state(), ri_resource_state::copy_dest);
-        }
-        if (state.buffer)
-        {
-            transition_list.barrier(*state.buffer, state.buffer->get_initial_state(), ri_resource_state::copy_dest);
-        }
+    profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "uploads");
+    profile_gpu_marker(copy_queue, profile_colors::gpu_transition, "uploads");
 
-        m_pending_free.push_back(state);
-    }        
-    transition_list.close();
-
-    // Start transitioning resources on graphics queue.
+    // Transition all pending resources to common on graphics queue.
     {
-        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources for upload");
+        dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
+        transition_list.open();
+        for (upload_state& state : uploads)
+        {
+            if (state.texture)
+            {
+                transition_list.barrier(*state.texture, ri_resource_state::initial, ri_resource_state::common_state);
+            }
+            if (state.buffer)
+            {
+                transition_list.barrier(*state.buffer, ri_resource_state::initial, ri_resource_state::common_state);
+            }
+
+            m_pending_free.push_back(state);
+        }        
+        transition_list.close();
+
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources to common");
         graphics_queue.execute(transition_list);
     }
 
@@ -330,14 +385,84 @@ void dx12_ri_upload_manager::perform_uploads()
     {
         profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "upload resources");
 
+        // Transition from common to a copy destination.
+        {
+            dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(copy_queue.alloc_command_list());
+            transition_list.open();
+            for (upload_state& state : uploads)
+            {
+                if (state.texture)
+                {
+                    transition_list.barrier(*state.texture, ri_resource_state::common_state, ri_resource_state::copy_dest);
+                }
+                if (state.buffer)
+                {
+                    transition_list.barrier(*state.buffer, ri_resource_state::common_state, ri_resource_state::copy_dest);
+                }
+
+                m_pending_free.push_back(state);
+            }
+            transition_list.close();
+
+            profile_gpu_marker(copy_queue, profile_colors::gpu_transition, "transition resources to copy destination");
+            copy_queue.execute(transition_list);
+        }
+
+        // Perform actual copies.
         for (upload_state& state : uploads)
         {
             copy_queue.execute(*state.list);
+        }
+
+        // Transition back from copy destination to common.
+        {
+            dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(copy_queue.alloc_command_list());
+            transition_list.open();
+            for (upload_state& state : uploads)
+            {
+                if (state.texture)
+                {
+                    transition_list.barrier(*state.texture, ri_resource_state::copy_dest, ri_resource_state::common_state);
+                }
+                if (state.buffer)
+                {
+                    transition_list.barrier(*state.buffer, ri_resource_state::copy_dest, ri_resource_state::common_state);
+                }
+
+                m_pending_free.push_back(state);
+            }
+            transition_list.close();
+
+            profile_gpu_marker(copy_queue, profile_colors::gpu_transition, "transition resources to copy destination");
+            copy_queue.execute(transition_list);
         }
     }
 
     // Signal graphics queue that we have finished.
     m_copy_queue_fence->signal(copy_queue, fence_value);
+
+    // Graphics queue now transitions everything back from common to initial state.
+    {
+        dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
+        transition_list.open();
+        for (upload_state& state : uploads)
+        {
+            if (state.texture)
+            {
+                transition_list.barrier(*state.texture, ri_resource_state::common_state, ri_resource_state::initial);
+            }
+            if (state.buffer)
+            {
+                transition_list.barrier(*state.buffer, ri_resource_state::common_state, ri_resource_state::initial);
+            }
+
+            m_pending_free.push_back(state);
+        }
+        transition_list.close();
+
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources to initial");
+        graphics_queue.execute(transition_list);
+    }
 }
 
 }; // namespace ws

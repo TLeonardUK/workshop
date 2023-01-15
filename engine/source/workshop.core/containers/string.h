@@ -189,7 +189,7 @@ inline result<input_type> from_string(const std::string& input)
                                                                             \
         for (size_t i = 0; i < platform_count; i++)                         \
         {                                                                   \
-            if (string_array[i] == input)                                   \
+            if (_stricmp(string_array[i], input.c_str()) == 0)              \
             {                                                               \
                 return static_cast<type>(i);                                \
             }                                                               \

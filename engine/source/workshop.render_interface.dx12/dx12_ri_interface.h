@@ -61,6 +61,7 @@ public:
     virtual std::unique_ptr<ri_swapchain> create_swapchain(window& for_window, const char* debug_name) override;
     virtual std::unique_ptr<ri_fence> create_fence(const char* debug_name) override;
     virtual std::unique_ptr<ri_shader_compiler> create_shader_compiler() override;
+    virtual std::unique_ptr<ri_texture_compiler> create_texture_compiler() override;
     virtual std::unique_ptr<ri_pipeline> create_pipeline(const ri_pipeline::create_params& params, const char* debug_name) override;
     virtual std::unique_ptr<ri_param_block_archetype> create_param_block_archetype(const ri_param_block_archetype::create_params& params, const char* debug_name) override;
     virtual std::unique_ptr<ri_texture> create_texture(const ri_texture::create_params& params, const char* debug_name = nullptr) override;

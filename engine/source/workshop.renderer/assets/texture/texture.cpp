@@ -23,6 +23,27 @@ texture::~texture()
 
 bool texture::post_load()
 {
+    ri_texture::create_params params;
+    params.width = width;
+    params.height = height;
+    params.depth = depth;
+    params.format = ri_convert_pixmap_format(format);
+    params.dimensions = dimensions;
+    params.is_render_target = false;
+    params.mip_levels = mip_levels;
+    params.data = data;
+
+    ri_instance = m_ri_interface.create_texture(params, name.c_str());
+    if (!ri_instance)
+    {
+        db_error(asset, "Failed to create texture '%s'.", name.c_str());
+        return false;
+    }
+
+    // No need to keep the local data around any more, the RI interface will have copied 
+    // it to the gpu now.
+    data.clear();
+
     return true;
 }
 

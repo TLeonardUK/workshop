@@ -11,7 +11,7 @@
 #include "workshop.core/drawing/pixmap.h"
 
 #include "workshop.render_interface/ri_interface.h"
-#include "workshop.render_interface/ri_shader_compiler.h"
+#include "workshop.render_interface/ri_texture_compiler.h"
 
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
 
@@ -27,6 +27,13 @@ constexpr size_t k_asset_descriptor_current_version = 1;
 constexpr size_t k_asset_compiled_version = 2;
 
 };
+
+template<>
+inline void stream_serialize(stream& out, texture::face& face)
+{
+    stream_serialize(out, face.file);
+    stream_serialize_list(out, face.mips);
+}
 
 texture_loader::texture_loader(ri_interface& instance, renderer& renderer)
     : m_ri_interface(instance)
@@ -86,6 +93,16 @@ bool texture_loader::serialize(const char* path, texture& asset, bool isSaving)
         return false;
     }
 
+    stream_serialize_enum(*stream, asset.usage);
+    stream_serialize_enum(*stream, asset.dimensions);
+    stream_serialize_enum(*stream, asset.format);
+    stream_serialize(*stream, asset.width);
+    stream_serialize(*stream, asset.height);
+    stream_serialize(*stream, asset.depth);
+    stream_serialize(*stream, asset.mipmapped);
+    stream_serialize(*stream, asset.mip_levels);
+    stream_serialize_list(*stream, asset.data);
+
     return true;
 }
 
@@ -94,9 +111,9 @@ bool texture_loader::load_face(const char* path, const char* face_path, texture&
     // Load the face from.
     texture::face& face = asset.faces.emplace_back();
     face.file = face_path;
-    face.pixmap = pixmap::load(face_path);
+    face.mips.emplace_back(pixmap::load(face_path));
 
-    if (!face.pixmap)
+    if (!face.mips[0])
     {
         db_error(asset, "[%s] Failed to load pixmap from referenced file: %s", path, face_path);
         return false;
@@ -143,6 +160,46 @@ bool texture_loader::parse_faces(const char* path, YAML::Node& node, texture& as
     return true;
 }
 
+bool texture_loader::parse_properties(const char* path, YAML::Node& node, texture& asset)
+{
+    if (!parse_property(path, "usage", node["usage"], asset.usage, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "dimensions", node["dimensions"], asset.dimensions, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "format", node["format"], asset.format, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "width", node["width"], asset.width, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "height", node["height"], asset.height, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "depth", node["depth"], asset.depth, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "mipmapped", node["mipmapped"], asset.mipmapped, false))
+    {
+        return false;
+    }
+
+    return true;
+}
+
 bool texture_loader::parse_file(const char* path, texture& asset)
 {
     db_verbose(asset, "[%s] Parsing file", path);
@@ -153,8 +210,232 @@ bool texture_loader::parse_file(const char* path, texture& asset)
         return false;
     }
 
+    if (!parse_properties(path, node, asset))
+    {
+        return false;
+    }
+
     if (!parse_faces(path, node, asset))
     {
+        return false;
+    }
+
+    return true;
+}
+
+bool texture_loader::infer_properties(const char* path, texture& asset)
+{
+    if (asset.dimensions == ri_texture_dimension::COUNT)
+    {
+        if (asset.faces.size() == 1)
+        {
+            if (asset.faces[0].mips[0]->get_height() == 1)
+            {
+                asset.dimensions = ri_texture_dimension::texture_1d;
+            }
+            else
+            {
+                asset.dimensions = ri_texture_dimension::texture_2d;
+            }
+        }
+        else if (asset.faces.size() == 6)
+        {
+            asset.dimensions = ri_texture_dimension::texture_cube;
+        }
+        else
+        {
+            asset.dimensions = ri_texture_dimension::texture_3d;
+        }
+    }
+    if (asset.width == 0)
+    {
+        for (texture::face& face : asset.faces)
+        {
+            asset.width = std::max(asset.width, face.mips[0]->get_width());
+        }
+    }
+    if (asset.height == 0)
+    {
+        for (texture::face& face : asset.faces)
+        {
+            asset.height = std::max(asset.height, face.mips[0]->get_height());
+        }
+    }
+    if (asset.depth == 0)
+    {
+        if (asset.dimensions == ri_texture_dimension::texture_3d)
+        {
+            asset.depth = asset.faces.size();
+        }
+        else
+        {
+            asset.depth = 1;
+        }
+    }
+    if (asset.format == pixmap_format::COUNT)
+    {
+        pixmap& face = *asset.faces[0].mips[0];
+
+        // If more faces than 1 or format is not a standard 32bit value, then use
+        // the pixmaps format directly.
+        if (asset.faces.size() != 1 || face.get_format() != pixmap_format::R8G8B8A8)
+        {
+            asset.format = face.get_format();
+        }
+        else
+        {
+            if (asset.usage == texture_usage::color)
+            {
+                bool r_constant = face.is_channel_constant(0, { 0, 0, 0, 255 });
+                bool g_constant = face.is_channel_constant(1, { 0, 0, 0, 255 });
+                bool b_constant = face.is_channel_constant(2, { 0, 0, 0, 255 });
+                bool a_constant = face.is_channel_constant(3, { 0, 0, 0, 255 });
+
+                // If all channels but R are zero, BC4
+                if (g_constant && b_constant && a_constant)
+                {
+                    asset.format = pixmap_format::BC4;
+                }
+                // If all channels but RG are zero, BC5
+                else if (b_constant && a_constant)
+                {
+                    asset.format = pixmap_format::BC5;
+                }
+                // If one bit alpha BC1. 
+                // Not sure this is really any better than BC7.
+                //else if (face.is_channel_one_bit(3))
+                //{
+                //    asset.format = pixmap_format::BC1;
+                //}
+                // Otherwise BC7.
+                else
+                {
+                    asset.format = pixmap_format::BC7;
+                }
+            }
+            else if (asset.usage == texture_usage::normal)
+            {
+                asset.format = pixmap_format::BC5;
+            }
+            else if (asset.usage == texture_usage::mask)
+            {
+                asset.format = pixmap_format::BC4;
+            }
+            else
+            {
+                // Fallback to the pixmaps format if we cannot infer anything useful.
+                asset.format = face.get_format();
+            }
+        }
+    }
+
+    if (asset.depth != 1)
+    {
+        if (asset.dimensions == ri_texture_dimension::texture_1d || 
+            asset.dimensions == ri_texture_dimension::texture_2d ||
+            asset.dimensions == ri_texture_dimension::texture_cube)
+        {
+            db_error(asset, "[%s] only a depth of 1 is permitted for 1d/2d/cube texture.", path);
+            return false;
+        }
+        else if (asset.dimensions != ri_texture_dimension::texture_3d)
+        {
+            db_error(asset, "[%s] only a depth of 1 is permitted for non-3d, non-cube textures.", path);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool texture_loader::perform_resize(const char* path, texture& asset)
+{
+    for (texture::face& face : asset.faces)
+    {
+        if (face.mips[0]->get_width() != asset.width ||
+            face.mips[0]->get_height() != asset.height)
+        {
+            face.mips[0] = face.mips[0]->resize(asset.width, asset.height, pixmap_filter::bilinear);
+        }
+    }
+
+    return true;
+}
+
+bool texture_loader::generate_mipchain(const char* path, texture& asset)
+{
+    pixmap_format_metrics metrics = get_pixmap_format_metrics(asset.format);
+
+    // Minimum size of mip chain is based on minimum block size of encoded format.
+    // If we need to encode smaller sizes than this, we should 
+    size_t block_size = metrics.block_size;
+    if (block_size == 0)
+    {
+        block_size = 1;
+    }
+
+    for (texture::face& face : asset.faces)
+    {
+        while (true)
+        {
+            pixmap& last_mip = *face.mips.back();
+            if (last_mip.get_width() == block_size && last_mip.get_height() == block_size)
+            {
+                break;
+            }
+
+            size_t mip_width = std::max(block_size, (last_mip.get_width() / 2));
+            size_t mip_height = std::max(block_size, (last_mip.get_height() / 2));
+            face.mips.emplace_back(last_mip.resize(mip_width, mip_height, pixmap_filter::bilinear));
+        }
+    }
+
+    return true;
+}
+
+bool texture_loader::perform_encoding(const char* path, texture& asset)
+{
+    for (texture::face& face : asset.faces)
+    {
+        for (size_t i = 0; i < face.mips.size(); i++)    
+        {
+            if (face.mips[i]->get_format() != asset.format)
+            {
+                face.mips[i] = face.mips[i]->convert(asset.format);
+            }
+        }
+    }
+
+    return true;
+}
+
+bool texture_loader::compile_render_data(const char* path, texture& asset)
+{
+    std::unique_ptr<ri_texture_compiler> compiler = m_ri_interface.create_texture_compiler();
+
+    std::vector<ri_texture_compiler::texture_face> faces;
+    for (texture::face& face : asset.faces)
+    {
+        ri_texture_compiler::texture_face& output_face = faces.emplace_back();
+        output_face.mips.reserve(face.mips.size());
+
+        for (auto& mip : face.mips)
+        {
+            output_face.mips.push_back(mip.get());
+        }
+    }
+
+    asset.mip_levels = asset.faces[0].mips.size();
+
+    if (!compiler->compile(
+        asset.dimensions,
+        asset.width,
+        asset.height,
+        asset.depth,
+        faces,
+        asset.data))
+    {
+        db_error(asset, "[%s] Failed to compile texture.", path);
         return false;
     }
 
@@ -171,11 +452,44 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
         return false;
     }
 
-    // TODO: Convert to requested format / do post-processing
+    if (asset.faces.empty())
+    {
+        db_error(asset, "[%s] no faces of texture were defined.", input_path);
+        return false;
+    }
 
-    // TODO: Generate platform-specific raw data.
+    // Infer various properties from the faces that have been defined.
+    if (!infer_properties(input_path, asset))
+    {
+        return false;
+    }
 
-    // TODO: Store the raw data and clear out all the face pixmaps.
+    // Resize any mipmaps that don't match our expected width/height.
+    if (!perform_resize(input_path, asset))
+    {
+        return false;
+    }
+
+    // Generate a mipchain if required.
+    if (asset.mipmapped)
+    {
+        if (!generate_mipchain(input_path, asset))
+        {
+            return false;
+        }
+    }
+
+    // Convert texture into expected format.
+    if (!perform_encoding(input_path, asset))
+    {
+        return false;
+    }
+
+    // Generate texture data that can be loaded by render interface.
+    if (!compile_render_data(input_path, asset))
+    {
+        return false;
+    }
 
     // Construct the asset header.
     asset_cache_key compiled_key;

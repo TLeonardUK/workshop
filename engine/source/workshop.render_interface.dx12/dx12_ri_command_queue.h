@@ -74,8 +74,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_queue = nullptr;
 
     std::recursive_mutex m_thread_context_mutex;
-    std::vector<std::unique_ptr<thread_context>> m_thread_contexts;
-    inline static thread_local int32_t m_thread_context_tls = -1;
+    std::unordered_map<std::thread::id, std::unique_ptr<thread_context>> m_thread_contexts;
 
     size_t m_frame_index = 0;
 

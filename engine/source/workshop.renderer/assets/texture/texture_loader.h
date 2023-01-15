@@ -35,11 +35,18 @@ private:
 
     bool save(const char* path, texture& asset);
 
+    bool parse_properties(const char* path, YAML::Node& node, texture& asset);
     bool parse_faces(const char* path, YAML::Node& node, texture& asset);
 
     bool load_face(const char* path, const char* face_path, texture& asset);
 
     bool parse_file(const char* path, texture& asset);
+
+    bool infer_properties(const char* path, texture& asset);
+    bool perform_resize(const char* path, texture& asset);
+    bool generate_mipchain(const char* path, texture& asset);
+    bool perform_encoding(const char* path, texture& asset);
+    bool compile_render_data(const char* path, texture& asset);
 
 private:
     ri_interface& m_ri_interface;

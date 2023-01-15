@@ -37,8 +37,9 @@ public:
         float optimal_clear_depth = 0.0f;
         uint8_t optimal_clear_stencil = 0;
 
-        // Linear data that we will upload into the texture on construction.
-        std::span<uint8_t> linear_data;
+        // Data that we will upload into the texture on construction.
+        // This must be in the format returned by ri_texture_compiler.
+        std::span<uint8_t> data;
     };
 
 public:

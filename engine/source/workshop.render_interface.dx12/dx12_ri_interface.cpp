@@ -9,6 +9,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_heap.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include "workshop.render_interface.dx12/dx12_ri_shader_compiler.h"
+#include "workshop.render_interface.dx12/dx12_ri_texture_compiler.h"
 #include "workshop.render_interface.dx12/dx12_ri_pipeline.h"
 #include "workshop.render_interface.dx12/dx12_ri_param_block_archetype.h"
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
@@ -78,6 +79,17 @@ std::unique_ptr<ri_fence> dx12_render_interface::create_fence(const char* debug_
 std::unique_ptr<ri_shader_compiler> dx12_render_interface::create_shader_compiler()
 {
     std::unique_ptr<dx12_ri_shader_compiler> instance = std::make_unique<dx12_ri_shader_compiler>(*this);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
+}
+
+std::unique_ptr<ri_texture_compiler> dx12_render_interface::create_texture_compiler()
+{
+    std::unique_ptr<dx12_ri_texture_compiler> instance = std::make_unique<dx12_ri_texture_compiler>(*this);
     if (!instance->create_resources())
     {
         return nullptr;

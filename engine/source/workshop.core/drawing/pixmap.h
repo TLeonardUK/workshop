@@ -39,10 +39,6 @@ enum class pixmap_format
     R16G16B16A16_SIGNED,
     R16G16B16A16,
 
-    R16G16B16_FLOAT,
-    R16G16B16_SIGNED,
-    R16G16B16,
-
     R16G16_FLOAT,
     R16G16_SIGNED,
     R16G16,
@@ -53,9 +49,6 @@ enum class pixmap_format
 
     R8G8B8A8_SIGNED,
     R8G8B8A8,
-
-    R8G8B8,
-    R8G8B8_SIGNED,
 
     R8G8,
     R8G8_SIGNED,
@@ -75,6 +68,53 @@ enum class pixmap_format
 
     COUNT
 };
+
+inline static const char* pixmap_format_strings[static_cast<int>(pixmap_format::COUNT)] = {
+    "R32G32B32A32_FLOAT",
+    "R32G32B32A32_SIGNED",
+    "R32G32B32A32",
+    
+    "R32G32B32_FLOAT",
+    "R32G32B32_SIGNED",
+    "R32G32B32",
+    
+    "R32G32_FLOAT",
+    "R32G32_SIGNED",
+    "R32G32",
+    
+    "R32_FLOAT",
+    "R32_SIGNED",
+    "R32",
+    
+    "R16G16B16A16_FLOAT",
+    "R16G16B16A16_SIGNED",
+    "R16G16B16A16",
+    
+    "R16G16_FLOAT",
+    "R16G16_SIGNED",
+    "R16G16",
+    
+    "R16_FLOAT",
+    "R16_SIGNED",
+    "R16",
+    
+    "R8G8B8A8_SIGNED",
+    "R8G8B8A8",
+    
+    "R8G8",
+    "R8G8_SIGNED",
+    
+    "R8",
+    "R8_SIGNED",
+    
+    "BC1",
+    "BC3",
+    "BC4",
+    "BC5",
+    "BC7",
+};
+
+DEFINE_ENUM_TO_STRING(pixmap_format, pixmap_format_strings)
 
 // Data type that a channel is stored in.
 enum class pixmap_channel_format
@@ -159,6 +199,9 @@ public:
 
     // Returns true if all values for a given channel match the value of the channel in the provided color.
     bool is_channel_constant(size_t channel_index, const color& color) const;
+
+    // Returns true if all values for a given channel are either the min or max values for it.
+    bool is_channel_one_bit(size_t channel_index) const;
 
     // Creates a new pixmap that contains the contents of this pixmap converted
     // to a different format.

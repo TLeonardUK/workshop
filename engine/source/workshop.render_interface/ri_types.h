@@ -7,6 +7,8 @@
 #include "workshop.core/containers/string.h"
 #include "workshop.core/filesystem/stream.h"
 
+#include "workshop.core/drawing/pixmap.h"
+
 namespace ws {
 
 // ================================================================================================
@@ -728,6 +730,12 @@ bool ri_is_format_depth_target(ri_texture_format format);
 // Determines how many bytes each texel takes up.
 size_t ri_bytes_per_texel(ri_texture_format format);
 
+// Gets the block size of a compressed format, or 1 if uncompressed.
+size_t ri_format_block_size(ri_texture_format format);
+
+// Converts a pixmap format into the equivilent ri texture format.
+ri_texture_format ri_convert_pixmap_format(pixmap_format format);
+
 // ================================================================================================
 //  Defines the layout of a data block. 
 //  This is a generic container for things like vertex buffers, param blocks, etc.
@@ -777,10 +785,10 @@ enum class ri_texture_dimension
 };
 
 inline static const char* ri_texture_dimension_strings[static_cast<int>(ri_texture_dimension::COUNT)] = {
-    "texture_1d",
-    "texture_2d",
-    "texture_3d",
-    "texture_cube," 
+    "1d",
+    "2d",
+    "3d",
+    "cube" 
 };
 
 DEFINE_ENUM_TO_STRING(ri_texture_dimension, ri_texture_dimension_strings)

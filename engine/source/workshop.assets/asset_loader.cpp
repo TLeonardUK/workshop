@@ -122,6 +122,7 @@ bool asset_loader::get_cache_key(const char* path, platform_type asset_platform,
     key.source.path = path;
     if (!virtual_file_system::get().modified_time(path, key.source.modified_time))
     {
+        db_error(asset, "[%s] Could not get modification time of source file.", path);
         return false;
     }
     key.version = get_compiled_version();
@@ -132,6 +133,7 @@ bool asset_loader::get_cache_key(const char* path, platform_type asset_platform,
         file.path = dep;
         if (!virtual_file_system::get().modified_time(dep.c_str(), file.modified_time))
         {
+            db_error(asset, "[%s] Could not get modification time of dependent file: %s", path, dep.c_str());
             return false;
         }
     }

@@ -18,6 +18,7 @@ SET(SOURCES
     "ri_types.h"
     "ri_types.cpp"
     "ri_shader_compiler.h"
+    "ri_texture_compiler.h"
     "ri_pipeline.h"
     "ri_param_block.h"
     "ri_param_block.cpp"

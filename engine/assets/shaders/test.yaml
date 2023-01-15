@@ -1,0 +1,36 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to clear the gbuffer back to its 
+# default state at the start of the frame.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  test:
+    techniques:
+      test: {}
+
+param_blocks:
+  test_params:
+    scope: instance
+    fields:
+      albedo_texture: texture2d
+      albedo_sampler: sampler
+
+techniques:
+  test:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/test.hlsl
+      entry: pshader
+    render_state: no_depth_test
+    vertex_layout: vertex2d_pos_uv
+    output_target: gbuffer
+    param_blocks: [ gbuffer, test_params ]

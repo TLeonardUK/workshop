@@ -132,7 +132,7 @@ result<void> dx12_ri_texture::create_resources()
         D3D12_HEAP_FLAG_NONE,
         &desc,
         initial_state,
-        &clear_color,
+        m_create_params.is_render_target ? &clear_color : nullptr,
         IID_PPV_ARGS(&m_handle)
     );
     if (FAILED(hr))
@@ -142,11 +142,11 @@ result<void> dx12_ri_texture::create_resources()
     }        
 
     // Upload the linear data if any has been provided.
-    if (!m_create_params.linear_data.empty())
+    if (!m_create_params.data.empty())
     {
         m_renderer.get_upload_manager().upload(
             *this, 
-            m_create_params.linear_data
+            m_create_params.data
         );
     }
 

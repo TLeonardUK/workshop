@@ -30,6 +30,8 @@ SET(SOURCES
     "dx12_ri_sampler.cpp"
     "dx12_ri_shader_compiler.h"
     "dx12_ri_shader_compiler.cpp"
+    "dx12_ri_texture_compiler.h"
+    "dx12_ri_texture_compiler.cpp"
     "dx12_ri_pipeline.h"
     "dx12_ri_pipeline.cpp"
     "dx12_ri_param_block.h"

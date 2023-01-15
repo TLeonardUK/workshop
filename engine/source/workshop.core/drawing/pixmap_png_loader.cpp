@@ -33,7 +33,7 @@ std::unique_ptr<pixmap> pixmap_png_loader::load(const std::vector<char>& buffer)
 
 bool pixmap_png_loader::save(pixmap& input, std::vector<char>& buffer)
 {
-    db_assert_message(input.get_format() == pixmap_format::R8G8B8A8 || input.get_format() == pixmap_format::R8G8B8, "Format is not valid for PNG format.");
+    db_assert_message(input.get_format() == pixmap_format::R8G8B8A8, "Format is not valid for PNG format.");
 
     unsigned char* image = nullptr;
     size_t image_size = 0;
@@ -42,10 +42,6 @@ bool pixmap_png_loader::save(pixmap& input, std::vector<char>& buffer)
     if (input.get_format() == pixmap_format::R8G8B8A8)
     {
         error = lodepng_encode32(&image, &image_size, input.get_data().data(), input.get_width(), input.get_height());
-    }
-    else if (input.get_format() == pixmap_format::R8G8B8)
-    {
-        error = lodepng_encode24(&image, &image_size, input.get_data().data(), input.get_width(), input.get_height());
     }
     
     if (error)

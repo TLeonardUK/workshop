@@ -27,6 +27,7 @@ enum class asset_loading_state
     unloaded,
     unloading,
     loading,
+    waiting_for_dependencies,
     loaded,
     failed,
 
@@ -48,6 +49,9 @@ struct asset_state
     asset* default_asset = nullptr;
 
     const std::type_info* type_id;
+
+    std::vector<asset_state*> dependencies;
+    std::vector<asset_state*> depended_on_by;
 };
 
 // ================================================================================================
@@ -89,10 +93,6 @@ public:
 
     bool operator==(asset_ptr const& other) const;
     bool operator!=(asset_ptr const& other) const;
-
-protected:
-    void increment_ref();
-    void decrement_ref();
 
 private:
     asset_manager* m_asset_manager = nullptr;
@@ -167,6 +167,16 @@ protected:
     template <typename asset_type>
     friend class asset_ptr;
 
+    // Called for assets in waiting_for_depencies state to check if 
+    // they can now proceed to the loading state or not.
+    void check_dependency_load_state(asset_state* state);
+
+    // Increments the reference count for a given asset state. May trigger a load.
+    void increment_ref(asset_state* state, bool state_lock_held = false);
+
+    // Decrements the reference count for a given asset state. May trigger an unload.
+    void decrement_ref(asset_state* state, bool state_lock_held = false);
+
     // Gets the loader that handles the given type.
     asset_loader* get_loader_for_type(const std::type_info* id);
 
@@ -176,9 +186,11 @@ protected:
 
     // Requests to start loading a given asset state, should only be called by asset_ptr.
     void request_load(asset_state* state);
+    void request_load_lockless(asset_state* state);
 
     // Requests to start unloading a given asset state, should only be called by asset_ptr.
     void request_unload(asset_state* state);
+    void request_unload_lockless(asset_state* state);
 
     // Blocks until the given asset is either loaded or load has failed.
     void wait_for_load(asset_state* state);
@@ -281,7 +293,7 @@ private:
     std::mutex m_states_mutex;
     std::condition_variable m_states_convar;
     std::vector<asset_state*> m_states;
-    std::queue<asset_state*> m_pending_queue;
+    std::vector<asset_state*> m_pending_queue;
 
     constexpr inline static const size_t k_max_concurrent_ops = 5;
 
@@ -313,10 +325,9 @@ inline asset_ptr<asset_type>::asset_ptr(asset_manager* manager, asset_state* sta
     : m_asset_manager(manager)
     , m_state(state)
 {
-    if (m_state)
-    {
-        increment_ref();
-    }
+    // Note: No ref increase is required, create_asset_state has already done this before returning.
+    //       To avoid anything being nuked between the state being created and the asset_ptr 
+    //       incrementing the ref.
 }
 
 template <typename asset_type>
@@ -326,7 +337,7 @@ inline asset_ptr<asset_type>::asset_ptr(const asset_ptr& other)
 {
     if (m_state)
     {
-        increment_ref();
+       m_asset_manager->increment_ref(m_state);
     }
 }
 
@@ -344,27 +355,7 @@ inline asset_ptr<asset_type>::~asset_ptr()
 {
     if (m_state)
     {
-        decrement_ref();
-    }
-}
-
-template <typename asset_type>
-inline void asset_ptr<asset_type>::increment_ref()
-{
-    size_t result = m_state->references.fetch_add(1);
-    if (result == 0)
-    {
-        m_asset_manager->request_load(m_state);
-    }
-}
-
-template <typename asset_type>
-inline void asset_ptr<asset_type>::decrement_ref()
-{
-    size_t result = m_state->references.fetch_sub(1);
-    if (result == 1)
-    {
-        m_asset_manager->request_unload(m_state);
+        m_asset_manager->decrement_ref(m_state);
     }
 }
 
@@ -414,7 +405,7 @@ inline asset_type& asset_ptr<asset_type>::operator*()
     {
         wait_for_load();
     }
-    return *static_cast<asset_type*>(m_state->asset);
+    return *static_cast<asset_type*>(m_state->instance);
 }
 
 template <typename asset_type>
@@ -431,7 +422,7 @@ inline asset_ptr<asset_type>& asset_ptr<asset_type>::operator=(const asset_ptr<a
 
     if (m_state)
     {
-        increment_ref();
+        m_asset_manager.increment_ref(m_state);
     }
 }
 
@@ -444,6 +435,8 @@ inline asset_ptr<asset_type>& asset_ptr<asset_type>::operator=(asset_ptr<asset_t
     other.m_state = nullptr;
 
     // Reference doesn't need changing move doesn't effect it.
+
+    return *this;
 }
 
 template <typename asset_type>

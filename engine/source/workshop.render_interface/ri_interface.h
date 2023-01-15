@@ -21,6 +21,7 @@ class ri_command_queue;
 class ri_command_list;
 class ri_param_block_archetype;
 class ri_shader_compiler;
+class ri_texture_compiler;
 class ri_buffer;
 class ri_layout_factory;
 
@@ -61,6 +62,9 @@ public:
 
     // Creates a class to handle compiling shaders for offline use.
     virtual std::unique_ptr<ri_shader_compiler> create_shader_compiler() = 0;
+
+    // Creates a class to handle compiling textures for offline use.
+    virtual std::unique_ptr<ri_texture_compiler> create_texture_compiler() = 0;
 
     // Creates a pipeline describing the gpu state at the point of a draw call.
     virtual std::unique_ptr<ri_pipeline> create_pipeline(const ri_pipeline::create_params& params, const char* debug_name = nullptr) = 0;
