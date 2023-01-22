@@ -98,6 +98,11 @@ SET(SOURCES
     "drawing/pixmap.cpp"
     "drawing/pixmap_png_loader.h"
     "drawing/pixmap_png_loader.cpp"
+    
+    "geometry/geometry.h"
+    "geometry/geometry.cpp"
+    "geometry/geometry_assimp_loader.h"
+    "geometry/geometry_assimp_loader.cpp"
 
     "entry.cpp"
     "entry.h"
@@ -117,5 +122,6 @@ endif()
 target_link_libraries(${PROJECT_NAME} 
     lodepng
     bc7enc
+    assimp
     ${PLATFORM_LIB}
 )
