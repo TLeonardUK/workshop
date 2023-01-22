@@ -29,7 +29,6 @@ Once generated the project files are stored in the intermediate folder, at this 
 │   ├── tools/                Contains the tools used to build the engine, cmake scripts and various batch scripts.
 ├── game/                     All game assets and code.
 │   ├── roguelike/            This is a simple example game using the engine.
-├── Tools/                    Various cheat engine tables, bat files and alike used for analysis.
 ```
 
 # Source code structure
