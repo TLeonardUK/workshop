@@ -422,8 +422,10 @@ inline asset_ptr<asset_type>& asset_ptr<asset_type>::operator=(const asset_ptr<a
 
     if (m_state)
     {
-        m_asset_manager.increment_ref(m_state);
+        m_asset_manager->increment_ref(m_state);
     }
+
+    return *this;
 }
 
 template <typename asset_type>

@@ -5,6 +5,7 @@
 #include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/objects/render_view.h"
+#include "workshop.renderer/objects/render_static_mesh.h"
 
 namespace ws {
     
@@ -36,7 +37,7 @@ void render_scene_manager::set_object_transform(render_object_id id, const vecto
     }
     else
     {
-        db_warning(renderer, "set_object_transform called with non-existant view id {%zi}.", id);
+        db_warning(renderer, "set_object_transform called with non-existant id {%zi}.", id);
     }
 }
 
@@ -56,7 +57,7 @@ void render_scene_manager::create_view(render_object_id id, const char* name)
     }
     else
     {
-        db_warning(renderer, "create_view called with a duplicate view id {%zi}.", id);
+        db_warning(renderer, "create_view called with a duplicate id {%zi}.", id);
     }
 }
 
@@ -71,7 +72,7 @@ void render_scene_manager::destroy_view(render_object_id id)
     }
     else
     {
-        db_warning(renderer, "destroy_view called with non-existant view id {%zi}.", id);
+        db_warning(renderer, "destroy_view called with non-existant id {%zi}.", id);
     }
 }
 
@@ -83,7 +84,7 @@ void render_scene_manager::set_view_viewport(render_object_id id, const recti& v
     }
     else
     {
-        db_warning(renderer, "set_view_viewport called with non-existant view id {%zi}.", id);
+        db_warning(renderer, "set_view_viewport called with non-existant id {%zi}.", id);
     }
 }
 
@@ -98,13 +99,65 @@ void render_scene_manager::set_view_projection(render_object_id id, float fov, f
     }
     else
     {
-        db_warning(renderer, "set_view_projection called with non-existant view id {%zi}.", id);
+        db_warning(renderer, "set_view_projection called with non-existant id {%zi}.", id);
     }
 }
 
 std::vector<render_view*> render_scene_manager::get_views()
 {
     return m_active_views;
+}
+
+void render_scene_manager::create_static_mesh(render_object_id id, const char* name)
+{
+    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>();
+    obj->name = name;
+
+    render_static_mesh* obj_ptr = obj.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(obj));
+    if (success)
+    {
+        m_active_static_meshes.push_back(obj_ptr);
+
+        db_verbose(renderer, "Created new static mesh: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "create_static_mesh called with a duplicate id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::destroy_static_mesh(render_object_id id)
+{
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed static mesh: {%zi} %s", id, iter->second->name.c_str());
+
+        m_active_static_meshes.erase(std::find(m_active_static_meshes.begin(), m_active_static_meshes.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_static_mesh called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_static_mesh_model(render_object_id id, const asset_ptr<model>& model)
+{
+    if (render_static_mesh* object = dynamic_cast<render_static_mesh*>(resolve_id(id)))
+    {
+        object->model = model;
+    }
+    else
+    {
+        db_warning(renderer, "set_static_mesh_model called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_static_mesh*> render_scene_manager::get_static_meshes()
+{
+    return m_active_static_meshes;
 }
 
 }; // namespace ws

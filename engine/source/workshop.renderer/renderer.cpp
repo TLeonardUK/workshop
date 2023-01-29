@@ -254,11 +254,7 @@ void renderer::process_render_commands(render_world_state& state)
 
     while (!queue.empty())
     {
-        render_command* command = queue.read_forced<render_command>();
-        if (command)
-        {
-            command->execute(*this);
-        }
+        queue.execute_next();
     }
 
     queue.reset();

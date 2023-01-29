@@ -24,7 +24,7 @@ struct command
 };
 
 // ================================================================================================
-//  The command queue works as a FIFO buffer for command derived structs that contain POD data.
+//  The command queue works as a FIFO buffer for commands.
 // 
 //  The queues will continue to grow until reset is called, allowing
 //  commands to allocate arbitrary blocks of data within the queue and know they will be valid 
@@ -41,26 +41,6 @@ struct command
 // ================================================================================================
 class command_queue
 {
-private:
-
-    // Header prefixed before each command or block of allocated data.
-    struct command_header
-    {
-        size_t type_id;
-        size_t size;
-    };
-
-    // Gets the command type id used for a block of arbitrary data. 
-    // This makes the very-unlike-to-break assumption that no type has this id.
-    static inline constexpr size_t k_data_command_id = std::numeric_limits<size_t>::max();
-
-    // Gets a unique id for each command type.
-    template <typename command_type>
-    static constexpr size_t get_command_id()
-    {
-        return type_id<command_type>();
-    }
-
 public:
     command_queue(size_t capacity);
     ~command_queue();
@@ -74,24 +54,14 @@ public:
     // Gets the size in bytes that are actively in use in the queue.
     size_t size_bytes();
 
-    // Returns true if the next command in the queue is of the given template type.
-    template<typename command_type>
-    bool peek_type();
-
     // Writes a command of the given type into the queue.
-    template<typename command_type>
-    void write(const command_type& command);
+    // Name is used to describe the command. Its lifetime needs to remain until the command is executed
+    // so use a literal, or allocate_copy a string for it.
+    template<typename lambda_type>
+    void queue_command(const char* name, lambda_type&& lambda);
 
-    // Reads the next command from the queue. Returns a nullptr if the next command in the queue
-    // is not of the given type. If the command is not of the expected type it is not consumed, and
-    // read should can be called again with a different type to query multiple types.
-    template<typename command_type>
-    command_type* read();
-
-    // Same as read but will always read the next command as the given type even if the id missmatches.
-    // Be very careful with this, you can easily cause faults if not handling types correctly.
-    template<typename command_type>
-    command_type* read_forced();
+    // Reads the next command from the queue and executes it.
+    void execute_next();
 
     // Allocates a block of data that can be referenced by commands. This can be used for commands that need to store large arrays of data. This data
     // will be deallocated automatically when free is called.
@@ -105,96 +75,62 @@ private:
     // Allocates a raw block of data without a data command header.
     std::span<uint8_t> allocate_raw(size_t size);
 
-    // Skips the next command in the queue.
-    void skip_command();
-
-    // Gets a unique id for each command type.
-    command_header& peek_header();
-
-    // Consumes the given number of bytes of data. Will assert
-    // if more is consumed than is available.
-    void consume(size_t bytes);
-
 private:
 
-    std::atomic_size_t m_write_offset = 0;
-    std::atomic_size_t m_read_offset = 0;
-    std::atomic_size_t m_non_data_command_read = 0;
-    std::atomic_size_t m_non_data_command_written = 0;
+    using execute_function_t = void (*)(void* data);
 
+    struct command_header
+    {
+        execute_function_t execute;
+        const char* name;
+        void* lambda_pointer;
+        command_header* next;
+    };
+
+    std::atomic_size_t m_write_offset = 0;    
     std::vector<uint8_t> m_buffer;
+
+    std::atomic<command_header*> m_command_head;
+    std::atomic<command_header*> m_command_tail;
 
 };
 
-template<typename command_type>
-bool command_queue::peek_type()
+template<typename lambda_type>
+void command_queue::queue_command(const char* name, lambda_type&& lambda)
 {
-    static_assert(std::is_trivially_destructible<command_type>(), "Commands should be trivially destructable, use allocate() if you need dynamically sized memory.");
-    db_assert_message(!empty(), "Attempted to peek an empty command queue.");
+    // Allocate and move lambda into our buffer.
+    std::span<uint8_t> lambda_data = allocate_raw(sizeof(lambda_type));
+    lambda_type* placed_lambda = new(lambda_data.data()) lambda_type(std::move(lambda));
 
-    size_t id = get_command_id<command_type>();
-    return peek_header().type_id == id;
-}
+    // Allocate a new command header.
+    std::span<uint8_t> command_header_data = allocate_raw(sizeof(command_header));
+    command_header* header = new(command_header_data.data()) command_header;
+    header->name = name;
+    header->next = nullptr;
+    header->lambda_pointer = placed_lambda;
+    header->execute = [](void* data) {
+        lambda_type* strong_type = reinterpret_cast<lambda_type*>(data);
+        (*strong_type)();
+        strong_type->~lambda_type();
+    };
 
-template<typename command_type>
-void command_queue::write(const command_type& command)
-{
-    static_assert(std::is_trivially_destructible<command_type>(), "Commands should be trivially destructable, use allocate() if you need dynamically sized memory.");
-    size_t id = get_command_id<command_type>();
-
-    command_header header;
-    header.type_id = id;
-    header.size = sizeof(command_type);
-
-    size_t data_required = sizeof(command_type) + sizeof(command_header);
-    std::span<uint8_t> data = allocate_raw(data_required);
-    memcpy(data.data(), &header, sizeof(command_header));
-    memcpy(data.data() + sizeof(command_header), &command, sizeof(command_type));
-
-    m_non_data_command_written.fetch_add(1);
-}
-
-template<typename command_type>
-command_type* command_queue::read()
-{
-    static_assert(std::is_trivially_destructible<command_type>(), "Commands should be trivially destructable, use allocate() if you need dynamically sized memory.");
-    db_assert_message(!empty(), "Attempted to read from empty command queue.");
-
-    // Skip any data buffers preceding next command.
-    while (!empty() && peek_header().type_id == k_data_command_id)
+    // Commit command header.
+    while (true)
     {
-        skip_command();
+        command_header* last = m_command_tail.load();
+        if (m_command_tail.compare_exchange_strong(last, header))
+        {
+            if (last)
+            {
+                last->next = header;
+            }
+            else
+            {
+                m_command_head = header;
+            }
+            break;
+        }
     }
-
-    if (!peek_type<command_type>())
-    {
-        return nullptr;
-    }
-
-    command_header& header = peek_header();
-    consume(sizeof(command_header) + header.size);
-    m_non_data_command_read.fetch_add(1);
-
-    return reinterpret_cast<command_type*>(reinterpret_cast<uint8_t*>(&header) + sizeof(command_header));
-}
-
-template<typename command_type>
-command_type* command_queue::read_forced()
-{
-    static_assert(std::is_trivially_destructible<command_type>(), "Commands should be trivially destructable, use allocate() if you need dynamically sized memory.");
-    db_assert_message(!empty(), "Attempted to read from empty command queue.");
-
-    // Skip any data buffers preceding next command.
-    while (!empty() && peek_header().type_id == k_data_command_id)
-    {
-        skip_command();
-    }
-
-    command_header& header = peek_header();
-    consume(sizeof(command_header) + header.size);
-    m_non_data_command_read.fetch_add(1);
-
-    return reinterpret_cast<command_type*>(reinterpret_cast<uint8_t*>(&header) + sizeof(command_header));
 }
 
 }; // namespace workshop

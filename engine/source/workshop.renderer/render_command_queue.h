@@ -20,16 +20,6 @@ class model;
 using render_object_id = size_t;
 
 // ================================================================================================
-//  Base struct for all derived render commands. 
-// ================================================================================================
-struct render_command : public command
-{
-    // Called on the render thread when the command queue 
-    // is being processed.
-    virtual void execute(renderer& renderer) = 0;
-};
-
-// ================================================================================================
 //  The render command queue is used by engine code to queue commands that modify
 //  the state of the world being rendered.
 // 

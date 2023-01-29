@@ -18,30 +18,18 @@ command_queue::~command_queue()
 void command_queue::reset()
 {
     m_write_offset = 0;
-    m_read_offset = 0;
-    m_non_data_command_read = 0;
-    m_non_data_command_written = 0;
+    m_command_head.store(nullptr);
+    m_command_tail.store(nullptr);
 }
 
 bool command_queue::empty()
 {
-    return (m_non_data_command_read >= m_non_data_command_written);
+    return (m_command_head.load() == nullptr);
 }
 
 size_t command_queue::size_bytes()
 {
     return m_write_offset.load();
-}
-
-std::span<uint8_t> command_queue::allocate(size_t size)
-{
-    std::span<uint8_t> span = allocate_raw(size + sizeof(command_header));
-    
-    command_header* header = reinterpret_cast<command_header*>(span.data());
-    header->type_id = k_data_command_id;
-    header->size = size;
-
-    return { span.data() + sizeof(command_header), size };
 }
 
 std::span<uint8_t> command_queue::allocate_raw(size_t size)
@@ -57,27 +45,17 @@ std::span<uint8_t> command_queue::allocate_raw(size_t size)
 const char* command_queue::allocate_copy(const char* value)
 {
     size_t required_space = strlen(value) + 1;
-    std::span<uint8_t> buffer = allocate(required_space);
+    std::span<uint8_t> buffer = allocate_raw(required_space);
     memcpy(buffer.data(), value, required_space);
     return reinterpret_cast<const char*>(buffer.data());
 }
 
-void command_queue::skip_command()
+void command_queue::execute_next()
 {
-    command_header* header = reinterpret_cast<command_header*>(m_buffer.data() + m_read_offset.load());
-    consume(sizeof(command_header) + header->size);
-}
-
-command_queue::command_header& command_queue::peek_header()
-{
-    command_header* header = reinterpret_cast<command_header*>(m_buffer.data() + m_read_offset.load());
-    return *header;
-}
-
-void command_queue::consume(size_t bytes)
-{
-    m_read_offset.fetch_add(bytes);
-    db_assert(m_read_offset.load() <= m_write_offset.load());
+    command_header* header = m_command_head.load();
+    db_assert_message(header, "Command queue is empty.");
+    m_command_head.store(header->next);
+    header->execute(header->lambda_pointer);
 }
 
 }; // namespace workshop

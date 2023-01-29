@@ -18,6 +18,7 @@ class renderer;
 class asset_manager;
 class shader;
 class render_view;
+class render_static_mesh;
 
 // ================================================================================================
 //  Handles management of the render scene and the objects within it. 
@@ -62,6 +63,22 @@ public:
     // Gets a list of all active views.
     std::vector<render_view*> get_views();
 
+    // ===========================================================================================
+    //  Static meshes
+    // ===========================================================================================
+
+    // Creates a new static mesh that has the given id. id's are expected to be unique.
+    void create_static_mesh(render_object_id id, const char* name);
+
+    // Removes a static mesh previously created with create_static_mesh.
+    void destroy_static_mesh(render_object_id id);
+
+    // Sets the model a static mesh is rendering.
+    void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
+
+    // Gets a list of all active static meshes.
+    std::vector<render_static_mesh*> get_static_meshes();
+
 private:
 
     // Gets a pointer to a render object from its id, returns nullptr on failure.
@@ -71,6 +88,7 @@ private:
 
     std::unordered_map<render_object_id, std::unique_ptr<render_object>> m_objects;
     std::vector<render_view*> m_active_views;
+    std::vector<render_static_mesh*> m_active_static_meshes;
 
 };
 
