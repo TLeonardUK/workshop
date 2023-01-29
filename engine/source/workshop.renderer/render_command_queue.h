@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/containers/command_queue.h"
+#include "workshop.assets/asset_manager.h"
 
 #include "workshop.core/math/rect.h"
 #include "workshop.core/math/vector3.h"
@@ -13,6 +14,7 @@
 namespace ws {
 
 class renderer;
+class model;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
 using render_object_id = size_t;
@@ -74,17 +76,13 @@ public:
     // ===========================================================================================
 
     // Creates a non-animated static mesh that will be rendered in the scene.
-    //render_object_id create_static_mesh(const char* name);
+    render_object_id create_static_mesh(const char* name);
 
     // Destroys a static mesh previously created with create_static_mesh.
-    //void destroy_static_mesh(render_object_id id);
+    void destroy_static_mesh(render_object_id id);
 
     // Set the model that will be rendered on the static mesh.
-    //void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
-
-    // Sets the material slot of the meshes model to the given material. Overwrites
-    // the original material loaded with the model.
-    //void set_static_mesh_material(id, slot, mat);
+    void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
 
 private:
     renderer& m_renderer;

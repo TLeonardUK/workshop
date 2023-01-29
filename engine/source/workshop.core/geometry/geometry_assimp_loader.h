@@ -7,6 +7,9 @@
 #include <memory>
 #include <vector>
 
+struct aiScene;
+struct aiNode;
+
 namespace ws {
 
 class geometry;
@@ -19,7 +22,10 @@ class geometry_assimp_loader
 public:
 
     // Attempts to load geometry in OBJ format from an in-memory buffer.
-    static std::unique_ptr<geometry> load(const std::vector<char>& buffer);
+    static std::unique_ptr<geometry> load(const std::vector<char>& buffer, const char* path_hint);
+
+    // Returns true if the extension is one that this loader supports.
+    static bool supports_extension(const char* extension);
 
 };
 

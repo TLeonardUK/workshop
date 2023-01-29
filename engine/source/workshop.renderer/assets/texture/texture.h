@@ -29,6 +29,8 @@ enum class texture_usage
 {
     color,          // 3/4 channel color map
     normal,         // 2 channel (RG) normal map
+    roughness,      // 1 channel (R) mask
+    metallic,       // 1 channel (R) mask
     mask,           // 1 channel (R) mask
 
     COUNT
@@ -37,6 +39,8 @@ enum class texture_usage
 inline static const char* texture_usage_strings[static_cast<int>(texture_usage::COUNT)] = {
     "color",
     "normal",
+    "roughness",
+    "metallic",
     "mask"
 };
 

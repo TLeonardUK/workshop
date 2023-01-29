@@ -1,0 +1,14 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: opaque 
+
+textures:
+  albedo_texture:     data:models/test_scenes/sponza/textures/col_brickwall_01_BaseColor.yaml
+  metallic_texture:   data:models/test_scenes/sponza/textures/col_brickwall_01_Metalness.yaml
+  normal_texture:     data:models/test_scenes/sponza/textures/col_brickwall_01_Normal.yaml
+  roughness_texture:  data:models/test_scenes/sponza/textures/col_brickwall_01_Roughness.yaml

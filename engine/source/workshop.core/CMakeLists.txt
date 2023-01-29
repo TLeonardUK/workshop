@@ -123,5 +123,6 @@ target_link_libraries(${PROJECT_NAME}
     lodepng
     bc7enc
     assimp
+    zlib
     ${PLATFORM_LIB}
 )

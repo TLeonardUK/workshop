@@ -1,0 +1,13 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: texture
+version: 1
+
+group: world
+
+usage: roughness
+
+faces:
+    - data:models/test_scenes/sponza/textures/arch_stone_wall_01_Roughnessarch_stone_wall_01_Metalness.png

@@ -11,6 +11,7 @@
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.renderer/assets/texture/texture.h"
 #include "workshop.renderer/assets/material/material.h"
+#include "workshop.renderer/assets/model/model.h"
 
 namespace ws {
 
@@ -27,10 +28,10 @@ void render_system_test::register_init(init_list& list)
 void render_system_test::create_graph(render_graph& graph)
 {
     m_test_texture = m_asset_manager.request_asset<texture>("data:tests/test_texture.yaml", 0);
-    m_test_texture.wait_for_load();
-
     asset_ptr<material> test_material = m_asset_manager.request_asset<material>("data:tests/test_material.yaml", 0);
-    test_material.wait_for_load();
+
+    m_asset_manager.drain_queue();
+
 
     ri_sampler::create_params sampler_params;
     m_test_sampler = m_renderer.get_render_interface().create_sampler(sampler_params, "test sampler");

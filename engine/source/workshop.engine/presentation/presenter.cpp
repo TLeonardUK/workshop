@@ -11,6 +11,8 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_world_state.h"
 
+#include "workshop.renderer/assets/model/model.h"
+
 namespace ws {
 
 presenter::~presenter() = default;
@@ -32,16 +34,18 @@ void presenter::register_init(init_list& list)
 result<void> presenter::create_resources()
 {
     auto& cmd_queue = m_owner.get_renderer().get_command_queue();
+    auto& ass_manager = m_owner.get_asset_manager();
 
     render_object_id view_id = cmd_queue.create_view("Main View");
     cmd_queue.set_view_viewport(view_id, recti(0, 0, m_owner.get_main_window().get_width(), m_owner.get_main_window().get_height()));
     cmd_queue.set_view_projection(view_id, 90.0f, 1.33f, 0.1f, 10000.0f);
     cmd_queue.set_object_transform(view_id, vector3::zero, quat::identity, vector3::one);
 
-//    render_object_id object_id = cmd_queue.create_static_mesh("Main Object");
-//    cmd_queue.set_static_mesh(object_id, mesh);
-//    cmd_queue.set_static_mesh_material(object_id, material);
-//    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 10.0f), quat::identity, vector3::one);
+    asset_ptr<model> test_model = ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0);
+
+    render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
+    cmd_queue.set_static_mesh_model(object_id, test_model);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 10.0f), quat::identity, vector3::one);
 
 //    cmd_queue.set_object_attachment(view_id, other);
 

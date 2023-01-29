@@ -8,6 +8,7 @@
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
+#include "workshop.core/geometry/geometry.h"
 
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_shader_compiler.h"
@@ -27,9 +28,30 @@ constexpr size_t k_asset_compiled_version = 2;
 
 };
 
-model_loader::model_loader(ri_interface& instance, renderer& renderer)
+template<>
+inline void stream_serialize(stream& out, model::material_info& mat)
+{
+    stream_serialize(out, mat.name);
+    stream_serialize(out, mat.file);
+}
+
+template<>
+inline void stream_serialize(stream& out, geometry& geo)
+{
+    std::vector<geometry_vertex_stream>& streams = geo.get_vertex_streams();
+
+    stream_serialize_list(out, streams, [&out](geometry_vertex_stream& stream) {
+        stream_serialize(out, stream.name);
+        stream_serialize_enum(out, stream.type);
+        stream_serialize(out, stream.element_size);
+        stream_serialize_list(out, stream.data);
+    });
+}
+
+model_loader::model_loader(ri_interface& instance, renderer& renderer, asset_manager& ass_manager)
     : m_ri_interface(instance)
     , m_renderer(renderer)
+    , m_asset_manager(ass_manager)
 {
 }
 
@@ -45,7 +67,7 @@ asset* model_loader::get_default_asset()
 
 asset* model_loader::load(const char* path)
 {
-    model* asset = new model(m_ri_interface, m_renderer);
+    model* asset = new model(m_ri_interface, m_renderer, m_asset_manager);
     if (!serialize(path, *asset, false))
     {
         delete asset;
@@ -85,7 +107,70 @@ bool model_loader::serialize(const char* path, model& asset, bool isSaving)
         return false;
     }
 
-    // TODO: Serialize anything valid.
+    if (!isSaving)
+    {
+        asset.geometry = std::make_unique<geometry>();
+    }
+
+    stream_serialize_list(*stream, asset.materials);
+    stream_serialize(*stream, *asset.geometry);
+
+    return true;
+}
+
+bool model_loader::parse_properties(const char* path, YAML::Node& node, model& asset)
+{
+    std::string source;
+
+    if (!parse_property(path, "source", node["source"], source, true))
+    {
+        return false;
+    }
+
+    asset.geometry = geometry::load(source.c_str());
+    if (!asset.geometry)
+    {
+        db_error(asset, "[%s] failed to load geometry from: %s", path, source.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool model_loader::parse_materials(const char* path, YAML::Node& node, model& asset)
+{
+    YAML::Node this_node = node["materials"];
+
+    if (!this_node.IsDefined())
+    {
+        return true;
+    }
+
+    if (this_node.Type() != YAML::NodeType::Map)
+    {
+        db_error(asset, "[%s] materials node is invalid data type.", path);
+        return false;
+    }
+
+    for (auto iter = this_node.begin(); iter != this_node.end(); iter++)
+    {
+        if (!iter->second.IsScalar())
+        {
+            db_error(asset, "[%s] material value was not scalar value.", path);
+            return false;
+        }
+        else
+        {
+            std::string name = iter->first.as<std::string>();
+            std::string value = iter->second.as<std::string>();
+
+            asset.header.add_dependency(value.c_str());
+
+            model::material_info& mat = asset.materials.emplace_back();
+            mat.name = name;
+            mat.file = value;            
+        }
+    }
 
     return true;
 }
@@ -99,23 +184,29 @@ bool model_loader::parse_file(const char* path, model& asset)
     {
         return false;
     }
-    
-    // TODO: Parse
+
+    if (!parse_properties(path, node, asset))
+    {
+        return false;
+    }
+
+    if (!parse_materials(path, node, asset))
+    {
+        return false;
+    }
 
     return true;
 }
 
 bool model_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config)
 {
-    model asset(m_ri_interface, m_renderer);
+    model asset(m_ri_interface, m_renderer, m_asset_manager);
 
     // Parse the source YAML file that defines the shader.
     if (!parse_file(input_path, asset))
     {
         return false;
     }
-
-    // TODO: Do post processing.
 
     // Construct the asset header.
     asset_cache_key compiled_key;

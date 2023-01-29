@@ -68,6 +68,8 @@ asset_manager::asset_manager(platform_type asset_platform, config_type asset_con
     : m_asset_platform(asset_platform)
     , m_asset_config(asset_config)
 {
+    m_max_concurrent_ops = task_scheduler::get().get_worker_count(task_queue::standard);
+
     m_load_thread = std::thread([this]() {
 
         db_set_thread_name("Asset Manager Coordinator");    
@@ -160,7 +162,7 @@ void asset_manager::drain_queue()
 {
     std::unique_lock lock(m_states_mutex);
 
-    while (m_pending_queue.size() > 0)
+    while (m_pending_queue.size() > 0 || m_outstanding_ops.load() > 0)
     {
         m_states_convar.wait(lock);
     }
@@ -331,7 +333,7 @@ void asset_manager::do_work()
 
     while (!m_shutting_down)
     {
-        if (m_outstanding_ops.load() < k_max_concurrent_ops)
+        if (m_outstanding_ops.load() < m_max_concurrent_ops)
         {
             if (m_pending_queue.size() > 0)
             {
@@ -392,6 +394,8 @@ void asset_manager::begin_load(asset_state* state)
     db_assert(state->loading_state == asset_loading_state::unloaded)
     set_load_state(state, asset_loading_state::loading);
 
+    m_outstanding_ops.fetch_add(1);
+
     async("Load Asset", task_queue::loading, [this, state]() {
     
         do_load(state);
@@ -441,6 +445,7 @@ void asset_manager::begin_load(asset_state* state)
             // has changed during this process.
             process_asset(state);
 
+            m_outstanding_ops.fetch_sub(1);
             m_states_convar.notify_all();
         }
     
@@ -486,6 +491,8 @@ void asset_manager::begin_unload(asset_state* state)
     db_assert(state->loading_state == asset_loading_state::loaded);
     set_load_state(state, asset_loading_state::unloading);
 
+    m_outstanding_ops.fetch_add(1);
+
     async("Unload Asset", task_queue::loading, [this, state]() {
     
         do_unload(state);
@@ -523,6 +530,7 @@ void asset_manager::begin_unload(asset_state* state)
                 process_asset(state);
             }
 
+            m_outstanding_ops.fetch_sub(1);
             m_states_convar.notify_all();
         }
     

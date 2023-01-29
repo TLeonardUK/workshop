@@ -140,7 +140,7 @@ result<void> renderer::destroy_resources()
 result<void> renderer::register_asset_loaders()
 {
     m_asset_manager.register_loader(std::make_unique<shader_loader>(get_render_interface(), *this));
-    m_asset_manager.register_loader(std::make_unique<model_loader>(get_render_interface(), *this));
+    m_asset_manager.register_loader(std::make_unique<model_loader>(get_render_interface(), *this, m_asset_manager));
     m_asset_manager.register_loader(std::make_unique<material_loader>(get_render_interface(), *this, m_asset_manager));
     m_asset_manager.register_loader(std::make_unique<texture_loader>(get_render_interface(), *this));
 

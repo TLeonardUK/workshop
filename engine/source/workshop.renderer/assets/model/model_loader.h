@@ -14,6 +14,7 @@ class model;
 class render_interface;
 class ri_interface;
 class renderer;
+class asset_manager;
 
 // ================================================================================================
 //  Loads model files.
@@ -24,7 +25,7 @@ class renderer;
 class model_loader : public asset_loader
 {
 public:
-    model_loader(ri_interface& instance, renderer& renderer);
+    model_loader(ri_interface& instance, renderer& renderer, asset_manager& ass_manager);
 
     virtual const std::type_info& get_type() override;
     virtual asset* get_default_asset() override;
@@ -38,11 +39,14 @@ private:
 
     bool save(const char* path, model& asset);
 
+    bool parse_properties(const char* path, YAML::Node& node, model& asset);
+    bool parse_materials(const char* path, YAML::Node& node, model& asset);
     bool parse_file(const char* path, model& asset);
 
 private:
     ri_interface& m_ri_interface;
     renderer& m_renderer;
+    asset_manager& m_asset_manager;
 
 };
 

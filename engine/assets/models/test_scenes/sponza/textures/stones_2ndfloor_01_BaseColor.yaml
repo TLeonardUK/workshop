@@ -1,0 +1,13 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: texture
+version: 1
+
+group: world
+
+usage: color
+
+faces:
+    - data:models/test_scenes/sponza/textures/stones_2ndfloor_01_BaseColor.png

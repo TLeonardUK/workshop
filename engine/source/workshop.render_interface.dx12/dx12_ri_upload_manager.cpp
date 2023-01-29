@@ -20,31 +20,24 @@ dx12_ri_upload_manager::dx12_ri_upload_manager(dx12_render_interface& renderer)
 
 dx12_ri_upload_manager::~dx12_ri_upload_manager()
 {
-    if (m_heap_handle != nullptr)
+    for (auto& state : m_heaps)
     {
         D3D12_RANGE range;
         range.Begin = 0;
         range.End = k_heap_size;
-        m_heap_handle->Unmap(0, &range);
+        state->handle->Unmap(0, &range);
 
-        CheckedRelease(m_heap_handle);
+        CheckedRelease(state->handle);
     }
+    m_heaps.clear();
 
-    m_heap_handle = nullptr;
     m_graphics_queue_fence = nullptr;
     m_copy_queue_fence = nullptr;
 }
 
-result<void> dx12_ri_upload_manager::create_resources()
+void dx12_ri_upload_manager::allocate_new_heap()
 {
-    m_graphics_queue_fence = m_renderer.create_fence("Upload Manager - Graphics Fence");
-    m_copy_queue_fence = m_renderer.create_fence("Upload Manager - Copy Fence");
-    if (!m_graphics_queue_fence || !m_copy_queue_fence)
-    {
-        return false;
-    }
-
-    // Create the upload heap we will store all our cpu data in before its copied to the gpu.
+    std::unique_ptr<heap_state> state = std::make_unique<heap_state>();
 
     D3D12_HEAP_PROPERTIES heap_properties;
     heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -72,26 +65,38 @@ result<void> dx12_ri_upload_manager::create_resources()
         &desc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&m_heap_handle)       
+        IID_PPV_ARGS(&state->handle)
     );
     if (FAILED(hr))
     {
-        db_error(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
-        return false;
+        db_fatal(render_interface, "CreateCommittedResource failed with error 0x%08x when creating upload heap.", hr);
     }
 
     D3D12_RANGE range;
     range.Begin = 0;
     range.End = k_heap_size;
 
-    hr = m_heap_handle->Map(0, &range, (void**)&m_upload_heap_ptr);
+    hr = state->handle->Map(0, &range, (void**)&state->start_ptr);
     if (FAILED(hr))
     {
-        db_error(render_interface, "Mapping upload heap failed with error 0x%08x.", hr);
+        db_fatal(render_interface, "Mapping upload heap failed with error 0x%08x.", hr);
+    }
+
+    state->memory_heap = std::make_unique<memory_heap>(k_heap_size);
+
+    m_heaps.push_back(std::move(state));
+}
+
+result<void> dx12_ri_upload_manager::create_resources()
+{
+    m_graphics_queue_fence = m_renderer.create_fence("Upload Manager - Graphics Fence");
+    m_copy_queue_fence = m_renderer.create_fence("Upload Manager - Copy Fence");
+    if (!m_graphics_queue_fence || !m_copy_queue_fence)
+    {
         return false;
     }
 
-    m_upload_heap = std::make_unique<memory_heap>(k_heap_size);
+    allocate_new_heap();
 
     return true;
 }
@@ -181,7 +186,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
             size_t pitch = math::round_up_multiple((size_t)footprint.Footprint.RowPitch, (size_t)D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
             size_t depth = footprint.Footprint.Depth;
 
-            uint8_t* destination = (m_upload_heap_ptr + upload.heap_offset) + footprint.Offset;
+            uint8_t* destination = (upload.heap->start_ptr + upload.heap_offset) + footprint.Offset;
 
             for (size_t slice_index = 0; slice_index < depth; slice_index++)
             {
@@ -223,7 +228,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
         dest.SubresourceIndex = i;
 
         D3D12_TEXTURE_COPY_LOCATION src = {};
-        src.pResource = m_heap_handle.Get();
+        src.pResource = upload.heap->handle.Get();
         src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
         src.PlacedFootprint = footprints[i];
         src.PlacedFootprint.Offset += upload.heap_offset;
@@ -251,14 +256,14 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
     upload_state upload = allocate_upload(data.size(), source.get_element_size());
     upload.buffer = &source;
 
-    memcpy(m_upload_heap_ptr + upload.heap_offset, data.data(), data.size());
+    memcpy(upload.heap->start_ptr + upload.heap_offset, data.data(), data.size());
 
     dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
     list.open();
     list.get_dx_command_list()->CopyBufferRegion(
         source.get_resource(), 
         0, 
-        m_heap_handle.Get(), 
+        upload.heap->handle.Get(), 
         upload.heap_offset, 
         data.size()
     );
@@ -276,9 +281,25 @@ dx12_ri_upload_manager::upload_state dx12_ri_upload_manager::allocate_upload(siz
 
     upload_state state;
 
-    if (!m_upload_heap->alloc(size, alignment, state.heap_offset))
+    while (true)
     {
-        db_fatal(renderer, "Upload heap has run out of space, consider increasing the size or reducing the amount uploaded.");
+        for (auto& heap : m_heaps)
+        {
+            if (heap->memory_heap->alloc(size, alignment, state.heap_offset))
+            {
+                state.heap = heap.get();
+                break;
+            }
+        }
+
+        if (!state.heap)
+        {
+            allocate_new_heap();
+        }
+        else
+        {
+            break;
+        }
     }
 
     return state;
@@ -315,12 +336,37 @@ void dx12_ri_upload_manager::free_uploads()
     {
         if (iter->queued_frame_index <= free_frame_index)
         {
-            m_upload_heap->free(iter->heap_offset);
+            iter->heap->memory_heap->free(iter->heap_offset);
             iter = m_pending_free.erase(iter);
         }
         else
         {
             iter++;
+        }
+    }
+
+    // Nuke any heaps (apart from first) that haven't contained uploads in the full frame depth.
+    if (m_heaps.size() > 1)
+    {
+        for (size_t i = 1; i < m_heaps.size(); /* empty */)
+        {
+            heap_state* heap = m_heaps[i].get();
+
+            if (heap->memory_heap->empty())
+            {
+                D3D12_RANGE range;
+                range.Begin = 0;
+                range.End = k_heap_size;
+                heap->handle->Unmap(0, &range);
+
+                CheckedRelease(heap->handle);
+
+                m_heaps.erase(m_heaps.begin() + i);
+            }
+            else
+            {
+                i++;
+            }
         }
     }
 }

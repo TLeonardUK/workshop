@@ -317,7 +317,9 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
             {
                 asset.format = pixmap_format::BC5;
             }
-            else if (asset.usage == texture_usage::mask)
+            else if (asset.usage == texture_usage::roughness ||
+                     asset.usage == texture_usage::metallic ||
+                     asset.usage == texture_usage::mask)
             {
                 asset.format = pixmap_format::BC4;
             }

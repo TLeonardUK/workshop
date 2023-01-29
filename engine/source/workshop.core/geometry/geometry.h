@@ -14,13 +14,49 @@
 #include "workshop.core/math/matrix4.h"
 
 #include <vector>
+#include <span>
 
 namespace ws {
 
-// Represents the type of data of each element that makes up a geometry vertex stream.
-enum class geometry_vertex_stream_type
+//  Data types that can exist inside a geometry stream.
+enum class geometry_data_type
 {
+	t_bool,
+	t_int,
+	t_uint,
+	t_half,
+	t_float,
+	t_double,
 
+	t_bool2,
+	t_int2,
+	t_uint2,
+	t_half2,
+	t_float2,
+	t_double2,
+
+	t_bool3,
+	t_int3,
+	t_uint3,
+	t_half3,
+	t_float3,
+	t_double3,
+
+	t_bool4,
+	t_int4,
+	t_uint4,
+	t_half4,
+	t_float4,
+	t_double4,
+
+	t_float2x2,
+	t_double2x2,
+	t_float3x3,
+	t_double3x3,
+	t_float4x4,
+	t_double4x4,
+
+	COUNT
 };
 
 // Represents an individual vertex stream held in a geometry instance.
@@ -29,8 +65,8 @@ struct geometry_vertex_stream
 	// Name of this stream.
 	std::string name;
 
-	// Type of data held in this stream.
-	geometry_vertex_stream_type type;
+	// Data type of elements stored in this stream.
+	geometry_data_type type;
 
 	// How large an individual element is in the stream. This can be derived from type.
 	size_t element_size;
@@ -107,14 +143,17 @@ public:
     size_t get_vertex_count();
 
 	// Gets all the vertex streams in this geometry.
-	const std::vector<geometry_vertex_stream>& get_vertex_streams();
+	std::vector<geometry_vertex_stream>& get_vertex_streams();
 
 	// Gets all the materials in this geometry.
-	const std::vector<geometry_material>& get_materials();
+	std::vector<geometry_material>& get_materials();
 
     // Attempts to load the geometry data from the given file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
     static std::unique_ptr<geometry> load(const char* path);
+
+private:
+	void add_vertex_stream(const char* field_name, std::span<uint8_t> data, size_t element_size, geometry_data_type type);
 
 private:
 	std::vector<geometry_vertex_stream> m_streams;

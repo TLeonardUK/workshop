@@ -37,6 +37,9 @@ public:
     // Frees a block in the heap previously allocated with alloc.
     void free(size_t offset);
 
+    // Returns true if there are no allocations in the heap.
+    bool empty();
+
 private:
     bool get_block_index(size_t offset, size_t& index);
 

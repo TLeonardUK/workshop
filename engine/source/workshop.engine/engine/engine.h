@@ -56,6 +56,9 @@ public:
     // Gets the renderer.
     renderer& get_renderer();
 
+    // Gets the asset manager.
+    asset_manager& get_asset_manager();
+
     // Gets the windowing manager.
     windowing& get_windowing();
 

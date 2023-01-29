@@ -295,7 +295,7 @@ private:
     std::vector<asset_state*> m_states;
     std::vector<asset_state*> m_pending_queue;
 
-    constexpr inline static const size_t k_max_concurrent_ops = 5;
+    size_t m_max_concurrent_ops = 32;
 
     std::atomic_size_t m_outstanding_ops;
 

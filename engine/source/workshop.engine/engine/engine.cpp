@@ -102,6 +102,11 @@ renderer& engine::get_renderer()
     return *m_renderer.get();
 }
 
+asset_manager& engine::get_asset_manager()
+{
+    return *m_asset_manager.get();
+}
+
 windowing& engine::get_windowing()
 {
     return *m_windowing.get();
@@ -167,7 +172,7 @@ result<void> engine::create_task_scheduler(init_list& list)
     // If you add new task queues, set up and appropriate weight here.
     static_assert(static_cast<int>(task_queue::COUNT) == 2);
     init_state.queue_weights[static_cast<int>(task_queue::standard)] = 1.0f;
-    init_state.queue_weights[static_cast<int>(task_queue::loading)] = 0.5f;
+    init_state.queue_weights[static_cast<int>(task_queue::loading)] = 0.75f; 
 
     db_log(engine, "Creating task scheduler with %zi workers.", init_state.worker_count);
 

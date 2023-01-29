@@ -8,6 +8,7 @@
 #include "workshop.core/containers/string.h"
 
 #include "workshop.render_interface/ri_types.h"
+#include "workshop.render_interface/ri_sampler.h"
 
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/assets/texture/texture.h"

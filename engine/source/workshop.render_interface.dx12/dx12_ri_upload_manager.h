@@ -37,10 +37,20 @@ public:
     void new_frame(size_t index);
 
 private:
+    struct heap_state
+    {
+        Microsoft::WRL::ComPtr<ID3D12Resource> handle = nullptr;
+        uint8_t* start_ptr = nullptr;
+
+        std::unique_ptr<memory_heap> memory_heap;
+    };
+
     struct upload_state
     {
         size_t queued_frame_index;
         size_t heap_offset;
+
+        heap_state* heap = nullptr;
 
         dx12_ri_texture* texture = nullptr;
         dx12_ri_buffer* buffer = nullptr;
@@ -53,6 +63,8 @@ private:
     static constexpr size_t k_heap_size = 128 * 1024 * 1024;
 
 private:
+    void allocate_new_heap();
+    
     upload_state allocate_upload(size_t size, size_t alignment);
     void queue_upload(upload_state state);
 
@@ -68,12 +80,13 @@ private:
     std::unique_ptr<ri_fence> m_graphics_queue_fence;
     std::unique_ptr<ri_fence> m_copy_queue_fence;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_heap_handle = nullptr;
-    uint8_t* m_upload_heap_ptr = nullptr;
-
     size_t m_frame_index = 0;
 
-    std::unique_ptr<memory_heap> m_upload_heap;
+    //Microsoft::WRL::ComPtr<ID3D12Resource> m_heap_handle = nullptr;
+    //uint8_t* m_upload_heap_ptr = nullptr;
+    //std::unique_ptr<memory_heap> m_upload_heap;
+
+    std::vector<std::unique_ptr<heap_state>> m_heaps;
 
 };
 

@@ -202,6 +202,19 @@ inline result<input_type> from_string(const std::string& input)
 //  Common to/from string overloads.
 // ================================================================================================
 
+// string 
+template <>
+inline std::string to_string(const std::string& input)
+{
+    return input;
+}
+
+template <>
+inline result<std::string> from_string(const std::string& input)
+{
+    return input;
+}
+
 // bool
 template <>
 inline std::string to_string(const bool& input)

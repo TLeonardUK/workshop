@@ -63,6 +63,11 @@ bool memory_heap::get_block_index(size_t offset, size_t& index)
     return false;
 }
 
+bool memory_heap::empty()
+{
+    return (m_blocks.size() == 1 && !m_blocks[0].used);
+}
+
 void memory_heap::coalesce(size_t index)
 {
     // Compact current block into previous block.

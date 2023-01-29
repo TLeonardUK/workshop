@@ -125,4 +125,21 @@ void render_command_queue::set_view_projection(render_object_id id, float fov, f
     write(cmd);
 }
 
+// ================================================================================================
+//  Static meshes
+// ================================================================================================
+
+render_object_id render_command_queue::create_static_mesh(const char* name)
+{
+    return 0;
+}
+
+void render_command_queue::destroy_static_mesh(render_object_id id)
+{
+}
+
+void render_command_queue::set_static_mesh_model(render_object_id id, const asset_ptr<model>& model)
+{
+}
+
 }; // namespace ws

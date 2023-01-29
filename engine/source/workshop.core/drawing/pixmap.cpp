@@ -68,8 +68,8 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC1,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC3,
-        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC4,
-        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC5,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC4,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC5,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC7,
     };
 

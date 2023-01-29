@@ -6,6 +6,8 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/disk_stream.h"
 
+#include "workshop.core/containers/string.h"
+
 #include <filesystem>
 
 namespace ws {
@@ -99,14 +101,16 @@ void virtual_file_system_redirect_handler::alias(const char* virtual_path, const
 {
     std::unique_lock lock(m_alias_mutex);
 
-    m_aliases[virtual_path] = target_path;
+    m_aliases[string_lower(virtual_path)] = target_path;
 }
 
 bool virtual_file_system_redirect_handler::get_target_path(const char* virtual_path, std::string& target_path)
 {
     std::shared_lock lock(m_alias_mutex);
 
-    if (auto iter = m_aliases.find(virtual_path); iter != m_aliases.end())
+    std::string lower = string_lower(virtual_path);
+
+    if (auto iter = m_aliases.find(lower.c_str()); iter != m_aliases.end())
     {
         target_path = iter->second;
         return true; 
