@@ -10,6 +10,7 @@
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
 #include <span>
+#include <functional>
 
 namespace ws {
 
@@ -37,6 +38,8 @@ public:
     void new_frame(size_t index);
 
 private:
+    using build_command_list_callback_t = std::function<void(dx12_ri_command_list& list)>;
+
     struct heap_state
     {
         Microsoft::WRL::ComPtr<ID3D12Resource> handle = nullptr;
@@ -55,7 +58,8 @@ private:
         dx12_ri_texture* texture = nullptr;
         dx12_ri_buffer* buffer = nullptr;
 
-        dx12_ri_command_list* list = nullptr;
+        build_command_list_callback_t build_command_list = nullptr;
+
     };
 
     // Size of the heap, this should be able to store the maximum

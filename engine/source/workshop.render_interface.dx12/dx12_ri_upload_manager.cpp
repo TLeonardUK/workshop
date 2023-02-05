@@ -217,35 +217,32 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     }
 
     // Generate copy command list.
-    dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
-    list.open();
-
-    for (size_t i = 0; i < sub_resource_count; i++)
+    upload.build_command_list = [sub_resource_count, &source, footprints, heap_ptr=upload.heap->handle.Get(), heap_offset=upload.heap_offset](dx12_ri_command_list& list)
     {
-        D3D12_TEXTURE_COPY_LOCATION dest = {};
-        dest.pResource = source.get_resource();
-        dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-        dest.SubresourceIndex = i;
+        for (size_t i = 0; i < sub_resource_count; i++)
+        {
+            D3D12_TEXTURE_COPY_LOCATION dest = {};
+            dest.pResource = source.get_resource();
+            dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+            dest.SubresourceIndex = i;
 
-        D3D12_TEXTURE_COPY_LOCATION src = {};
-        src.pResource = upload.heap->handle.Get();
-        src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        src.PlacedFootprint = footprints[i];
-        src.PlacedFootprint.Offset += upload.heap_offset;
+            D3D12_TEXTURE_COPY_LOCATION src = {};
+            src.pResource = heap_ptr;
+            src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+            src.PlacedFootprint = footprints[i];
+            src.PlacedFootprint.Offset += heap_offset;
 
-        list.get_dx_command_list()->CopyTextureRegion(
-            &dest,
-            0,
-            0,
-            0,
-            &src,
-            nullptr
-        );
-    }
-
-    list.close();
-
-    upload.list = &list;
+            list.get_dx_command_list()->CopyTextureRegion(
+                &dest,
+                0,
+                0,
+                0,
+                &src,
+                nullptr
+            );
+        }
+    };
+    
     queue_upload(upload);
 }
 
@@ -258,18 +255,17 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
 
     memcpy(upload.heap->start_ptr + upload.heap_offset, data.data(), data.size());
 
-    dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
-    list.open();
-    list.get_dx_command_list()->CopyBufferRegion(
-        source.get_resource(), 
-        0, 
-        upload.heap->handle.Get(), 
-        upload.heap_offset, 
-        data.size()
-    );
-    list.close();
+    upload.build_command_list = [source_ptr = source.get_resource(), heap_ptr = upload.heap->handle.Get(), heap_offset = upload.heap_offset, size = data.size()](dx12_ri_command_list& list)
+    {
+        list.get_dx_command_list()->CopyBufferRegion(
+            source_ptr, 
+            0, 
+            heap_ptr, 
+            heap_offset, 
+            size
+        );
+    };
 
-    upload.list = &list;
     queue_upload(upload);
 }
 
@@ -454,11 +450,15 @@ void dx12_ri_upload_manager::perform_uploads()
             copy_queue.execute(transition_list);
         }
 
-        // Perform actual copies.
+        // Perform the actual copies.
+        dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(copy_queue.alloc_command_list());
+        list.open();
         for (upload_state& state : uploads)
         {
-            copy_queue.execute(*state.list);
+            state.build_command_list(list);
         }
+        list.close();
+        copy_queue.execute(list);
 
         // Transition back from copy destination to common.
         {
