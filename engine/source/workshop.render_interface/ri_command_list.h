@@ -23,6 +23,7 @@ class color;
 class ri_command_list
 {
 public:
+    virtual ~ri_command_list() {}
 
     // Called before recording command to this list.
     virtual void open() = 0;
@@ -37,6 +38,9 @@ public:
 
     // Clears a render target to a specific color.
     virtual void clear(ri_texture& resource, const color& destination) = 0;
+
+    // Clears a depth target to a specific color.
+    virtual void clear_depth(ri_texture& resource, float depth, size_t stencil) = 0;
 
     // Changes the rendering pipeline state.
     virtual void set_pipeline(ri_pipeline& pipeline) = 0;

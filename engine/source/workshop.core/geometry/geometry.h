@@ -148,6 +148,9 @@ public:
 	// Gets all the materials in this geometry.
 	std::vector<geometry_material>& get_materials();
 
+	// Attempts to get a material with the given name.
+	geometry_material* get_material(const char* name);
+
     // Attempts to load the geometry data from the given file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
     static std::unique_ptr<geometry> load(const char* path);

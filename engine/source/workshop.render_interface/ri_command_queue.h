@@ -18,6 +18,7 @@ class ri_command_list;
 class ri_command_queue
 {
 public:
+    virtual ~ri_command_queue() {}
 
     // Allocates a new command list which can be submitted to this queue.
     // This list is valid for the current frame.

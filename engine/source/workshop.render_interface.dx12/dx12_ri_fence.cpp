@@ -20,7 +20,7 @@ dx12_ri_fence::~dx12_ri_fence()
 {
     m_renderer.defer_delete([fence = m_fence, fence_event = m_fence_event]() 
     {
-        CheckedRelease(fence);
+        //CheckedRelease(fence);
         CheckedCloseHandle(fence_event);
     });
 }

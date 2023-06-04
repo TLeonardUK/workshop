@@ -21,14 +21,12 @@ SET(SOURCES
     "render_output.cpp"
     "render_pass.h"
     "render_pass.cpp"
-    "render_pass_graphics.h"
-    "render_pass_graphics.cpp"
-    "render_pass_fullscreen.h"
-    "render_pass_fullscreen.cpp"
     "render_system.h"
     "render_system.cpp"
     "render_world_state.h"
     "render_world_state.cpp"    
+    "render_batch_manager.h"
+    "render_batch_manager.cpp"    
     
     "render_effect_manager.h"
     "render_effect_manager.cpp"    
@@ -42,9 +40,18 @@ SET(SOURCES
     
     "render_object.h"
     "render_object.cpp"
-        
+            
+    "passes/render_pass_graphics.h"
+    "passes/render_pass_graphics.cpp"
+    "passes/render_pass_fullscreen.h"
+    "passes/render_pass_fullscreen.cpp"
+    "passes/render_pass_geometry.h"
+    "passes/render_pass_geometry.cpp"
+
     "objects/render_view.h"
+    "objects/render_view.cpp"
     "objects/render_static_mesh.h"
+    "objects/render_static_mesh.cpp"
     #"objects/render_skinned_mesh.h"
     #"objects/render_dynamic_mesh.h"
 

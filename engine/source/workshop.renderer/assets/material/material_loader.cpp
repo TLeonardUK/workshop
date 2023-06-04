@@ -15,6 +15,8 @@
 
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 namespace {
@@ -24,7 +26,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 2;
+constexpr size_t k_asset_compiled_version = 5;
 
 };
 

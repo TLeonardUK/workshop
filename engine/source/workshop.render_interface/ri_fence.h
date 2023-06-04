@@ -14,6 +14,7 @@ class ri_command_queue;
 class ri_fence
 {
 public:
+    virtual ~ri_fence() {}
 
     // Blocks cpu until the fence has signaled the current value. 
     virtual void wait(size_t value) = 0;

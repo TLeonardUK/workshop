@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 2;
+constexpr size_t k_asset_compiled_version = 12;
 
 };
 
@@ -33,6 +33,7 @@ inline void stream_serialize(stream& out, model::material_info& mat)
 {
     stream_serialize(out, mat.name);
     stream_serialize(out, mat.file);
+    stream_serialize_list(out, mat.indices);
 }
 
 template<>
@@ -164,11 +165,17 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
             std::string name = iter->first.as<std::string>();
             std::string value = iter->second.as<std::string>();
 
-            asset.header.add_dependency(value.c_str());
+            // Only add the material if the geometry actual uses it.
+            geometry_material* geo_mat = asset.geometry->get_material(name.c_str());
+            if (geo_mat != nullptr)
+            {
+                asset.header.add_dependency(value.c_str());
 
-            model::material_info& mat = asset.materials.emplace_back();
-            mat.name = name;
-            mat.file = value;            
+                model::material_info& mat = asset.materials.emplace_back();
+                mat.name = name;
+                mat.file = value;    
+                mat.indices = geo_mat->indices;
+            }
         }
     }
 

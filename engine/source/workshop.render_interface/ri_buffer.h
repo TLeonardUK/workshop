@@ -38,11 +38,15 @@ public:
     };
 
 public:
+    virtual ~ri_buffer() {}
 
     virtual size_t get_element_count() = 0;
     virtual size_t get_element_size() = 0;
 
     virtual ri_resource_state get_initial_state() = 0;
+
+    virtual void* map(size_t offset, size_t size) = 0;
+    virtual void unmap(void* pointer) = 0;
     
 };
 

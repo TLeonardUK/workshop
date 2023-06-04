@@ -11,6 +11,7 @@
 #include "workshop.engine/presentation/presenter.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
+#include "workshop.core/utils/event.h"
 
 #include <vector>
 #include <memory>
@@ -85,6 +86,9 @@ public:
 
     // Sets the initial window mode, should be set during configuration.
     void set_window_mode(const std::string& title, size_t width, size_t height, window_mode mode);
+
+    // Invoked when the engine is stepped.
+    event<frame_time> on_step;
 
 private:
 

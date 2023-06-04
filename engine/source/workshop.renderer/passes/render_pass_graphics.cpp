@@ -2,7 +2,7 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "workshop.renderer/render_pass_graphics.h"
+#include "workshop.renderer/passes/render_pass_graphics.h"
 #include "workshop.renderer/render_world_state.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/common_types.h"

@@ -49,4 +49,28 @@ bool material::post_load()
     return true;
 }
 
+ri_sampler* material::get_sampler(const char* name, ri_sampler* default_instance)
+{
+    for (sampler_info& info : samplers)
+    {
+        if (info.name == name)
+        {
+            return info.ri_sampler.get();
+        }
+    }
+    return default_instance;
+}
+
+ri_texture* material::get_texture(const char* name, ri_texture* default_instance)
+{
+    for (texture_info& info : textures)
+    {
+        if (info.name == name && info.texture.is_loaded())
+        {
+            return info.texture->ri_instance.get();
+        }
+    }
+    return default_instance;
+}
+
 }; // namespace ws

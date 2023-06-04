@@ -2,7 +2,7 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "workshop.renderer/render_pass_fullscreen.h"
+#include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/render_world_state.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/renderer.h"
@@ -21,9 +21,9 @@ result<void> render_pass_fullscreen::create_resources(renderer& renderer)
     ri_data_layout layout = technique->pipeline->get_create_params().vertex_layout;
 
     // Generate vertex/index buffers for rendering a rect across the entire screen.
-    std::unique_ptr<ri_layout_factory> factory = renderer.get_render_interface().create_layout_factory(layout);
+    std::unique_ptr<ri_layout_factory> factory = renderer.get_render_interface().create_layout_factory(layout, ri_layout_usage::buffer);
     factory->add("position", { vector2(-1.0f, -1.0f), vector2( 1.0f, -1.0f), vector2(-1.0f,  1.0f), vector2( 1.0f,  1.0f) });    
-    factory->add("uv",       { vector2( 0.0f,  0.0f), vector2( 1.0f,  0.0f), vector2( 0.0f,  1.0f), vector2( 1.0f,  1.0f) });
+    factory->add("uv",       { vector2( 0.0f,  1.0f), vector2( 1.0f,  1.0f), vector2( 0.0f,  0.0f), vector2( 1.0f,  0.0f) });
 
     m_vertex_buffer = factory->create_vertex_buffer(string_format("%s - Vertex buffer", name.c_str()).c_str());
     m_index_buffer  = factory->create_index_buffer(string_format("%s - Index buffer", name.c_str()).c_str(), std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
@@ -32,6 +32,7 @@ result<void> render_pass_fullscreen::create_resources(renderer& renderer)
     m_vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
     m_vertex_info_param_block->set("vertex_buffer", *m_vertex_buffer);
     m_vertex_info_param_block->set("vertex_buffer_offset", 0u);
+    m_vertex_info_param_block->clear_buffer("instance_buffer");
     param_blocks.push_back(m_vertex_info_param_block.get());
 
     // Validate the parameters we've been passed.
@@ -64,17 +65,27 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         for (ri_texture* texture : output.color_targets)
         {
             list.barrier(*texture, ri_resource_state::initial, ri_resource_state::render_target);
+
+            if (clear_color_outputs)
+            {
+                list.clear(*texture, color::black);
+            }
         }
         if (output.depth_target)
         {
             list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_write);
+
+            if (clear_depth_outputs)
+            {
+                list.clear_depth(*output.depth_target, 1.0f, 0);
+            }
         }
 
         list.set_pipeline(*technique->pipeline.get());
         list.set_render_targets(output.color_targets, output.depth_target);
         list.set_param_blocks(param_blocks);
-        list.set_viewport(view.viewport);
-        list.set_scissor(view.viewport);
+        list.set_viewport(view.get_viewport());
+        list.set_scissor(view.get_viewport());
         list.set_primitive_topology(ri_primitive::triangle_list);
         list.set_index_buffer(*m_index_buffer);
         list.draw(6, 1);

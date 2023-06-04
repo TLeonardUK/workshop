@@ -14,6 +14,7 @@
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
 #include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
@@ -32,10 +33,31 @@ class ri_param_block_archetype;
 class render_view;
 class render_param_block_manager;
 class render_effect_manager;
-class render_scene_manager;
+class render_batch_manager;
 class asset_manager;
 class window;
 class shader;
+
+// Decribes the usage of a specific default texture, used to select
+// an appropriate one when calling renderer::get_default_texture.
+enum class default_texture_type
+{
+    black,      // RGBA 0,0,0,0
+    white,      // RGBA 1,1,1,1
+    normal,     // RGBA 0,0,1,1
+
+    COUNT
+};
+
+// Decribes the usage of a specific default sampler, used to select
+// an appropriate one when calling renderer::get_default_sampler.
+enum class default_sampler_type
+{
+    color,      // Configured for sampling color data.
+    normal,     // Configured for sampling normal data.
+
+    COUNT
+};
 
 // ================================================================================================
 //  Provides an abstracted interface for all rendering behaviour in the engine 
@@ -94,12 +116,30 @@ public:
     // Gets the manager that handles the objects contained in the render scene.
     render_scene_manager& get_scene_manager();
 
+    // Gets the manager that handles creating batches for instance rendering.
+    render_batch_manager& get_batch_manager();    
+
     // Gets the current command queue that should be written to.
     // This is only valid for the current frame, do not try to cache this.
     render_command_queue& get_command_queue();
 
     // Gets the next opaque id of a render object. This is thread safe.
     render_object_id next_render_object_id();
+
+    // Gets a default texture for the given usage.
+    ri_texture* get_default_texture(default_texture_type type);
+
+    // Gets a default sampler for the given usage.
+    ri_sampler* get_default_sampler(default_sampler_type type);
+
+    // Gets the current frame index being constructed.
+    size_t get_frame_index();
+
+    // Queues a callback that runs on the render thread.
+    void queue_callback(void* source, std::function<void()> callback);
+
+    // Unqueues all callbacks queued from the given source.
+    void unqueue_callbacks(void* source);
 
 private:
 
@@ -132,13 +172,16 @@ private:
     // Renders the give view.
     void render_single_view(render_world_state& state, render_view& view, std::vector<render_pass::generated_state>& output);
 
+    // Runs all callbacks that have been queued.
+    void run_callbacks();
+
 private:
 
     // How many frames can be in the pipeline at a given time.
     constexpr static inline size_t k_frame_depth = 3;
 
     // How much data we need to store in each command queue per frame.
-    constexpr static inline size_t k_command_queue_size = 16'000'000;
+    constexpr static inline size_t k_command_queue_size = 32'000'000;
 
     ri_interface& m_render_interface;
     window& m_window;
@@ -150,6 +193,7 @@ private:
     std::unique_ptr<render_param_block_manager> m_param_block_manager;
     std::unique_ptr<render_effect_manager> m_effect_manager;
     std::unique_ptr<render_scene_manager> m_scene_manager;
+    std::unique_ptr<render_batch_manager> m_batch_manager;
 
     // Command queue.
 
@@ -169,10 +213,17 @@ private:
 
     task_handle m_render_job_task;
 
+    size_t m_frame_index = 0;
+
     // Swapchain
 
     std::unique_ptr<ri_swapchain> m_swapchain;
     ri_texture* m_current_backbuffer = nullptr;
+
+    // Default resources
+
+    std::array<std::unique_ptr<ri_texture>, static_cast<int>(default_texture_type::COUNT)> m_default_textures;
+    std::array<std::unique_ptr<ri_sampler>, static_cast<int>(default_sampler_type::COUNT)> m_default_samplers;
 
     // gbuffer
 
@@ -182,6 +233,17 @@ private:
     std::unique_ptr<ri_sampler> m_gbuffer_sampler;
 
     std::unique_ptr<ri_param_block> m_gbuffer_param_block;
+
+    // Callbacks
+
+    struct callback
+    {
+        void* source;
+        std::function<void()> callback_function;
+    };
+
+    std::mutex m_callback_mutex;
+    std::vector<callback> m_callbacks;
 
 };
 

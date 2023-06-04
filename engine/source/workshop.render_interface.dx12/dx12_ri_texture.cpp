@@ -44,7 +44,7 @@ dx12_ri_texture::~dx12_ri_texture()
         {
             renderer->get_descriptor_table(ri_descriptor_table::depth_stencil).free(dsv);
         }
-        CheckedRelease(handle);    
+        //CheckedRelease(handle);    
     });
 }
 

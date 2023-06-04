@@ -95,7 +95,14 @@ result<void> sdl_window::apply_changes()
             }
         }
 
-        m_window = SDL_CreateWindow(m_title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_width, m_height, static_cast<SDL_WindowFlags>(flags));
+        m_window = SDL_CreateWindow(
+            m_title.c_str(), 
+            SDL_WINDOWPOS_CENTERED, 
+            SDL_WINDOWPOS_CENTERED, 
+            static_cast<int>(m_width), 
+            static_cast<int>(m_height), 
+            static_cast<SDL_WindowFlags>(flags));
+
         if (m_window == nullptr)
         {
             db_error(window, "SDL_CreateWindow failed with error: %s", SDL_GetError());

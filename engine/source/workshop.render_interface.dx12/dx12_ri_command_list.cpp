@@ -102,14 +102,24 @@ void dx12_ri_command_list::close()
 void dx12_ri_command_list::barrier(ri_texture& resource, ri_resource_state source_state, ri_resource_state destination_state)
 {
     dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(resource);
+    barrier(dx12_resource.get_resource(), dx12_resource.get_initial_state(), source_state, destination_state);
+}
 
+void dx12_ri_command_list::barrier(ri_buffer& resource, ri_resource_state source_state, ri_resource_state destination_state)
+{
+    dx12_ri_buffer& dx12_resource = static_cast<dx12_ri_buffer&>(resource);
+    barrier(dx12_resource.get_resource(), dx12_resource.get_initial_state(), source_state, destination_state);
+}
+
+void dx12_ri_command_list::barrier(ID3D12Resource* resource, ri_resource_state resource_initial_state, ri_resource_state source_state, ri_resource_state destination_state)
+{
     if (source_state == ri_resource_state::initial)
     {
-        source_state = dx12_resource.get_initial_state();
+        source_state = resource_initial_state;
     }
     if (destination_state == ri_resource_state::initial)
     {
-        destination_state = dx12_resource.get_initial_state();
+        destination_state = resource_initial_state;
     }
 
     if (source_state == destination_state)
@@ -120,34 +130,13 @@ void dx12_ri_command_list::barrier(ri_texture& resource, ri_resource_state sourc
     D3D12_RESOURCE_BARRIER barrier;
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = dx12_resource.get_resource();
+    barrier.Transition.pResource = resource;
     barrier.Transition.StateBefore = ri_to_dx12(source_state);
     barrier.Transition.StateAfter = ri_to_dx12(destination_state);
     barrier.Transition.Subresource = 0;
     m_command_list->ResourceBarrier(1, &barrier);
-}
 
-void dx12_ri_command_list::barrier(ri_buffer& resource, ri_resource_state source_state, ri_resource_state destination_state)
-{
-    dx12_ri_buffer& dx12_resource = static_cast<dx12_ri_buffer&>(resource);
-
-    if (source_state == ri_resource_state::initial)
-    {
-        source_state = dx12_resource.get_initial_state();
-    }
-    if (destination_state == ri_resource_state::initial)
-    {
-        destination_state = dx12_resource.get_initial_state();
-    }
-
-    D3D12_RESOURCE_BARRIER barrier;
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = dx12_resource.get_resource();
-    barrier.Transition.StateBefore = ri_to_dx12(source_state);
-    barrier.Transition.StateAfter = ri_to_dx12(destination_state);
-    barrier.Transition.Subresource = 0;
-    m_command_list->ResourceBarrier(1, &barrier);
+    //db_log(core, "barrier: %p : %i -> %i", resource, (int)source_state, (int)destination_state);
 }
 
 void dx12_ri_command_list::clear(ri_texture& resource, const color& destination)
@@ -156,6 +145,13 @@ void dx12_ri_command_list::clear(ri_texture& resource, const color& destination)
 
     FLOAT color[] = { destination.r, destination.g, destination.b, destination.a };
     m_command_list->ClearRenderTargetView(dx12_resource.get_rtv().cpu_handle, color, 0, nullptr);
+}
+
+void dx12_ri_command_list::clear_depth(ri_texture& resource, float depth, size_t stencil)
+{
+    dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(resource);
+
+    m_command_list->ClearDepthStencilView(dx12_resource.get_dsv().cpu_handle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, static_cast<UINT8>(stencil), 0, nullptr);
 }
 
 void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
@@ -191,17 +187,19 @@ void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> p
 
     const auto& archetype_list = m_active_pipeline->get_create_params().param_block_archetypes;
 
-    if (param_blocks.size() != archetype_list.size())
-    {
-        db_warning(renderer, "set_param_blocks passed in differing number of param blocks compared to what pipeline expected.");
-    }
-
     // Param blocks immediately follow the descriptor tables in the root sig.
     size_t base_param_block_root_parameter = m_active_pipeline->get_create_params().descriptor_tables.size();
 
+    size_t cbv_index = 0;
     for (size_t i = 0; i < archetype_list.size(); i++)
     {
         ri_param_block_archetype* archetype = archetype_list[i];
+
+        // Instance param blocks are passed in via the instant buffer. We don't need to provide them here.
+        if (archetype->get_create_params().scope == ri_data_scope::instance)
+        {
+            continue;
+        }
 
         // Find appropriate param block in input.
         bool found = false;
@@ -212,9 +210,11 @@ void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> p
             if (input->get_archetype() == archetype)
             {
                 m_command_list->SetGraphicsRootConstantBufferView(
-                    static_cast<UINT>(base_param_block_root_parameter + i),
+                    static_cast<UINT>(base_param_block_root_parameter + cbv_index),
                     reinterpret_cast<UINT64>(input->consume())
                 );
+
+                cbv_index++;
                 found = true;
                 break;
             }
@@ -325,7 +325,7 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture*>& co
 
 void dx12_ri_command_list::draw(size_t indexes_per_instance, size_t instance_count)
 {
-    m_command_list->DrawIndexedInstanced(indexes_per_instance, instance_count, 0, 0, 0);
+    m_command_list->DrawIndexedInstanced(static_cast<UINT>(indexes_per_instance), static_cast<UINT>(instance_count), 0, 0, 0);
 }
 
 void dx12_ri_command_list::begin_event(const color& color, const char* format, ...)

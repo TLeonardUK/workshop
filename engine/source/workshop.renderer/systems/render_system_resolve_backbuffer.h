@@ -5,7 +5,7 @@
 #pragma once
 
 #include "workshop.renderer/render_system.h"
-#include "workshop.renderer/render_pass_fullscreen.h"
+#include "workshop.renderer/passes/render_pass_fullscreen.h"
 
 namespace ws {
 

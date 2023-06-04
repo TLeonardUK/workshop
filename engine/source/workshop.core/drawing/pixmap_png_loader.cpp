@@ -16,7 +16,13 @@ std::unique_ptr<pixmap> pixmap_png_loader::load(const std::vector<char>& buffer)
     uint32_t width;
     uint32_t height;
 
-    uint32_t error = lodepng_decode32(&image, &width, &height, reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size());
+    uint32_t error = lodepng_decode32(
+        &image, 
+        &width, 
+        &height, 
+        reinterpret_cast<const unsigned char*>(buffer.data()),
+        buffer.size());
+
     if (error)
     {
         db_warning(core, "lodepng_decode32 failed with error %u: %s", error, lodepng_error_text(error));
@@ -41,7 +47,12 @@ bool pixmap_png_loader::save(pixmap& input, std::vector<char>& buffer)
 
     if (input.get_format() == pixmap_format::R8G8B8A8)
     {
-        error = lodepng_encode32(&image, &image_size, input.get_data().data(), input.get_width(), input.get_height());
+        error = lodepng_encode32(
+            &image, 
+            &image_size, 
+            input.get_data().data(), 
+            static_cast<unsigned int>(input.get_width()), 
+            static_cast<unsigned int>(input.get_height()));
     }
     
     if (error)

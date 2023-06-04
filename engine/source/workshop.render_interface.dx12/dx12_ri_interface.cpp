@@ -153,9 +153,9 @@ std::unique_ptr<ri_buffer> dx12_render_interface::create_buffer(const ri_buffer:
     return instance;
 }
 
-std::unique_ptr<ri_layout_factory> dx12_render_interface::create_layout_factory(ri_data_layout layout)
+std::unique_ptr<ri_layout_factory> dx12_render_interface::create_layout_factory(ri_data_layout layout, ri_layout_usage usage)
 {
-    return std::make_unique<dx12_ri_layout_factory>(*this, layout);
+    return std::make_unique<dx12_ri_layout_factory>(*this, layout, usage);
 }
 
 bool dx12_render_interface::is_tearing_allowed()
@@ -515,14 +515,17 @@ void dx12_render_interface::begin_frame()
 
     m_graphics_queue->begin_frame();
     m_copy_queue->begin_frame();
-
-    m_upload_manager->new_frame(m_frame_index);
 }
 
 void dx12_render_interface::end_frame()
 {
     m_graphics_queue->end_frame();
     m_copy_queue->end_frame();
+}
+
+void dx12_render_interface::flush_uploads()
+{
+    m_upload_manager->new_frame(m_frame_index);
 }
 
 void dx12_render_interface::process_pending_deletes()

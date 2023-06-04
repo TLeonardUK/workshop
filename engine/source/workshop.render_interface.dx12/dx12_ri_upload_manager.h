@@ -8,6 +8,8 @@
 #include "workshop.core/containers/memory_heap.h"
 
 #include "workshop.render_interface.dx12/dx12_headers.h"
+#include "workshop.render_interface/ri_types.h"
+
 #include <array>
 #include <span>
 #include <functional>
@@ -33,7 +35,7 @@ public:
     result<void> create_resources();
 
     void upload(dx12_ri_texture& source, const std::span<uint8_t>& data);
-    void upload(dx12_ri_buffer& source, const std::span<uint8_t>& data);
+    void upload(dx12_ri_buffer& source, const std::span<uint8_t>& data, size_t offset);
 
     void new_frame(size_t index);
 
@@ -55,8 +57,8 @@ private:
 
         heap_state* heap = nullptr;
 
-        dx12_ri_texture* texture = nullptr;
-        dx12_ri_buffer* buffer = nullptr;
+        ID3D12Resource* resource = nullptr;
+        ri_resource_state resource_initial_state;
 
         build_command_list_callback_t build_command_list = nullptr;
 

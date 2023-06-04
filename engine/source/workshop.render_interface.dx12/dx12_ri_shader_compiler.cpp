@@ -311,6 +311,10 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
     // Lets see what result we got.
     Microsoft::WRL::ComPtr<IDxcBlobEncoding> error_blob;
     ret = compile_result->GetErrorBuffer(error_blob.GetAddressOf());
+
+    HRESULT compileRet;
+    compile_result->GetStatus(&compileRet);
+
     if (FAILED(ret))
     {
         output.push_error({ string_format("Failed to get compile result with error 0x%08x", ret), file, 0, 0 });
@@ -322,10 +326,27 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
         std::string errors_string(ptr, ptr + error_blob->GetBufferSize());
 
         parse_output(output, errors_string);
+
+        // If we failed to compile and got no useful error messages out of the output,
+        // then just dump the whole output into an error message as its probably barfed
+        // up something in an incorrect format.
+        if (!SUCCEEDED(compileRet))
+        {
+            if (output.get_messages().empty() &&
+                output.get_warnings().empty() &&
+                output.get_errors().empty())
+            {
+                ri_shader_compiler_output::log log;
+                log.column = 0;
+                log.file = file;
+                log.line = 0;
+                log.message = errors_string;
+                output.push_error(log);
+            }
+        }
     }
 
-    compile_result->GetStatus(&ret);
-    if (SUCCEEDED(ret))
+    if (SUCCEEDED(compileRet))
     {
         Microsoft::WRL::ComPtr<IDxcBlob> bytecode_blob;
 

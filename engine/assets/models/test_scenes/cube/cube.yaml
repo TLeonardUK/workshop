@@ -1,0 +1,13 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/test_scenes/cube/cube.obj
+
+materials:
+  "DefaultMaterial":  "data:models/test_scenes/cube/materials/default.yaml"
+  "Material":         "data:models/test_scenes/cube/materials/default.yaml"
+  "Material2":        "data:models/test_scenes/cube/materials/default.yaml"

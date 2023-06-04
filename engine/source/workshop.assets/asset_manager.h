@@ -5,6 +5,8 @@
 #pragma once
 
 #include "workshop.core/debug/debug.h"
+#include "workshop.core/perf/timer.h"
+#include "workshop.core/utils/event.h"
 #include "workshop.assets/asset_loader.h"
 #include "workshop.assets/asset_cache.h"
 
@@ -52,6 +54,10 @@ struct asset_state
 
     std::vector<asset_state*> dependencies;
     std::vector<asset_state*> depended_on_by;
+
+    event<> on_change_callback;
+
+    timer load_timer;
 };
 
 // ================================================================================================
@@ -78,11 +84,27 @@ public:
     // If this asset_ptr is valid and points to an asset.
     bool is_valid();
 
+    // If the asset has been loaded.
+    bool is_loaded();
+
     // Gets the current loading state of this asset.
     asset_loading_state get_state();
 
     // Blocks until the asset has been loaded.
     void wait_for_load();
+
+    // Forces the asset to be reloaded from disk, this is used to support hot reloading.
+    //void reload();
+
+    // Gets a hash describing the asset being pointed to. No guarantees are
+    // given over stability of the hash or of collisions.
+    size_t get_hash() const;
+
+    // Registers a callback for when the state of the asset changes.
+    event<>::key_t register_changed_callback(std::function<void()> callback);
+
+    // Unregisters a callback previously registered by register_changed_callback
+    void unregister_changed_callback(event<>::key_t key);
 
     // Operator overloads for all the standard ptr behaviour.
     asset_type& operator*();
@@ -183,6 +205,9 @@ protected:
     // Requests the creation of a state block for the given asset. This state block
     // should be used to construct an asset_ptr.
     asset_state* create_asset_state(const std::type_info& id, const char* path, int32_t priority);
+
+    // Triggers a reload of an asset.
+    //void request_reload(asset_state* state);
 
     // Requests to start loading a given asset state, should only be called by asset_ptr.
     void request_load(asset_state* state);
@@ -376,6 +401,12 @@ inline bool asset_ptr<asset_type>::is_valid()
 }
 
 template <typename asset_type>
+inline bool asset_ptr<asset_type>::is_loaded()
+{
+    return m_state != nullptr && m_state->loading_state == asset_loading_state::loaded;
+}
+
+template <typename asset_type>
 inline asset_loading_state asset_ptr<asset_type>::get_state()
 {
     return m_state->loading_state;
@@ -385,6 +416,27 @@ template <typename asset_type>
 inline void asset_ptr<asset_type>::wait_for_load()
 {
     return m_asset_manager->wait_for_load(m_state);
+}
+
+/*
+template <typename asset_type>
+inline void asset_ptr<asset_type>::reload()
+{
+    return m_asset_manager->request_reload(m_state);
+}
+*/
+
+
+template <typename asset_type>
+event<>::key_t asset_ptr<asset_type>::register_changed_callback(std::function<void()> callback)
+{
+    return m_state->on_change_callback.add(callback);
+}
+
+template <typename asset_type>
+void asset_ptr<asset_type>::unregister_changed_callback(event<>::key_t key)
+{
+    m_state->on_change_callback.remove(key);
 }
 
 template <typename asset_type>
@@ -439,6 +491,15 @@ inline asset_ptr<asset_type>& asset_ptr<asset_type>::operator=(asset_ptr<asset_t
     // Reference doesn't need changing move doesn't effect it.
 
     return *this;
+}
+
+template <typename asset_type>
+inline size_t asset_ptr<asset_type>::get_hash() const
+{
+    size_t hash = 0;
+    ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_state));
+    ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_asset_manager));
+    return hash;
 }
 
 template <typename asset_type>

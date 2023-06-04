@@ -12,7 +12,7 @@ template <typename T>
 struct base_matrix2
 {
 public:
-	float columns[2][2];
+	T columns[2][2];
 
 	static const base_matrix2<T> identity;
 	static const base_matrix2<T> zero;
@@ -20,10 +20,10 @@ public:
 	T* operator[](int column);
 	const T* operator[](int column) const;
 
-	base_vector2<T> GetColumn(int column) const;
-	base_vector2<T> GetRow(int row) const;
-	void SetColumn(int column, const base_vector2<T>& vec);
-	void SetRow(int row, const base_vector2<T>& vec);
+	base_vector2<T> get_column(int column) const;
+	base_vector2<T> get_row(int row) const;
+	void set_column(int column, const base_vector2<T>& vec);
+	void set_row(int row, const base_vector2<T>& vec);
 
 	base_matrix2() = default;
 	base_matrix2(const base_matrix2& other) = default;
@@ -32,6 +32,8 @@ public:
 	base_matrix2& operator=(const base_matrix2& vector) = default;
 	base_matrix2& operator*=(T scalar);
 	base_matrix2& operator*=(const base_matrix2& other);
+
+	base_matrix2 transpose() const;
 };
 
 typedef base_matrix2<float> matrix2;
@@ -62,7 +64,7 @@ const T* base_matrix2<T>::operator[](int column) const
 }
 
 template <typename T>
-base_vector2<T> base_matrix2<T>::GetColumn(int column) const
+base_vector2<T> base_matrix2<T>::get_column(int column) const
 {
 	return base_vector2<T>(
 		columns[column][0],
@@ -71,7 +73,7 @@ base_vector2<T> base_matrix2<T>::GetColumn(int column) const
 }
 
 template <typename T>
-base_vector2<T> base_matrix2<T>::GetRow(int row) const
+base_vector2<T> base_matrix2<T>::get_row(int row) const
 {
 	return base_vector2<T>(
 		columns[0][row],
@@ -80,14 +82,14 @@ base_vector2<T> base_matrix2<T>::GetRow(int row) const
 }
 
 template <typename T>
-void base_matrix2<T>::SetColumn(int column, const base_vector2<T>& vec)
+void base_matrix2<T>::set_column(int column, const base_vector2<T>& vec)
 {
 	columns[column][0] = vec.x;
 	columns[column][1] = vec.y;
 }
 
 template <typename T>
-void base_matrix2<T>::SetRow(int row, const base_vector2<T>& vec)
+void base_matrix2<T>::set_row(int row, const base_vector2<T>& vec)
 {
 	columns[0][row] = vec.x;
 	columns[1][row] = vec.y;
@@ -100,6 +102,18 @@ base_matrix2<T>::base_matrix2(T x0, T y0, T x1, T y1)
 	columns[0][1] = y0;
 	columns[1][0] = x1;
 	columns[1][1] = y1;
+}
+
+template <typename T>
+inline base_matrix2<T> base_matrix2<T>::transpose() const
+{
+	return base_matrix2<T>(
+		columns[0][0],
+		columns[1][0],
+
+		columns[0][1],
+		columns[1][1]
+	);
 }
 
 template <typename T>

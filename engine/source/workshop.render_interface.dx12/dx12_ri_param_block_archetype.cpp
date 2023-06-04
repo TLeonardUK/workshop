@@ -15,9 +15,18 @@ dx12_ri_param_block_archetype::dx12_ri_param_block_archetype(dx12_render_interfa
     , m_create_params(params)
     , m_debug_name(debug_name)
 {
-    m_layout_factory = m_renderer.create_layout_factory(m_create_params.layout);
+    m_layout_factory = m_renderer.create_layout_factory(m_create_params.layout, ri_layout_usage::param_block);
     m_instance_size = m_layout_factory->get_instance_size();
-    m_instance_stride = math::round_up_multiple(m_instance_size, k_instance_alignment);
+
+    // Instance param blocks are read as byte address buffers not cbuffers so don't need to follow the cbuffer alignment rules.
+    if (m_create_params.scope == ri_data_scope::instance)
+    {
+        m_instance_stride = m_instance_size;
+    }
+    else
+    {
+        m_instance_stride = math::round_up_multiple(m_instance_size, k_instance_alignment);
+    }
 }
 
 dx12_ri_param_block_archetype::~dx12_ri_param_block_archetype()
@@ -26,6 +35,17 @@ dx12_ri_param_block_archetype::~dx12_ri_param_block_archetype()
     {
         alloc_page& instance = m_pages[i];
         db_assert(instance.free_list.size() == k_page_size);
+
+        if (m_create_params.scope == ri_data_scope::instance)
+        {
+            m_renderer.defer_delete([renderer = &m_renderer, srv = instance.srv]()
+            {
+                if (srv.is_valid())
+                {
+                    renderer->get_descriptor_table(ri_descriptor_table::buffer).free(srv);
+                }
+            });            
+        }
 
         D3D12_RANGE range;
         range.Begin = 0;
@@ -74,6 +94,14 @@ dx12_ri_param_block_archetype::allocation dx12_ri_param_block_archetype::allocat
     }
 
     return {};
+}
+
+void dx12_ri_param_block_archetype::get_table(allocation alloc, size_t& index, size_t& offset)
+{
+    std::scoped_lock lock(m_allocation_mutex);
+
+    index = m_pages[alloc.pool_index].srv.get_table_index();
+    offset = (alloc.allocation_index * m_instance_stride);
 }
 
 void dx12_ri_param_block_archetype::free(allocation alloc)
@@ -145,6 +173,23 @@ void dx12_ri_param_block_archetype::add_page()
     {
         instance.free_list[i] = i;
     }
+
+    // If using this param block as instance data, we need to create an SRV in the buffer
+    // descriptor table so we can access it by index.
+    if (m_create_params.scope == ri_data_scope::instance)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
+        view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+        view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        view_desc.Buffer.FirstElement = 0;
+        view_desc.Buffer.NumElements = static_cast<UINT>(desc.Width / 4);
+        view_desc.Buffer.StructureByteStride = 0;
+        view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+
+        instance.srv = m_renderer.get_descriptor_table(ri_descriptor_table::buffer).allocate();
+        m_renderer.get_device()->CreateShaderResourceView(instance.handle.Get(), &view_desc, instance.srv.cpu_handle);
+    }
 }
 
 std::unique_ptr<ri_param_block> dx12_ri_param_block_archetype::create_param_block()
@@ -160,6 +205,11 @@ dx12_ri_layout_factory& dx12_ri_param_block_archetype::get_layout_factory()
 const char* dx12_ri_param_block_archetype::get_name()
 {
     return m_debug_name.c_str();
+}
+
+dx12_ri_param_block_archetype::create_params dx12_ri_param_block_archetype::get_create_params()
+{
+    return m_create_params;
 }
 
 bool dx12_ri_param_block_archetype::allocation::is_valid() const

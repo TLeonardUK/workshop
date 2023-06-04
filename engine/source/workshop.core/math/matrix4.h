@@ -11,11 +11,13 @@
 
 namespace ws {
 
+// 4x4 matrix, stored in column-major order.
+
 template <typename T>
 struct base_matrix4
 {
 public:
-	float columns[4][4];
+	T columns[4][4];
 
 	static const base_matrix4<T> identity;
 	static const base_matrix4<T> zero;
@@ -414,10 +416,10 @@ template <typename T>
 inline base_matrix4<T> base_matrix4<T>::translate(const vector3& position)
 {
 	base_matrix4 result = identity;
-	result[3][0] = position.x;
-	result[3][1] = position.y;
-	result[3][2] = position.z;
-	return result;
+    result[0][3] = position.x;
+    result[1][3] = position.y;
+    result[2][3] = position.z;
+	return result; 
 }
 
 template <typename T>
@@ -471,25 +473,23 @@ inline base_matrix4<T> base_matrix4<T>::rotation(const quat& quat)
 template <typename T>
 inline base_matrix4<T> base_matrix4<T>::look_at(const base_vector3<T>& eye, const base_vector3<T>& center, const base_vector3<T>& up)
 {
-	// Right handed
+	base_vector3<T> eye_direction = (center - eye);
+	base_vector3<T> r2 = eye_direction.normalize();
+	base_vector3<T> r0 = base_vector3<T>::cross(up, r2).normalize();
+	base_vector3<T> r1 = base_vector3<T>::cross(r2, r0);
 
-	base_vector3<T> f = (center - eye).normalize();
-	base_vector3<T> s = base_vector3<T>::cross(f, up).normalize();
-	base_vector3<T> u(base_vector3<T>::cross(s, f));
+	base_vector3<T> neg_eye_position = -eye;
 
-	base_matrix4<T> result = base_matrix4<T>::identity;
-	result[0][0] = s.x;
-	result[1][0] = s.y;
-	result[2][0] = s.z;
-	result[0][1] = u.x;
-	result[1][1] = u.y;
-	result[2][1] = u.z;
-	result[0][2] = -f.x;
-	result[1][2] = -f.y;
-	result[2][2] = -f.z;
-	result[3][0] = -base_vector3<T>::dot(s, eye);
-	result[3][1] = -base_vector3<T>::dot(u, eye);
-	result[3][2] =  base_vector3<T>::dot(f, eye);
+	float d0 = base_vector3<T>::dot(r0, neg_eye_position);
+	float d1 = base_vector3<T>::dot(r1, neg_eye_position);
+	float d2 = base_vector3<T>::dot(r2, neg_eye_position);
+
+	base_matrix4<T> result = base_matrix4<T>(
+		r0.x, r0.y, r0.z, d0,
+		r1.x, r1.y, r1.z, d1,
+		r2.x, r2.y, r2.z, d2,
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
 
 	return result;
 }
@@ -497,62 +497,32 @@ inline base_matrix4<T> base_matrix4<T>::look_at(const base_vector3<T>& eye, cons
 template <typename T>
 inline base_matrix4<T> base_matrix4<T>::orthographic(T left, T right, T bottom, T top, T nearZ, T farZ)
 {
-	float r = right;
-	right = left;
-	left = r;
+	float a = 1.0f / (farZ - nearZ);
+	float b = -a * nearZ;
 
 	base_matrix4<T> result = base_matrix4<T>(
-		2.0f / (right - left),
-		0.0f,
-		0.0f,
-		0.0f,
-
-		0.0f,
-		2.0f / (bottom - top),
-		0.0f,
-		0.0f,
-
-		0.0f,
-		0.0f,
-		1.0f / (nearZ - farZ),
-		0.0f,
-
-		-(right + left) / (right - left),
-		-(bottom + top) / (bottom - top),
-		nearZ / (nearZ - farZ),
-		1.0f
+		2.0f / (right - left),				0.0f,								0.0f,	0.0f,
+		0.0f,								2.0f / (bottom - top),				0.0f,	0.0f,
+		0.0f,								0.0f,								a,		0.0f,
+		-(right + left) / (right - left),	-(bottom + top) / (bottom - top),	b,		1.0f
 	);
 
-	return result;
+	return result.transpose();
 }
 
 template <typename T>
 inline base_matrix4<T> base_matrix4<T>::perspective(T fovRadians, T aspect, T zNear, T zFar)
 {
-	zNear *= 2.0f; /// huuuum, this doesn't feel right. But extracting the frustum planes results in znear being half what it should be.
-
-	T f = 1.0f / tan(0.5f * fovRadians);
+	float h = 1.0f / tan(fovRadians * 0.5f);
+	float w = h / aspect;
+	float a = zFar / (zFar - zNear);
+	float b = (-zNear * zFar) / (zFar - zNear);
 
 	base_matrix4<T> result = base_matrix4<T>(
-		-f / aspect,
-		0.0f,
-		0.0f,
-		0.0f,
-
-		0.0f,
-		-f,
-		0.0f,
-		0.0f,
-
-		0.0f,
-		0.0f,
-		zFar / (zNear - zFar),
-		-1.0f,
-
-		0.0f,
-		0.0f,
-		(zNear * zFar) / (zNear - zFar),
-		0.0f
+		w, 0.0f, 0.0f, 0.0f,
+		0.0f, h, 0.0f, 0.0f,
+		0.0f, 0.0f, a, b,
+		0.0f, 0.0f, 1.0f, 0.0f
 	);
 
 	return result;

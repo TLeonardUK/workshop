@@ -6,6 +6,7 @@
 
 #include "workshop.render_interface/ri_param_block_archetype.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
+#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include "workshop.core/utils/result.h"
 
 #include <memory>
@@ -54,6 +55,9 @@ public:
     dx12_ri_layout_factory& get_layout_factory();
 
     virtual const char* get_name() override;
+    virtual create_params get_create_params() override;
+
+    void get_table(allocation alloc, size_t& index, size_t& offset);
 
 private:
     void add_page();
@@ -73,9 +77,11 @@ private:
 
         uint8_t* base_address_cpu = nullptr;
         uint8_t* base_address_gpu = nullptr;
+
+        dx12_ri_descriptor_table::allocation srv;
     };
 
-    std::mutex m_allocation_mutex;
+    std::recursive_mutex m_allocation_mutex;
 
     dx12_render_interface& m_renderer;
     std::string m_debug_name;

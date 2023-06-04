@@ -76,7 +76,11 @@ private:
     // more than this then heap memory will be allocated.
     inline static constexpr int k_stack_space = 256;
 
+#ifdef WS_DEBUG
+    inline static log_level m_max_log_level = log_level::verbose;
+#else
     inline static log_level m_max_log_level = log_level::log;
+#endif
 
     inline static std::recursive_mutex m_handlers_mutex;
     inline static std::vector<log_handler*> m_handlers;

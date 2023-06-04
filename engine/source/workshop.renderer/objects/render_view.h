@@ -6,10 +6,16 @@
 
 #include "workshop.core/math/rect.h"
 #include "workshop.core/math/frustum.h"
+#include "workshop.core/math/matrix4.h"
 
 #include "workshop.renderer/render_object.h"
 
+#include <memory>
+
 namespace ws {
+
+class renderer;
+class ri_param_block;
 
 // ================================================================================================
 //  Represets a view into the scene to be renderer, including the associated projection
@@ -18,14 +24,43 @@ namespace ws {
 class render_view : public render_object
 {
 public:
+    render_view(renderer& renderer);
 
-    recti viewport = recti::empty;
+    void set_viewport(const recti& viewport);
+    recti get_viewport();
 
-    float near_clip = 0.1f;
-    float far_clip = 10000.0f;
+    void set_clip(float near, float far);
+    void get_clip(float& near, float& far);
 
-    float field_of_view = 90.0f;
-    float aspect_ratio = 1.33f;
+    void set_fov(float fov);
+    float get_fov();
+
+    void set_aspect_ratio(float ration);
+    float get_aspect_ratio();
+
+    matrix4 get_view_matrix();
+    matrix4 get_perspective_matrix();
+
+    ri_param_block* get_view_info_param_block();
+
+    // Overrides the normal set transform to update instance data when the transform changes.
+    virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
+
+private:
+    void update_view_info_param_block();
+
+private:
+    renderer& m_renderer;
+
+    recti m_viewport = recti::empty;
+
+    float m_near_clip = 0.01f;
+    float m_far_clip = 10000.0f;
+
+    float m_field_of_view = 45.0f;
+    float m_aspect_ratio = 1.33f;
+
+    std::unique_ptr<ri_param_block> m_view_info_param_block;
 
 };
 

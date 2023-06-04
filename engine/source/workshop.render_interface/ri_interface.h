@@ -11,6 +11,7 @@
 #include "workshop.render_interface/ri_texture.h"
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_buffer.h"
+#include "workshop.render_interface/ri_layout_factory.h"
 
 namespace ws {
 
@@ -41,6 +42,9 @@ enum class ri_interface_type
 class ri_interface
 {
 public:
+    virtual ~ri_interface() {}
+
+    using deferred_delete_function_t = std::function<void()>;
 
     // Registers all the steps required to initialize the rendering system.
     // Interacting with this class without successfully running these steps is undefined.
@@ -53,6 +57,11 @@ public:
 
     // Informs the renderer that the frame has finished rendering.
     virtual void end_frame() = 0;
+
+    // Data uploads normally occur at the start of a frame. This can be called
+    // to flush any pending uploads mid-frame. This is mostly useful for uploading things like
+    // param blocks that have been updated this frame and need to be reflected this frame.
+    virtual void flush_uploads() = 0;
 
     // Creates a swapchain for rendering to the given window.
     virtual std::unique_ptr<ri_swapchain> create_swapchain(window& for_window, const char* debug_name = nullptr) = 0;
@@ -82,7 +91,7 @@ public:
     virtual std::unique_ptr<ri_buffer> create_buffer(const ri_buffer::create_params& params, const char* debug_name = nullptr) = 0;
 
     // Creates a factory for laying out buffer data in a format consumable by the gpu.
-    virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout) = 0;
+    virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout, ri_layout_usage usage) = 0;
 
     // Gets the main graphics command queue responsible for raster ops.
     virtual ri_command_queue& get_graphics_queue() = 0;
@@ -92,6 +101,9 @@ public:
 
     // Gets the maximum number of frames that can be in flight at the same time.
     virtual size_t get_pipeline_depth() = 0;
+
+    // Used to defer a resource deletion until the gpu is no longer referencing it.
+    virtual void defer_delete(const deferred_delete_function_t& func) = 0;
 
 
 };

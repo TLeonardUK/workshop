@@ -31,7 +31,11 @@ public:
     virtual void set(const char* field_name, const ri_sampler& resource) override;
     virtual void set(const char* field_name, const ri_buffer& resource) override;
 
+    virtual void clear_buffer(const char* field_name) override;
+
     virtual ri_param_block_archetype* get_archetype() override;
+
+    virtual void get_table(size_t& index, size_t& offset) override;
 
 public:
     // Gets the gpu address and also increments the use count
@@ -42,6 +46,8 @@ private:
     void mutate();
 
     virtual void set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
+
+    void transpose_matrices(void* field, ri_data_type type);
 
 private:
     dx12_render_interface& m_renderer;

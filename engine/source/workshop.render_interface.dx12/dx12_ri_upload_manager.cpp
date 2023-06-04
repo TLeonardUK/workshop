@@ -26,8 +26,9 @@ dx12_ri_upload_manager::~dx12_ri_upload_manager()
         range.Begin = 0;
         range.End = k_heap_size;
         state->handle->Unmap(0, &range);
+        state->handle = nullptr;
 
-        CheckedRelease(state->handle);
+        //CheckedRelease(state->handle);
     }
     m_heaps.clear();
 
@@ -144,7 +145,8 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     );
 
     upload_state upload = allocate_upload(total_memory, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-    upload.texture = &source;
+    upload.resource = source.get_resource();
+    upload.resource_initial_state = source.get_initial_state();
 
     // TODO: All the below is pretty grim, this needs cleaning up and simplifying.
 
@@ -217,14 +219,14 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     }
 
     // Generate copy command list.
-    upload.build_command_list = [sub_resource_count, &source, footprints, heap_ptr=upload.heap->handle.Get(), heap_offset=upload.heap_offset](dx12_ri_command_list& list)
+    upload.build_command_list = [sub_resource_count, source_ptr=source.get_resource(), footprints, heap_ptr=upload.heap->handle.Get(), heap_offset=upload.heap_offset](dx12_ri_command_list& list)
     {
         for (size_t i = 0; i < sub_resource_count; i++)
         {
             D3D12_TEXTURE_COPY_LOCATION dest = {};
-            dest.pResource = source.get_resource();
+            dest.pResource = source_ptr;
             dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-            dest.SubresourceIndex = i;
+            dest.SubresourceIndex = static_cast<UINT>(i);
 
             D3D12_TEXTURE_COPY_LOCATION src = {};
             src.pResource = heap_ptr;
@@ -246,20 +248,21 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     queue_upload(upload);
 }
 
-void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint8_t>& data)
+void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint8_t>& data, size_t offset)
 {
     ri_command_queue& queue = m_renderer.get_copy_queue();
 
     upload_state upload = allocate_upload(data.size(), source.get_element_size());
-    upload.buffer = &source;
+    upload.resource = source.get_resource();
+    upload.resource_initial_state = source.get_initial_state();
 
     memcpy(upload.heap->start_ptr + upload.heap_offset, data.data(), data.size());
 
-    upload.build_command_list = [source_ptr = source.get_resource(), heap_ptr = upload.heap->handle.Get(), heap_offset = upload.heap_offset, size = data.size()](dx12_ri_command_list& list)
+    upload.build_command_list = [source_ptr=source.get_resource(), heap_ptr = upload.heap->handle.Get(), heap_offset=upload.heap_offset, size=data.size(), offset](dx12_ri_command_list& list)
     {
         list.get_dx_command_list()->CopyBufferRegion(
             source_ptr, 
-            0, 
+            offset, 
             heap_ptr, 
             heap_offset, 
             size
@@ -355,7 +358,8 @@ void dx12_ri_upload_manager::free_uploads()
                 range.End = k_heap_size;
                 heap->handle->Unmap(0, &range);
 
-                CheckedRelease(heap->handle);
+                //CheckedRelease(heap->handle);
+                heap->handle = nullptr;
 
                 m_heaps.erase(m_heaps.begin() + i);
             }
@@ -391,14 +395,7 @@ void dx12_ri_upload_manager::perform_uploads()
         transition_list.open();
         for (upload_state& state : uploads)
         {
-            if (state.texture)
-            {
-                transition_list.barrier(*state.texture, ri_resource_state::initial, ri_resource_state::common_state);
-            }
-            if (state.buffer)
-            {
-                transition_list.barrier(*state.buffer, ri_resource_state::initial, ri_resource_state::common_state);
-            }
+            transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::initial, ri_resource_state::common_state);
 
             m_pending_free.push_back(state);
         }        
@@ -433,15 +430,8 @@ void dx12_ri_upload_manager::perform_uploads()
             transition_list.open();
             for (upload_state& state : uploads)
             {
-                if (state.texture)
-                {
-                    transition_list.barrier(*state.texture, ri_resource_state::common_state, ri_resource_state::copy_dest);
-                }
-                if (state.buffer)
-                {
-                    transition_list.barrier(*state.buffer, ri_resource_state::common_state, ri_resource_state::copy_dest);
-                }
-
+                transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::common_state, ri_resource_state::copy_dest);
+             
                 m_pending_free.push_back(state);
             }
             transition_list.close();
@@ -466,15 +456,8 @@ void dx12_ri_upload_manager::perform_uploads()
             transition_list.open();
             for (upload_state& state : uploads)
             {
-                if (state.texture)
-                {
-                    transition_list.barrier(*state.texture, ri_resource_state::copy_dest, ri_resource_state::common_state);
-                }
-                if (state.buffer)
-                {
-                    transition_list.barrier(*state.buffer, ri_resource_state::copy_dest, ri_resource_state::common_state);
-                }
-
+                transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::copy_dest, ri_resource_state::common_state);
+                
                 m_pending_free.push_back(state);
             }
             transition_list.close();
@@ -493,14 +476,7 @@ void dx12_ri_upload_manager::perform_uploads()
         transition_list.open();
         for (upload_state& state : uploads)
         {
-            if (state.texture)
-            {
-                transition_list.barrier(*state.texture, ri_resource_state::common_state, ri_resource_state::initial);
-            }
-            if (state.buffer)
-            {
-                transition_list.barrier(*state.buffer, ri_resource_state::common_state, ri_resource_state::initial);
-            }
+            transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::common_state, ri_resource_state::initial);
 
             m_pending_free.push_back(state);
         }

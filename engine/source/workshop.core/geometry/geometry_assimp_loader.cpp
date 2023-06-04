@@ -11,24 +11,25 @@
 #include "thirdparty/assimp/include/assimp/mesh.h"
 #include "thirdparty/assimp/include/assimp/postprocess.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 namespace {
 
 struct import_context
 {
+    struct material
+    {
+        std::string name;
+        std::vector<size_t> indices;
+    };
+
     std::vector<vector3> positions;
     std::vector<vector3> normals;
     std::vector<vector3> tangents;
     std::vector<vector3> bitangents;
-    std::vector<std::vector<vector3>> uvs;
+    std::vector<std::vector<vector2>> uvs;
     std::vector<std::vector<vector4>> colors;
-    std::vector<size_t> materials;
-    std::vector<size_t> indices;
-
-    std::vector<std::string> material_names;
+    std::vector<material> materials;
 };
  
 // Imports a mesh node in the assimp scene.
@@ -99,19 +100,19 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
 
             for (size_t i = original_size; i < output.uvs.size(); i++)
             {
-                output.uvs[i].resize(original_vert_count, { 0.0f, 0.0f, 0.0f });
+                output.uvs[i].resize(original_vert_count, { 0.0f, 0.0f });
             }
         }
     }
 
     for (size_t j = 0; j < node->GetNumUVChannels(); j++)
     {
-        std::vector<vector3>& uvs = output.uvs[j];
+        std::vector<vector2>& uvs = output.uvs[j];
         uvs.reserve(uvs.size() + node->mNumVertices);
         for (size_t i = 0; i < node->mNumVertices; i++)
         {
             const aiVector3D& vert = *(node->mTextureCoords[j] + i);
-            uvs.push_back({ vert.x, vert.y, vert.z });
+            uvs.push_back({ vert.x, vert.y });
         }
     }
 
@@ -144,19 +145,14 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
         }
     }
 
-    output.materials.reserve(output.materials.size() + node->mNumVertices);
-    for (size_t i = 0; i < node->mNumVertices; i++)
-    {
-        output.materials.push_back(node->mMaterialIndex);
-    }
-
-    output.indices.reserve(output.indices.size() + (node->mNumFaces * 3));
+    import_context::material& mat = output.materials[node->mMaterialIndex];
+    mat.indices.reserve(mat.indices.size() + (node->mNumFaces * 3));
     for (size_t i = 0; i < node->mNumFaces; i++)
     {
         const aiFace& face = node->mFaces[i];
-        output.indices.push_back(start_vertex_index + face.mIndices[0]);
-        output.indices.push_back(start_vertex_index + face.mIndices[1]);
-        output.indices.push_back(start_vertex_index + face.mIndices[2]);
+        mat.indices.push_back(start_vertex_index + face.mIndices[0]);
+        mat.indices.push_back(start_vertex_index + face.mIndices[1]);
+        mat.indices.push_back(start_vertex_index + face.mIndices[2]);
     }
 
     return true;
@@ -165,7 +161,9 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
 // Imports a material node in the assimp scene.
 bool process_material(aiMaterial* node, const aiScene* scene, import_context& output)
 {
-    output.material_names.push_back(node->GetName().C_Str());
+    import_context::material mat;
+    mat.name = node->GetName().C_Str();
+    output.materials.push_back(mat);
     return true;
 }
 
@@ -198,10 +196,13 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
 {
     Assimp::Importer importer;
 
+    int flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded);    
+    flags &= ~aiProcess_RemoveRedundantMaterials;
+
     const aiScene* scene = importer.ReadFileFromMemory(
         buffer.data(), 
         buffer.size(), 
-        (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded) & ~aiProcess_RemoveRedundantMaterials,
+        flags,
         path_hint);
     
     if (scene == nullptr)
@@ -212,12 +213,6 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
 
     import_context context;
 
-    // Import all meshes in scene.
-    if (!walk_scene(scene->mRootNode, scene, context))
-    {
-        return nullptr;
-    }
-
     // Import all materials.
     for (size_t i = 0; i < scene->mNumMaterials; i++)
     {
@@ -226,6 +221,12 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         {
             return nullptr;
         }
+    }
+
+    // Import all meshes in scene.
+    if (!walk_scene(scene->mRootNode, scene, context))
+    {
+        return nullptr;
     }
 
     // Import all skeletons.
@@ -238,19 +239,13 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     std::unique_ptr<geometry> result = std::make_unique<geometry>();
 
     // Insert all the materials into the geometry.
-    for (size_t i = 0; i < context.material_names.size(); i++)
+    for (import_context::material& mat : context.materials)
     {
-        std::vector<size_t> indices;
-        indices.reserve(context.materials.size());
-        for (size_t j = 0; j < context.materials.size(); j++)
+        if (mat.indices.empty())
         {
-            if (context.materials[j] == i)
-            {
-                indices.push_back(j);
-            }
+            continue;
         }
-
-        result->add_material(context.material_names[i].c_str(), indices);
+        result->add_material(mat.name.c_str(), mat.indices);
     }
 
     // Insert all the vertex streams.

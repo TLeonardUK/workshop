@@ -19,9 +19,9 @@ public:
     {
 		ri_texture_filter filter = ri_texture_filter::linear;
 		
-		ri_texture_address_mode address_mode_u = ri_texture_address_mode::clamp_to_edge;
-		ri_texture_address_mode address_mode_v = ri_texture_address_mode::clamp_to_edge;
-		ri_texture_address_mode address_mode_w = ri_texture_address_mode::clamp_to_edge;
+		ri_texture_address_mode address_mode_u = ri_texture_address_mode::repeat;
+		ri_texture_address_mode address_mode_v = ri_texture_address_mode::repeat;
+		ri_texture_address_mode address_mode_w = ri_texture_address_mode::repeat;
 
 		ri_texture_border_color border_color = ri_texture_border_color::opaque_black;
 
@@ -33,6 +33,7 @@ public:
     };
 
 public:
+    virtual ~ri_sampler() {}
 
 	virtual ri_texture_filter get_filter() = 0;
 

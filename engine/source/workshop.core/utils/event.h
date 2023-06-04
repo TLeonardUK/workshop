@@ -53,6 +53,7 @@ private:
 
 };
 
+
 template <typename... parameters>
 class event
 {
@@ -84,9 +85,9 @@ public:
     {
         std::scoped_lock lock(m_event_state->mutex);
 
-        if (auto iter = std::find(m_event_state->managed_delegates.begin(), m_event_state->managed_delegates.end(), key); iter != m_event_state->managed_delegates.end())
+        if (auto iter = m_event_state->managed_delegates.find(key); iter != m_event_state->managed_delegates.end())
         {
-            delegate_t* delegate_instance = iter.second.get();
+            delegate_t* delegate_instance = iter->second.get();
 
             if (auto instance_iter = m_event_state->delegate_set.find(delegate_instance); instance_iter != m_event_state->delegate_set.end())
             {

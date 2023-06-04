@@ -19,8 +19,8 @@ dx12_ri_pipeline::~dx12_ri_pipeline()
 {
     m_renderer.defer_delete([root_signature = m_root_signature, pipeline_state = m_pipeline_state]() 
     {
-        CheckedRelease(root_signature);
-        CheckedRelease(pipeline_state);
+        //CheckedRelease(root_signature);
+        //CheckedRelease(pipeline_state);
     });
 }
 
@@ -82,13 +82,22 @@ bool dx12_ri_pipeline::create_root_signature()
     }
 
     // Create root parameters for each param block. This is recommended over putting them in the descriptor heap.
+    size_t cbv_index = 0;
     for (size_t i = 0; i < m_create_params.param_block_archetypes.size(); i++)
     {
+        // Skip the instance param blocks they are indirectly referenced.
+        if (m_create_params.param_block_archetypes[i]->get_create_params().scope == ri_data_scope::instance)
+        {
+            continue;
+        }
+
         D3D12_ROOT_PARAMETER& table = parameters.emplace_back();
         table.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         table.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
         table.Descriptor.RegisterSpace = 0;
-        table.Descriptor.ShaderRegister = i;
+        table.Descriptor.ShaderRegister = static_cast<UINT>(cbv_index);
+
+        cbv_index++;
     }
 
     /*

@@ -14,6 +14,7 @@ class ri_texture;
 class ri_swapchain
 {
 public:
+    virtual ~ri_swapchain() {}
 
     // Gets the render target for the next back buffer to be rendered to.
     // This may block until a back buffer is available.

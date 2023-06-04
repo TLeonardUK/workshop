@@ -8,10 +8,16 @@ type: shader
 version: 1
 
 render_states:
+  # Default geometry rendering state.
+  default: 
+    cull_mode: back
+    fill_mode: wireframe
   # Default render state but without depth testing enabled. Useful
   # for things such as fullscreen passes.
   no_depth_test:
-    depth_test_enabled: false
+    depth_test_enabled: false  
+    depth_write_enabled: true
+    cull_mode: none
 
 vertex_layouts:
   # Simple layout that contains only vert position and uv. Useful
@@ -39,7 +45,8 @@ param_blocks:
       gbuffer2_texture: texture2d
       gbuffer_sampler: sampler
   # Describes the projection information for the view being rendered.
-  view_state:
+  view_info:
     scope: global
     fields:
-      view_projection: float4x4
+      view_matrix: float4x4
+      projection_matrix: float4x4

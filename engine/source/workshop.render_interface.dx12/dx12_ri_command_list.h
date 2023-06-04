@@ -37,6 +37,7 @@ public:
     virtual void barrier(ri_texture& resource, ri_resource_state source_state, ri_resource_state destination_state) override;
     virtual void barrier(ri_buffer& resource, ri_resource_state source_state, ri_resource_state destination_state) override;
     virtual void clear(ri_texture& resource, const color& destination) override;
+    virtual void clear_depth(ri_texture& resource, float depth, size_t stencil) override;
     virtual void set_pipeline(ri_pipeline& pipeline) override;
     virtual void set_param_blocks(const std::vector<ri_param_block*> param_blocks) override;
     virtual void set_viewport(const recti& rect) override;
@@ -49,6 +50,8 @@ public:
     virtual void draw(size_t indexes_per_instance, size_t instance_count) override;
     virtual void begin_event(const color& color, const char* name, ...) override;
     virtual void end_event() override;
+
+    void barrier(ID3D12Resource* resource, ri_resource_state resource_initial_state, ri_resource_state source_state, ri_resource_state destination_state);
 
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> get_dx_command_list();
 

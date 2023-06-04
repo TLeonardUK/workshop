@@ -89,6 +89,30 @@ ri_param_block_archetype* dx12_ri_param_block::get_archetype()
     return &m_archetype;
 }
 
+void dx12_ri_param_block::get_table(size_t& index, size_t& offset)
+{
+    // If no param block has been allocated yet, we need to allocate one to return the table information.
+    if (!m_allocation.is_valid())
+    {
+        mutate();
+    }
+
+    m_archetype.get_table(m_allocation, index, offset);
+}
+
+void dx12_ri_param_block::transpose_matrices(void* field, ri_data_type type)
+{
+    switch (type)
+    {
+    case ri_data_type::t_double2x2:     *reinterpret_cast<matrix2d*>(field) = reinterpret_cast<matrix2d*>(field)->transpose(); break;
+    case ri_data_type::t_double3x3:     *reinterpret_cast<matrix3d*>(field) = reinterpret_cast<matrix3d*>(field)->transpose(); break;
+    case ri_data_type::t_double4x4:     *reinterpret_cast<matrix4d*>(field) = reinterpret_cast<matrix4d*>(field)->transpose(); break;
+    case ri_data_type::t_float2x2:      *reinterpret_cast<matrix2*>(field) = reinterpret_cast<matrix2*>(field)->transpose(); break;
+    case ri_data_type::t_float3x3:      *reinterpret_cast<matrix3*>(field) = reinterpret_cast<matrix3*>(field)->transpose(); break;
+    case ri_data_type::t_float4x4:      *reinterpret_cast<matrix4*>(field) = reinterpret_cast<matrix4*>(field)->transpose(); break;
+    }
+}
+
 void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
 {
     mutate();
@@ -118,6 +142,9 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
 
     void* field_ptr = static_cast<uint8_t*>(m_allocation.cpu_address) + field_info.offset;
     memcpy(field_ptr, values.data(), values.size());
+
+    // Matrices are stored column-major but HLSL expects them in row-major, so transpose them.
+    transpose_matrices(field_ptr, type);
 }
 
 void dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
@@ -171,6 +198,12 @@ void dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource)
     const dx12_ri_buffer& dx12_resource = static_cast<const dx12_ri_buffer&>(resource);
     uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_srv().get_table_index());
 
+    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_byteaddressbuffer);
+}
+
+void dx12_ri_param_block::clear_buffer(const char* field_name)
+{
+    uint32_t table_index = 0;
     set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_byteaddressbuffer);
 }
 

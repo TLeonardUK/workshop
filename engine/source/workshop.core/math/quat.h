@@ -151,14 +151,14 @@ inline base_quat<element_type> base_quat<element_type>::inverse() const
 }
 
 template <typename element_type>
-inline static element_type base_quat<element_type>::dot(const base_quat<element_type>&a, const base_quat<element_type>&b)
+inline element_type base_quat<element_type>::dot(const base_quat<element_type>&a, const base_quat<element_type>&b)
 {
 	base_vector4<element_type> tmp(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w);
 	return (tmp.x + tmp.y) + (tmp.z + tmp.w);
 }
 
 template <typename element_type>
-inline static base_quat<element_type> base_quat<element_type>::angle_axis(element_type angle_radians, const vector3_type& axis)
+inline base_quat<element_type> base_quat<element_type>::angle_axis(element_type angle_radians, const vector3_type& axis)
 {
 	base_quat<element_type> result;
 
@@ -173,7 +173,7 @@ inline static base_quat<element_type> base_quat<element_type>::angle_axis(elemen
 }
 
 template <typename element_type>
-inline static base_quat<element_type> base_quat<element_type>::euler(const vector3_type& angles)
+inline base_quat<element_type> base_quat<element_type>::euler(const vector3_type& angles)
 {
 	base_quat<element_type> result;
 
@@ -221,15 +221,15 @@ inline base_quat<element_type> operator*(const base_quat<element_type>& first, c
 template <typename element_type>
 inline base_quat<element_type>::vector3_type operator*(const typename base_quat<element_type>::vector3_type& vec, const base_quat<element_type>& quat)
 {
-	return quat.Inverse() * vec;
+	return quat.inverse() * vec;
 }
 
 template <typename element_type>
 inline base_quat<element_type>::vector3_type operator*(const base_quat<element_type>& quat, const typename base_quat<element_type>::vector3_type& vec)
 {
 	typename base_quat<element_type>::vector3_type quatVector(quat.x, quat.y, quat.z);
-	typename base_quat<element_type>::vector3_type uv(typename base_quat<element_type>::vector3_type::cross(quatVector, vec));
-	typename base_quat<element_type>::vector3_type uuv(typename base_quat<element_type>::vector3_type::cross(quatVector, uv));
+	typename base_quat<element_type>::vector3_type uv(base_quat<element_type>::vector3_type::cross(quatVector, vec));
+	typename base_quat<element_type>::vector3_type uuv(base_quat<element_type>::vector3_type::cross(quatVector, uv));
 
 	return vec + ((uv * quat.w) + uuv) * static_cast<element_type>(2);
 }
@@ -237,7 +237,7 @@ inline base_quat<element_type>::vector3_type operator*(const base_quat<element_t
 template <typename element_type>
 inline base_quat<element_type>::vector4_type operator*(const typename base_quat<element_type>::vector4_type& vec, const base_quat<element_type>& quat)
 {
-	return quat.Inverse() * vec;
+	return quat.inverse() * vec;
 }
 
 template <typename element_type>

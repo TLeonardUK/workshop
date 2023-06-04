@@ -10,6 +10,7 @@
 namespace ws::math {
 
 inline static constexpr float pi = 3.141592653f;
+inline static constexpr float pi2 = pi * 2;
 
 template <typename T>
 inline T radians(T degrees)

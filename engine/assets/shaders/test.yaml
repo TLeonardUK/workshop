@@ -17,7 +17,7 @@ effects:
 
 param_blocks:
   test_params:
-    scope: instance
+    scope: draw
     fields:
       albedo_texture: texture2d
       albedo_sampler: sampler

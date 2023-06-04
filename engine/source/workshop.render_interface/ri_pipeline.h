@@ -41,6 +41,7 @@ public:
     };
 
 public:
+    virtual ~ri_pipeline() {}
 
     virtual create_params get_create_params() = 0;
 

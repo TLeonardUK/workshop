@@ -26,7 +26,7 @@ dx12_ri_buffer::~dx12_ri_buffer()
         {
             renderer->get_descriptor_table(ri_descriptor_table::buffer).free(srv);
         }
-        CheckedRelease(handle);    
+        //CheckedRelease(handle);    
     });
 }
 
@@ -90,7 +90,8 @@ result<void> dx12_ri_buffer::create_resources()
     {
         m_renderer.get_upload_manager().upload(
             *this, 
-            m_create_params.linear_data
+            m_create_params.linear_data,
+            0
         );
     }
 
@@ -101,7 +102,7 @@ result<void> dx12_ri_buffer::create_resources()
     view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
     view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
     view_desc.Buffer.FirstElement = 0;
-    view_desc.Buffer.NumElements = (m_create_params.element_count * m_create_params.element_size) / 4;
+    view_desc.Buffer.NumElements = static_cast<UINT>((m_create_params.element_count * m_create_params.element_size) / 4);
     view_desc.Buffer.StructureByteStride = 0;
     view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 
@@ -134,6 +135,36 @@ ri_resource_state dx12_ri_buffer::get_initial_state()
 dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_srv() const
 {
     return m_srv;
+}
+
+void* dx12_ri_buffer::map(size_t offset, size_t size)
+{
+    db_assert(offset >= 0 && offset + size <= m_create_params.element_count);
+
+    mapped_buffer& buf = m_buffers.emplace_back();
+    buf.offset = offset;
+    buf.size = size;
+    buf.data.resize(size);
+
+    return buf.data.data();
+}
+
+void dx12_ri_buffer::unmap(void* pointer)
+{
+    for (auto iter = m_buffers.begin(); iter != m_buffers.end(); iter++)
+    {
+        if (iter->data.data() == pointer)
+        {
+            m_renderer.get_upload_manager().upload(
+                *this,
+                iter->data,
+                iter->offset
+            );
+
+            m_buffers.erase(iter);
+            return;
+        }
+    }
 }
 
 }; // namespace ws

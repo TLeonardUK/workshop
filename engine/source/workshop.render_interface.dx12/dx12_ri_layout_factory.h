@@ -23,7 +23,7 @@ class dx12_ri_layout_factory
     : public ri_layout_factory
 {
 public:
-    dx12_ri_layout_factory(dx12_render_interface& renderer, ri_data_layout layout);
+    dx12_ri_layout_factory(dx12_render_interface& renderer, ri_data_layout layout, ri_layout_usage usage);
     virtual ~dx12_ri_layout_factory();
 
     virtual void clear() override;
@@ -51,6 +51,8 @@ public:
     field get_field(size_t index);
     bool get_field_info(const char* name, field& info);
 
+    void transpose_matrices(void* field, ri_data_type type);
+
 private:
     void validate();
 
@@ -60,6 +62,7 @@ private:
 
     dx12_render_interface& m_renderer;
     ri_data_layout m_layout;
+    ri_layout_usage m_usage;
 
     size_t m_element_size;
     size_t m_element_count;

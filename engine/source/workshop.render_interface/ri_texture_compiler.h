@@ -25,6 +25,10 @@ public:
         std::vector<pixmap*> mips;
     };
 
+public:
+
+    virtual ~ri_texture_compiler() {}
+
     // Attempts to compile the given texture.
     virtual bool compile(
         ri_texture_dimension dimensions,

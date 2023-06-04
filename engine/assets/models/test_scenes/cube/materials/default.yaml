@@ -1,0 +1,14 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: opaque 
+
+textures:
+  albedo_texture:     data:models/test_scenes/cube/textures/albedo.yaml
+  metallic_texture:   data:models/test_scenes/cube/textures/metalness.yaml
+  normal_texture:     data:models/test_scenes/cube/textures/normal.yaml
+  roughness_texture:  data:models/test_scenes/cube/textures/roughness.yaml

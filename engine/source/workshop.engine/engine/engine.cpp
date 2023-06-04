@@ -44,6 +44,7 @@ void engine::step()
     profile_variable(m_frame_time.delta_seconds, "delta seconds");
 
     m_frame_time.step();
+    on_step.broadcast(m_frame_time);
     m_presenter->step(m_frame_time);
     m_windowing->pump_events();
 }

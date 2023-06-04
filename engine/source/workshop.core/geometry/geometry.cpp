@@ -177,6 +177,18 @@ std::vector<geometry_material>& geometry::get_materials()
     return m_materials;
 }
 
+geometry_material* geometry::get_material(const char* name)
+{
+    for (geometry_material& mat : m_materials)
+    {
+        if (mat.name == name)
+        {
+            return &mat;
+        }
+    }
+    return nullptr;
+}
+
 std::unique_ptr<geometry> geometry::load(const char* path)
 {
     std::unique_ptr<stream> stream = virtual_file_system::get().open(path, false);

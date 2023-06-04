@@ -34,7 +34,7 @@ public:
 
         // Optimal clear value.
         color optimal_clear_color = color(0.0f, 0.0f, 0.0f, 0.0f);
-        float optimal_clear_depth = 0.0f;
+        float optimal_clear_depth = 1.0f;
         uint8_t optimal_clear_stencil = 0;
 
         // Data that we will upload into the texture on construction.
@@ -43,6 +43,7 @@ public:
     };
 
 public:
+    virtual ~ri_texture() {}
 
     virtual size_t get_width() = 0;
     virtual size_t get_height() = 0;

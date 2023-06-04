@@ -28,6 +28,7 @@ class ri_param_block_archetype;
 class ri_param_block
 {
 public:
+    virtual ~ri_param_block() {}
 
 	// bool
 	void set(const char* field_name, const uint8_t& values); // Fucking bools.
@@ -70,7 +71,13 @@ public:
 	virtual void set(const char* field_name, const ri_sampler& resource) = 0;
 	virtual void set(const char* field_name, const ri_buffer& resource) = 0;
 
+	virtual void clear_buffer(const char* field_name) = 0;
+
 	virtual ri_param_block_archetype* get_archetype() = 0;
+
+    // Gets the index into the descriptor table of the buffer holding this param block
+    // and the offset within that buffer of the param blocks data.
+    virtual void get_table(size_t& index, size_t& offset) = 0;
 
 private:
 	virtual void set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) = 0;

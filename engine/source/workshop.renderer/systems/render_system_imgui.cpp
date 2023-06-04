@@ -5,7 +5,7 @@
 #include "workshop.renderer/systems/render_system_imgui.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
-#include "workshop.renderer/render_pass_fullscreen.h"
+#include "workshop.renderer/passes/render_pass_fullscreen.h"
 
 namespace ws {
 

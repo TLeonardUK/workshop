@@ -49,8 +49,6 @@ public:
 
     // Maximum amount of descriptors each dsv table can use.
     constexpr static size_t k_dsv_descriptor_table_size = k_dsv_heap_size;
-
-    using deferred_delete_function_t = std::function<void()>;
  
     dx12_render_interface();
     virtual ~dx12_render_interface();
@@ -58,6 +56,7 @@ public:
     virtual void register_init(init_list& list) override;
     virtual void begin_frame() override;
     virtual void end_frame() override;
+    virtual void flush_uploads() override;
     virtual std::unique_ptr<ri_swapchain> create_swapchain(window& for_window, const char* debug_name) override;
     virtual std::unique_ptr<ri_fence> create_fence(const char* debug_name) override;
     virtual std::unique_ptr<ri_shader_compiler> create_shader_compiler() override;
@@ -67,10 +66,11 @@ public:
     virtual std::unique_ptr<ri_texture> create_texture(const ri_texture::create_params& params, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_sampler> create_sampler(const ri_sampler::create_params& params, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_buffer> create_buffer(const ri_buffer::create_params& params, const char* debug_name = nullptr) override;
-    virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout) override;
+    virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout, ri_layout_usage usage) override;
     virtual ri_command_queue& get_graphics_queue() override;
     virtual ri_command_queue& get_copy_queue() override;
     virtual size_t get_pipeline_depth() override;
+    virtual void defer_delete(const deferred_delete_function_t& func) override;
 
     dx12_ri_upload_manager& get_upload_manager();
 
@@ -86,9 +86,6 @@ public:
     dx12_ri_descriptor_table& get_descriptor_table(ri_descriptor_table table);
 
     size_t get_frame_index();
-
-    // Used to defer a resource deletion until the gpu is no longer referencing it.
-    void defer_delete(const deferred_delete_function_t& func);
 
 private:
 

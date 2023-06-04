@@ -6,8 +6,10 @@
 
 #include "workshop.core/containers/string.h"
 #include "workshop.core/filesystem/stream.h"
+#include "workshop.core/geometry/geometry.h"
 
 #include "workshop.core/drawing/pixmap.h"
+#include "workshop.core/hashing/hash.h"
 
 namespace ws {
 
@@ -208,6 +210,9 @@ DEFINE_ENUM_TO_STRING(ri_data_type, ri_data_type_strings)
 
 // Number of bytes a given data type takes up on the gpu.
 size_t ri_bytes_for_data_type(ri_data_type type);
+
+// Converts a geometry type to an ri data type.
+ri_data_type ri_convert_geometry_data_type(geometry_data_type type);
 
 // ================================================================================================
 //  Topology of vertex data as interpreted by hull/geometry shaders.
@@ -749,6 +754,33 @@ struct ri_data_layout
     };
 
     std::vector<field> fields;
+
+    bool operator!=(const ri_data_layout& other) const
+    {
+        return !operator==(other);
+    }
+
+    bool operator==(const ri_data_layout& other) const
+    {
+        if (fields.size() != other.fields.size())
+        {
+            return false;
+        }
+
+        for (size_t i = 0; i < fields.size(); i++)
+        {
+            const field& this_field = fields[i];
+            const field& other_field = other.fields[i];
+
+            if (this_field.name != other_field.name ||
+                this_field.data_type != other_field.data_type)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 };
 
 
@@ -758,7 +790,15 @@ struct ri_data_layout
 // ================================================================================================
 enum class ri_data_scope
 {
+    // Exists globally, managed by code.
     global,
+
+    // Exists for a specific draw call. Multiple instances of the same model will share 
+    // the same param block.
+    draw,
+    
+    // Exists for each instance of a draw. Keep size as minimal as possible to make instanced
+    // rendering as efficient as possible.
     instance,
 
     COUNT
@@ -766,6 +806,7 @@ enum class ri_data_scope
 
 inline static const char* ri_data_scope_strings[static_cast<int>(ri_data_scope::COUNT)] = {
     "global",
+    "draw",
     "instance"
 };
 
@@ -858,3 +899,30 @@ inline static const char* ri_texture_border_color_strings[static_cast<int>(ri_te
 DEFINE_ENUM_TO_STRING(ri_texture_border_color, ri_texture_border_color_strings)
 
 }; // namespace ws
+
+namespace std {
+
+// Hash implementation for ri_data_layout.
+template <>
+struct hash<ws::ri_data_layout>
+{
+    std::size_t operator()(const ws::ri_data_layout& k) const
+    {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+
+        size_t h;
+        ws::hash_combine(h, k.fields.size());
+
+        for (const ws::ri_data_layout::field& field : k.fields)
+        {
+            ws::hash_combine(h, static_cast<int>(field.data_type));
+            ws::hash_combine(h, field.name);
+        }
+
+        return h;
+    }
+};
+
+}; // namespace std

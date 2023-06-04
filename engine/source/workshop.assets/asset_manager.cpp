@@ -68,7 +68,7 @@ asset_manager::asset_manager(platform_type asset_platform, config_type asset_con
     : m_asset_platform(asset_platform)
     , m_asset_config(asset_config)
 {
-    m_max_concurrent_ops = task_scheduler::get().get_worker_count(task_queue::standard);
+    m_max_concurrent_ops = task_scheduler::get().get_worker_count(task_queue::loading);
 
     m_load_thread = std::thread([this]() {
 
@@ -234,6 +234,15 @@ asset_state* asset_manager::create_asset_state(const std::type_info& id, const c
             state->default_asset = loader->get_default_asset();
         }
 
+        // Create a path watcher for changes.
+        /*
+        state->path_watcher = std::make_unique<virtual_file_system_path_watcher>(path, []() {
+        
+            // TODO: Reload asset if able.
+        
+        });        
+        */
+
         m_states.push_back(state);
     }
 
@@ -259,6 +268,17 @@ asset_state* asset_manager::create_asset_state(const std::type_info& id, const c
 
     return state;
 }
+
+/*
+void asset_manager::request_reload(asset_state* state)
+{
+    std::unique_lock lock(m_states_mutex);
+    db_assert_message(!state->is_pending, "Requested reload on asset already pending state change.");
+    db_assert_message(state->loading_state == asset_loading_state::loaded || state->loading_state == asset_loading_state::failed, "Requested reload on asset that is not loaded.");
+
+    request_load_lockless(state);
+}
+*/
 
 void asset_manager::request_load(asset_state* state)
 {
@@ -317,8 +337,7 @@ void asset_manager::wait_for_load(asset_state* state)
     while (true)
     {
         if (state->loading_state == asset_loading_state::loaded ||
-            state->loading_state == asset_loading_state::failed ||
-            !state->is_pending)
+            state->loading_state == asset_loading_state::failed)
         {
             return;
         }
@@ -340,6 +359,8 @@ void asset_manager::do_work()
                 asset_state* state = m_pending_queue.back();
                 m_pending_queue.pop_back();
 
+                state->is_pending = false;
+
                 process_asset(state);
 
                 continue;
@@ -360,6 +381,10 @@ void asset_manager::process_asset(asset_state* state)
             {
                 begin_unload(state);
             }
+            else
+            {
+                // TODO: Handle reloading.
+            }
             break;
         }
     case asset_loading_state::unloaded:
@@ -374,6 +399,9 @@ void asset_manager::process_asset(asset_state* state)
         {
             // We do nothing to failed assets, they sit in
             // this state and return a default asset if available.
+
+            // TODO: Handle reloading.
+
             break;
         }
     case asset_loading_state::waiting_for_dependencies:
@@ -758,8 +786,20 @@ void asset_manager::do_unload(asset_state* state)
 
 void asset_manager::set_load_state(asset_state* state, asset_loading_state new_state)
 {
-    //db_log(asset, "[%s] %s", state->path.c_str(), k_loading_state_strings[static_cast<int>(new_state)]);
+    //db_verbose(asset, "[%s] %s", state->path.c_str(), k_loading_state_strings[static_cast<int>(new_state)]);
     state->loading_state = new_state;
+
+    if (new_state == asset_loading_state::loading)
+    {
+        state->load_timer.start();
+    }
+    else if (new_state == asset_loading_state::loaded)
+    {
+        state->load_timer.stop();
+        db_verbose(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
+    }
+
+    state->on_change_callback.broadcast();
 }
 
 }; // namespace workshop

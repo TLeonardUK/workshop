@@ -15,6 +15,7 @@
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/assets/shader/shader.h"
@@ -55,7 +56,7 @@ renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_
     // Note: Order is important here, this is the order the 
     //       stages will be added to the render graph in.
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
-    m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
+    //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
@@ -63,6 +64,7 @@ renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_
     m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
     m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
     m_scene_manager = std::make_unique<render_scene_manager>(*this);
+    m_batch_manager = std::make_unique<render_batch_manager>(*this);
 
     for (size_t i = 0; i < k_frame_depth; i++)
     {
@@ -81,6 +83,7 @@ void renderer::register_init(init_list& list)
     m_param_block_manager->register_init(list);
     m_effect_manager->register_init(list);
     m_scene_manager->register_init(list);
+    m_batch_manager->register_init(list);
 
     list.add_step(
         "Renderer Resources",
@@ -182,6 +185,34 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_param_block->set("gbuffer2_texture", *m_gbuffer_textures[2]);
     m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
 
+    // Create default resources.
+    std::vector<uint8_t> default_data = { 0, 0, 0, 0 };
+    params.format = ri_texture_format::R8G8B8A8;
+    params.width = 1;
+    params.height = 1;
+    params.data = default_data;
+
+    default_data[0] = 0;
+    default_data[1] = 0;
+    default_data[2] = 0;
+    default_data[3] = 0;
+    m_default_textures[static_cast<int>(default_texture_type::black)] = m_render_interface.create_texture(params, "default black texture");
+
+    default_data[0] = 255;
+    default_data[1] = 255;
+    default_data[2] = 255;
+    default_data[3] = 255;
+    m_default_textures[static_cast<int>(default_texture_type::white)] = m_render_interface.create_texture(params, "default white texture");
+
+    default_data[0] = 0;
+    default_data[1] = 0;
+    default_data[2] = 255;
+    default_data[3] = 255;
+    m_default_textures[static_cast<int>(default_texture_type::normal)] = m_render_interface.create_texture(params, "default normal texture");
+
+    m_default_samplers[static_cast<int>(default_sampler_type::color)] = m_render_interface.create_sampler(sampler_params,  "default color sampler");
+    m_default_samplers[static_cast<int>(default_sampler_type::normal)] = m_render_interface.create_sampler(sampler_params,  "default normal sampler");
+
     return true;
 }
 
@@ -238,14 +269,63 @@ render_scene_manager& renderer::get_scene_manager()
     return *m_scene_manager;
 }
 
+render_batch_manager& renderer::get_batch_manager()
+{
+    return *m_batch_manager;
+}
+
 render_command_queue& renderer::get_command_queue()
 {
     return *m_command_queues[m_command_queue_active_index];
 }
 
+ri_texture* renderer::get_default_texture(default_texture_type type)
+{
+    return m_default_textures[static_cast<int>(type)].get();
+}
+
+ri_sampler* renderer::get_default_sampler(default_sampler_type type)
+{
+    return m_default_samplers[static_cast<int>(type)].get();
+}
+
+size_t renderer::get_frame_index()
+{
+    return m_frame_index;
+}
+
 render_object_id renderer::next_render_object_id()
 {
     return static_cast<render_object_id>(m_next_render_object_id.fetch_add(1));
+}
+
+void renderer::queue_callback(void* source, std::function<void()> callback)
+{
+    std::scoped_lock lock(m_callback_mutex);
+
+    m_callbacks.push_back({ source, callback });
+}
+
+void renderer::unqueue_callbacks(void* source)
+{
+    std::scoped_lock lock(m_callback_mutex);
+
+    auto start_iter = std::remove_if(m_callbacks.begin(), m_callbacks.end(), [source](const callback& instance) {
+        return source == instance.source;
+    });
+    m_callbacks.erase(start_iter, m_callbacks.end());
+}
+
+void renderer::run_callbacks()
+{
+    std::scoped_lock lock(m_callback_mutex);
+
+    for (callback& instance : m_callbacks)
+    {
+        instance.callback_function();
+    }
+
+    m_callbacks.clear();
 }
 
 void renderer::process_render_commands(render_world_state& state)
@@ -267,8 +347,13 @@ void renderer::render_state(render_world_state& state)
 
     profile_marker(profile_colors::render, "frame %zi", (size_t)state.time.frame_count);
 
+    m_frame_index = state.time.frame_count;
+
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
     m_current_backbuffer = &get_next_backbuffer();
+
+    // Execute any callbacks that have been queued.
+    run_callbacks();
 
     // Process the command queue.
     process_render_commands(state);
@@ -281,6 +366,9 @@ void renderer::render_state(render_world_state& state)
 
     // Begin the new frame.
     m_render_interface.begin_frame();
+    m_batch_manager->begin_frame();
+
+    // TODO: Do culling.
 
     // Render each view.
     std::vector<render_view*> views = m_scene_manager->get_views();
@@ -289,9 +377,12 @@ void renderer::render_state(render_world_state& state)
     view_generated_states.resize(views.size());
 
     parallel_for("render views", task_queue::standard, views.size(), [this, &state, &views, &view_generated_states](size_t index) {
-        profile_marker(profile_colors::render, "render view: %s", views[index]->name.c_str());
+        profile_marker(profile_colors::render, "render view: %s", views[index]->get_name().c_str());
         render_single_view(state, *views[index], view_generated_states[index]);
     });
+
+    // Before dispatching command lists flush any uploads that may have been queued as part of generation.
+    m_render_interface.flush_uploads();
 
     // Dispatch all generated command lists.
     {
@@ -302,7 +393,7 @@ void renderer::render_state(render_world_state& state)
             std::vector<render_pass::generated_state>& generated_state_list = view_generated_states[i];
             render_view& view = *views[i];
 
-            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", view.name.c_str());
+            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", view.get_name().c_str());
 
             for (render_pass::generated_state& state : generated_state_list)
             {

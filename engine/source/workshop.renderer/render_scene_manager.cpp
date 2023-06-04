@@ -31,9 +31,7 @@ void render_scene_manager::set_object_transform(render_object_id id, const vecto
 {
     if (render_object* object = resolve_id(id))
     {
-        object->local_location = location;
-        object->local_rotation = rotation;
-        object->local_scale = scale;
+        object->set_local_transform(location, rotation, scale);
     }
     else
     {
@@ -43,8 +41,8 @@ void render_scene_manager::set_object_transform(render_object_id id, const vecto
 
 void render_scene_manager::create_view(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_view> view = std::make_unique<render_view>();
-    view->name = name;
+    std::unique_ptr<render_view> view = std::make_unique<render_view>(m_renderer);
+    view->set_name(name);
 
     render_view* view_ptr = view.get();
 
@@ -65,7 +63,7 @@ void render_scene_manager::destroy_view(render_object_id id)
 {
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
-        db_verbose(renderer, "Removed render view: {%zi} %s", id, iter->second->name.c_str());
+        db_verbose(renderer, "Removed render view: {%zi} %s", id, iter->second->get_name().c_str());
 
         m_active_views.erase(std::find(m_active_views.begin(), m_active_views.end(), iter->second.get()));
         m_objects.erase(iter);
@@ -80,7 +78,7 @@ void render_scene_manager::set_view_viewport(render_object_id id, const recti& v
 {
     if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
     {
-        object->viewport = viewport;
+        object->set_viewport(viewport);
     }
     else
     {
@@ -92,10 +90,9 @@ void render_scene_manager::set_view_projection(render_object_id id, float fov, f
 {
     if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
     {
-        object->field_of_view = fov;
-        object->aspect_ratio = aspect_ratio;
-        object->near_clip = near_clip;
-        object->far_clip = far_clip;
+        object->set_fov(fov);
+        object->set_aspect_ratio(aspect_ratio);
+        object->set_clip(near_clip, far_clip);
     }
     else
     {
@@ -110,8 +107,8 @@ std::vector<render_view*> render_scene_manager::get_views()
 
 void render_scene_manager::create_static_mesh(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>();
-    obj->name = name;
+    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(m_renderer);
+    obj->set_name(name);
 
     render_static_mesh* obj_ptr = obj.get();
 
@@ -132,8 +129,8 @@ void render_scene_manager::destroy_static_mesh(render_object_id id)
 {
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
-        db_verbose(renderer, "Removed static mesh: {%zi} %s", id, iter->second->name.c_str());
-
+        db_verbose(renderer, "Removed static mesh: {%zi} %s", id, iter->second->get_name().c_str());
+        
         m_active_static_meshes.erase(std::find(m_active_static_meshes.begin(), m_active_static_meshes.end(), iter->second.get()));
         m_objects.erase(iter);
     }
@@ -147,7 +144,7 @@ void render_scene_manager::set_static_mesh_model(render_object_id id, const asse
 {
     if (render_static_mesh* object = dynamic_cast<render_static_mesh*>(resolve_id(id)))
     {
-        object->model = model;
+        object->set_model(model);
     }
     else
     {

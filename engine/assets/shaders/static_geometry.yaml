@@ -1,0 +1,52 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to render static unskinned geometry.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  static_geometry:
+    techniques:
+      static_geometry: {}
+
+vertex_layouts:
+  geometry_vertex:
+    position: float3
+    normal: float3
+    bitangent: float3
+    uv0: float2
+
+param_blocks:
+  geometry_instance_info:
+    scope: instance
+    fields:
+      model_matrix: float4x4
+  geometry_info:
+    scope: draw
+    fields:
+      albedo_texture: texture2d
+      albedo_sampler: sampler
+      metallic_texture: texture2d
+      metallic_sampler: sampler
+      roughness_texture: texture2d
+      roughness_sampler: sampler
+      normal_texture: texture2d
+      normal_sampler: sampler      
+
+techniques:
+  static_geometry:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader
+    render_state: default
+    vertex_layout: geometry_vertex
+    output_target: gbuffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]

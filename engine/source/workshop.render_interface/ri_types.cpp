@@ -69,6 +69,56 @@ size_t ri_bytes_for_data_type(ri_data_type value)
     }
 }
 
+ri_data_type ri_convert_geometry_data_type(geometry_data_type value)
+{    
+    static std::array<ri_data_type, static_cast<int>(geometry_data_type::COUNT)> conversion = {
+        ri_data_type::t_bool, // t_bool,
+	    ri_data_type::t_int, // t_int,
+	    ri_data_type::t_uint, // t_uint,
+	    ri_data_type::t_half, // t_half,
+	    ri_data_type::t_float, // t_float,
+	    ri_data_type::t_double,  // t_double,
+
+	    ri_data_type::t_bool2, // t_bool2,
+	    ri_data_type::t_int2, // t_int2,
+	    ri_data_type::t_uint2, // t_uint2,
+	    ri_data_type::t_half2, // t_half2,
+	    ri_data_type::t_float2, // t_float2,
+	    ri_data_type::t_double2, // t_double2,
+        
+        ri_data_type::t_bool3, // t_bool3,
+	    ri_data_type::t_int3, // t_int3,
+	    ri_data_type::t_uint3, // t_uint3,
+	    ri_data_type::t_half3, // t_half3,
+	    ri_data_type::t_float3, // t_float3,
+	    ri_data_type::t_double3, // t_double3,
+        
+        ri_data_type::t_bool4, // t_bool4,
+	    ri_data_type::t_int4, // t_int4,
+	    ri_data_type::t_uint4, // t_uint4,
+	    ri_data_type::t_half4, // t_half4,
+	    ri_data_type::t_float4, // t_float4,
+	    ri_data_type::t_double4, // t_double4,
+        
+        ri_data_type::t_float2x2, // t_float2x2,
+	    ri_data_type::t_double2x2, // t_double2x2,
+	    ri_data_type::t_float3x3, // t_float3x3,
+	    ri_data_type::t_double3x3, // t_double3x3,
+	    ri_data_type::t_float4x4, // t_float4x4,
+	    ri_data_type::t_double4x4, // t_double4x4,
+    };
+
+    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    {
+        return conversion[index];
+    }
+    else
+    {
+        db_assert_message(false, "Out of bounds conversion of geometry_data_type: %llu", index);
+        return conversion[0];
+    }
+}
+
 bool ri_is_format_depth_target(ri_texture_format format)
 {
     return  format == ri_texture_format::D16 ||

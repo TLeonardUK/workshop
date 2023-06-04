@@ -12,7 +12,7 @@ template <typename T>
 struct base_matrix3
 {
 public:
-	float columns[3][3];
+	T columns[3][3];
 
 	static const base_matrix3<T> identity;
 	static const base_matrix3<T> zero;
@@ -35,6 +35,7 @@ public:
 	base_matrix3& operator*=(T scalar);
 	base_matrix3& operator*=(const base_matrix3& other);
 
+	base_matrix3 transpose() const;
 	base_quat<T> to_quat();
 };
 
@@ -140,6 +141,24 @@ inline base_matrix3<T>& base_matrix3<T>::operator*=(const base_matrix3& other)
 {
 	*this = (*this * other);
 	return *this;
+}
+
+template <typename T>
+inline base_matrix3<T> base_matrix3<T>::transpose() const
+{
+	return base_matrix3<T>(
+		columns[0][0],
+		columns[1][0],
+		columns[2][0],
+
+		columns[0][1],
+		columns[1][1],
+		columns[2][1],
+
+		columns[0][2],
+		columns[1][2],
+		columns[2][2]
+	);
 }
 
 template <typename T>

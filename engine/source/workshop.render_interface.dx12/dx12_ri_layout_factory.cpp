@@ -7,9 +7,10 @@
 
 namespace ws {
 
-dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, ri_data_layout layout)
+dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, ri_data_layout layout, ri_layout_usage usage)
     : m_renderer(renderer)
     , m_layout(layout)
+    , m_usage(usage)
 {
     clear();
     
@@ -24,15 +25,20 @@ dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, 
         size_t type_size = ri_bytes_for_data_type(src_field.data_type);
 
         // Align so we do not straddle vector size.
-        size_t remainder = (offset % vector_size);
-        if (remainder > 0)
+        if (usage == ri_layout_usage::param_block)
         {
-            size_t bytes_left_in_vector = vector_size - remainder;
-            if (bytes_left_in_vector < type_size)
+            size_t remainder = (offset % vector_size);
+            if (remainder > 0)
             {
-                offset += bytes_left_in_vector;
+                size_t bytes_left_in_vector = vector_size - remainder;
+                if (bytes_left_in_vector < type_size)
+                {
+                    offset += bytes_left_in_vector;
+                }
             }
         }
+
+        // TODO: Handle type alignment rules for non param_block usage.
 
         field dst_field;
         dst_field.name = src_field.name;
@@ -49,10 +55,14 @@ dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, 
 
     m_element_size = offset;
 
-    size_t remainder = (offset % vector_size);
-    if (remainder > 0)
+    // Ensure element size is multiple of vector size.
+    if (usage == ri_layout_usage::param_block)
     {
-        m_element_size += vector_size - remainder;
+        size_t remainder = (offset % vector_size);
+        if (remainder > 0)
+        {
+            m_element_size += vector_size - remainder;
+        }
     }
 }
 
@@ -74,6 +84,19 @@ void dx12_ri_layout_factory::clear()
     for (auto& pair : m_fields)
     {
         pair.second.added = false;
+    }
+}
+
+void dx12_ri_layout_factory::transpose_matrices(void* field, ri_data_type type)
+{
+    switch (type)
+    {
+    case ri_data_type::t_double2x2:     *reinterpret_cast<matrix2d*>(field) = reinterpret_cast<matrix2d*>(field)->transpose(); break;
+    case ri_data_type::t_double3x3:     *reinterpret_cast<matrix3d*>(field) = reinterpret_cast<matrix3d*>(field)->transpose(); break;
+    case ri_data_type::t_double4x4:     *reinterpret_cast<matrix4d*>(field) = reinterpret_cast<matrix4d*>(field)->transpose(); break;
+    case ri_data_type::t_float2x2:      *reinterpret_cast<matrix2*>(field) = reinterpret_cast<matrix2*>(field)->transpose(); break;
+    case ri_data_type::t_float3x3:      *reinterpret_cast<matrix3*>(field) = reinterpret_cast<matrix3*>(field)->transpose(); break;
+    case ri_data_type::t_float4x4:      *reinterpret_cast<matrix4*>(field) = reinterpret_cast<matrix4*>(field)->transpose(); break;
     }
 }
 
@@ -116,6 +139,9 @@ void dx12_ri_layout_factory::add(const char* field_name, const std::span<uint8_t
             uint8_t* src = values.data() + (i * value_size);
             uint8_t* dst = m_buffer.data() + (i * m_element_size) + field.offset;
             memcpy(dst, src, value_size);
+
+            // We store our matrices as column-major but directx expects them to be in row-major, so transpose them.
+            transpose_matrices(dst, type);
         }
     }
 }

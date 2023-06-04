@@ -106,6 +106,7 @@ private:
 class ri_shader_compiler
 {
 public:
+    virtual ~ri_shader_compiler() {}
 
     // Attempts to compile the given shader.
     virtual ri_shader_compiler_output compile(

@@ -62,9 +62,9 @@ public:
 
         ri_texture_filter filter = ri_texture_filter::linear;
 
-        ri_texture_address_mode address_mode_u = ri_texture_address_mode::clamp_to_edge;
-        ri_texture_address_mode address_mode_v = ri_texture_address_mode::clamp_to_edge;
-        ri_texture_address_mode address_mode_w = ri_texture_address_mode::clamp_to_edge;
+        ri_texture_address_mode address_mode_u = ri_texture_address_mode::repeat;
+        ri_texture_address_mode address_mode_v = ri_texture_address_mode::repeat;
+        ri_texture_address_mode address_mode_w = ri_texture_address_mode::repeat;
 
         ri_texture_border_color border_color = ri_texture_border_color::opaque_black;
 
@@ -93,6 +93,12 @@ public:
     std::vector<texture_info> textures;
     std::vector<sampler_info> samplers;
     std::vector<parameter_info> parameters;
+
+    // Gets a sampler with the given name, returns the provided default if none exists.
+    ri_sampler* get_sampler(const char* name, ri_sampler* default_instance = nullptr);
+
+    // Gets a texture with the given name, returns the provided default if none exists.
+    ri_texture* get_texture(const char* name, ri_texture* default_instance = nullptr);
 
 protected:
     virtual bool post_load() override;

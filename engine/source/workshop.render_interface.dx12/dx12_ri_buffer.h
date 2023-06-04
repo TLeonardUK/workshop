@@ -33,6 +33,10 @@ public:
 
     virtual ri_resource_state get_initial_state() override;
 
+    virtual void* map(size_t offset, size_t size) override;
+    virtual void unmap(void* pointer) override;
+
+
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
 
@@ -48,6 +52,15 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
 
     dx12_ri_descriptor_table::allocation m_srv;
+
+    struct mapped_buffer
+    {
+        size_t offset;
+        size_t size;
+        std::vector<uint8_t> data;
+    };
+
+    std::vector<mapped_buffer> m_buffers;
 
 };
 
