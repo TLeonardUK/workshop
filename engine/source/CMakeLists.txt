@@ -23,8 +23,14 @@ if (WIN32)
 endif()
 add_subdirectory(workshop.renderer)
 
-add_subdirectory(workshop.windowing)
-add_subdirectory(workshop.windowing.sdl)
+add_subdirectory(workshop.platform_interface)
+add_subdirectory(workshop.platform_interface.sdl)
+
+add_subdirectory(workshop.window_interface)
+add_subdirectory(workshop.window_interface.sdl)
+
+add_subdirectory(workshop.input_interface)
+add_subdirectory(workshop.input_interface.sdl)
 
 # ================================================================================================
 #  Tier 2 - Engine functionality

@@ -6,7 +6,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_command_list.h"
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 #include "thirdparty/pix/include/pix3.h"
 

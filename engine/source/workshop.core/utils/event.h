@@ -17,8 +17,7 @@ namespace ws {
 // 
 // You can use it roughly like this:
 // 
-//   using MyDelegate = cb_delegate<int>;
-//   using MyEvent = cb_event<MyDelegate>;
+//   using MyEvent = event<MyDelegate>;
 // 
 //   MyEvent OnSomething;
 //   MyEvent::delegate_ptr ptr = OnSomething.add(Callback);
@@ -52,7 +51,6 @@ private:
     callback_function_type m_callback;
 
 };
-
 
 template <typename... parameters>
 class event

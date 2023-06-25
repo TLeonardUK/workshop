@@ -44,7 +44,9 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} 
     workshop.renderer
-    workshop.windowing
+    workshop.window_interface
+    workshop.input_interface
+    workshop.platform_interface
     "$<$<CONFIG:Debug>:${NON_RELEASE_LIBS}>"
     "$<$<CONFIG:Profile>:${NON_RELEASE_MODULES}>"
     yamlcpp

@@ -18,7 +18,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_ri_layout_factory.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 #include <algorithm>
 
@@ -526,6 +526,19 @@ void dx12_render_interface::end_frame()
 void dx12_render_interface::flush_uploads()
 {
     m_upload_manager->new_frame(m_frame_index);
+}
+
+void dx12_render_interface::drain_deferred()
+{
+    for (size_t i = 0; i < k_max_pipeline_depth; i++)
+    {
+        auto& queue = m_pending_deletions[i];
+        for (deferred_delete_function_t& functor : queue)
+        {
+            functor();
+        }
+        queue.clear();
+    }
 }
 
 void dx12_render_interface::process_pending_deletes()

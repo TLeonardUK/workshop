@@ -912,7 +912,7 @@ struct hash<ws::ri_data_layout>
         using std::hash;
         using std::string;
 
-        size_t h;
+        size_t h = 0;
         ws::hash_combine(h, k.fields.size());
 
         for (const ws::ri_data_layout::field& field : k.fields)

@@ -9,7 +9,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 namespace ws {
 

@@ -72,6 +72,11 @@ public:
     virtual size_t get_pipeline_depth() override;
     virtual void defer_delete(const deferred_delete_function_t& func) override;
 
+    // Drains all of the defered deletes without regard for which frame they should
+    // be destroyed on. Be -very- careful with this, the only real usecase is when we are
+    // draining the entire pipeline at once.
+    void drain_deferred();
+
     dx12_ri_upload_manager& get_upload_manager();
 
     bool is_tearing_allowed();

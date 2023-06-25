@@ -2,22 +2,22 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "workshop.windowing.sdl/sdl_window.h"
-#include "workshop.windowing.sdl/sdl_windowing.h"
+#include "workshop.window_interface.sdl/sdl_window.h"
+#include "workshop.window_interface.sdl/sdl_window_interface.h"
 
 #include "thirdparty/sdl2/include/SDL_syswm.h"
 
 namespace ws {
 
-sdl_window::sdl_window(sdl_windowing* owner)
+sdl_window::sdl_window(sdl_window_interface* owner, sdl_platform_interface* platform)
     : m_owner(owner)
 {
-    m_owner->register_window(this);
+    m_event_delegate = platform->on_sdl_event.add_shared(std::bind(&sdl_window::handle_event, this, std::placeholders::_1));
 }
 
 sdl_window::~sdl_window()
 {
-    m_owner->unregister_window(this);
+    m_event_delegate = nullptr;
 }
 
 void* sdl_window::get_platform_handle()
@@ -30,13 +30,18 @@ void* sdl_window::get_platform_handle()
     return reinterpret_cast<void*>(info.info.win.window);
 }
 
-void sdl_window::handle_event(const SDL_Event& event)
+SDL_Window* sdl_window::get_sdl_handle()
 {
-    if (event.type == SDL_KEYDOWN)
+    return m_window;
+}
+
+void sdl_window::handle_event(const SDL_Event* event)
+{
+    if (event->type == SDL_KEYDOWN)
     {
         // Switch between fullscreen and windowed.
-        if (event.key.keysym.sym == SDLK_RETURN && 
-            (event.key.keysym.mod & KMOD_ALT) != 0)
+        if (event->key.keysym.sym == SDLK_RETURN && 
+            (event->key.keysym.mod & KMOD_ALT) != 0)
         {             
             switch (m_mode)
             {

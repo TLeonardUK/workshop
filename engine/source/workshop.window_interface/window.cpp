@@ -2,7 +2,7 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 namespace ws {
 

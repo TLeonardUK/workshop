@@ -7,7 +7,9 @@
 #include "workshop.core/utils/result.h"
 #include "workshop.core/utils/init_list.h"
 #include "workshop.render_interface/ri_interface.h"
-#include "workshop.windowing/windowing.h"
+#include "workshop.input_interface/input_interface.h"
+#include "workshop.platform_interface/platform_interface.h"
+#include "workshop.window_interface/window_interface.h"
 #include "workshop.engine/presentation/presenter.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
@@ -54,6 +56,12 @@ public:
     // Gets the renderer instance.
     ri_interface& get_render_interface();
 
+    // Gets the input instance.
+    input_interface& get_input_interface();
+
+    // Gets the platform instance.
+    platform_interface& get_platform_interface();
+
     // Gets the renderer.
     renderer& get_renderer();
 
@@ -61,7 +69,7 @@ public:
     asset_manager& get_asset_manager();
 
     // Gets the windowing manager.
-    windowing& get_windowing();
+    window_interface& get_windowing();
 
     // Gets the main rendering window.
     window& get_main_window();
@@ -82,7 +90,13 @@ public:
     void set_render_interface_type(ri_interface_type type);
 
     // Sets the windowing system to use, immutable once engine is initialized.
-    void set_windowing_type(windowing_type type);
+    void set_window_interface_type(window_interface_type type);
+
+    // Sets the input system to use, immutable once engine is initialized.
+    void set_input_interface_type(input_interface_type type);
+
+    // Sets the platform system to use, immutable once engine is initialized.
+    void set_platform_interface_type(platform_interface_type type);
 
     // Sets the initial window mode, should be set during configuration.
     void set_window_mode(const std::string& title, size_t width, size_t height, window_mode mode);
@@ -95,14 +109,20 @@ private:
     result<void> create_task_scheduler(init_list& list);
     result<void> destroy_task_scheduler();
 
-    result<void> create_windowing(init_list& list);
-    result<void> destroy_windowing();
+    result<void> create_window_interface(init_list& list);
+    result<void> destroy_window_interface();
 
     result<void> create_render_interface(init_list& list);
     result<void> destroy_render_interface();
 
     result<void> create_renderer(init_list& list);
     result<void> destroy_renderer();
+
+    result<void> create_input_interface(init_list& list);
+    result<void> destroy_input_interface();
+
+    result<void> create_platform_interface(init_list& list);
+    result<void> destroy_platform_interface();
 
     result<void> create_main_window(init_list& list);
     result<void> destroy_main_window();
@@ -120,9 +140,12 @@ protected:
 
     std::vector<std::unique_ptr<world>> m_worlds;
 
-    std::unique_ptr<task_scheduler> m_task_scheduler;
-    std::unique_ptr<windowing> m_windowing;
+    std::unique_ptr<window_interface> m_window_interface;
     std::unique_ptr<ri_interface> m_render_interface;
+    std::unique_ptr<input_interface> m_input_interface;
+    std::unique_ptr<platform_interface> m_platform_interface;
+
+    std::unique_ptr<task_scheduler> m_task_scheduler;
     std::unique_ptr<renderer> m_renderer;
     std::unique_ptr<window> m_window;
     std::unique_ptr<presenter> m_presenter;
@@ -130,7 +153,9 @@ protected:
     std::unique_ptr<asset_manager> m_asset_manager;
 
     ri_interface_type m_render_interface_type = ri_interface_type::dx12;
-    windowing_type m_windowing_type = windowing_type::sdl;
+    window_interface_type m_window_interface_type = window_interface_type::sdl;
+    input_interface_type m_input_interface_type = input_interface_type::sdl;
+    platform_interface_type m_platform_interface_type = platform_interface_type::sdl;
 
     frame_time m_frame_time = {};
 

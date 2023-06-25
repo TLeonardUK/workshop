@@ -10,7 +10,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.core/perf/profile.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 namespace ws {
 
@@ -28,13 +28,14 @@ dx12_ri_swapchain::~dx12_ri_swapchain()
 
 void dx12_ri_swapchain::destroy_resources()
 {
-    drain();
-
     for (size_t i = 0; i < k_buffer_count; i++)
     {
         m_back_buffer_targets[i] = nullptr;
         m_back_buffer_last_used_frame[i] = 0;
     }
+
+    drain();
+
     SafeRelease(m_swap_chain);
 }
 
@@ -151,6 +152,8 @@ result<void> dx12_ri_swapchain::resize_buffers()
         m_back_buffer_last_used_frame[i] = 0;
     }
 
+    drain();
+
     HRESULT hr = m_swap_chain->ResizeBuffers(
         k_buffer_count,
         static_cast<UINT>(m_window.get_width()),
@@ -218,7 +221,6 @@ void dx12_ri_swapchain::present()
     {
         db_log(render_interface, "Window metrics changed, recreating swapchain.");
 
-        drain();
         if (!resize_buffers())
         {
             db_fatal(render_interface, "Failed to recreate swapchain.");
@@ -233,6 +235,8 @@ void dx12_ri_swapchain::drain()
         profile_marker(profile_colors::wait, "draining gpu");
         m_fence->wait(m_frame_index - 1);
     }
+
+    m_renderer.drain_deferred();
 }
 
 }; // namespace ws

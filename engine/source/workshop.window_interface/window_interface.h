@@ -7,7 +7,7 @@
 #include "workshop.core/utils/init_list.h"
 
 #include "workshop.render_interface/ri_interface.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 namespace ws {
 
@@ -16,7 +16,7 @@ class window;
 // ================================================================================================
 //  Types of windowing implementations available. Make sure to update if you add new ones.
 // ================================================================================================
-enum class windowing_type
+enum class window_interface_type
 {
     sdl
 };
@@ -25,7 +25,7 @@ enum class windowing_type
 //  Engine interface for all windowing implementation. Windowing encompases creation of windows,
 //  pumping of platform messages queues, and anything else required to display and update windows.
 // ================================================================================================
-class windowing
+class window_interface
 {
 public:
 

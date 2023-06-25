@@ -13,7 +13,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.core/drawing/color.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 #include "thirdparty/pix/include/pix3.h"
 

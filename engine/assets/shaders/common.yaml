@@ -11,7 +11,6 @@ render_states:
   # Default geometry rendering state.
   default: 
     cull_mode: back
-    fill_mode: wireframe
   # Default render state but without depth testing enabled. Useful
   # for things such as fullscreen passes.
   no_depth_test:

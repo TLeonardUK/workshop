@@ -32,6 +32,10 @@ private:
 
     render_object_id m_view_id;
 
+    vector3 m_view_position = vector3::zero;
+    vector3 m_view_rotation_euler = vector3::zero;
+    quat m_view_rotation = quat::identity;
+
 };
 
 };

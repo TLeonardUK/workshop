@@ -148,67 +148,6 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
     list.close();
     state_output.graphics_command_lists.push_back(&list);
-
-/*
-    std::vector<batch> batches = calculate_batches(renderer);
-    
-    ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
-    list.open();
-    {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
-
-        // Transition targets to the relevant state.
-        for (ri_texture* texture : output.color_targets)
-        {
-            list.barrier(*texture, ri_resource_state::initial, ri_resource_state::render_target);
-        }
-        if (output.depth_target)
-        {
-            list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_write);
-        }        
-
-        // Draw each batch.
-        list.set_pipeline(*technique->pipeline.get());
-        list.set_render_targets(output.color_targets, output.depth_target);
-        list.set_viewport(view.viewport);
-        list.set_scissor(view.viewport);
-        list.set_primitive_topology(ri_primitive::triangle_list);
-
-        for (batch& batch_data : batches)
-        {
-            // Put together param block list to use.
-            std::vector<ri_param_block*> blocks = param_blocks;
-            blocks.push_back(view.view_info_param_block.get());
-            blocks.push_back(batch_data.geometry_info_param_block);
-            blocks.push_back(batch_data.model_vertex_buffer->vertex_info_param_block.get());
-
-            // TODO: Re-add instance information.
-            //blocks.push_back(geometry_instance_info);
-
-            list.set_param_blocks(blocks);
-
-            for (instance& instance_data : batch_data.instances)
-            {
-                // TODO: Apply instance data.
-                list.set_index_buffer(*batch_data.index_buffer);
-                list.draw(batch_data.index_count, 1);
-            }
-        }
-
-        // Transition targets back to initial state.
-        for (ri_texture* texture : output.color_targets)
-        {
-            list.barrier(*texture, ri_resource_state::render_target, ri_resource_state::initial);
-        }
-        if (output.depth_target)
-        {
-            list.barrier(*output.depth_target, ri_resource_state::depth_write, ri_resource_state::initial);
-        }
-    }
-    list.close();
-
-    state_output.graphics_command_lists.push_back(&list);
-*/
 }
 
 }; // namespace ws

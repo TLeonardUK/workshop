@@ -57,7 +57,7 @@ public:
 
 protected:
 
-    friend class sdl_windowing;
+    friend class sdl_window_interface;
 
     void set_compatibility(ri_interface_type value);
 

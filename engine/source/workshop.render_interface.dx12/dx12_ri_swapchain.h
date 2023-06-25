@@ -6,7 +6,7 @@
 
 #include "workshop.render_interface/ri_swapchain.h"
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>

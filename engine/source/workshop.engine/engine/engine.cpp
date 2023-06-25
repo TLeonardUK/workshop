@@ -24,8 +24,14 @@
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
 
-#include "workshop.windowing/windowing.h"
-#include "workshop.windowing.sdl/sdl_windowing.h"
+#include "workshop.window_interface/window_interface.h"
+#include "workshop.window_interface.sdl/sdl_window_interface.h"
+
+#include "workshop.input_interface/input_interface.h"
+#include "workshop.input_interface.sdl/sdl_input_interface.h"
+
+#include "workshop.platform_interface/platform_interface.h"
+#include "workshop.platform_interface.sdl/sdl_platform_interface.h"
 
 #include "workshop.render_interface/ri_interface.h"
 
@@ -44,9 +50,12 @@ void engine::step()
     profile_variable(m_frame_time.delta_seconds, "delta seconds");
 
     m_frame_time.step();
+    m_platform_interface->pump_events();
+    m_window_interface->pump_events();
+    m_input_interface->pump_events();
+
     on_step.broadcast(m_frame_time);
     m_presenter->step(m_frame_time);
-    m_windowing->pump_events();
 }
 
 void engine::register_init(init_list& list)
@@ -67,9 +76,14 @@ void engine::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_asset_manager(); }
     );
     list.add_step(
-        "Windowing",
-        [this, &list]() -> result<void> { return create_windowing(list); },
-        [this, &list]() -> result<void> { return destroy_windowing(); }
+        "Platform Interface",
+        [this, &list]() -> result<void> { return create_platform_interface(list); },
+        [this, &list]() -> result<void> { return destroy_platform_interface(); }
+    );
+    list.add_step(
+        "Window Interface",
+        [this, &list]() -> result<void> { return create_window_interface(list); },
+        [this, &list]() -> result<void> { return destroy_window_interface(); }
     );
     list.add_step(
         "Main Window",
@@ -80,6 +94,11 @@ void engine::register_init(init_list& list)
         "Render Interface",
         [this, &list]() -> result<void> { return create_render_interface(list); },
         [this, &list]() -> result<void> { return destroy_render_interface(); }
+    );
+    list.add_step(
+        "Input Interface",
+        [this, &list]() -> result<void> { return create_input_interface(list); },
+        [this, &list]() -> result<void> { return destroy_input_interface(); }
     );
     list.add_step(
         "Renderer",
@@ -98,6 +117,16 @@ ri_interface& engine::get_render_interface()
     return *m_render_interface.get();
 }
 
+input_interface& engine::get_input_interface()
+{
+    return *m_input_interface.get();
+}
+
+platform_interface& engine::get_platform_interface()
+{
+    return *m_platform_interface.get();
+}
+
 renderer& engine::get_renderer()
 {
     return *m_renderer.get();
@@ -108,9 +137,9 @@ asset_manager& engine::get_asset_manager()
     return *m_asset_manager.get();
 }
 
-windowing& engine::get_windowing()
+window_interface& engine::get_windowing()
 {
-    return *m_windowing.get();
+    return *m_window_interface.get();
 }
 
 window& engine::get_main_window()
@@ -143,9 +172,19 @@ void engine::set_render_interface_type(ri_interface_type type)
     m_render_interface_type = type;
 }
 
-void engine::set_windowing_type(windowing_type type)
+void engine::set_window_interface_type(window_interface_type type)
 {
-    m_windowing_type = type;
+    m_window_interface_type = type;
+}
+
+void engine::set_input_interface_type(input_interface_type type)
+{
+    m_input_interface_type = type;
+}
+
+void engine::set_platform_interface_type(platform_interface_type type)
+{
+    m_platform_interface_type = type;
 }
 
 void engine::set_window_mode(const std::string& title, size_t width, size_t height, window_mode mode)
@@ -281,14 +320,14 @@ result<void> engine::destroy_asset_manager()
     return true;
 }
 
-result<void> engine::create_windowing(init_list& list)
+result<void> engine::create_window_interface(init_list& list)
 {
-    switch (m_windowing_type)
+    switch (m_window_interface_type)
     {
-    case windowing_type::sdl:
+    case window_interface_type::sdl:
         {
-            m_windowing = std::make_unique<sdl_windowing>();
-            m_windowing->register_init(list);
+            m_window_interface = std::make_unique<sdl_window_interface>(m_platform_interface.get());
+            m_window_interface->register_init(list);
             break;
         }
     default:
@@ -301,9 +340,63 @@ result<void> engine::create_windowing(init_list& list)
     return true;
 }
 
-result<void> engine::destroy_windowing()
+result<void> engine::destroy_window_interface()
 {
-    m_windowing = nullptr;
+    m_window_interface = nullptr;
+
+    return true;
+}
+
+result<void> engine::create_input_interface(init_list& list)
+{
+    switch (m_input_interface_type)
+    {
+    case input_interface_type::sdl:
+        {
+            m_input_interface = std::make_unique<sdl_input_interface>(m_window.get());
+            m_input_interface->register_init(list);
+            break;
+        }
+    default:
+        {
+            db_error(core, "Input interface type requested is not implemented.");
+            return standard_errors::no_implementation;
+        }
+    }
+
+    return true;
+}
+
+result<void> engine::destroy_input_interface()
+{
+    m_input_interface = nullptr;
+
+    return true;
+}
+
+result<void> engine::create_platform_interface(init_list& list)
+{
+    switch (m_platform_interface_type)
+    {
+    case platform_interface_type::sdl:
+        {
+            m_platform_interface = std::make_unique<sdl_platform_interface>();
+            m_platform_interface->register_init(list);
+            break;
+        }
+    default:
+        {
+            db_error(core, "Platform interface type requested is not implemented.");
+            return standard_errors::no_implementation;
+        }
+    }
+
+    return true;
+}
+
+result<void> engine::destroy_platform_interface()
+{
+    m_platform_interface = nullptr;
 
     return true;
 }
@@ -354,7 +447,7 @@ result<void> engine::destroy_renderer()
 
 result<void> engine::create_main_window(init_list& list)
 {
-    m_window = m_windowing->create_window(m_window_title.c_str(), m_window_width, m_window_height, m_window_mode, m_render_interface_type);
+    m_window = m_window_interface->create_window(m_window_title.c_str(), m_window_width, m_window_height, m_window_mode, m_render_interface_type);
     if (m_window == nullptr)
     {
         db_error(core, "Failed to create main window.");

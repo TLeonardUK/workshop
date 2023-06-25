@@ -35,7 +35,7 @@
 
 #include "workshop.assets/asset_manager.h"
 
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 #include "workshop.core/filesystem/virtual_file_system.h"
 

@@ -5,7 +5,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_heap.h"
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
-#include "workshop.windowing/window.h"
+#include "workshop.window_interface/window.h"
 
 namespace ws {
 
