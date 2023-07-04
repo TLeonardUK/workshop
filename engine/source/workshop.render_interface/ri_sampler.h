@@ -17,7 +17,7 @@ public:
 
     struct create_params
     {
-		ri_texture_filter filter = ri_texture_filter::linear;
+		ri_texture_filter filter = ri_texture_filter::anisotropic;
 		
 		ri_texture_address_mode address_mode_u = ri_texture_address_mode::repeat;
 		ri_texture_address_mode address_mode_v = ri_texture_address_mode::repeat;
@@ -26,10 +26,10 @@ public:
 		ri_texture_border_color border_color = ri_texture_border_color::opaque_black;
 
 		float min_lod = 0.0f;
-		float max_lod = -1.0f;
+		float max_lod = 100000.0f;
 		float mip_lod_bias = 0.0f;
 
-		int max_anisotropy = 0;
+		int max_anisotropy = 16;
     };
 
 public:

@@ -353,7 +353,7 @@ result<void> engine::create_input_interface(init_list& list)
     {
     case input_interface_type::sdl:
         {
-            m_input_interface = std::make_unique<sdl_input_interface>(m_window.get());
+            m_input_interface = std::make_unique<sdl_input_interface>(m_platform_interface.get(), m_window.get());
             m_input_interface->register_init(list);
             break;
         }
@@ -432,7 +432,7 @@ result<void> engine::destroy_render_interface()
 
 result<void> engine::create_renderer(init_list& list)
 {
-    m_renderer = std::make_unique<renderer>(*m_render_interface.get(), *m_window.get(), *m_asset_manager.get());
+    m_renderer = std::make_unique<renderer>(*m_render_interface.get(), *m_input_interface.get(), *m_window.get(), *m_asset_manager.get());
     m_renderer->register_init(list);
 
     return true;

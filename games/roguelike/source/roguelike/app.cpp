@@ -15,6 +15,8 @@
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/assets/model/model.h"
 
+#include "workshop.renderer/render_imgui_manager.h"
+
 std::shared_ptr<ws::app> make_app()
 {
     return std::make_shared<ws::rl_game_app>();
@@ -46,16 +48,22 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 10000.0f);
     cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 0.0f, -100.0f), quat::identity, vector3::one);
 
-    asset_ptr<model> test_model = ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0);
-    //asset_ptr<model> test_model = ass_manager.request_asset<model>("data:models/test_scenes/cube/cube.yaml", 0);
+    render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
 
-    for (size_t i = 0; i < 10; i++)
-    {
-        render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
-        cmd_queue.set_static_mesh_model(object_id, test_model);
-        cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    }
+    object_id = cmd_queue.create_static_mesh("Sponza Curtains");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
 
+    object_id = cmd_queue.create_static_mesh("Sponza Ivy");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+
+    object_id = cmd_queue.create_static_mesh("Sponza Trees");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+    
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);
     });
@@ -80,7 +88,7 @@ void rl_game_app::step(const frame_time& time)
     input.set_mouse_position(center_pos);
 
     constexpr float k_sensitivity = 0.001f;
-    constexpr float k_speed = 100.0f;
+    constexpr float k_speed = 300.0f;
 
     if (time.frame_count > 2)
     {
@@ -122,6 +130,13 @@ void rl_game_app::step(const frame_time& time)
         m_view_rotation,
         vector3::one
     );
+
+
+    imgui_scope scope(get_engine().get_renderer().get_imgui_manager(), "Test");
+    ImGui::SetNextWindowSize(ImVec2(300.0f, 300.0f));
+    ImGui::Begin("Test Window");
+    ImGui::Text("This is a test window, hopefully it works...");
+    ImGui::End();
 
 
     /*

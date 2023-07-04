@@ -34,6 +34,8 @@ SET(SOURCES
     "render_param_block_manager.cpp"
     "render_scene_manager.h"
     "render_scene_manager.cpp"
+    "render_imgui_manager.h"
+    "render_imgui_manager.cpp"
     
     "render_command_queue.h"
     "render_command_queue.cpp"
@@ -47,6 +49,8 @@ SET(SOURCES
     "passes/render_pass_fullscreen.cpp"
     "passes/render_pass_geometry.h"
     "passes/render_pass_geometry.cpp"
+    "passes/render_pass_callback.h"
+    "passes/render_pass_callback.cpp"
 
     "objects/render_view.h"
     "objects/render_view.cpp"
@@ -94,4 +98,5 @@ util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 target_link_libraries(${PROJECT_NAME} 
     workshop.render_interface
     workshop.assets
+    imgui
 )

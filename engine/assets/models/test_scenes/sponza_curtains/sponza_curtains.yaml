@@ -1,0 +1,14 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/test_scenes/sponza_curtains/sponza_curtains.fbx
+
+materials: 
+  "curtain_01":        "data:models/test_scenes/sponza_curtains/materials/curtain_01.yaml"
+  "curtain_02":        "data:models/test_scenes/sponza_curtains/materials/curtain_02.yaml"
+  "curtain_03":        "data:models/test_scenes/sponza_curtains/materials/curtain_03.yaml"
+  "metal_door":        "data:models/test_scenes/sponza_curtains/materials/metal_door.yaml"

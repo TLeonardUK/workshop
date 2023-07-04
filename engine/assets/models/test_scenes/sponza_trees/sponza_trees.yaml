@@ -1,0 +1,13 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/test_scenes/sponza_trees/sponza_trees.fbx
+
+materials: 
+  "Bark": "data:models/test_scenes/sponza_trees/materials/bark.yaml"
+  "LeafSpring": "data:models/test_scenes/sponza_trees/materials/leaf_spring.yaml"
+  "SmallBranches": "data:models/test_scenes/sponza_trees/materials/small_branches.yaml"

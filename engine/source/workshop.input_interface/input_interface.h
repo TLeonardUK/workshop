@@ -22,6 +22,8 @@ enum class input_interface_type
 // ================================================================================================
 enum class input_key
 {
+    invalid,
+
     a,
     b,
     c,
@@ -233,6 +235,9 @@ public:
 
     // Sets if the mouse is globally hidden or visible.
     virtual void set_mouse_hidden(bool hidden) = 0;
+
+    // Gets input that has been typed in over the last frame.
+    virtual std::string get_input() = 0;
 
 };
 

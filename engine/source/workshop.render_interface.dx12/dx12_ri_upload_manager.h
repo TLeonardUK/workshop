@@ -66,7 +66,7 @@ private:
 
     // Size of the heap, this should be able to store the maximum
     // size of any resource we try to upload.
-    static constexpr size_t k_heap_size = 128 * 1024 * 1024;
+    static constexpr size_t k_heap_size = 256 * 1024 * 1024;
 
 private:
     void allocate_new_heap();

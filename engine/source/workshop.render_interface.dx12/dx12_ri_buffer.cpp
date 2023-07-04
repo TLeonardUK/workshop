@@ -139,7 +139,7 @@ dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_srv() const
 
 void* dx12_ri_buffer::map(size_t offset, size_t size)
 {
-    db_assert(offset >= 0 && offset + size <= m_create_params.element_count);
+    db_assert(offset >= 0 && offset + size <= (m_create_params.element_count * m_create_params.element_size));
 
     mapped_buffer& buf = m_buffers.emplace_back();
     buf.offset = offset;

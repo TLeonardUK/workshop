@@ -24,7 +24,7 @@ public:
         size_t width = 1;
         size_t height = 1;
         size_t depth = 1;
-        size_t mip_levels = 0;
+        size_t mip_levels = 1;
         ri_texture_dimension dimensions = ri_texture_dimension::texture_2d;
         ri_texture_format format = ri_texture_format::R8G8B8A8;
         bool is_render_target = false;

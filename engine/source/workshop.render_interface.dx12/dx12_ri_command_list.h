@@ -47,7 +47,7 @@ public:
     virtual void set_primitive_topology(ri_primitive value) override;
     virtual void set_index_buffer(ri_buffer& buffer) override;
     virtual void set_render_targets(const std::vector<ri_texture*>& colors, ri_texture* depth) override;
-    virtual void draw(size_t indexes_per_instance, size_t instance_count) override;
+    virtual void draw(size_t indexes_per_instance, size_t instance_count, size_t start_index_location) override;
     virtual void begin_event(const color& color, const char* name, ...) override;
     virtual void end_event() override;
 

@@ -15,6 +15,7 @@
 #include "workshop.renderer/render_output.h"
 #include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
+#include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
@@ -37,6 +38,7 @@ class render_batch_manager;
 class asset_manager;
 class window;
 class shader;
+class input_interface;
 
 // Decribes the usage of a specific default texture, used to select
 // an appropriate one when calling renderer::get_default_texture.
@@ -67,7 +69,7 @@ class renderer
 public:
 
     renderer() = delete;
-    renderer(ri_interface& rhi, window& main_window, asset_manager& asset_manager);
+    renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager);
 
     // Registers all the steps required to initialize the renderer.
     void register_init(init_list& list);
@@ -84,7 +86,7 @@ public:
         {
             if (typeid(T) == typeid(*system))
             {
-                return system.get();
+                return static_cast<T*>(system.get());
             }
         }
         return nullptr;
@@ -106,6 +108,9 @@ public:
     // Gets the param block that contains all the information needed for reading
     // and writing to the gbuffer.
     ri_param_block* get_gbuffer_param_block();
+
+    // Gets the imgui manager.
+    render_imgui_manager& get_imgui_manager();
 
     // Gets the param block archetype repository.
     render_param_block_manager& get_param_block_manager();
@@ -140,6 +145,13 @@ public:
 
     // Unqueues all callbacks queued from the given source.
     void unqueue_callbacks(void* source);
+
+    // Drains the renderer of all pending gpu work.
+    void drain();
+
+    // Gets the width/height of the output target we are rendering to.
+    size_t get_display_width();
+    size_t get_display_height();
 
 private:
 
@@ -184,6 +196,7 @@ private:
     constexpr static inline size_t k_command_queue_size = 32'000'000;
 
     ri_interface& m_render_interface;
+    input_interface& m_input_interface;
     window& m_window;
     asset_manager& m_asset_manager;
 
@@ -194,6 +207,7 @@ private:
     std::unique_ptr<render_effect_manager> m_effect_manager;
     std::unique_ptr<render_scene_manager> m_scene_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
+    std::unique_ptr<render_imgui_manager> m_imgui_manager;
 
     // Command queue.
 

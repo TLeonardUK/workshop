@@ -1,0 +1,12 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/test_scenes/sponza_ivy/sponza_ivy.fbx
+
+materials: 
+  "IvyLeaf": "data:models/test_scenes/sponza_ivy/materials/ivyleaf.yaml"
+  "Lianas": "data:models/test_scenes/sponza_ivy/materials/bark.yaml"

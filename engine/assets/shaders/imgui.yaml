@@ -1,0 +1,55 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to render the basic imgui rects
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  render_imgui:
+    techniques:
+      render_imgui: {}
+
+vertex_layouts:
+  imgui_vertex:
+    position: float2
+    uv0: float2
+    color0: float4
+
+param_blocks:
+  imgui_params:
+    scope: draw
+    fields:
+      color_texture: texture2d
+      color_sampler: sampler     
+      projection_matrix: float4x4
+
+render_states:
+  imgui_render_state: 
+    depth_test_enabled: false  
+    depth_write_enabled: false
+    cull_mode: none
+    blend_enabled: true
+    blend_op: add
+    blend_source_op: source_alpha
+    blend_destination_op: inverse_source_alpha
+    blend_alpha_op: add
+    blend_alpha_source_op: inverse_source_alpha
+    blend_alpha_destination_op: zero
+
+techniques:
+  render_imgui:
+    vertex_shader: 
+      file: data:shaders/source/imgui.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/imgui.hlsl
+      entry: pshader
+    render_state: imgui_render_state
+    vertex_layout: imgui_vertex
+    output_target: swapchain
+    param_blocks: [ imgui_params ]

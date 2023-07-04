@@ -378,6 +378,7 @@ bool texture_loader::generate_mipchain(const char* path, texture& asset)
 
     for (texture::face& face : asset.faces)
     {
+        size_t mip_index = 0;
         while (true)
         {
             pixmap& last_mip = *face.mips.back();
@@ -388,7 +389,43 @@ bool texture_loader::generate_mipchain(const char* path, texture& asset)
 
             size_t mip_width = std::max(block_size, (last_mip.get_width() / 2));
             size_t mip_height = std::max(block_size, (last_mip.get_height() / 2));
+
+#if 0
+            static color s_mip_colors[17] = {
+                color::red,
+                color::green,
+                color::blue,
+                color::yellow,
+                color::amber,
+                color::black,
+                color::blue_grey,
+                color::brown,
+                color::cyan,
+                color::deep_orange,
+                color::deep_purple,
+                color::indigo,
+                color::grey,
+                color::pure_blue,
+                color::pink,
+                color::white,
+                color::yellow
+            };
+
+            std::unique_ptr<pixmap> mip = std::make_unique<pixmap>(mip_width, mip_height, last_mip.get_format());
+            for (size_t y = 0; y < mip_height; y++)
+            {
+                for (size_t x = 0; x < mip_width; x++)
+                {
+                    mip->set(x, y, s_mip_colors[mip_index]);
+                }
+            }
+
+            face.mips.emplace_back(std::move(mip));
+#else
             face.mips.emplace_back(last_mip.resize(mip_width, mip_height, pixmap_filter::bilinear));
+#endif
+
+            mip_index++;
         }
     }
 

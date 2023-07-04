@@ -81,7 +81,7 @@ public:
     // Dispatches a draw call with all the set state. 
     // Note: Vertex buffers are accessed bindlessly, so offsets for
     // selecting instance specific data is handled in the shader.
-    virtual void draw(size_t indexes_per_instance, size_t instance_count) = 0;
+    virtual void draw(size_t indexes_per_instance, size_t instance_count, size_t start_index_location = 0) = 0;
 
     // Begins a profiling scope within the queue.
     virtual void begin_event(const color& color, const char* name, ...) = 0;

@@ -5,6 +5,8 @@
 #include "workshop.input_interface.sdl/sdl_input_interface.h"
 #include "workshop.window_interface.sdl/sdl_window_interface.h"
 #include "workshop.window_interface.sdl/sdl_window.h"
+#include "workshop.platform_interface/platform_interface.h"
+#include "workshop.platform_interface.sdl/sdl_platform_interface.h"
 #include "workshop.core/perf/profile.h"
 
 #include "thirdparty/sdl2/include/SDL.h"
@@ -12,6 +14,8 @@
 namespace
 {
     int g_input_key_to_scanecode[(int)ws::input_key::count] = {
+
+        0,
 
         SDL_SCANCODE_A,
         SDL_SCANCODE_B,
@@ -148,9 +152,12 @@ namespace
 
 namespace ws {
 
-sdl_input_interface::sdl_input_interface(window* window)
+sdl_input_interface::sdl_input_interface(platform_interface* platform_interface, window* window)
 {
+    m_platform = dynamic_cast<sdl_platform_interface*>(platform_interface);
     m_window = dynamic_cast<sdl_window*>(window);
+
+    db_assert_message(m_platform != nullptr, "Platform provided to input interface is not sdl. Input interface is not compatible.");
     db_assert_message(m_window != nullptr, "Window provided to input interface is not an sdl window. Input interface is not compatible.");
 }
 
@@ -165,6 +172,8 @@ void sdl_input_interface::register_init(init_list& list)
 
 result<void> sdl_input_interface::create_sdl(init_list& list)
 {
+    m_event_delegate = m_platform->on_sdl_event.add_shared(std::bind(&sdl_input_interface::handle_event, this, std::placeholders::_1));
+
     m_mouse_cursors[(int)input_cursor::arrow] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     m_mouse_cursors[(int)input_cursor::ibeam] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
     m_mouse_cursors[(int)input_cursor::wait] = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
@@ -192,6 +201,8 @@ result<void> sdl_input_interface::destroy_sdl()
             cursor = nullptr;
         }
     }
+
+    m_event_delegate = nullptr;
 
     return true;
 }
@@ -237,8 +248,14 @@ void sdl_input_interface::pump_events()
         return;
     }
 
-    m_mouse_wheel_horizontal = 0.0f;
-    m_mouse_wheel_vertical = 0.0f;
+    m_current_input = m_pending_input;
+    m_mouse_wheel_horizontal = m_pending_mouse_wheel_horizontal;
+    m_mouse_wheel_vertical = m_pending_mouse_wheel_vertical;
+
+    m_pending_input = "";
+    m_pending_mouse_wheel_horizontal = 0;
+    m_pending_mouse_wheel_vertical = 0;
+    
     m_mouse_state = (uint32_t)SDL_GetMouseState(&m_mouse_x, &m_mouse_y);
     m_keyboard_state = SDL_GetKeyboardState(nullptr);
 
@@ -254,11 +271,6 @@ void sdl_input_interface::pump_events()
         bool down = (m_mouse_state & (1 << bit)) != 0;
 
         update_key_state(i, down);
-    }
-
-    if (was_key_pressed(input_key::g))
-    {
-        db_log(core, "g presed");
     }
 }
 
@@ -334,9 +346,10 @@ float sdl_input_interface::get_mouse_wheel_delta(bool horizontal)
 
 void sdl_input_interface::set_mouse_cursor(input_cursor cursor)
 {    
-    if (SDL_Cursor* cursor = m_mouse_cursors[(int)cursor])
+    SDL_Cursor* sdl_cursor = m_mouse_cursors[(int)cursor];
+    if (sdl_cursor != nullptr)
     {
-        SDL_SetCursor(cursor);
+        SDL_SetCursor(sdl_cursor);
     }
 }
 
@@ -348,6 +361,29 @@ void sdl_input_interface::set_mouse_capture(bool capture)
 void sdl_input_interface::set_mouse_hidden(bool hidden)
 {
     SDL_ShowCursor(!hidden);
+}
+
+std::string sdl_input_interface::get_input()
+{
+    return m_current_input;
+}
+
+void sdl_input_interface::handle_event(const SDL_Event* event)
+{		
+    switch (event->type)
+	{
+	case SDL_TEXTINPUT:
+		{
+            m_pending_input += event->text.text;
+		}
+	case SDL_MOUSEWHEEL:
+		{
+			if (event->wheel.x > 0) m_pending_mouse_wheel_horizontal += 1;
+			if (event->wheel.x < 0) m_pending_mouse_wheel_horizontal -= 1;
+			if (event->wheel.y > 0) m_pending_mouse_wheel_vertical += 1;
+			if (event->wheel.y < 0) m_pending_mouse_wheel_vertical -= 1;
+		}
+	}
 }
 
 }; // namespace ws

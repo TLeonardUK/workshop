@@ -36,6 +36,7 @@ intermediate/
 tests/
 junk/
 .vs/
+bistro/
 
 # Ignore exclusions
 !tools/cmake/**

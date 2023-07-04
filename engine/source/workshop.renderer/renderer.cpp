@@ -16,6 +16,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
+#include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/assets/shader/shader.h"
@@ -48,8 +49,9 @@
 
 namespace ws {
 
-renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_manager)
+renderer::renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager)
     : m_render_interface(rhi)
+    , m_input_interface(input)
     , m_window(main_window)
     , m_asset_manager(asset_manager)
 {
@@ -58,13 +60,14 @@ renderer::renderer(ri_interface& rhi, window& main_window, asset_manager& asset_
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
     //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
-    m_systems.push_back(std::make_unique<render_system_imgui>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
+    m_systems.push_back(std::make_unique<render_system_imgui>(*this));
 
     m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
     m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
     m_scene_manager = std::make_unique<render_scene_manager>(*this);
     m_batch_manager = std::make_unique<render_batch_manager>(*this);
+    m_imgui_manager = std::make_unique<render_imgui_manager>(*this, m_input_interface);
 
     for (size_t i = 0; i < k_frame_depth; i++)
     {
@@ -84,6 +87,7 @@ void renderer::register_init(init_list& list)
     m_effect_manager->register_init(list);
     m_scene_manager->register_init(list);
     m_batch_manager->register_init(list);
+    m_imgui_manager->register_init(list);
 
     list.add_step(
         "Renderer Resources",
@@ -191,6 +195,7 @@ result<void> renderer::recreate_resizable_targets()
     params.width = 1;
     params.height = 1;
     params.data = default_data;
+    params.is_render_target = false;
 
     default_data[0] = 0;
     default_data[1] = 0;
@@ -272,6 +277,11 @@ render_scene_manager& renderer::get_scene_manager()
 render_batch_manager& renderer::get_batch_manager()
 {
     return *m_batch_manager;
+}
+
+render_imgui_manager& renderer::get_imgui_manager()
+{
+    return *m_imgui_manager;
 }
 
 render_command_queue& renderer::get_command_queue()
@@ -469,6 +479,9 @@ void renderer::render_job()
 
 void renderer::step(std::unique_ptr<render_world_state>&& state)
 {
+    // Step all sub-managers.
+    m_imgui_manager->step(state->time);
+
     // Push this frame into the queue, and optionally wait if 
     // queue depth has gotten too great.
     bool start_new_render_job = false;
@@ -545,6 +558,21 @@ result<void> renderer::destroy_render_graph()
     m_render_graph = nullptr;
 
     return true;
+}
+
+void renderer::drain()
+{
+    m_swapchain->drain();
+}
+
+size_t renderer::get_display_width()
+{
+    return m_window.get_width();
+}
+
+size_t renderer::get_display_height()
+{
+    return m_window.get_height();
 }
 
 }; // namespace ws

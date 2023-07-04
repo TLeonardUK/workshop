@@ -178,26 +178,48 @@ void dx12_ri_texture::create_views()
 
     // Create SRV view for buffer.
     // TODO: need to create a UAV if writable
+    D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
+    view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    view_desc.Format = ri_to_dx12(m_create_params.format);
+
+    size_t mip_levels = m_create_params.mip_levels;
+
     switch (m_create_params.dimensions)
     {
     case ri_texture_dimension::texture_1d:
         {
             m_srv_table = ri_descriptor_table::texture_1d;
+
+            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+            view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
+
             break;
         }
     case ri_texture_dimension::texture_2d:
         {
             m_srv_table = ri_descriptor_table::texture_2d;
+
+            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
+
             break;
         }
     case ri_texture_dimension::texture_3d:
         {
             m_srv_table = ri_descriptor_table::texture_3d;
+
+            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+            view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
+
             break;
         }
     case ri_texture_dimension::texture_cube:
         {
             m_srv_table = ri_descriptor_table::texture_cube;
+
+            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+            view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
+
             break;
         }
     }   
@@ -206,7 +228,7 @@ void dx12_ri_texture::create_views()
     if (!ri_is_format_depth_target(m_create_params.format))
     {
         m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
-        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), nullptr, m_srv.cpu_handle);
+        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &view_desc, m_srv.cpu_handle);
     }
 }
 

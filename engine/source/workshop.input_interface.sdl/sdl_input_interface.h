@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.input_interface/input_interface.h"
+#include "workshop.platform_interface.sdl/sdl_platform_interface.h"
 
 #include "thirdparty/sdl2/include/SDL.h"
 
@@ -21,7 +22,7 @@ class sdl_window;
 class sdl_input_interface : public input_interface
 {
 public:
-    sdl_input_interface(window* in_window);
+    sdl_input_interface(platform_interface* platform_interface, window* in_window);
 
     virtual void register_init(init_list& list) override;
     virtual void pump_events() override;
@@ -45,6 +46,8 @@ public:
     virtual void set_mouse_capture(bool capture) override;
 
     virtual void set_mouse_hidden(bool hidden) override;
+
+    virtual std::string get_input() override;
     
 protected:
 
@@ -53,6 +56,8 @@ protected:
 
     void update_key_state(int keyIndex, bool down);
     bool is_window_in_focus();
+
+    void handle_event(const SDL_Event* event);
 
 private:
 
@@ -68,15 +73,24 @@ private:
     uint32_t m_mouse_state;
     const Uint8* m_keyboard_state;
 
-    int m_mouse_wheel_vertical;
-    int m_mouse_wheel_horizontal;
-
     std::array<int, (int)input_key::count> m_key_states;
 
     std::array<SDL_Cursor*, (int)input_cursor::count> m_mouse_cursors;
 
     sdl_window* m_window = nullptr;
 
+    std::string m_current_input = "";
+    std::string m_pending_input = "";
+
+    int m_mouse_wheel_vertical;
+    int m_mouse_wheel_horizontal;
+
+    int m_pending_mouse_wheel_vertical;
+    int m_pending_mouse_wheel_horizontal;
+
+    sdl_platform_interface* m_platform = nullptr;
+
+    decltype(sdl_platform_interface::on_sdl_event)::delegate_ptr m_event_delegate;
 
 };
 
