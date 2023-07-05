@@ -39,5 +39,4 @@ junk/
 bistro/
 
 # Ignore exclusions
-!tools/cmake/**
 !source/thirdparty/**
