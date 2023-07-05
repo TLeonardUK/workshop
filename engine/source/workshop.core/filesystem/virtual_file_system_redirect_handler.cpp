@@ -96,6 +96,16 @@ std::vector<std::string> virtual_file_system_redirect_handler::list(const char* 
     return virtual_file_system::get().list(target_path.c_str(), type);
 }
 
+std::unique_ptr<virtual_file_system_watcher> virtual_file_system_redirect_handler::watch(const char* path, virtual_file_system_watcher::callback_t callback)
+{
+    std::string target_path;
+    if (!get_target_path(path, target_path))
+    {
+        return {};
+    }
+
+    return virtual_file_system::get().watch(target_path.c_str(), callback);
+}
 
 void virtual_file_system_redirect_handler::alias(const char* virtual_path, const char* target_path)
 {
@@ -117,6 +127,11 @@ bool virtual_file_system_redirect_handler::get_target_path(const char* virtual_p
     }
 
     return false;
+}
+
+void virtual_file_system_redirect_handler::raise_watch_events()
+{
+    // Nothing required for redirect handler, the handlers we redirect to will handle this.
 }
 
 }; // namespace workshop

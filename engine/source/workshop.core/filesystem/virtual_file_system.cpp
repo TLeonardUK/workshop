@@ -313,4 +313,43 @@ std::vector<std::string> virtual_file_system::list(const char* path, virtual_fil
     return result;
 }
 
+std::unique_ptr<virtual_file_system_watcher> virtual_file_system::watch(const char* path, virtual_file_system_watcher::callback_t callback)
+{
+    std::unique_ptr<virtual_file_system_watcher_compound> result = std::make_unique<virtual_file_system_watcher_compound>();
+
+    std::string protocol;
+    std::string filename;
+    virtual_file_system::crack(path, protocol, filename);
+    protocol = virtual_file_system::normalize(protocol.c_str());
+
+    // Handlers return relative paths, they don't include the alias so we have a special callback here to just prefix
+    // the alias and pass it on to the real callback.
+    virtual_file_system_watcher::callback_t alias_callback = [callback, protocol](const char* callback_path)
+    {
+        callback((protocol + ":" + callback_path).c_str());
+    };
+
+    iterate_handlers(path, [&result, &path, &alias_callback](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+
+        std::unique_ptr<virtual_file_system_watcher> handler_watch = handler->watch(filename.c_str(), alias_callback);
+        if (handler_watch)
+        {
+            result->watchers.push_back(std::move(handler_watch));
+        }
+
+        return false;
+
+    });
+
+    return result;
+}
+
+void virtual_file_system::raise_watch_events()
+{
+    for (registered_handle& handle : m_handlers)
+    {
+        handle.handler->raise_watch_events();
+    }
+}
+
 }; // namespace workshop

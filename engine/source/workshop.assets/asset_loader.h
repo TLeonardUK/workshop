@@ -51,6 +51,13 @@ public:
     // Unloads an asset previous returned from load.
     virtual void unload(asset* instance) = 0;
 
+    // Called when an asset has been hot reloaded. The loader should swap over state from the new_instance
+    // to the original instance as the new_instance will be destroyed afterwards.
+    virtual void hot_reload(asset* instance, asset* new_instance) { }
+
+    // Returns true if assets are capable of being hot reloaded.
+    virtual bool can_hot_reload() { return false; };
+
     // Offline compiles an asset from the source data at the given path to an 
     // optimal binary file format. 
     // The resulting data will be stored and used for all future loads.

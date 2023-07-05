@@ -50,10 +50,17 @@ struct asset_state
     asset_loading_state loading_state = asset_loading_state::unloaded;
     asset* default_asset = nullptr;
 
+    asset_cache_key cache_key;
+
     const std::type_info* type_id;
 
     std::vector<asset_state*> dependencies;
     std::vector<asset_state*> depended_on_by;
+
+    std::vector<std::unique_ptr<virtual_file_system_watcher>> file_watchers;
+
+    bool is_for_hot_reload = false;
+    asset_state* hot_reload_state = nullptr;
 
     event<> on_change_callback;
 
@@ -179,11 +186,15 @@ public:
     template<typename T>
     asset_ptr<T> request_asset(const char* path, int32_t priority)
     {
-        return asset_ptr<T>(this, create_asset_state(typeid(T), path, priority));
+        return asset_ptr<T>(this, create_asset_state(typeid(T), path, priority, false));
     }
 
     // Blocks until all pending asset operations have completed.
     void drain_queue();
+
+    // Performs any needed hot reload swapping. Done explicitly so higher level code
+    // can control any syncronisation problems.
+    void run_hot_reloads();
 
 protected:
     template <typename asset_type>
@@ -204,7 +215,8 @@ protected:
 
     // Requests the creation of a state block for the given asset. This state block
     // should be used to construct an asset_ptr.
-    asset_state* create_asset_state(const std::type_info& id, const char* path, int32_t priority);
+    asset_state* create_asset_state(const std::type_info& id, const char* path, int32_t priority, bool is_hot_reload);
+    asset_state* create_asset_state_lockless(const std::type_info& id, const char* path, int32_t priority, bool is_hot_reload);
 
     // Triggers a reload of an asset.
     //void request_reload(asset_state* state);
@@ -259,6 +271,16 @@ protected:
 
     // Compiles the given asset and stores it in the cache.
     bool compile_asset(asset_cache_key& cache_key, asset_loader* loader, asset_state* state, std::string& compiled_path);
+
+    // Registers file watchers to monitor for hot reloading of asset.
+    void start_watching_for_reload(asset_state* state);
+    void stop_watching_for_reload(asset_state* state);
+
+    // Queus a state for hot reload.
+    void hot_reload(asset_state* state);
+
+    // Cleans up a state that has been unloaded and no longer required.
+    void delete_state(asset_state* state);
 
 private:
     struct registered_loader
@@ -319,6 +341,9 @@ private:
     std::condition_variable m_states_convar;
     std::vector<asset_state*> m_states;
     std::vector<asset_state*> m_pending_queue;
+    std::vector<asset_state*> m_pending_hot_reload;
+
+    std::vector<asset_state*> m_hot_reload_queue;
 
     size_t m_max_concurrent_ops = 32;
 

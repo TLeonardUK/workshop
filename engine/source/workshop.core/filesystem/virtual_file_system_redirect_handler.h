@@ -30,6 +30,8 @@ public:
     virtual bool create_directory(const char* path) override;
     virtual bool modified_time(const char* path, virtual_file_system_time_point& timepoint) override;
     virtual std::vector<std::string> list(const char* path, virtual_file_system_path_type type) override;
+    virtual std::unique_ptr<virtual_file_system_watcher> watch(const char* path, virtual_file_system_watcher::callback_t callback) override;
+    virtual void raise_watch_events() override;
 
     void alias(const char* virtual_path, const char* target_path);
 

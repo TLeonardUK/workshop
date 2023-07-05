@@ -40,6 +40,8 @@ SET(SOURCES
     
     "filesystem/file.cpp"
     "filesystem/file.h"
+    "filesystem/path_watcher.cpp"
+    "filesystem/path_watcher.h"
     "filesystem/stream.h"
     "filesystem/stream.cpp"
     "filesystem/disk_stream.h"

@@ -5,6 +5,7 @@
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/disk_stream.h"
+#include "workshop.core/filesystem/path_watcher.h"
 
 #include <filesystem>
 
@@ -14,6 +15,7 @@ virtual_file_system_disk_handler::virtual_file_system_disk_handler(const std::st
     : m_root(root)
     , m_read_only(read_only)
 {
+    m_path_watcher = watch_path(root);
 }
 
 std::unique_ptr<stream> virtual_file_system_disk_handler::open(const char* path, bool for_writing)
@@ -188,6 +190,56 @@ std::vector<std::string> virtual_file_system_disk_handler::list(const char* path
     }
 
     return result;
+
+}
+
+virtual_file_system_disk_watcher::~virtual_file_system_disk_watcher()
+{
+    std::scoped_lock lock(m_handler->m_registered_watchers_mutex);
+
+    auto iter = std::find(m_handler->m_registered_watchers.begin(), m_handler->m_registered_watchers.end(), this);
+    if (iter != m_handler->m_registered_watchers.end())
+    {
+        m_handler->m_registered_watchers.erase(iter);
+    }
+}
+
+std::unique_ptr<virtual_file_system_watcher> virtual_file_system_disk_handler::watch(const char* path, virtual_file_system_watcher::callback_t callback)
+{
+    std::scoped_lock lock(m_registered_watchers_mutex);
+
+    std::unique_ptr<virtual_file_system_disk_watcher> result = std::make_unique<virtual_file_system_disk_watcher>();
+    result->m_callback = callback;
+    result->m_path = virtual_file_system::normalize(path);
+    result->m_handler = this;
+
+    m_registered_watchers.push_back(result.get());
+
+    return result;
+}
+
+void virtual_file_system_disk_handler::raise_watch_events()
+{
+    std::scoped_lock lock(m_registered_watchers_mutex);
+
+    if (m_path_watcher == nullptr)
+    {
+        return;
+    }
+
+    path_watcher::event evt;
+    while (m_path_watcher->get_next_change(evt))
+    {
+        std::string relative_path = virtual_file_system::normalize(std::filesystem::relative(evt.path, m_root).string().c_str());
+
+        for (virtual_file_system_disk_watcher* watcher : m_registered_watchers)
+        {
+            if (watcher->m_path == relative_path)
+            {
+                watcher->m_callback(relative_path.c_str());
+            }
+        }
+    }
 }
 
 }; // namespace workshop

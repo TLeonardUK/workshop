@@ -10,6 +10,7 @@ SET(SOURCES
     "debug/debug.cpp"
 
     "filesystem/file.cpp"
+    "filesystem/path_watcher.cpp"
     
     "platform/platform.cpp"
     

@@ -32,14 +32,14 @@ public:
     using texture_id = size_t;
 
     // Should match imgui_vertex in shader.
-#pragma pack(push, 0)
+#pragma pack(push, 1)
     struct vertex
     {
         vector2 position;
         vector2 uv;
         vector4 color;
     };
-#pragma pack(pop, 0)
+#pragma pack(pop, 1)
 
     struct draw_command
     {

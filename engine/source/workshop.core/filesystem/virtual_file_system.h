@@ -90,6 +90,12 @@ public:
     // Lists all the files or directories that exist in a given path.
     std::vector<std::string> list(const char* path, virtual_file_system_path_type type);
 
+    // Watches a path within the file system for modifications and raises events when they occur.
+    std::unique_ptr<virtual_file_system_watcher> watch(const char* path, virtual_file_system_watcher::callback_t callback);
+
+    // Invokes any pending callbacks for paths that are being watched via watch(). 
+    void raise_watch_events();
+
 public:
 
     // Normalizes a path.

@@ -9,10 +9,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace ws {
 
 class stream;
+class virtual_file_system;
 
 // ================================================================================================
 //  This class is the base class for protocol handlers that can be registered to the 
@@ -42,6 +44,13 @@ public:
 
     // Lists all the files or directories that exist in a given path.
     virtual std::vector<std::string> list(const char* path, virtual_file_system_path_type type) = 0;
+
+    // Gets the time a file was modified.
+    virtual std::unique_ptr<virtual_file_system_watcher> watch(const char* path, virtual_file_system_watcher::callback_t callback) = 0;
+
+    // Invokes any pending callbacks for paths that are being watched via watch(). 
+    virtual void raise_watch_events() = 0;
+
 
 };
 

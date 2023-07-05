@@ -200,23 +200,32 @@ void asset_manager::decrement_ref(asset_state* state, bool state_lock_held)
     }
 }
 
-asset_state* asset_manager::create_asset_state(const std::type_info& id, const char* path, int32_t priority)
+
+asset_state* asset_manager::create_asset_state(const std::type_info& id, const char* path, int32_t priority, bool is_hot_reload)
 {
     std::unique_lock lock(m_states_mutex);
-  
+    return create_asset_state_lockless(id, path, priority, is_hot_reload);
+}
+
+asset_state* asset_manager::create_asset_state_lockless(const std::type_info& id, const char* path, int32_t priority, bool is_hot_reload)
+{
     asset_state* state = nullptr;
 
-    // See if the asset already exists.
-    auto iter = std::find_if(m_states.begin(), m_states.end(), [&path](asset_state* state) {
-        return (_stricmp(state->path.c_str(), path) == 0);
-    });
-
-    if (iter != m_states.end())
+    //  If we are hot reloading always load the asset.
+    if (!is_hot_reload)
     {
-        state = *iter;
-        state->priority = priority; 
+        // See if the asset already exists.
+        auto iter = std::find_if(m_states.begin(), m_states.end(), [&path](asset_state* state) {
+            return !state->is_for_hot_reload && (_stricmp(state->path.c_str(), path) == 0);
+        });
+
+        if (iter != m_states.end())
+        {
+            state = *iter;
+            state->priority = priority;
+        }
     }
-  
+
     // Create a new state if one didn't already exist.
     if (state == nullptr)
     {
@@ -227,21 +236,13 @@ asset_state* asset_manager::create_asset_state(const std::type_info& id, const c
         state->references = 0;
         state->type_id = &id;
         state->path = path;
+        state->is_for_hot_reload = is_hot_reload;
 
         asset_loader* loader = get_loader_for_type(state->type_id);
         if (loader != nullptr)
         {
             state->default_asset = loader->get_default_asset();
         }
-
-        // Create a path watcher for changes.
-        /*
-        state->path_watcher = std::make_unique<virtual_file_system_path_watcher>(path, []() {
-        
-            // TODO: Reload asset if able.
-        
-        });        
-        */
 
         m_states.push_back(state);
     }
@@ -546,8 +547,7 @@ void asset_manager::begin_unload(asset_state* state)
                 state->dependencies.clear();
 
                 // Nuke the state.
-                m_states.erase(std::find(m_states.begin(), m_states.end(), state));
-                delete state;
+                delete_state(state);
             }
             else
             {
@@ -563,6 +563,22 @@ void asset_manager::begin_unload(asset_state* state)
         }
     
     });
+}
+
+void asset_manager::delete_state(asset_state* state)
+{
+    if (state->hot_reload_state)
+    {
+        decrement_ref(state->hot_reload_state, true);
+        state->hot_reload_state = nullptr;
+    }
+
+    if (auto iter = std::find(m_hot_reload_queue.begin(), m_hot_reload_queue.end(), state); iter != m_hot_reload_queue.end())
+    {
+        m_hot_reload_queue.erase(iter);
+    }
+    m_states.erase(std::find(m_states.begin(), m_states.end(), state));
+    delete state;
 }
 
 bool asset_manager::search_cache_for_key(const asset_cache_key& cache_key, std::string& compiled_path)
@@ -711,6 +727,8 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
             }
             else
             {
+                state->cache_key = compiled_cache_key;
+
                 if (compiled_cache_key.hash() != header.compiled_hash)
                 {
                     db_warning(asset, "[%s] Compiled asset looks to be out of date, recompile required.", state->path.c_str());
@@ -796,10 +814,117 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
     else if (new_state == asset_loading_state::loaded)
     {
         state->load_timer.stop();
+        
         db_verbose(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
     }
 
+    if (!state->is_for_hot_reload)
+    {
+        if (new_state == asset_loading_state::loaded)
+        {
+            start_watching_for_reload(state);
+        }
+        else
+        {
+            stop_watching_for_reload(state);
+        }
+    }
+
     state->on_change_callback.broadcast();
+}
+
+void asset_manager::hot_reload(asset_state* state)
+{
+    std::scoped_lock lock(m_states_mutex);
+
+    if (state->loading_state != asset_loading_state::loaded)
+    {
+        db_log(core, "Not hot reloading, asset not loaded yet.");
+        return;
+    }
+
+    if (state->hot_reload_state)
+    {
+        db_log(core, "Not hot reloading, already in hot reload queue: %s", state->path.c_str());
+        return;
+    }
+
+    asset_loader* loader = get_loader_for_type(state->type_id);
+    if (loader && !loader->can_hot_reload())
+    {
+        db_log(core, "Not hot reloading, asset type is not hot reloadable: %s", state->path.c_str());
+        return;
+    }
+
+    state->hot_reload_state = create_asset_state_lockless(*state->type_id, state->path.c_str(), state->priority, true);
+
+    // Keep state in memory while hot reloading it.
+    increment_ref(state);
+
+    db_log(core, "Queued asset for hot reload: %s", state->path.c_str());
+    m_hot_reload_queue.push_back(state);
+}
+
+void asset_manager::start_watching_for_reload(asset_state* state)
+{
+    state->file_watchers.clear();
+
+    auto callback = [this, state](const char* changed_path) {
+
+        db_log(core, "Asset modified: %s (due to change to %s)", state->path.c_str(), changed_path);
+        hot_reload(state);
+
+    };
+
+    // Create a path watcher for changes.
+    state->file_watchers.push_back(virtual_file_system::get().watch(state->cache_key.source.path.c_str(), callback));
+    for (asset_cache_key_file& file : state->cache_key.dependencies)
+    {
+        state->file_watchers.push_back(virtual_file_system::get().watch(file.path.c_str(), callback));
+    }
+}
+
+void asset_manager::stop_watching_for_reload(asset_state* state)
+{
+    state->file_watchers.clear();
+}
+
+void asset_manager::run_hot_reloads()
+{
+    std::scoped_lock lock(m_states_mutex);
+
+    for (auto iter = m_hot_reload_queue.begin(); iter != m_hot_reload_queue.end(); /* empty */)
+    {
+        asset_state* state = *iter;
+
+        if (state->hot_reload_state->loading_state == asset_loading_state::loaded)
+        {
+            db_log(core, "Swapping hot reloaded asset: %s", state->path.c_str());
+
+            // Ask the asset loader to swap the internal state of the asset being hot reloaded.
+            asset_loader* loader = get_loader_for_type(state->type_id);
+            if (loader)
+            {
+                loader->hot_reload(state->instance, state->hot_reload_state->instance);
+            }
+
+            // Remove the temporary hot reload state.
+            if (state->hot_reload_state)
+            {
+                decrement_ref(state->hot_reload_state, true);
+                state->hot_reload_state = nullptr;
+            }
+
+            // Remove reference from state that we added when we queued it for hot reload.
+            decrement_ref(state, true);
+
+            iter = m_hot_reload_queue.erase(iter);
+        }
+        else
+        {
+            iter++;
+        }
+    }
 }
 
 }; // namespace workshop

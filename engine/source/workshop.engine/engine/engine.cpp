@@ -56,6 +56,9 @@ void engine::step()
 
     on_step.broadcast(m_frame_time);
     m_presenter->step(m_frame_time);
+
+    m_filesystem->raise_watch_events();
+    m_asset_manager->run_hot_reloads();
 }
 
 void engine::register_init(init_list& list)
