@@ -62,6 +62,8 @@ public:
     texture(ri_interface& ri_interface, renderer& renderer);
     virtual ~texture();
 
+    void swap(texture* other);
+
 public:
     texture_usage usage = texture_usage::color;
     ri_texture_dimension dimensions = ri_texture_dimension::COUNT;

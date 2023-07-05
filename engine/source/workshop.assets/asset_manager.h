@@ -192,9 +192,12 @@ public:
     // Blocks until all pending asset operations have completed.
     void drain_queue();
 
+    // Returns true if any hot reloads are pending and apply_hot_reloads is needed.
+    bool has_pending_hot_reloads();
+
     // Performs any needed hot reload swapping. Done explicitly so higher level code
     // can control any syncronisation problems.
-    void run_hot_reloads();
+    void apply_hot_reloads();
 
 protected:
     template <typename asset_type>

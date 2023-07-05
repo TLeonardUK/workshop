@@ -43,6 +43,8 @@ public:
 
     virtual ri_resource_state get_initial_state() override;
 
+    virtual void swap(ri_texture* other) override;
+
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
     dx12_ri_descriptor_table::allocation get_rtv() const;
@@ -58,6 +60,9 @@ private:
     ri_texture::create_params m_create_params;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
+
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC m_view_desc = {};
 
     dx12_ri_descriptor_table::allocation m_rtv;
     dx12_ri_descriptor_table::allocation m_dsv;

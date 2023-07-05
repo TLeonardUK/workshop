@@ -149,6 +149,13 @@ public:
     // Drains the renderer of all pending gpu work.
     void drain();
 
+    // Halts the render thread and drains all gpu work. Rendering will not continue
+    // until resume is called.
+    void pause();
+
+    // Resumes halted render thread caused by pause.
+    void resume();
+
     // Gets the width/height of the output target we are rendering to.
     size_t get_display_width();
     size_t get_display_height();
@@ -228,6 +235,8 @@ private:
     task_handle m_render_job_task;
 
     size_t m_frame_index = 0;
+
+    bool m_paused = false;
 
     // Swapchain
 

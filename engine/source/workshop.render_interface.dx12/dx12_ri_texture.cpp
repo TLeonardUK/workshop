@@ -178,9 +178,8 @@ void dx12_ri_texture::create_views()
 
     // Create SRV view for buffer.
     // TODO: need to create a UAV if writable
-    D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
-    view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    view_desc.Format = ri_to_dx12(m_create_params.format);
+    m_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    m_view_desc.Format = ri_to_dx12(m_create_params.format);
 
     size_t mip_levels = m_create_params.mip_levels;
 
@@ -190,8 +189,8 @@ void dx12_ri_texture::create_views()
         {
             m_srv_table = ri_descriptor_table::texture_1d;
 
-            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-            view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+            m_view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
 
             break;
         }
@@ -199,8 +198,8 @@ void dx12_ri_texture::create_views()
         {
             m_srv_table = ri_descriptor_table::texture_2d;
 
-            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-            view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            m_view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
 
             break;
         }
@@ -208,8 +207,8 @@ void dx12_ri_texture::create_views()
         {
             m_srv_table = ri_descriptor_table::texture_3d;
 
-            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-            view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+            m_view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
 
             break;
         }
@@ -217,8 +216,8 @@ void dx12_ri_texture::create_views()
         {
             m_srv_table = ri_descriptor_table::texture_cube;
 
-            view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
+            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+            m_view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
 
             break;
         }
@@ -228,7 +227,7 @@ void dx12_ri_texture::create_views()
     if (!ri_is_format_depth_target(m_create_params.format))
     {
         m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
-        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &view_desc, m_srv.cpu_handle);
+        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_view_desc, m_srv.cpu_handle);
     }
 }
 
@@ -310,6 +309,34 @@ ID3D12Resource* dx12_ri_texture::get_resource()
 ri_resource_state dx12_ri_texture::get_initial_state()
 {
     return m_common_state;
+}
+
+void dx12_ri_texture::swap(ri_texture* other)
+{
+    dx12_ri_texture* dx12_other = static_cast<dx12_ri_texture*>(other);
+
+    std::swap(m_debug_name, dx12_other->m_debug_name);
+    std::swap(m_create_params, dx12_other->m_create_params);
+
+    std::swap(m_srv_table, dx12_other->m_srv_table);
+    std::swap(m_common_state, dx12_other->m_common_state);
+    
+    std::swap(m_handle, dx12_other->m_handle);
+
+    // Recreate our views in the same descriptor slots. This keeps all the handles used elsewhere
+    // in param blocks etc valid, no need to replace everything.
+    if (m_rtv.is_valid())
+    {
+        m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), nullptr, m_rtv.cpu_handle);
+    }
+    if (m_dsv.is_valid())
+    {
+        m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), nullptr, m_dsv.cpu_handle);
+    }
+    if (m_srv.is_valid())
+    {
+        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_view_desc, m_srv.cpu_handle);
+    }
 }
 
 }; // namespace ws

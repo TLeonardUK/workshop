@@ -47,4 +47,21 @@ bool texture::post_load()
     return true;
 }
 
+void texture::swap(texture* other)
+{
+    usage = other->usage;
+    dimensions = other->dimensions;
+    format = other->format;
+    width = other->width;
+    height = other->height;
+    depth = other->depth;
+    mipmapped = other->mipmapped;
+    faces = std::move(other->faces);
+    other->faces.clear();
+    mip_levels = other->mip_levels;
+    data = other->data;
+
+    ri_instance->swap(other->ri_instance.get());
+}
+
 }; // namespace ws

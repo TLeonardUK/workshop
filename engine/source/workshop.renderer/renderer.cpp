@@ -519,6 +519,26 @@ void renderer::step(std::unique_ptr<render_world_state>&& state)
     m_command_queue_active_index = (m_command_queue_active_index + 1) % m_command_queues.size();
 }
 
+void renderer::pause()
+{
+    std::unique_lock lock(m_pending_frames_mutex);
+
+    while (m_frames_in_flight.load() >= k_frame_depth)
+    {
+        profile_marker(profile_colors::render, "wait for render");
+        m_pending_frame_convar.wait(lock);
+    }
+
+    drain();
+
+    m_paused = true;
+}
+ 
+void renderer::resume()
+{
+    m_paused = false;
+}
+
 result<void> renderer::create_render_graph()
 {
     m_render_graph = std::make_unique<render_graph>();

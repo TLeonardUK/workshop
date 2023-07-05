@@ -550,6 +550,14 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
     return true;
 }
 
+void texture_loader::hot_reload(asset* instance, asset* new_instance)
+{
+    texture* old_instance_tex = static_cast<texture*>(instance);
+    texture* new_instance_tex = static_cast<texture*>(new_instance);
+
+    old_instance_tex->swap(new_instance_tex);
+}
+
 size_t texture_loader::get_compiled_version()
 {
     return k_asset_compiled_version;

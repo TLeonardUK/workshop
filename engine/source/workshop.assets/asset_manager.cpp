@@ -889,7 +889,22 @@ void asset_manager::stop_watching_for_reload(asset_state* state)
     state->file_watchers.clear();
 }
 
-void asset_manager::run_hot_reloads()
+bool asset_manager::has_pending_hot_reloads()
+{
+    std::scoped_lock lock(m_states_mutex);
+
+    for (asset_state* state : m_hot_reload_queue)
+    {
+        if (state->hot_reload_state->loading_state == asset_loading_state::loaded)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void asset_manager::apply_hot_reloads()
 {
     std::scoped_lock lock(m_states_mutex);
 
