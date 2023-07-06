@@ -31,6 +31,8 @@ public:
     virtual size_t get_element_count() override;
     virtual size_t get_element_size() override;
 
+    virtual const char* get_debug_name() override;
+
     virtual ri_resource_state get_initial_state() override;
 
     virtual void* map(size_t offset, size_t size) override;

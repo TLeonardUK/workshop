@@ -169,7 +169,9 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
             geometry_material* geo_mat = asset.geometry->get_material(name.c_str());
             if (geo_mat != nullptr)
             {
-                asset.header.add_dependency(value.c_str());
+                // Note: Don't add as dependency. We don't want to trigger a rebuild of the
+                //       model just because a material has changed.
+                //asset.header.add_dependency(value.c_str());
 
                 model::material_info& mat = asset.materials.emplace_back();
                 mat.name = name;

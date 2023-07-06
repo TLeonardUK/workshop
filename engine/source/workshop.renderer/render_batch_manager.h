@@ -225,6 +225,9 @@ public:
     // Gets all the batches that have the given domain and usage.
     std::vector<render_batch*> get_batches(material_domain domain, render_batch_usage usage);
 
+    // Clears all cached data.
+    void clear_cached_data();
+
     // Invalidates any cached state that uses the given materail.
     void clear_cached_material_data(material* material);
 

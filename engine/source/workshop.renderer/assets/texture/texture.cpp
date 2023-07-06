@@ -49,17 +49,16 @@ bool texture::post_load()
 
 void texture::swap(texture* other)
 {
-    usage = other->usage;
-    dimensions = other->dimensions;
-    format = other->format;
-    width = other->width;
-    height = other->height;
-    depth = other->depth;
-    mipmapped = other->mipmapped;
-    faces = std::move(other->faces);
-    other->faces.clear();
-    mip_levels = other->mip_levels;
-    data = other->data;
+    std::swap(usage, other->usage);
+    std::swap(dimensions, other->dimensions);
+    std::swap(format, other->format);
+    std::swap(width, other->width);
+    std::swap(height, other->height);
+    std::swap(depth, other->depth);
+    std::swap(mipmapped, other->mipmapped);
+    std::swap(faces, other->faces);
+    std::swap(mip_levels, other->mip_levels);
+    std::swap(data, other->data);
 
     ri_instance->swap(other->ri_instance.get());
 }

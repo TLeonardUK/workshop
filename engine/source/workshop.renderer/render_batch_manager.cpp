@@ -374,6 +374,14 @@ std::vector<render_batch*> render_batch_manager::get_batches(material_domain dom
     return result;
 }
 
+void render_batch_manager::clear_cached_data()
+{
+    for (auto& [key, batch] : m_batches)
+    {
+        batch->clear_cached_data();
+    }
+}
+
 void render_batch_manager::clear_cached_material_data(material* material)
 {
     for (auto& [key, batch] : m_batches)

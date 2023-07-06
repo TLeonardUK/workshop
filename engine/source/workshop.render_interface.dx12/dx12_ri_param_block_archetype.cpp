@@ -108,7 +108,12 @@ void dx12_ri_param_block_archetype::free(allocation alloc)
 {
     std::scoped_lock lock(m_allocation_mutex);
 
+    // Useful for debugging allocations still in use.
+#if 0
+    m_pages[alloc.pool_index].free_list.insert(m_pages[alloc.pool_index].free_list.begin(), alloc.allocation_index);
+#else
     m_pages[alloc.pool_index].free_list.push_back(alloc.allocation_index);
+#endif
 }
 
 void dx12_ri_param_block_archetype::add_page()

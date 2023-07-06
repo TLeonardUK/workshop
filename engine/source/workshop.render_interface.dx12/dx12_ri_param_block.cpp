@@ -54,7 +54,7 @@ void dx12_ri_param_block::mutate()
         memcpy(m_allocation.cpu_address, old_allocation.cpu_address, old_allocation.size);
 
         // Free old allocation.
-        m_renderer.defer_delete([allocation = m_allocation, archetype = &m_archetype]()
+        m_renderer.defer_delete([allocation = old_allocation, archetype = &m_archetype]()
         {
             archetype->free(allocation);
         });

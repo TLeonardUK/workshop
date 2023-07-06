@@ -122,6 +122,11 @@ size_t dx12_ri_buffer::get_element_size()
     return m_create_params.element_size;
 }
 
+const char* dx12_ri_buffer::get_debug_name()
+{
+    return m_debug_name.c_str();
+}
+
 ID3D12Resource* dx12_ri_buffer::get_resource()
 {
     return m_handle.Get();
