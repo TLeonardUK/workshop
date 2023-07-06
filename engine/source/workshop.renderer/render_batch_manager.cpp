@@ -237,8 +237,6 @@ ri_param_block* render_batch::find_or_create_param_block(
     {
         std::unique_ptr<ri_param_block> new_block = m_renderer.get_param_block_manager().create_param_block(param_block_name);
 
-        db_log(renderer, "Creating new param block: %s", param_block_name);
-
         if (creation_callback)
         {
             creation_callback(*new_block.get());
@@ -280,8 +278,6 @@ render_batch_instance_buffer* render_batch::find_or_create_instance_buffer(void*
     }
     else
     {
-        db_log(renderer, "Creating new instance buffer: %p", key);
-
         instance_buffer block;
         block.key = key;
         block.buffer = std::make_unique<render_batch_instance_buffer>(m_renderer);

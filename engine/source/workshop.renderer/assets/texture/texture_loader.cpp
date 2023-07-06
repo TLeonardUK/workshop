@@ -432,7 +432,7 @@ bool texture_loader::generate_mipchain(const char* path, texture& asset)
     return true;
 }
 
-bool texture_loader::perform_encoding(const char* path, texture& asset)
+bool texture_loader::perform_encoding(const char* path, texture& asset, asset_flags flags)
 {
     for (texture::face& face : asset.faces)
     {
@@ -440,7 +440,9 @@ bool texture_loader::perform_encoding(const char* path, texture& asset)
         {
             if (face.mips[i]->get_format() != asset.format)
             {
-                face.mips[i] = face.mips[i]->convert(asset.format);
+                bool high_quality = (static_cast<size_t>(flags) & static_cast<size_t>(asset_flags::hot_reload)) == 0;
+
+                face.mips[i] = face.mips[i]->convert(asset.format, high_quality);
             }
         }
     }
@@ -481,7 +483,7 @@ bool texture_loader::compile_render_data(const char* path, texture& asset)
     return true;
 }
 
-bool texture_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config)
+bool texture_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config, asset_flags flags)
 {
     texture asset(m_ri_interface, m_renderer);
 
@@ -519,7 +521,7 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
     }
 
     // Convert texture into expected format.
-    if (!perform_encoding(input_path, asset))
+    if (!perform_encoding(input_path, asset, flags))
     {
         return false;
     }
@@ -532,7 +534,7 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
 
     // Construct the asset header.
     asset_cache_key compiled_key;
-    if (!get_cache_key(input_path, asset_platform, asset_config, compiled_key, asset.header.dependencies))
+    if (!get_cache_key(input_path, asset_platform, asset_config, flags, compiled_key, asset.header.dependencies))
     {
         db_error(asset, "[%s] Failed to calculate compiled cache key.", input_path);
         return false;

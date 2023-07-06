@@ -115,10 +115,11 @@ bool asset_loader::serialize_header(stream& out, compiled_asset_header& header, 
     return true;
 }
 
-bool asset_loader::get_cache_key(const char* path, platform_type asset_platform, config_type asset_config, asset_cache_key& key, const std::vector<std::string>& dependencies)
+bool asset_loader::get_cache_key(const char* path, platform_type asset_platform, config_type asset_config, asset_flags flags, asset_cache_key& key, const std::vector<std::string>& dependencies)
 {
     key.platform = asset_platform;
     key.config = asset_config;
+    key.flags = flags;
     key.source.path = path;
     if (!virtual_file_system::get().modified_time(path, key.source.modified_time))
     {

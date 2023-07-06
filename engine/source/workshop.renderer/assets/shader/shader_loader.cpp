@@ -1298,7 +1298,7 @@ bool shader_loader::compile_technique(const char* path, shader::technique& techn
     return true;
 }
 
-bool shader_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config)
+bool shader_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config, asset_flags flags)
 {
     shader asset(m_ri_interface, m_renderer);
     
@@ -1337,7 +1337,7 @@ bool shader_loader::compile(const char* input_path, const char* output_path, pla
 
     // Construct the asset header.
     asset_cache_key compiled_key;
-    if (!get_cache_key(input_path, asset_platform, asset_config, compiled_key, asset.header.dependencies))
+    if (!get_cache_key(input_path, asset_platform, asset_config, flags, compiled_key, asset.header.dependencies))
     {
         db_error(asset, "[%s] Failed to calculate compiled cache key.", input_path);
         return false;

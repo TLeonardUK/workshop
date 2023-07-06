@@ -27,7 +27,7 @@ public:
     virtual asset* get_default_asset() override;
     virtual asset* load(const char* path) override;
     virtual void unload(asset* instance) override;
-    virtual bool compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config) override;
+    virtual bool compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config, asset_flags flags) override;
     virtual void hot_reload(asset* instance, asset* new_instance) override;
     virtual bool can_hot_reload() override { return true; };
     virtual size_t get_compiled_version() override;

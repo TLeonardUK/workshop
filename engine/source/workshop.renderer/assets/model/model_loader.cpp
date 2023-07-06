@@ -207,7 +207,7 @@ bool model_loader::parse_file(const char* path, model& asset)
     return true;
 }
 
-bool model_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config)
+bool model_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config, asset_flags flags)
 {
     model asset(m_ri_interface, m_renderer, m_asset_manager);
 
@@ -219,7 +219,7 @@ bool model_loader::compile(const char* input_path, const char* output_path, plat
 
     // Construct the asset header.
     asset_cache_key compiled_key;
-    if (!get_cache_key(input_path, asset_platform, asset_config, compiled_key, asset.header.dependencies))
+    if (!get_cache_key(input_path, asset_platform, asset_config, flags, compiled_key, asset.header.dependencies))
     {
         db_error(asset, "[%s] Failed to calculate compiled cache key.", input_path);
         return false;

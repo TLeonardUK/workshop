@@ -14,6 +14,30 @@
 
 namespace ws {
 
+// These are extra flags that can be passed when compiling an asset to differentiate
+// it in the cache and to the loader.
+// 
+// These can be bitwise or'd together.
+enum class asset_flags : size_t
+{
+    none = 0,
+
+    // This prevents hot reloaded assets being used on subsequent runs, and also hints
+    // to the loader that we should try and get the asset loaded as fast as possible
+    // as opposed to going for quality.
+    hot_reload = 1,
+
+    COUNT
+};
+
+static const char* asset_flags_strings[static_cast<int>(asset_flags::COUNT)] = {
+    "none",
+    "hot_reload",
+};
+
+DEFINE_ENUM_TO_STRING(asset_flags, asset_flags_strings);
+
+
 // State of a given file in a cache key.
 struct asset_cache_key_file
 {
@@ -39,6 +63,9 @@ struct asset_cache_key
 
     // The release profile of the platform being compiled for.
     config_type config;
+
+    // Flags dictating how this asset differs from others.
+    asset_flags flags;
 
     // Calculates a string representation of the key data.
     // This can be used to identify the asset in the underlying

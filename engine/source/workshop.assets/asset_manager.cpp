@@ -627,7 +627,13 @@ bool asset_manager::compile_asset(asset_cache_key& cache_key, asset_loader* load
 {
     std::string temporary_path = string_format("temp:%s", to_string(guid::generate()).c_str());
 
-    if (!loader->compile(state->path.c_str(), temporary_path.c_str(), m_asset_platform, m_asset_config))
+    asset_flags flags = asset_flags::none;
+    if (state->is_for_hot_reload)
+    {
+        flags = static_cast<asset_flags>(static_cast<size_t>(flags) | static_cast<size_t>(asset_flags::hot_reload));
+    }
+
+    if (!loader->compile(state->path.c_str(), temporary_path.c_str(), m_asset_platform, m_asset_config, flags))
     {
         db_error(asset, "[%s] Failed to compile asset.", state->path.c_str());
         return false;
@@ -677,6 +683,12 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
 {
     asset_cache_key cache_key;
 
+    asset_flags flags = asset_flags::none;
+    if (state->is_for_hot_reload)
+    {
+        flags = static_cast<asset_flags>(static_cast<size_t>(flags) | static_cast<size_t>(asset_flags::hot_reload));
+    }
+
     std::string with_compiled_extension = state->path + k_compiled_asset_extension;
 
     // Try and find compiled version of asset in VFS. 
@@ -689,7 +701,7 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
     else if (!m_caches.empty())
     {
         // Generate a key with no dependencies.
-        if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, cache_key, { }))
+        if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, flags, cache_key, { }))
         {
             db_error(asset, "[%s] Failed to calculate cache key for asset.", state->path.c_str());
             return false;
@@ -719,7 +731,7 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
             }
 
             asset_cache_key compiled_cache_key;
-            if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, compiled_cache_key, header.dependencies))
+            if (!loader->get_cache_key(state->path.c_str(), m_asset_platform, m_asset_config, flags, compiled_cache_key, header.dependencies))
             {
                 // This can fail if one of our dependencies has been deleted, in which case we know we need to rebuild.
                 db_warning(asset, "[%s] Failed to calculate dependency cache key for asset, recompile required.", state->path.c_str());
@@ -744,6 +756,9 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
             {
                 return false;
             }
+            
+            // Run through this function again to grab the correct cache key.
+            return get_asset_compiled_path(loader, state, compiled_path);
         }
     }
 
@@ -815,7 +830,7 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
     {
         state->load_timer.stop();
         
-        db_verbose(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
+        db_log(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
     }
 
     if (!state->is_for_hot_reload)

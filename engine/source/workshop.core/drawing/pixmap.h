@@ -205,7 +205,7 @@ public:
 
     // Creates a new pixmap that contains the contents of this pixmap converted
     // to a different format.
-    std::unique_ptr<pixmap> convert(pixmap_format new_format);
+    std::unique_ptr<pixmap> convert(pixmap_format new_format, bool high_quality = true);
 
     // Creates a new pixmap that is resized to the given size.
     std::unique_ptr<pixmap> resize(size_t width, size_t height, pixmap_filter filter);
@@ -232,7 +232,7 @@ private:
     std::unique_ptr<pixmap> block_decode(pixmap_format new_format, const decode_block_function_t& block_callback);
 
     // Conversion to/from the various compressed formats.
-    std::unique_ptr<pixmap> encode_bc7(pixmap_format new_format);
+    std::unique_ptr<pixmap> encode_bc7(pixmap_format new_format, bool high_quality);
     std::unique_ptr<pixmap> decode_bc7(pixmap_format new_format);
 
     std::unique_ptr<pixmap> encode_bc5(pixmap_format new_format);

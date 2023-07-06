@@ -26,6 +26,7 @@ std::string asset_cache_key::hash() const
     hash_combine(hash, version);
     hash_combine(hash, static_cast<size_t>(platform));
     hash_combine(hash, static_cast<size_t>(config));
+    hash_combine(hash, static_cast<size_t>(flags));
     result.append(std::to_string(hash));
 
     // We append the filename of the asset to try and avoid any hash collisions.

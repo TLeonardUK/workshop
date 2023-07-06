@@ -153,7 +153,9 @@ bool material_loader::parse_textures(const char* path, YAML::Node& node, materia
             std::string name = iter->first.as<std::string>();
             std::string value = iter->second.as<std::string>();
 
-            asset.header.add_dependency(value.c_str());
+            // Note: Don't add texture as a dependency. We don't need to rebuild the material asset
+            // if only a texture is changed, the texture are independent.
+            //asset.header.add_dependency(value.c_str());
 
             material::texture_info& texture = asset.textures.emplace_back();
             texture.name = name;
@@ -321,7 +323,7 @@ bool material_loader::parse_file(const char* path, material& asset)
     return true;
 }
 
-bool material_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config)
+bool material_loader::compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config, asset_flags flags)
 {
     material asset(m_ri_interface, m_renderer, m_asset_manager);
 
@@ -333,7 +335,7 @@ bool material_loader::compile(const char* input_path, const char* output_path, p
 
     // Construct the asset header.
     asset_cache_key compiled_key;
-    if (!get_cache_key(input_path, asset_platform, asset_config, compiled_key, asset.header.dependencies))
+    if (!get_cache_key(input_path, asset_platform, asset_config, flags, compiled_key, asset.header.dependencies))
     {
         db_error(asset, "[%s] Failed to calculate compiled cache key.", input_path);
         return false;
@@ -354,12 +356,12 @@ bool material_loader::compile(const char* input_path, const char* output_path, p
 void material_loader::hot_reload(asset* instance, asset* new_instance)
 {
     material* old_instance_typed = static_cast<material*>(instance);
-    //material* new_instance_typed = static_cast<material*>(new_instance);
+    material* new_instance_typed = static_cast<material*>(new_instance);
 
-    //old_instance_typed->swap(new_instance_typed);
-
-    // Invalidate batches so they reflect the new materail.
+    // Invalidate batches so they are recreated for the new material.
     m_renderer.get_batch_manager().clear_cached_material_data(old_instance_typed);
+
+    old_instance_typed->swap(new_instance_typed);
 }
 
 size_t material_loader::get_compiled_version()

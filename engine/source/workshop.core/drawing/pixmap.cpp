@@ -497,12 +497,21 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
     return rgba_pixmap;
 }
 
-std::unique_ptr<pixmap> pixmap::encode_bc7(pixmap_format new_format)
+std::unique_ptr<pixmap> pixmap::encode_bc7(pixmap_format new_format, bool high_quality)
 {
     bc7enc_compress_block_params pack_params;
     bc7enc_compress_block_params_init(&pack_params);
-    pack_params.m_max_partitions_mode = BC7ENC_MAX_PARTITIONS1;
-    pack_params.m_uber_level = BC7ENC_MAX_UBER_LEVEL;
+
+    if (high_quality)
+    {
+        pack_params.m_max_partitions_mode = BC7ENC_MAX_PARTITIONS1;
+        pack_params.m_uber_level = BC7ENC_MAX_UBER_LEVEL;
+    }
+    else
+    {
+        pack_params.m_max_partitions_mode = 0;
+        pack_params.m_uber_level = 0;
+    }
 
     return block_encode(new_format, [&pack_params](uint8_t* output, uint8_t* pixels_rgba) {
         bc7enc_compress_block(output, pixels_rgba, &pack_params);
@@ -572,7 +581,7 @@ std::unique_ptr<pixmap> pixmap::decode_bc1(pixmap_format new_format)
     });
 }
 
-std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format)
+std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_quality)
 {
     std::unique_ptr<pixmap> result = nullptr;
 
@@ -601,7 +610,7 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format)
         }
         case pixmap_format::BC7:
         {
-            result = encode_bc7(new_format);
+            result = encode_bc7(new_format, high_quality);
             break;
         }
 

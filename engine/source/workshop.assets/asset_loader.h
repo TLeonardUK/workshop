@@ -10,6 +10,8 @@
 #include "workshop.core/containers/string.h"
 #include "workshop.core/utils/traits.h"
 
+#include "workshop.assets/asset_cache.h"
+
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
 
 #include <typeinfo>
@@ -62,7 +64,7 @@ public:
     // optimal binary file format. 
     // The resulting data will be stored and used for all future loads.
     // Returns true on success.
-    virtual bool compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config) = 0;
+    virtual bool compile(const char* input_path, const char* output_path, platform_type asset_platform, config_type asset_config, asset_flags flags) = 0;
 
     // Gets the current version of the compiled asset format.
     virtual size_t get_compiled_version() = 0;
@@ -71,7 +73,7 @@ public:
 
     // Tries to calculate the cache key used for a given asset.
     // Returns true on success, can fail if original asset file is not readable.
-    bool get_cache_key(const char* path, platform_type asset_platform, config_type asset_config, asset_cache_key& key, const std::vector<std::string>& dependencies);
+    bool get_cache_key(const char* path, platform_type asset_platform, config_type asset_config, asset_flags flags, asset_cache_key& key, const std::vector<std::string>& dependencies);
 
     // Loads the asset header only from the given file, this can be used
     // to determine if an asset needs to be recompiled.
