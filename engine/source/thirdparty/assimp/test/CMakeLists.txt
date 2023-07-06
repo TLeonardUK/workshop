@@ -102,6 +102,10 @@ SET( COMMON
   unit/Common/utBaseProcess.cpp
 )
 
+SET(Geometry 
+    unit/Geometry/utGeometryUtils.cpp
+)
+
 SET( IMPORTERS
   unit/ImportExport/Assxml/utAssxmlImportExport.cpp
   unit/utLWSImportExport.cpp
@@ -200,12 +204,13 @@ SET( POST_PROCESSES
   unit/utGenBoundingBoxesProcess.cpp
 )
 
-SOURCE_GROUP( UnitTests\\Compiler     FILES  unit/CCompilerTest.c )
-SOURCE_GROUP( UnitTests\\Common       FILES  ${COMMON} )
-SOURCE_GROUP( UnitTests\\ImportExport FILES  ${IMPORTERS} )
-SOURCE_GROUP( UnitTests\\Material     FILES  ${MATERIAL} )
-SOURCE_GROUP( UnitTests\\Math         FILES  ${MATH} )
-SOURCE_GROUP( UnitTests\\PostProcess  FILES  ${POST_PROCESSES})
+SOURCE_GROUP( UnitTests\\Compiler      FILES unit/CCompilerTest.c )
+SOURCE_GROUP( UnitTests\\Common        FILES ${COMMON} )
+SOURCE_GROUP( UnitTests\\GeometryTools FILES ${Geometry} )
+SOURCE_GROUP( UnitTests\\ImportExport  FILES ${IMPORTERS} )
+SOURCE_GROUP( UnitTests\\Material      FILES ${MATERIAL} )
+SOURCE_GROUP( UnitTests\\Math          FILES ${MATH} )
+SOURCE_GROUP( UnitTests\\PostProcess   FILES ${POST_PROCESSES})
 
 add_executable( unit
     unit/CCompilerTest.c
@@ -213,6 +218,7 @@ add_executable( unit
     ../code/Common/Version.cpp
 	../code/Common/Base64.cpp
 	${COMMON}
+  ${Geometry}
 	${IMPORTERS}
 	${MATERIAL}
 	${MATH}
@@ -261,6 +267,14 @@ ENDIF()
 
 IF(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+ENDIF()
+
+IF (ASSIMP_WARNINGS_AS_ERRORS)
+  IF (MSVC)
+    TARGET_COMPILE_OPTIONS(unit PRIVATE /W4 /WX)
+  ELSE()
+    TARGET_COMPILE_OPTIONS(unit PRIVATE -Wall -Werror)
+  ENDIF()
 ENDIF()
 
 target_link_libraries( unit assimp ${platform_libs} )

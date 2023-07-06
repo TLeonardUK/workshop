@@ -219,8 +219,14 @@ TEST_F(utglTF2ImportExport, importglTF2AndExport_KHR_materials_pbrSpecularGlossi
     const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/BoxTextured-glTF-pbrSpecularGlossiness/BoxTextured.gltf",
             aiProcess_ValidateDataStructure);
     EXPECT_NE(nullptr, scene);
-    // Export
+    
+    // Export with specular glossiness disabled
     EXPECT_EQ(aiReturn_SUCCESS, exporter.Export(scene, "glb2", ASSIMP_TEST_MODELS_DIR "/glTF2/BoxTextured-glTF-pbrSpecularGlossiness/BoxTextured_out.glb"));
+    
+    // Export with specular glossiness enabled
+    ExportProperties props;
+    props.SetPropertyBool(AI_CONFIG_USE_GLTF_PBR_SPECULAR_GLOSSINESS, true);
+    EXPECT_EQ(aiReturn_SUCCESS, exporter.Export(scene, "glb2", ASSIMP_TEST_MODELS_DIR "/glTF2/BoxTextured-glTF-pbrSpecularGlossiness/BoxTextured_out.glb", 0, &props));
 
     // And re-import
     EXPECT_TRUE(importerMatTest(ASSIMP_TEST_MODELS_DIR "/glTF2/BoxTextured-glTF-pbrSpecularGlossiness/BoxTextured_out.glb", true));
@@ -380,7 +386,7 @@ TEST_F(utglTF2ImportExport, importglTF2PrimitiveModeLines) {
     const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/glTF-Asset-Generator/Mesh_PrimitiveMode/Mesh_PrimitiveMode_08.gltf", aiProcess_ValidateDataStructure);
     EXPECT_NE(nullptr, scene);
     EXPECT_EQ(scene->mMeshes[0]->mNumVertices, 4u);
-    std::array<unsigned int, 5> l1 = { { 0u, 3u, 2u, 1u, 0u } };
+    std::array<unsigned int, 5> l1 = { { 0u, 1u, 2u, 3u, 0u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mNumIndices, 2u);
     for (unsigned int i = 0; i < scene->mMeshes[0]->mNumFaces; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[i].mIndices[0], l1[i]);
@@ -394,7 +400,7 @@ TEST_F(utglTF2ImportExport, importglTF2PrimitiveModeLineLoop) {
     const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/glTF-Asset-Generator/Mesh_PrimitiveMode/Mesh_PrimitiveMode_09.gltf", aiProcess_ValidateDataStructure);
     EXPECT_NE(nullptr, scene);
     EXPECT_EQ(scene->mMeshes[0]->mNumVertices, 4u);
-    std::array<unsigned int, 5> l1 = { { 0, 3u, 2u, 1u, 0u } };
+    std::array<unsigned int, 5> l1 = { { 0, 1u, 2u, 3u, 0u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mNumIndices, 2u);
     for (unsigned int i = 0; i < scene->mMeshes[0]->mNumFaces; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[i].mIndices[0], l1[i]);
@@ -408,7 +414,7 @@ TEST_F(utglTF2ImportExport, importglTF2PrimitiveModeLineStrip) {
     const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/glTF-Asset-Generator/Mesh_PrimitiveMode/Mesh_PrimitiveMode_10.gltf", aiProcess_ValidateDataStructure);
     EXPECT_NE(nullptr, scene);
     EXPECT_EQ(scene->mMeshes[0]->mNumVertices, 4u);
-    std::array<unsigned int, 5> l1 = { { 0u, 3u, 2u, 1u, 0u } };
+    std::array<unsigned int, 5> l1 = { { 0u, 1u, 2u, 3u, 0u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mNumIndices, 2u);
     for (unsigned int i = 0; i < scene->mMeshes[0]->mNumFaces; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[i].mIndices[0], l1[i]);
@@ -423,13 +429,13 @@ TEST_F(utglTF2ImportExport, importglTF2PrimitiveModeTrianglesStrip) {
     EXPECT_NE(nullptr, scene);
     EXPECT_EQ(scene->mMeshes[0]->mNumFaces, 2u);
     EXPECT_EQ(scene->mMeshes[0]->mNumVertices, 4u);
-    std::array<unsigned int, 3> f1 = { { 0u, 3u, 1u } };
+    std::array<unsigned int, 3> f1 = { { 0u, 1u, 2u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mNumIndices, 3u);
     for (size_t i = 0; i < 3; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mIndices[i], f1[i]);
     }
 
-    std::array<unsigned int, 3> f2 = { { 1u, 3u, 2u } };
+    std::array<unsigned int, 3> f2 = { { 2u, 1u, 3u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[1].mNumIndices, 3u);
     for (size_t i = 0; i < 3; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[1].mIndices[i], f2[i]);
@@ -443,13 +449,13 @@ TEST_F(utglTF2ImportExport, importglTF2PrimitiveModeTrianglesFan) {
     EXPECT_NE(nullptr, scene);
     EXPECT_EQ(scene->mMeshes[0]->mNumVertices, 4u);
     EXPECT_EQ(scene->mMeshes[0]->mNumFaces, 2u);
-    std::array<unsigned int, 3> f1 = { { 0u, 3u, 2u } };
+    std::array<unsigned int, 3> f1 = { { 0u, 1u, 2u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mNumIndices, 3u);
     for (size_t i = 0; i < 3; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[0].mIndices[i], f1[i]);
     }
 
-    std::array<unsigned int, 3> f2 = { { 0u, 2u, 1u } };
+    std::array<unsigned int, 3> f2 = { { 0u, 2u, 3u } };
     EXPECT_EQ(scene->mMeshes[0]->mFaces[1].mNumIndices, 3u);
     for (size_t i = 0; i < 3; ++i) {
         EXPECT_EQ(scene->mMeshes[0]->mFaces[1].mIndices[i], f2[i]);
@@ -753,12 +759,18 @@ TEST_F(utglTF2ImportExport, wrongTypes) {
     // Deliberately broken version of the BoxTextured.gltf asset.
     using tup_T = std::tuple<std::string, std::string, std::string, std::string>;
     std::vector<tup_T> wrongTypes = {
-        { "/glTF2/wrongTypes/badArray.gltf", "array", "primitives", "meshes[0]" },
-        { "/glTF2/wrongTypes/badString.gltf", "string", "name", "scenes[0]" },
-        { "/glTF2/wrongTypes/badUint.gltf", "uint", "index", "materials[0]" },
-        { "/glTF2/wrongTypes/badNumber.gltf", "number", "scale", "materials[0]" },
-        { "/glTF2/wrongTypes/badObject.gltf", "object", "pbrMetallicRoughness", "materials[0]" },
-        { "/glTF2/wrongTypes/badExtension.gltf", "object", "KHR_texture_transform", "materials[0]" }
+#ifdef __cpp_lib_constexpr_tuple
+    #define TUPLE(x, y, z, w) {x, y, z, w}
+#else
+    #define TUPLE(x, y, z, w) tup_T(x, y, z, w)
+#endif
+        TUPLE("/glTF2/wrongTypes/badArray.gltf", "array", "primitives", "meshes[0]"),
+        TUPLE("/glTF2/wrongTypes/badString.gltf", "string", "name", "scenes[0]"),
+        TUPLE("/glTF2/wrongTypes/badUint.gltf", "uint", "index", "materials[0]"),
+        TUPLE("/glTF2/wrongTypes/badNumber.gltf", "number", "scale", "materials[0]"),
+        TUPLE("/glTF2/wrongTypes/badObject.gltf", "object", "pbrMetallicRoughness", "materials[0]"),
+        TUPLE("/glTF2/wrongTypes/badExtension.gltf", "object", "KHR_texture_transform", "materials[0]")
+#undef TUPLE
     };
     for (const auto& tuple : wrongTypes)
     {

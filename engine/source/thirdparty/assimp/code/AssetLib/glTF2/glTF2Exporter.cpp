@@ -321,7 +321,7 @@ inline size_t NZDiff(ComponentType compType, void *data, void *dataBase, size_t 
 }
 
 inline Ref<Accessor> ExportDataSparse(Asset &a, std::string &meshName, Ref<Buffer> &buffer,
-        size_t count, void *data, AttribType::Value typeIn, AttribType::Value typeOut, ComponentType compType, BufferViewTarget target = BufferViewTarget_NONE, void *dataBase = 0) {
+        size_t count, void *data, AttribType::Value typeIn, AttribType::Value typeOut, ComponentType compType, BufferViewTarget target = BufferViewTarget_NONE, void *dataBase = nullptr) {
     if (!count || !data) {
         return Ref<Accessor>();
     }
@@ -356,7 +356,7 @@ inline Ref<Accessor> ExportDataSparse(Asset &a, std::string &meshName, Ref<Buffe
     acc->type = typeOut;
 
     if (data) {
-        void *nzDiff = 0, *nzIdx = 0;
+        void *nzDiff = nullptr, *nzIdx = nullptr;
         size_t nzCount = NZDiff(compType, data, dataBase, count, numCompsIn, numCompsOut, nzDiff, nzIdx);
         acc->sparse.reset(new Accessor::Sparse);
         acc->sparse->count = nzCount;
@@ -443,6 +443,61 @@ inline Ref<Accessor> ExportData(Asset &a, std::string &meshName, Ref<Buffer> &bu
     return acc;
 }
 
+inline void ExportNodeExtras(const aiMetadataEntry &metadataEntry, aiString name, CustomExtension &value) {
+
+    value.name = name.C_Str();
+    switch (metadataEntry.mType) {
+    case AI_BOOL:
+        value.mBoolValue.value = *static_cast<bool *>(metadataEntry.mData);
+        value.mBoolValue.isPresent = true;
+        break;
+    case AI_INT32:
+        value.mInt64Value.value = *static_cast<int32_t *>(metadataEntry.mData);
+        value.mInt64Value.isPresent = true;
+        break;
+    case AI_UINT64:
+        value.mUint64Value.value = *static_cast<uint64_t *>(metadataEntry.mData);
+        value.mUint64Value.isPresent = true;
+        break;
+    case AI_FLOAT:
+        value.mDoubleValue.value = *static_cast<float *>(metadataEntry.mData);
+        value.mDoubleValue.isPresent = true;
+        break;
+    case AI_DOUBLE:
+        value.mDoubleValue.value = *static_cast<double *>(metadataEntry.mData);
+        value.mDoubleValue.isPresent = true;
+        break;
+    case AI_AISTRING:
+        value.mStringValue.value = static_cast<aiString *>(metadataEntry.mData)->C_Str();
+        value.mStringValue.isPresent = true;
+        break;
+    case AI_AIMETADATA: {
+        const aiMetadata *subMetadata = static_cast<aiMetadata *>(metadataEntry.mData);
+        value.mValues.value.resize(subMetadata->mNumProperties);
+        value.mValues.isPresent = true;
+
+        for (unsigned i = 0; i < subMetadata->mNumProperties; ++i) {
+            ExportNodeExtras(subMetadata->mValues[i], subMetadata->mKeys[i], value.mValues.value.at(i));
+        }
+        break;
+    }
+    default:
+        // AI_AIVECTOR3D not handled
+        break;
+    }
+}
+
+inline void ExportNodeExtras(const aiMetadata *metadata, Extras &extras) {
+    if (metadata == nullptr || metadata->mNumProperties == 0) {
+        return;
+    }
+
+    extras.mValues.resize(metadata->mNumProperties);
+    for (unsigned int i = 0; i < metadata->mNumProperties; ++i) {
+        ExportNodeExtras(metadata->mValues[i], metadata->mKeys[i], extras.mValues.at(i));
+    }
+}
+
 inline void SetSamplerWrap(SamplerWrap &wrap, aiTextureMapMode map) {
     switch (map) {
     case aiTextureMapMode_Clamp:
@@ -516,7 +571,7 @@ void glTF2Exporter::GetMatTex(const aiMaterial &mat, Ref<Texture> &texture, unsi
     if (mat.GetTextureCount(tt) == 0) {
         return;
     }
-        
+
     aiString tex;
 
     // Read texcoord (UV map index)
@@ -640,11 +695,10 @@ aiReturn glTF2Exporter::GetMatColor(const aiMaterial &mat, vec3 &prop, const cha
     return result;
 }
 
+// This extension has been deprecated, only export with the specific flag enabled, defaults to false. Uses KHR_material_specular default.
 bool glTF2Exporter::GetMatSpecGloss(const aiMaterial &mat, glTF2::PbrSpecularGlossiness &pbrSG) {
     bool result = false;
     // If has Glossiness, a Specular Color or Specular Texture, use the KHR_materials_pbrSpecularGlossiness extension
-    // NOTE: This extension is being considered for deprecation (Dec 2020), may be replaced by KHR_material_specular
-
     if (mat.Get(AI_MATKEY_GLOSSINESS_FACTOR, pbrSG.glossinessFactor) == AI_SUCCESS) {
         result = true;
     } else {
@@ -672,6 +726,25 @@ bool glTF2Exporter::GetMatSpecGloss(const aiMaterial &mat, glTF2::PbrSpecularGlo
     }
 
     return result;
+}
+
+bool glTF2Exporter::GetMatSpecular(const aiMaterial &mat, glTF2::MaterialSpecular &specular) {
+    // Specular requires either/or, default factors of zero disables specular, so do not export
+    if (GetMatColor(mat, specular.specularColorFactor, AI_MATKEY_COLOR_SPECULAR) != AI_SUCCESS || mat.Get(AI_MATKEY_SPECULAR_FACTOR, specular.specularFactor) != AI_SUCCESS) {
+        return false;
+    }
+    // The spec states that the default is 1.0 and [1.0, 1.0, 1.0]. We if both are 0, which should disable specular. Otherwise, if one is 0, set to 1.0
+    const bool colorFactorIsZero = specular.specularColorFactor[0] == defaultSpecularColorFactor[0] && specular.specularColorFactor[1] == defaultSpecularColorFactor[1] && specular.specularColorFactor[2] == defaultSpecularColorFactor[2];
+    if (specular.specularFactor == 0.0f && colorFactorIsZero) {
+        return false;
+    } else if (specular.specularFactor == 0.0f) {
+        specular.specularFactor = 1.0f;
+    } else if (colorFactorIsZero) {
+        specular.specularColorFactor[0] = specular.specularColorFactor[1] = specular.specularColorFactor[2] = 1.0f;
+    }
+    GetMatTex(mat, specular.specularColorTexture, aiTextureType_SPECULAR);
+    GetMatTex(mat, specular.specularTexture, aiTextureType_SPECULAR);
+    return true;
 }
 
 bool glTF2Exporter::GetMatSheen(const aiMaterial &mat, glTF2::MaterialSheen &sheen) {
@@ -731,6 +804,10 @@ bool glTF2Exporter::GetMatVolume(const aiMaterial &mat, glTF2::MaterialVolume &v
 
 bool glTF2Exporter::GetMatIOR(const aiMaterial &mat, glTF2::MaterialIOR &ior) {
     return mat.Get(AI_MATKEY_REFRACTI, ior.ior) == aiReturn_SUCCESS;
+}
+
+bool glTF2Exporter::GetMatEmissiveStrength(const aiMaterial &mat, glTF2::MaterialEmissiveStrength &emissiveStrength) {
+    return mat.Get(AI_MATKEY_EMISSIVE_INTENSITY, emissiveStrength.emissiveStrength) == aiReturn_SUCCESS;
 }
 
 void glTF2Exporter::ExportMaterials() {
@@ -814,9 +891,9 @@ void glTF2Exporter::ExportMaterials() {
             m->alphaMode = alphaMode.C_Str();
         }
 
-        {
+        // This extension has been deprecated, only export with the specific flag enabled, defaults to false. Uses KHR_material_specular default.
+        if (mProperties->GetPropertyBool(AI_CONFIG_USE_GLTF_PBR_SPECULAR_GLOSSINESS)) {
             // KHR_materials_pbrSpecularGlossiness extension
-            // NOTE: This extension is being considered for deprecation (Dec 2020)
             PbrSpecularGlossiness pbrSG;
             if (GetMatSpecGloss(mat, pbrSG)) {
                 mAsset->extensionsUsed.KHR_materials_pbrSpecularGlossiness = true;
@@ -833,7 +910,12 @@ void glTF2Exporter::ExportMaterials() {
         } else {
             // These extensions are not compatible with KHR_materials_unlit or KHR_materials_pbrSpecularGlossiness
             if (!m->pbrSpecularGlossiness.isPresent) {
-                // Sheen
+                MaterialSpecular specular;
+                if (GetMatSpecular(mat, specular)) {
+                    mAsset->extensionsUsed.KHR_materials_specular = true;
+                    m->materialSpecular = Nullable<MaterialSpecular>(specular);
+                }
+
                 MaterialSheen sheen;
                 if (GetMatSheen(mat, sheen)) {
                     mAsset->extensionsUsed.KHR_materials_sheen = true;
@@ -851,17 +933,23 @@ void glTF2Exporter::ExportMaterials() {
                     mAsset->extensionsUsed.KHR_materials_transmission = true;
                     m->materialTransmission = Nullable<MaterialTransmission>(transmission);
                 }
-                
+
                 MaterialVolume volume;
                 if (GetMatVolume(mat, volume)) {
                     mAsset->extensionsUsed.KHR_materials_volume = true;
                     m->materialVolume = Nullable<MaterialVolume>(volume);
                 }
-                                
+
                 MaterialIOR ior;
                 if (GetMatIOR(mat, ior)) {
                     mAsset->extensionsUsed.KHR_materials_ior = true;
                     m->materialIOR = Nullable<MaterialIOR>(ior);
+                }
+
+                MaterialEmissiveStrength emissiveStrength;
+                if (GetMatEmissiveStrength(mat, emissiveStrength)) {
+                    mAsset->extensionsUsed.KHR_materials_emissive_strength = true;
+                    m->materialEmissiveStrength = Nullable<MaterialEmissiveStrength>(emissiveStrength);
                 }
             }
         }
@@ -911,7 +999,7 @@ Ref<Node> FindSkeletonRootJoint(Ref<Skin> &skinRef) {
     return parentNodeRef;
 }
 
-void ExportSkin(Asset &mAsset, const aiMesh *aimesh, Ref<Mesh> &meshRef, Ref<Buffer> &bufferRef, Ref<Skin> &skinRef, 
+void ExportSkin(Asset &mAsset, const aiMesh *aimesh, Ref<Mesh> &meshRef, Ref<Buffer> &bufferRef, Ref<Skin> &skinRef,
         std::vector<aiMatrix4x4> &inverseBindMatricesData) {
     if (aimesh->mNumBones < 1) {
         return;
@@ -975,14 +1063,14 @@ void ExportSkin(Asset &mAsset, const aiMesh *aimesh, Ref<Mesh> &meshRef, Ref<Buf
                 vertexJointData[vertexId][jointsPerVertex[vertexId]] = static_cast<float>(jointNamesIndex);
                 vertexWeightData[vertexId][jointsPerVertex[vertexId]] = vertWeight;
 
-                jointsPerVertex[vertexId] += 1;   
+                jointsPerVertex[vertexId] += 1;
             }
         }
 
     } // End: for-loop mNumMeshes
 
     Mesh::Primitive &p = meshRef->primitives.back();
-    Ref<Accessor> vertexJointAccessor = ExportData(mAsset, skinRef->id, bufferRef, aimesh->mNumVertices, 
+    Ref<Accessor> vertexJointAccessor = ExportData(mAsset, skinRef->id, bufferRef, aimesh->mNumVertices,
         vertexJointData, AttribType::VEC4, AttribType::VEC4, ComponentType_FLOAT);
     if (vertexJointAccessor) {
         size_t offset = vertexJointAccessor->bufferView->byteOffset;
@@ -1080,7 +1168,7 @@ void glTF2Exporter::ExportMeshes() {
             }
         }
 
-        Ref<Accessor> n = ExportData(*mAsset, meshId, b, aim->mNumVertices, aim->mNormals, AttribType::VEC3, 
+        Ref<Accessor> n = ExportData(*mAsset, meshId, b, aim->mNumVertices, aim->mNormals, AttribType::VEC3,
             AttribType::VEC3, ComponentType_FLOAT, BufferViewTarget_ARRAY_BUFFER);
         if (n) {
             p.attributes.normal.push_back(n);
@@ -1102,7 +1190,7 @@ void glTF2Exporter::ExportMeshes() {
             if (aim->mNumUVComponents[i] > 0) {
                 AttribType::Value type = (aim->mNumUVComponents[i] == 2) ? AttribType::VEC2 : AttribType::VEC3;
 
-                Ref<Accessor> tc = ExportData(*mAsset, meshId, b, aim->mNumVertices, aim->mTextureCoords[i], 
+                Ref<Accessor> tc = ExportData(*mAsset, meshId, b, aim->mNumVertices, aim->mTextureCoords[i],
                     AttribType::VEC3, type, ComponentType_FLOAT, BufferViewTarget_ARRAY_BUFFER);
                 if (tc) {
                     p.attributes.texcoord.push_back(tc);
@@ -1130,7 +1218,7 @@ void glTF2Exporter::ExportMeshes() {
                 }
             }
 
-            p.indices = ExportData(*mAsset, meshId, b, indices.size(), &indices[0], AttribType::SCALAR, AttribType::SCALAR, 
+            p.indices = ExportData(*mAsset, meshId, b, indices.size(), &indices[0], AttribType::SCALAR, AttribType::SCALAR,
                 ComponentType_UNSIGNED_INT, BufferViewTarget_ELEMENT_ARRAY_BUFFER);
         }
 
@@ -1342,7 +1430,7 @@ unsigned int glTF2Exporter::ExportNodeHierarchy(const aiNode *n) {
     return node.GetIndex();
 }
 
-/*
+ /*
  * Export node and recursively calls ExportNode for all children.
  * Since these nodes are not the root node, we also export the parent Ref<Node>
  */
@@ -1352,6 +1440,8 @@ unsigned int glTF2Exporter::ExportNode(const aiNode *n, Ref<Node> &parent) {
 
     node->parent = parent;
     node->name = name;
+
+    ExportNodeExtras(n->mMetaData, node->extras);
 
     if (!n->mTransformation.IsIdentity()) {
         if (mScene->mNumAnimations > 0 || (mProperties && mProperties->HasPropertyBool("GLTF2_NODE_IN_TRS"))) {
