@@ -930,6 +930,9 @@ void asset_manager::apply_hot_reloads()
                 state->hot_reload_state = nullptr;
             }
 
+            // Invoke any change callbacks for reloaded state.
+            state->on_change_callback.broadcast();
+
             // Remove reference from state that we added when we queued it for hot reload.
             decrement_ref(state, true);
 

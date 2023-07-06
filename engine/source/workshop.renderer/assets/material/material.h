@@ -87,6 +87,8 @@ public:
     material(ri_interface& ri_interface, renderer& renderer, asset_manager& ass_manager);
     virtual ~material();
 
+    void swap(material* other);
+
 public:
     material_domain domain = material_domain::opaque;
 

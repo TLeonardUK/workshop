@@ -73,4 +73,12 @@ ri_texture* material::get_texture(const char* name, ri_texture* default_instance
     return default_instance;
 }
 
+void material::swap(material* other)
+{
+    std::swap(domain, other->domain);
+    std::swap(textures, other->textures);
+    std::swap(samplers, other->samplers);
+    std::swap(parameters, other->parameters);
+}
+
 }; // namespace ws

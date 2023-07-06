@@ -237,6 +237,8 @@ ri_param_block* render_batch::find_or_create_param_block(
     {
         std::unique_ptr<ri_param_block> new_block = m_renderer.get_param_block_manager().create_param_block(param_block_name);
 
+        db_log(renderer, "Creating new param block: %s", param_block_name);
+
         if (creation_callback)
         {
             creation_callback(*new_block.get());
@@ -278,6 +280,8 @@ render_batch_instance_buffer* render_batch::find_or_create_instance_buffer(void*
     }
     else
     {
+        db_log(renderer, "Creating new instance buffer: %p", key);
+
         instance_buffer block;
         block.key = key;
         block.buffer = std::make_unique<render_batch_instance_buffer>(m_renderer);
@@ -304,6 +308,12 @@ void render_batch::remove_instance(const render_batch_instance& instance)
     {
         m_instances.erase(iter);
     }
+}
+
+void render_batch::clear_cached_data()
+{
+    m_blocks.clear();
+    m_instance_buffers.clear();
 }
 
 render_batch_manager::render_batch_manager(renderer& render)
@@ -362,6 +372,34 @@ std::vector<render_batch*> render_batch_manager::get_batches(material_domain dom
     }
 
     return result;
+}
+
+void render_batch_manager::clear_cached_material_data(material* material)
+{
+    for (auto& [key, batch] : m_batches)
+    {
+        render_batch_key key = batch->get_key();
+        if (key.domain != material->domain)
+        {
+            continue;
+        }
+
+        if (!key.model.is_loaded())
+        {
+            continue;
+        }
+
+        model::material_info& material_info = key.model->materials[key.material_index];
+        if (!material_info.material.is_loaded())
+        {
+            continue;
+        }
+
+        if (material_info.material.get() == material)
+        {
+            batch->clear_cached_data();
+        }
+    }
 }
 
 }; // namespace ws

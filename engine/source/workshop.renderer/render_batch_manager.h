@@ -176,6 +176,9 @@ private:
     void add_instance(const render_batch_instance& instance);
     void remove_instance(const render_batch_instance& instance);
 
+    // Clears all param blocks/instance buffers/etc that are cached in this batch.
+    void clear_cached_data();
+
 private:
     render_batch_key m_key;
     renderer& m_renderer;
@@ -221,6 +224,9 @@ public:
 
     // Gets all the batches that have the given domain and usage.
     std::vector<render_batch*> get_batches(material_domain domain, render_batch_usage usage);
+
+    // Invalidates any cached state that uses the given materail.
+    void clear_cached_material_data(material* material);
 
 protected:
     

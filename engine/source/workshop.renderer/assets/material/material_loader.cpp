@@ -351,6 +351,17 @@ bool material_loader::compile(const char* input_path, const char* output_path, p
     return true;
 }
 
+void material_loader::hot_reload(asset* instance, asset* new_instance)
+{
+    material* old_instance_typed = static_cast<material*>(instance);
+    //material* new_instance_typed = static_cast<material*>(new_instance);
+
+    //old_instance_typed->swap(new_instance_typed);
+
+    // Invalidate batches so they reflect the new materail.
+    m_renderer.get_batch_manager().clear_cached_material_data(old_instance_typed);
+}
+
 size_t material_loader::get_compiled_version()
 {
     return k_asset_compiled_version;

@@ -71,17 +71,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             render_batch_key key = batch->get_key();
             const std::vector<render_batch_instance>& instances = batch->get_instances();
 
-            // Skip batch if resources have not finished loading for it.
-            if (!key.model.is_loaded())
-            {
-                continue;
-            }
-        
             model::material_info& material_info = key.model->materials[key.material_index];
-            if (!material_info.material.is_loaded())
-            {
-                continue;
-            }
 
             profile_gpu_marker(list, profile_colors::gpu_pass, "batch %zi / %zi", i, batches.size());
 

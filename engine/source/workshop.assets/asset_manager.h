@@ -107,6 +107,9 @@ public:
     // given over stability of the hash or of collisions.
     size_t get_hash() const;
 
+    // Gets the asset or asserts if not loaded.
+    asset_type* get();
+
     // Registers a callback for when the state of the asset changes.
     event<>::key_t register_changed_callback(std::function<void()> callback);
 
@@ -468,13 +471,13 @@ void asset_ptr<asset_type>::unregister_changed_callback(event<>::key_t key)
 }
 
 template <typename asset_type>
-inline asset_type& asset_ptr<asset_type>::operator*()
+asset_type* asset_ptr<asset_type>::get()
 {
     if (m_state->loading_state == asset_loading_state::failed)
     {
         if (m_state->default_asset != nullptr)
         {
-            return *static_cast<asset_type*>(m_state->default_asset);
+            return static_cast<asset_type*>(m_state->default_asset);
         }
         else
         {
@@ -483,15 +486,22 @@ inline asset_type& asset_ptr<asset_type>::operator*()
     }
     else if (m_state->loading_state != asset_loading_state::loaded)
     {
+        db_warning(engine, "Attempted to dereference asset that is not loaded '%s'. Forcing a blocking load.", get_path().c_str());
         wait_for_load();
     }
-    return *static_cast<asset_type*>(m_state->instance);
+    return static_cast<asset_type*>(m_state->instance);
+}
+
+template <typename asset_type>
+inline asset_type& asset_ptr<asset_type>::operator*()
+{
+    return *get();
 }
 
 template <typename asset_type>
 inline asset_type* asset_ptr<asset_type>::operator->()
 {
-    return &(operator*());
+    return get();
 }
 
 template <typename asset_type>
