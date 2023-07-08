@@ -1360,5 +1360,13 @@ size_t shader_loader::get_compiled_version()
     return k_asset_compiled_version;
 }
 
+void shader_loader::hot_reload(asset* instance, asset* new_instance)
+{
+    shader* old_instance_typed = static_cast<shader*>(instance);
+    shader* new_instance_typed = static_cast<shader*>(new_instance);
+
+    old_instance_typed->swap(new_instance_typed);
+}
+
 }; // namespace ws
 

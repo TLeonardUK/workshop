@@ -8,8 +8,6 @@
 
 #include <array>
 
-#pragma optimize("", off)
-
 namespace ws {
 
 class win32_path_watcher : public path_watcher

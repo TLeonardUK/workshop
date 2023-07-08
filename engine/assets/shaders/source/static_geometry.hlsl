@@ -32,23 +32,50 @@ geometry_pinput vshader(vertex_input input)
     return result;
 }
 
-gbuffer_output pshader(geometry_pinput input)
+gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
 {
     gbuffer_fragment f;
-    f.albedo = albedo_texture.Sample(albedo_sampler, input.uv0).rgb;
+    f.albedo = albedo.rgb;
+    f.opacity = albedo.a;
     f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
     f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
-
     f.world_normal = calculate_world_normal(
         normal_texture.Sample(normal_sampler, input.uv0).xyz,
         normalize(input.world_normal).xyz,
         normalize(input.world_bitangent).xyz
     );   
     f.world_normal = input.world_normal.xyz;
-
     f.world_position = input.world_position.xyz;
 
-    f.flags = 0;
-
     return encode_gbuffer(f);
+}
+
+gbuffer_output pshader_opaque(geometry_pinput input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    return pshader_common(input, albedo);
+}
+
+gbuffer_output pshader_masked(geometry_pinput input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    if (albedo.a < 0.5)
+    {
+        discard;
+    }
+    return pshader_common(input, albedo);
+}
+
+gbuffer_output pshader_transparent(geometry_pinput input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    return pshader_common(input, albedo);
+}
+
+gbuffer_output pshader_transparent_masked(geometry_pinput input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    float4 opacity = opacity_texture.Sample(albedo_sampler, input.uv0);
+    albedo *= opacity;
+    return pshader_common(input, albedo);
 }

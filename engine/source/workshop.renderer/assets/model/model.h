@@ -66,6 +66,8 @@ public:
     // its used.
     vertex_buffer* find_or_create_vertex_buffer(const ri_data_layout& layout);
 
+    void swap(model* other);
+
 public:
     std::vector<material_info> materials;
     std::unique_ptr<geometry> geometry;

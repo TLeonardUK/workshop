@@ -830,7 +830,7 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
     {
         state->load_timer.stop();
         
-        db_log(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
+        db_verbose(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
     }
 
     if (!state->is_for_hot_reload)
@@ -910,7 +910,8 @@ bool asset_manager::has_pending_hot_reloads()
 
     for (asset_state* state : m_hot_reload_queue)
     {
-        if (state->hot_reload_state->loading_state == asset_loading_state::loaded)
+        if (state->hot_reload_state->loading_state == asset_loading_state::loaded ||
+            state->hot_reload_state->loading_state == asset_loading_state::failed)
         {
             return true;
         }
@@ -927,7 +928,23 @@ void asset_manager::apply_hot_reloads()
     {
         asset_state* state = *iter;
 
-        if (state->hot_reload_state->loading_state == asset_loading_state::loaded)
+        if (state->hot_reload_state->loading_state == asset_loading_state::failed)
+        {
+            db_log(core, "Failed to hot reload asset: %s", state->path.c_str());
+
+            // Remove the temporary hot reload state.
+            if (state->hot_reload_state)
+            {
+                decrement_ref(state->hot_reload_state, true);
+                state->hot_reload_state = nullptr;
+            }
+
+            // Remove reference from state that we added when we queued it for hot reload.
+            decrement_ref(state, true);
+
+            iter = m_hot_reload_queue.erase(iter);
+        }
+        else if (state->hot_reload_state->loading_state == asset_loading_state::loaded)
         {
             db_log(core, "Swapping hot reloaded asset: %s", state->path.c_str());
 

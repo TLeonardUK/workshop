@@ -21,14 +21,33 @@ void render_system_geometry::register_init(init_list& list)
 
 void render_system_geometry::create_graph(render_graph& graph)
 {
+    // Draw opaque geometry.
     std::unique_ptr<render_pass_geometry> pass = std::make_unique<render_pass_geometry>();
-    pass->name = "static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", {});
+    pass->name = "opaque static geometry";
+    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain", "opaque" } });
+    pass->domain = material_domain::opaque;
     pass->output = m_renderer.get_gbuffer_output();
-
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-
     graph.add_node(std::move(pass));
+
+    // Draw masked geometry.
+    pass = std::make_unique<render_pass_geometry>();
+    pass->name = "masked static geometry";
+    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain", "masked" } });
+    pass->domain = material_domain::masked;
+    pass->output = m_renderer.get_gbuffer_output();
+    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+    graph.add_node(std::move(pass));
+
+    // Draw transparent geometry.
+    pass = std::make_unique<render_pass_geometry>();
+    pass->name = "transparent static geometry";
+    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain", "transparent" } });
+    pass->domain = material_domain::transparent;
+    pass->output = m_renderer.get_gbuffer_output();
+    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+    graph.add_node(std::move(pass));
+
 }
 
 void render_system_geometry::step(const render_world_state& state)

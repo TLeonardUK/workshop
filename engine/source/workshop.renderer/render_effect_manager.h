@@ -51,6 +51,10 @@ public:
     // Gets a renderer technique by its name and a set of parameter values.
     render_effect::technique* get_technique(const char* name, const std::unordered_map<std::string, std::string>& parameters);
 
+    // Swaps the effects pointed to by a given id. Be -very- careful using this, its mostly
+    // here for supporting hot reloading.
+    void swap_effect(effect_id id, effect_id other_id);
+
 private:
 
     result<void> create_shaders();
@@ -58,7 +62,7 @@ private:
 
 private:
 
-    std::mutex m_resource_mutex;
+    std::recursive_mutex m_resource_mutex;
 
     size_t m_id_counter = 1;
     std::unordered_map<effect_id, std::unique_ptr<render_effect>> m_effects;

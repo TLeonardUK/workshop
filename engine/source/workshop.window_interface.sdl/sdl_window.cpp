@@ -37,7 +37,15 @@ SDL_Window* sdl_window::get_sdl_handle()
 
 void sdl_window::handle_event(const SDL_Event* event)
 {
-    if (event->type == SDL_KEYDOWN)
+    if (event->type == SDL_WINDOWEVENT)
+    {
+        int x, y, width, height;
+        SDL_GetWindowPosition(m_window, &x, &y);
+        SDL_GetWindowSize(m_window, &width, &height);
+
+        db_move_console(x, y + height, width, 0.0f);        
+    }
+    else if (event->type == SDL_KEYDOWN)
     {
         // Switch between fullscreen and windowed.
         if (event->key.keysym.sym == SDLK_RETURN && 

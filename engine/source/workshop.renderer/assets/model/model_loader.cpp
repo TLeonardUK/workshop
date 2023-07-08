@@ -129,6 +129,8 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
     }
 
     asset.geometry = geometry::load(source.c_str());
+    asset.header.add_dependency(source.c_str());
+
     if (!asset.geometry)
     {
         db_error(asset, "[%s] failed to load geometry from: %s", path, source.c_str());
@@ -240,6 +242,14 @@ bool model_loader::compile(const char* input_path, const char* output_path, plat
 size_t model_loader::get_compiled_version()
 {
     return k_asset_compiled_version;
+}
+
+void model_loader::hot_reload(asset* instance, asset* new_instance)
+{
+    model* old_instance_typed = static_cast<model*>(instance);
+    model* new_instance_typed = static_cast<model*>(new_instance);
+
+    old_instance_typed->swap(new_instance_typed);
 }
 
 }; // namespace ws

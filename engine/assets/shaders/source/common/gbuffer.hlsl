@@ -8,11 +8,11 @@
 struct gbuffer_fragment
 {
     float3 albedo;
+    float opacity;
     float metallic;
     float3 world_normal;
     float roughness;
     float3 world_position;
-    uint flags;
 };
 
 // Output format when outputting to gbuffer.
@@ -28,7 +28,7 @@ gbuffer_output encode_gbuffer(gbuffer_fragment fragment)
 {
     gbuffer_output output;
     output.buffer0.xyz = fragment.albedo;
-    output.buffer0.w = fragment.flags / 255.0f;
+    output.buffer0.w = fragment.opacity;
     output.buffer1.xyz = fragment.world_normal;
     output.buffer1.w = fragment.roughness;
     output.buffer2.xyz = fragment.world_position;
@@ -45,7 +45,7 @@ gbuffer_fragment read_gbuffer(float2 uv)
 
     gbuffer_fragment result;
     result.albedo = buffer0.rgb;
-    result.flags = uint(buffer0.a * 255.0f); 
+    result.opacity = buffer0.a;
 
     result.world_normal = buffer1.rgb;
     result.metallic = buffer1.a;

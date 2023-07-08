@@ -20,11 +20,17 @@ shader::shader(ri_interface& ri_interface, renderer& renderer)
 
 shader::~shader()
 {
+    unregister_effects();
+}
+
+void shader::unregister_effects()
+{
     for (param_block& instance : param_blocks)
     {
         if (instance.renderer_id)
         {
             m_renderer.get_param_block_manager().unregister_param_block_archetype(instance.renderer_id);
+            instance.renderer_id = 0;
         }
     }
 
@@ -33,6 +39,7 @@ shader::~shader()
         if (instance.renderer_id)
         {
             m_renderer.get_effect_manager().unregister_effect(instance.renderer_id);
+            instance.renderer_id = 0;
         }
     }
 }
@@ -103,12 +110,12 @@ bool shader::post_load()
 
         for (effect::technique& instance : instance.techniques)
         {
-            render_effect::technique& tech = effect->techniques.emplace_back();
-            tech.name = instance.name;
+            std::unique_ptr<render_effect::technique> tech = std::make_unique<render_effect::technique>();
+            tech->name = instance.name;
             
             for (variation& var : instance.variations)
             {
-                render_effect::variation_parameter& param = tech.variation_parameters.emplace_back();
+                render_effect::variation_parameter& param = tech->variation_parameters.emplace_back();
                 param.name = var.name;
                 param.values = var.values;
             }
@@ -123,13 +130,92 @@ bool shader::post_load()
                 return false;
             }
 
-            tech.pipeline = make_technique_pipeline(*iter);
+            tech->pipeline = make_technique_pipeline(*iter);
+
+            effect->techniques.push_back(std::move(tech));
         }
 
         instance.renderer_id = m_renderer.get_effect_manager().register_effect(std::move(effect));
     }
 
     return true;
+}
+
+void shader::swap(shader* other)
+{
+    // Swap the raw data around.
+    std::swap(param_blocks, other->param_blocks);
+    std::swap(render_states, other->render_states);
+    std::swap(render_states, other->render_states);
+    std::swap(variations, other->variations);
+    std::swap(vertex_layouts, other->vertex_layouts);
+    std::swap(output_targets, other->output_targets);
+    std::swap(effects, other->effects);
+    std::swap(techniques, other->techniques);
+
+    // Throw a warning if the param blocks drastically differ
+    // changing these in a hot reload is complicated to support, so its better
+    // to just tell the user to reboot at this point.
+    bool param_blocks_different = false;
+    if (param_blocks.size() != other->param_blocks.size())
+    {
+        param_blocks_different = true;
+    }
+    else
+    {
+        for (size_t i = 0; i < param_blocks.size(); i++)
+        {
+            param_block& pb = param_blocks[i];
+            param_block& other_pb = other->param_blocks[i];
+
+            if (pb.name != other_pb.name ||
+                pb.scope != other_pb.scope ||
+                pb.layout != other_pb.layout)
+            {
+                param_blocks_different = true;
+                break;
+            }
+        }
+    }
+
+    if (param_blocks_different)
+    {
+        db_warning(renderer, "Changing param block configuration through hot reloading is very dangerous. Game may be unstable beyond this point.");
+    }
+
+    // Swap archetype internals
+    for (param_block& instance : param_blocks)
+    {
+        // Fidn the old state.
+        for (param_block& old_instance : other->param_blocks)
+        {
+            if (old_instance.name == instance.name)
+            {
+                // We want to preserve the old id to keep everything linked up.
+                std::swap(instance.renderer_id, old_instance.renderer_id);
+
+                // Swap the contents of the param block archetype.
+                m_renderer.get_param_block_manager().swap_param_block_archetype(instance.renderer_id, old_instance.renderer_id);
+            }
+        }
+    }
+
+    // Swap effect internals.
+    for (effect& instance : effects)
+    {
+        for (effect& old_instance : other->effects)
+        {
+            // We want to preserve the old id to keep everything linked up.
+            std::swap(instance.renderer_id, old_instance.renderer_id);
+
+            // Swap the contents of the param block archetype.
+            m_renderer.get_effect_manager().swap_effect(instance.renderer_id, old_instance.renderer_id);
+        }
+    }
+
+    // Nuke the old assets immediately rather than waiting for them to 
+    // be unloaded. Avoids the duplicating causing conflicts anywhere.
+    other->unregister_effects();
 }
 
 }; // namespace ws

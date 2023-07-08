@@ -12,7 +12,12 @@ imports: [ data:shaders/common.yaml ]
 effects:
   static_geometry:
     techniques:
-      static_geometry: {}
+      static_geometry_masked: 
+        domain: [ masked ]
+      static_geometry_opaque: 
+        domain: [ opaque ]
+      static_geometry_transparent: 
+        domain: [ transparent ]
 
 vertex_layouts:
   geometry_vertex:
@@ -31,6 +36,8 @@ param_blocks:
     fields:
       albedo_texture: texture2d
       albedo_sampler: sampler
+      opacity_texture: texture2d
+      opacity_sampler: sampler
       metallic_texture: texture2d
       metallic_sampler: sampler
       roughness_texture: texture2d
@@ -39,14 +46,41 @@ param_blocks:
       normal_sampler: sampler      
 
 techniques:
-  static_geometry:
+  # Technique to use when rendering basic opaque geometry.
+  static_geometry_opaque:
     vertex_shader: 
       file: data:shaders/source/static_geometry.hlsl
       entry: vshader
     pixel_shader: 
       file: data:shaders/source/static_geometry.hlsl
-      entry: pshader
+      entry: pshader_opaque
     render_state: default
+    vertex_layout: geometry_vertex
+    output_target: gbuffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
+  # Technique to use when rendering geometry where pixels are discarded if alpha < 0.5
+  static_geometry_masked:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_masked
+    render_state: default
+    vertex_layout: geometry_vertex
+    output_target: gbuffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
+  # Technique to use when rendering transparent geometry - input is sorted and no depth writes are enabled.
+  static_geometry_transparent:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_transparent
+    render_state: transparent
     vertex_layout: geometry_vertex
     output_target: gbuffer
     param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]

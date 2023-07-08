@@ -110,9 +110,9 @@ render_effect::technique* render_effect_manager::get_technique(const char* name,
     {
         if (pair.second->name == name)
         {
-            for (render_effect::technique& technique : pair.second->techniques)
+            for (auto& technique : pair.second->techniques)
             {
-                techniques.push_back(&technique);
+                techniques.push_back(technique.get());
             }
         }
     }
@@ -181,6 +181,16 @@ render_effect::technique* render_effect_manager::get_technique(const char* name,
         
         return nullptr;
     }
+}
+
+void render_effect_manager::swap_effect(effect_id id, effect_id other_id)
+{
+    std::scoped_lock lock(m_resource_mutex);
+
+    render_effect* effect_1 = m_effects[id].get();
+    render_effect* effect_2 = m_effects[other_id].get();
+
+    effect_1->swap(effect_2);
 }
 
 }; // namespace ws

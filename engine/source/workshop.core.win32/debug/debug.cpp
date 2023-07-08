@@ -148,4 +148,31 @@ std::unique_ptr<db_callstack> db_capture_callstack(size_t frame_offset, size_t f
     return std::move(result);
 }
 
+void db_move_console(size_t x, size_t y, size_t width, size_t height)
+{
+    HWND hwnd = GetConsoleWindow();
+
+    RECT window_rect;
+    GetWindowRect(hwnd, &window_rect);
+
+    if (x == 0)
+    {
+        x = window_rect.left;
+    }
+    if (y == 0)
+    {
+        y = window_rect.top;
+    }
+    if (width == 0)
+    {
+        width = window_rect.right - window_rect.left;
+    }
+    if (height == 0)
+    {
+        height = window_rect.bottom - window_rect.top;
+    }
+
+    MoveWindow(hwnd, x, y, width, height, true);
+}
+
 }; // namespace workshop

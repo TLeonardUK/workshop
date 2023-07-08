@@ -22,26 +22,10 @@ class material;
 class render_pass_geometry
     : public render_pass_graphics
 {
-private:
-/*
-    struct instance
-    {
-        matrix4 transform = matrix4::identity;
-    };
+public:
 
-    struct batch
-    {
-        material* material = nullptr;
-        geometry_material* geometry_material = nullptr;
-        model* model = nullptr;
-        ri_buffer* index_buffer = nullptr;
-        ri_param_block* geometry_info_param_block = nullptr;
-        model::vertex_buffer* model_vertex_buffer = nullptr;
-        size_t index_count = 0;
-
-        std::vector<instance> instances;
-    };
-*/
+    // What material domain to render.
+    material_domain domain = material_domain::opaque;
 
 public:
 

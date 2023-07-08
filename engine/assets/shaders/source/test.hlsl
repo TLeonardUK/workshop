@@ -9,11 +9,11 @@ gbuffer_output pshader(fullscreen_pinput input)
 {
     gbuffer_fragment f;
     f.albedo = albedo_texture.Sample(albedo_sampler, input.uv).rgb;
+    f.opacity = 1.0f;
     f.metallic = 0.0f;
     f.roughness = 0.0f;
     f.world_normal = float3(0.0f, 0.0f, 0.0f);
     f.world_position = float3(0.0f, 0.0f, 0.0f);
-    f.flags = 0;
 
     return encode_gbuffer(f);
 }

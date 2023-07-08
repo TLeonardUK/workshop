@@ -37,8 +37,6 @@ public:
         ri_data_scope scope;
         ri_data_layout layout;
 
-        std::unique_ptr<ri_param_block_archetype> archetype;
-
         render_param_block_manager::param_block_archetype_id renderer_id;
     };
 
@@ -103,6 +101,8 @@ public:
     shader(ri_interface& ri_interface, renderer& renderer);
     virtual ~shader();
 
+    void swap(shader* other);
+
 public:
     std::vector<param_block> param_blocks;
     std::vector<render_state> render_states;
@@ -117,6 +117,8 @@ protected:
     std::unique_ptr<ri_pipeline> make_technique_pipeline(const technique& instance);
 
     virtual bool post_load() override;
+
+    void unregister_effects();
 
 private:
     ri_interface& m_ri_interface;

@@ -61,8 +61,6 @@ void engine::step()
 
     if (m_asset_manager->has_pending_hot_reloads())
     {
-        db_log(core, "Applying hot reloads.");
-
         m_renderer->pause();
         m_asset_manager->apply_hot_reloads();
         m_renderer->resume();

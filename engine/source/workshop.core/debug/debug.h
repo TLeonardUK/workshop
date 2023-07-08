@@ -76,4 +76,12 @@ result<void> db_unload_symbols();
 // ================================================================================================
 std::unique_ptr<db_callstack> db_capture_callstack(size_t frame_offset = 0, size_t frame_count = INT_MAX);
 
+// ================================================================================================
+// Moves the console output to the given desktop coordinates. Only does anything on platforms with
+// a seperate console window.
+// 
+// Passing a value of 0 to any argument treats the value as unchanged.
+// ================================================================================================
+void db_move_console(size_t x, size_t y, size_t width, size_t height);
+
 }; // namespace workshop

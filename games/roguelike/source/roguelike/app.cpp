@@ -46,7 +46,7 @@ ws::result<void> rl_game_app::start()
     m_view_id = cmd_queue.create_view("Main View");
     cmd_queue.set_view_viewport(m_view_id, recti(0, 0, static_cast<int>(get_engine().get_main_window().get_width()), static_cast<int>(get_engine().get_main_window().get_height())));
     cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 10000.0f);
-    cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 0.0f, -100.0f), quat::identity, vector3::one);
+    cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
 
     render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
@@ -63,6 +63,10 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+
+    object_id = cmd_queue.create_static_mesh("Cube");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cube/cube.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3(50.f, 50.f, 50.f));
     
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);

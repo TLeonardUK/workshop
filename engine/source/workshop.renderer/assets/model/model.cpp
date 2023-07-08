@@ -112,4 +112,14 @@ model::vertex_buffer* model::find_or_create_vertex_buffer(const ri_data_layout& 
     return new_buf_ptr;
 }
 
+void model::swap(model* other)
+{
+    std::swap(materials, other->materials);
+    std::swap(geometry, other->geometry);
+
+    // Cleared cached data as these point to old data.
+    m_param_blocks.clear();
+    m_vertex_buffers.clear();
+}
+
 }; // namespace ws

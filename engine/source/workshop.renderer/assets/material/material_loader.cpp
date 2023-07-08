@@ -15,8 +15,6 @@
 
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 namespace {

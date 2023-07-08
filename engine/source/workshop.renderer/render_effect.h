@@ -58,8 +58,14 @@ public:
     std::string name;
 
     // List of techniques the effect contains.
-    std::vector<technique> techniques;
+    std::vector<std::unique_ptr<technique>> techniques;
 
+public:
+
+    // Swaps the contents of this effect with another one. Be very careful using this,
+    // this is primarily meant for supporting hot reload.
+    void swap(render_effect* other);
+   
 
 };
 

@@ -54,6 +54,9 @@ public:
     // this asset was created from.
     std::string name;
 
+public:
+    virtual ~asset() {};
+
 protected:
     friend class asset_manager;
 

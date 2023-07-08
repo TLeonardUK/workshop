@@ -44,6 +44,10 @@ public:
     // if parts of the renderer are still using the param block archetype.
     void unregister_param_block_archetype(param_block_archetype_id id);
 
+    // Swaps the internal data stored in each param block archetype id. Be careful using this
+    // its meant primarily for supporting hot-reloading.
+    void swap_param_block_archetype(param_block_archetype_id id, param_block_archetype_id other_id);
+
     // Gets a param block archetype from its id.
     ri_param_block_archetype* get_param_block_archetype(param_block_archetype_id id);
 
@@ -60,7 +64,7 @@ private:
         std::unique_ptr<ri_param_block_archetype> instance;
     };
 
-    std::mutex m_resource_mutex;
+    std::recursive_mutex m_resource_mutex;
 
     size_t m_id_counter = 1;
     std::unordered_map<param_block_archetype_id, param_block_state> m_param_block_archetypes;

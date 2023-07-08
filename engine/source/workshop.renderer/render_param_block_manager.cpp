@@ -85,6 +85,21 @@ void render_param_block_manager::unregister_param_block_archetype(param_block_ar
     }
 }
 
+void render_param_block_manager::swap_param_block_archetype(param_block_archetype_id id, param_block_archetype_id other_id)
+{
+    std::scoped_lock lock(m_resource_mutex);
+
+    ri_param_block_archetype* archetype_1 = get_param_block_archetype(id);
+    ri_param_block_archetype* archetype_2 = get_param_block_archetype(other_id);
+
+    if (archetype_1 == nullptr || archetype_2 == nullptr)
+    {
+        return;
+    }
+
+    std::swap(m_param_block_archetypes[id], m_param_block_archetypes[other_id]);
+}
+
 ri_param_block_archetype* render_param_block_manager::get_param_block_archetype(param_block_archetype_id id)
 {
     std::scoped_lock lock(m_resource_mutex);

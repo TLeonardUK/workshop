@@ -10,13 +10,24 @@ version: 1
 render_states:
   # Default geometry rendering state.
   default: 
-    cull_mode: back
+    cull_mode: none
   # Default render state but without depth testing enabled. Useful
   # for things such as fullscreen passes.
   no_depth_test:
     depth_test_enabled: false  
     depth_write_enabled: true
     cull_mode: none
+  # Transparent geometry rendering state.
+  transparent: 
+    cull_mode: none  
+    depth_write_enabled: false
+    blend_enabled: true
+    blend_op: add
+    blend_source_op: source_alpha
+    blend_destination_op: inverse_source_alpha
+    blend_alpha_op: add
+    blend_alpha_source_op: zero
+    blend_alpha_destination_op: one
 
 vertex_layouts:
   # Simple layout that contains only vert position and uv. Useful

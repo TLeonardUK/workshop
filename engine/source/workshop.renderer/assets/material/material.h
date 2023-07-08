@@ -28,7 +28,13 @@ class asset_manager;
 // ================================================================================================
 enum class material_domain
 {
+    // Opaque geometry.
     opaque,
+
+    // Geometry that has an alpha channel in the albedo. If alpha < 0.5 the pixel is discard.
+    masked,
+
+    // Transparent geometry with an alpha channel in the albedo.
     transparent,
 
     COUNT
@@ -36,6 +42,7 @@ enum class material_domain
 
 inline static const char* material_domain_strings[static_cast<int>(material_domain::COUNT)] = {
     "opaque",
+    "masked",
     "transparent"
 };
 
