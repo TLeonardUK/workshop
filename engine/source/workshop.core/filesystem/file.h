@@ -58,6 +58,11 @@ std::vector<std::string> get_command_line();
 void set_command_line(const std::vector<std::string>& args);
 
 // ================================================================================================
+//  Gets if a command line option is set.
+// ================================================================================================
+bool is_option_set(const char* name);
+
+// ================================================================================================
 //  Gets the directory non-roadming application data should be stored in.
 // ================================================================================================
 std::filesystem::path get_local_appdata_directory();

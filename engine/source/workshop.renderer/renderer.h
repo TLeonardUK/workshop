@@ -22,6 +22,8 @@
 
 #include "workshop.assets/asset_manager.h"
 
+#include "workshop.debug_menu/debug_menu.h"
+
 #include <queue>
 
 namespace ws {
@@ -39,6 +41,7 @@ class asset_manager;
 class window;
 class shader;
 class input_interface;
+class debug_menu;
 
 // Decribes the usage of a specific default texture, used to select
 // an appropriate one when calling renderer::get_default_texture.
@@ -61,6 +64,29 @@ enum class default_sampler_type
     COUNT
 };
 
+// Switches the resolve mode to visualization different elements
+// of the render pipeline.
+enum class visualization_mode
+{
+    normal, 
+    wireframe,
+    metallic,
+    roughness,
+    world_normal,
+    world_position,
+
+    COUNT
+};
+
+static inline const char* visualization_mode_strings[] = {
+    "normal",
+    "wireframe",
+    "metallic",
+    "roughness",
+    "world normal",
+    "world position"
+};
+
 // ================================================================================================
 //  Provides an abstracted interface for all rendering behaviour in the engine 
 // ================================================================================================
@@ -69,7 +95,7 @@ class renderer
 public:
 
     renderer() = delete;
-    renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager);
+    renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager, debug_menu& debug_menu);
 
     // Registers all the steps required to initialize the renderer.
     void register_init(init_list& list);
@@ -160,7 +186,12 @@ public:
     size_t get_display_width();
     size_t get_display_height();
 
+    // Gets the current visualization mode on the render thread.
+    visualization_mode get_visualization_mode();
+
 private:
+
+    friend class render_command_queue;
 
     result<void> create_resources();
     result<void> destroy_resources();
@@ -169,6 +200,11 @@ private:
     result<void> unregister_asset_loaders();
 
     result<void> recreate_resizable_targets();
+
+    // Performs any needed setup for any debug menu options
+    // exposed by the renderer.
+    result<void> create_debug_menu();
+    result<void> destroy_debug_menu();
 
     // Rebuilds the render graph. This should only occur on start or
     // when settings have changed that require the graph to be rebuilt
@@ -194,6 +230,11 @@ private:
     // Runs all callbacks that have been queued.
     void run_callbacks();
 
+    // Switchs the visualization mode. 
+    // Don't call directly, use the command queue to change only
+    // on the render thread.
+    void set_visualization_mode(visualization_mode mode);
+
 private:
 
     // How many frames can be in the pipeline at a given time.
@@ -206,6 +247,7 @@ private:
     input_interface& m_input_interface;
     window& m_window;
     asset_manager& m_asset_manager;
+    debug_menu& m_debug_menu;
 
     std::vector<std::unique_ptr<render_system>> m_systems;
     std::unique_ptr<render_graph> m_render_graph;
@@ -215,6 +257,10 @@ private:
     std::unique_ptr<render_scene_manager> m_scene_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
+
+    visualization_mode m_visualization_mode = visualization_mode::normal;
+
+    std::vector<debug_menu::option_handle> m_debug_menu_options;
 
     // Command queue.
 

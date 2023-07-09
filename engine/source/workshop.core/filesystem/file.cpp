@@ -45,6 +45,22 @@ std::vector<std::string> get_command_line()
     return g_command_line;
 }
 
+bool is_option_set(const char* name)
+{ 
+    // TODO: Parse this stuff better.
+    std::string option_1 = "-" + std::string(name);
+    std::string option_2 = "--" + std::string(name);
+
+    for (std::string& value : g_command_line)
+    {
+        if (value == option_1 || value == option_2)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void set_command_line(const std::vector<std::string>& args)
 {
     db_assert(args.size() > 0);

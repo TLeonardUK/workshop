@@ -56,6 +56,7 @@ void engine::step()
 
     on_step.broadcast(m_frame_time);
     m_presenter->step(m_frame_time);
+    m_debug_menu->step(m_frame_time);
 
     m_filesystem->raise_watch_events();
 
@@ -98,6 +99,11 @@ void engine::register_init(init_list& list)
         "Main Window",
         [this, &list]() -> result<void> { return create_main_window(list); },
         [this, &list]() -> result<void> { return destroy_main_window(); }
+    );
+    list.add_step(
+        "Debug Menu",
+        [this, &list]() -> result<void> { return create_debug_menu(list); },
+        [this, &list]() -> result<void> { return destroy_debug_menu(); }
     );
     list.add_step(
         "Render Interface",
@@ -154,6 +160,11 @@ window_interface& engine::get_windowing()
 window& engine::get_main_window()
 {
     return *m_window.get();
+}
+
+debug_menu& engine::get_debug_menu()
+{
+    return *m_debug_menu.get();
 }
 
 virtual_file_system& engine::get_filesystem()
@@ -373,6 +384,8 @@ result<void> engine::create_input_interface(init_list& list)
         }
     }
 
+    m_debug_menu->set_input(*m_input_interface);
+
     return true;
 }
 
@@ -441,8 +454,15 @@ result<void> engine::destroy_render_interface()
 
 result<void> engine::create_renderer(init_list& list)
 {
-    m_renderer = std::make_unique<renderer>(*m_render_interface.get(), *m_input_interface.get(), *m_window.get(), *m_asset_manager.get());
+    m_renderer = std::make_unique<renderer>(
+        *m_render_interface.get(), 
+        *m_input_interface.get(), 
+        *m_window.get(), 
+        *m_asset_manager.get(),
+        *m_debug_menu.get());
     m_renderer->register_init(list);
+
+    m_debug_menu->set_renderer(*m_renderer);
 
     return true;
 }
@@ -483,6 +503,21 @@ result<void> engine::create_presenter(init_list& list)
 result<void> engine::destroy_presenter()
 {
     m_presenter = nullptr;
+
+    return true;
+}
+
+result<void> engine::create_debug_menu(init_list& list)
+{
+    m_debug_menu = std::make_unique<debug_menu>();
+    m_debug_menu->register_init(list);
+
+    return true;
+}
+
+result<void> engine::destroy_debug_menu()
+{
+    m_debug_menu = nullptr;
 
     return true;
 }

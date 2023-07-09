@@ -26,6 +26,7 @@ public:
 
 private:
     render_pass_fullscreen* m_render_pass;
+    std::unique_ptr<ri_param_block> m_resolve_param_block;
 
 };
 

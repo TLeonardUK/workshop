@@ -15,6 +15,12 @@ effects:
     techniques:
       resolve_swapchain: {}
 
+param_blocks:
+  resolve_parameters:
+    scope: draw
+    fields:
+      visualization_mode: int
+
 techniques:
   resolve_swapchain:
     vertex_shader: 
@@ -26,4 +32,4 @@ techniques:
     render_state: no_depth_test
     vertex_layout: vertex2d_pos_uv
     output_target: swapchain
-    param_blocks: [ gbuffer ]
+    param_blocks: [ gbuffer, resolve_parameters ]

@@ -232,6 +232,7 @@ public:
 
     // Sets if the mouse is constrained within the application window.
     virtual void set_mouse_capture(bool capture) = 0;
+    virtual bool get_mouse_capture() = 0;
 
     // Sets if the mouse is globally hidden or visible.
     virtual void set_mouse_hidden(bool hidden) = 0;

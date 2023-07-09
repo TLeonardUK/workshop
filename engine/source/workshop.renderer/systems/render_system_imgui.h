@@ -39,7 +39,7 @@ public:
         vector2 uv;
         vector4 color;
     };
-#pragma pack(pop, 1)
+#pragma pack(pop)
 
     struct draw_command
     {

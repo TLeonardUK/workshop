@@ -34,6 +34,8 @@
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_param_block.h"
 
+#include "workshop.debug_menu/debug_menu.h"
+
 #include "workshop.assets/asset_manager.h"
 
 #include "workshop.window_interface/window.h"
@@ -49,11 +51,12 @@
 
 namespace ws {
 
-renderer::renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager)
+renderer::renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager, debug_menu& debug_menu)
     : m_render_interface(rhi)
     , m_input_interface(input)
     , m_window(main_window)
     , m_asset_manager(asset_manager)
+    , m_debug_menu(debug_menu)
 {
     // Note: Order is important here, this is the order the 
     //       stages will be added to the render graph in.
@@ -104,6 +107,12 @@ void renderer::register_init(init_list& list)
         "Build Render Graph",
         [this, &list]() -> result<void> { return create_render_graph(); },
         [this, &list]() -> result<void> { return destroy_render_graph(); }
+    );
+
+    list.add_step(
+        "Setup Renderer Debug Menu",
+        [this, &list]() -> result<void> { return create_debug_menu(); },
+        [this, &list]() -> result<void> { return destroy_debug_menu(); }
     );
 }
 
@@ -578,6 +587,40 @@ result<void> renderer::destroy_render_graph()
     m_render_graph = nullptr;
 
     return true;
+}
+
+result<void> renderer::create_debug_menu()
+{
+    for (size_t i = 0; i < static_cast<size_t>(visualization_mode::COUNT); i++)
+    {
+        std::string path = string_format("rendering/visualization/%s", visualization_mode_strings[i]);
+
+        auto option = m_debug_menu.add_option(path.c_str(), [this, i]() {
+            get_command_queue().set_visualization_mode(static_cast<visualization_mode>(i));
+        });
+
+        m_debug_menu_options.push_back(std::move(option));
+    }
+
+    return true;
+}
+
+result<void> renderer::destroy_debug_menu()
+{
+    m_debug_menu_options.clear();
+
+    return true;
+}
+
+void renderer::set_visualization_mode(visualization_mode mode)
+{
+    db_log(renderer, "Changed visualization mode to %zi", mode);
+    m_visualization_mode = mode;
+}
+
+visualization_mode renderer::get_visualization_mode()
+{
+    return m_visualization_mode;
 }
 
 void renderer::drain()

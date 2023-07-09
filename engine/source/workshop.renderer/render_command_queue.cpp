@@ -14,6 +14,17 @@ render_command_queue::render_command_queue(renderer& render, size_t capacity)
 }
 
 // ===========================================================================================
+//  Global
+// ===========================================================================================
+
+void render_command_queue::set_visualization_mode(visualization_mode mode)
+{
+    queue_command("set_visualization_mode", [renderer = &m_renderer, mode]() {
+        renderer->set_visualization_mode(mode);
+    });
+}
+
+// ===========================================================================================
 //  Objects
 // ===========================================================================================
 

@@ -355,7 +355,13 @@ void sdl_input_interface::set_mouse_cursor(input_cursor cursor)
 
 void sdl_input_interface::set_mouse_capture(bool capture)
 {
+    m_mouse_captured = capture;
     SDL_CaptureMouse(capture ? SDL_TRUE : SDL_FALSE);
+}
+
+bool sdl_input_interface::get_mouse_capture()
+{
+    return m_mouse_captured;
 }
 
 void sdl_input_interface::set_mouse_hidden(bool hidden)

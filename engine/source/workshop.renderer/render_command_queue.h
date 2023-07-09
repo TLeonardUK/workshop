@@ -15,6 +15,7 @@ namespace ws {
 
 class renderer;
 class model;
+enum class visualization_mode;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
 using render_object_id = size_t;
@@ -37,6 +38,13 @@ public:
     render_command_queue(renderer& render, size_t capacity);
 
 public:
+
+    // ===========================================================================================
+    //  Global
+    // ===========================================================================================
+
+    // Sets the debug mode we should use for rendering the output.
+    void set_visualization_mode(visualization_mode mode);
 
     // ===========================================================================================
     //  Objects

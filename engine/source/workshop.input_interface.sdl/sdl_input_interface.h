@@ -44,6 +44,7 @@ public:
     virtual void set_mouse_cursor(input_cursor cursor) override;
 
     virtual void set_mouse_capture(bool capture) override;
+    virtual bool get_mouse_capture() override;
 
     virtual void set_mouse_hidden(bool hidden) override;
 
@@ -87,6 +88,8 @@ private:
 
     int m_pending_mouse_wheel_vertical;
     int m_pending_mouse_wheel_horizontal;
+
+    bool m_mouse_captured = false;
 
     sdl_platform_interface* m_platform = nullptr;
 

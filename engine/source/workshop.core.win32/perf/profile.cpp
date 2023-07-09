@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/perf/profile.h"
+#include "workshop.core/filesystem/file.h"
 
 #include "workshop.core.win32/utils/windows_headers.h"
 #include "thirdparty/pix/include/pix3.h"
@@ -47,13 +48,16 @@ std::string get_latest_pix_gpu_dll()
 void platform_perf_init()
 {
 #ifndef WS_RELEASE
-    std::string pix_gpu_path = get_latest_pix_gpu_dll();
-    if (!pix_gpu_path.empty())
+    if (ws::is_option_set("load_pix"))
     {
-        if (GetModuleHandleA("WinPixGpuCapturer.dll") == 0)
+        std::string pix_gpu_path = get_latest_pix_gpu_dll();
+        if (!pix_gpu_path.empty())
         {
-            db_log(core, "Loading PIX gpu runtime from: %s", pix_gpu_path.c_str());
-            LoadLibraryA(pix_gpu_path.c_str());
+            if (GetModuleHandleA("WinPixGpuCapturer.dll") == 0)
+            {
+                db_log(core, "Loading PIX gpu runtime from: %s", pix_gpu_path.c_str());
+                LoadLibraryA(pix_gpu_path.c_str());
+            }
         }
     }
 #endif

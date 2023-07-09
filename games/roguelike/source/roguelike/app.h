@@ -36,6 +36,8 @@ private:
     vector3 m_view_rotation_euler = vector3::zero;
     quat m_view_rotation = quat::identity;
 
+    int m_mouse_control_frames = 0;
+
 };
 
 };
