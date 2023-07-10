@@ -24,7 +24,8 @@ void render_system_geometry::create_graph(render_graph& graph)
     // Draw opaque geometry.
     std::unique_ptr<render_pass_geometry> pass = std::make_unique<render_pass_geometry>();
     pass->name = "opaque static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain", "opaque" } });
+    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","opaque"}, {"wireframe","false"} });
+    pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"} });
     pass->domain = material_domain::opaque;
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
@@ -33,7 +34,8 @@ void render_system_geometry::create_graph(render_graph& graph)
     // Draw masked geometry.
     pass = std::make_unique<render_pass_geometry>();
     pass->name = "masked static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain", "masked" } });
+    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","masked"}, {"wireframe","false"} });
+    pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"} });
     pass->domain = material_domain::masked;
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
@@ -42,7 +44,8 @@ void render_system_geometry::create_graph(render_graph& graph)
     // Draw transparent geometry.
     pass = std::make_unique<render_pass_geometry>();
     pass->name = "transparent static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain", "transparent" } });
+    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain","transparent"}, {"wireframe","false"} });
+    pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"} });
     pass->domain = material_domain::transparent;
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());

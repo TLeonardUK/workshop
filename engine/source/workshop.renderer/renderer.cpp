@@ -218,8 +218,8 @@ result<void> renderer::recreate_resizable_targets()
     default_data[3] = 255;
     m_default_textures[static_cast<int>(default_texture_type::white)] = m_render_interface.create_texture(params, "default white texture");
 
-    default_data[0] = 0;
-    default_data[1] = 0;
+    default_data[0] = 128;
+    default_data[1] = 128;
     default_data[2] = 255;
     default_data[3] = 255;
     m_default_textures[static_cast<int>(default_texture_type::normal)] = m_render_interface.create_texture(params, "default normal texture");

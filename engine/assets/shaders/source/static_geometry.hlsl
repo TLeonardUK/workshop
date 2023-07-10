@@ -11,8 +11,9 @@ struct geometry_pinput
     float4 position : SV_POSITION;
     float2 uv0 : TEXCOORD0;
     float4 world_normal : TEXCOORD1;
-    float4 world_bitangent : TEXCOORD2;
-    float4 world_position : TEXCOORD3;
+    float4 world_tangent : TEXCOORD2;
+    float4 world_bitangent : TEXCOORD3;
+    float4 world_position : TEXCOORD4;
 };
 
 geometry_pinput vshader(vertex_input input)
@@ -25,9 +26,10 @@ geometry_pinput vshader(vertex_input input)
     geometry_pinput result;
     result.position = mul(mvp_matrix, float4(v.position, 1.0f));
     result.uv0 = v.uv0;
-    result.world_normal = mul(vi.model_matrix, float4(v.normal, 1.0f));
-    result.world_bitangent = mul(vi.model_matrix, float4(v.bitangent, 1.0f));
-    result.world_position = mul(vi.model_matrix, float4(v.position, 1.0f));
+    result.world_normal = mul(vi.model_matrix, float4(v.normal, 0.0f));
+    result.world_tangent = mul(vi.model_matrix, float4(v.tangent, 0.0f));
+    result.world_bitangent = mul(vi.model_matrix, float4(v.bitangent, 0.0f));
+    result.world_position = mul(vi.model_matrix, float4(v.position, 0.0f));
 
     return result;
 }
@@ -39,12 +41,19 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
     f.opacity = albedo.a;
     f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
     f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
+
+#if 0
+    f.world_normal = normalize(normal_texture.Sample(normal_sampler, input.uv0).xyz * 2.0f - 1.0f);
+#elif 1
     f.world_normal = calculate_world_normal(
         normal_texture.Sample(normal_sampler, input.uv0).xyz,
         normalize(input.world_normal).xyz,
+        normalize(input.world_tangent).xyz,
         normalize(input.world_bitangent).xyz
-    );   
+    );
+#else 
     f.world_normal = input.world_normal.xyz;
+#endif
     f.world_position = input.world_position.xyz;
 
     return encode_gbuffer(f);

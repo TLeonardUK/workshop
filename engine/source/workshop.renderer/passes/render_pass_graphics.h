@@ -24,6 +24,9 @@ public:
     // The effect technique to use for rendering this pass.
     render_effect::technique* technique;
 
+    // The effect technique to use for rendering this pass in wireframe.
+    render_effect::technique* wireframe_technique;
+
     // The output targets to render to.
     render_output output;
 

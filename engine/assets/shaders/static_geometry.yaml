@@ -12,17 +12,23 @@ imports: [ data:shaders/common.yaml ]
 effects:
   static_geometry:
     techniques:
+      static_geometry_wireframe: 
+        wireframe: [ true ]
       static_geometry_masked: 
         domain: [ masked ]
+        wireframe: [ false ]
       static_geometry_opaque: 
         domain: [ opaque ]
+        wireframe: [ false ]
       static_geometry_transparent: 
         domain: [ transparent ]
+        wireframe: [ false ]
 
 vertex_layouts:
   geometry_vertex:
     position: float3
     normal: float3
+    tangent: float3
     bitangent: float3
     uv0: float2
 
@@ -46,6 +52,19 @@ param_blocks:
       normal_sampler: sampler      
 
 techniques:
+  # Technique to use when rendering wireframe geometry.
+  static_geometry_wireframe:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_opaque
+    render_state: default_wireframe
+    vertex_layout: geometry_vertex
+    output_target: gbuffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
   # Technique to use when rendering basic opaque geometry.
   static_geometry_opaque:
     vertex_shader: 
