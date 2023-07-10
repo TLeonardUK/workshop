@@ -7,6 +7,7 @@
 #include "workshop.assets/asset.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.core/geometry/geometry.h"
+#include "workshop.core/math/aabb.h"
 
 #include "workshop.render_interface/ri_types.h"
 
@@ -71,6 +72,7 @@ public:
 public:
     std::vector<material_info> materials;
     std::unique_ptr<geometry> geometry;
+    aabb bounds;
 
 protected:
     virtual bool post_load() override;

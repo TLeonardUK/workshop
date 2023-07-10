@@ -58,20 +58,6 @@ renderer::renderer(ri_interface& rhi, input_interface& input, window& main_windo
     , m_asset_manager(asset_manager)
     , m_debug_menu(debug_menu)
 {
-    // Note: Order is important here, this is the order the 
-    //       stages will be added to the render graph in.
-    m_systems.push_back(std::make_unique<render_system_clear>(*this));
-    //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
-    m_systems.push_back(std::make_unique<render_system_geometry>(*this));
-    m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
-    m_systems.push_back(std::make_unique<render_system_imgui>(*this));
-
-    m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
-    m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
-    m_scene_manager = std::make_unique<render_scene_manager>(*this);
-    m_batch_manager = std::make_unique<render_batch_manager>(*this);
-    m_imgui_manager = std::make_unique<render_imgui_manager>(*this, m_input_interface);
-
     for (size_t i = 0; i < k_frame_depth; i++)
     {
         m_command_queues[i] = std::make_unique<render_command_queue>(*this, k_command_queue_size);
@@ -81,16 +67,16 @@ renderer::renderer(ri_interface& rhi, input_interface& input, window& main_windo
 void renderer::register_init(init_list& list)
 {
     list.add_step(
-        "Register Asset Loaders",
+        "Renderer Asset Loaders",
         [this, &list]() -> result<void> { return register_asset_loaders(); },
         [this, &list]() -> result<void> { return unregister_asset_loaders(); }
     );
 
-    m_param_block_manager->register_init(list);
-    m_effect_manager->register_init(list);
-    m_scene_manager->register_init(list);
-    m_batch_manager->register_init(list);
-    m_imgui_manager->register_init(list);
+    list.add_step(
+        "Renderer Managers",
+        [this, &list]() -> result<void> { return create_managers(list); },
+        [this, &list]() -> result<void> { return destroy_managers(); }
+    );
 
     list.add_step(
         "Renderer Resources",
@@ -98,10 +84,12 @@ void renderer::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_resources(); }
     );
 
-    for (auto& system : m_systems)
-    {
-        system->register_init(list);
-    }
+    list.add_step(
+        "Renderer Systems",
+        [this, &list]() -> result<void> { return create_systems(list); },
+        [this, &list]() -> result<void> { return destroy_systems(); }
+    );
+
 
     list.add_step(
         "Build Render Graph",
@@ -110,10 +98,63 @@ void renderer::register_init(init_list& list)
     );
 
     list.add_step(
-        "Setup Renderer Debug Menu",
+        "Renderer Debug Menu",
         [this, &list]() -> result<void> { return create_debug_menu(); },
         [this, &list]() -> result<void> { return destroy_debug_menu(); }
     );
+}
+
+result<void> renderer::create_systems(init_list& list)
+{
+    // Note: Order is important here, this is the order the 
+    //       stages will be added to the render graph in.
+    m_systems.push_back(std::make_unique<render_system_clear>(*this));
+    //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
+    m_systems.push_back(std::make_unique<render_system_geometry>(*this));
+    m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
+    m_systems.push_back(std::make_unique<render_system_imgui>(*this));
+
+    for (auto& system : m_systems)
+    {
+        system->register_init(list);
+    }
+
+    return true;
+}
+
+result<void> renderer::destroy_systems()
+{
+    m_systems.clear();
+
+    return true;
+}
+
+result<void> renderer::create_managers(init_list& list)
+{
+    m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
+    m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
+    m_scene_manager = std::make_unique<render_scene_manager>(*this);
+    m_batch_manager = std::make_unique<render_batch_manager>(*this);
+    m_imgui_manager = std::make_unique<render_imgui_manager>(*this, m_input_interface);
+
+    m_param_block_manager->register_init(list);
+    m_effect_manager->register_init(list);
+    m_scene_manager->register_init(list);
+    m_batch_manager->register_init(list);
+    m_imgui_manager->register_init(list);
+
+    return true;
+}
+
+result<void> renderer::destroy_managers()
+{
+    m_effect_manager = nullptr;
+    m_param_block_manager = nullptr;
+    m_scene_manager = nullptr;
+    m_batch_manager = nullptr;
+    m_imgui_manager = nullptr;
+
+    return true;
 }
 
 result<void> renderer::create_resources()
@@ -532,7 +573,7 @@ void renderer::pause()
 {
     std::unique_lock lock(m_pending_frames_mutex);
 
-    while (m_frames_in_flight.load() >= k_frame_depth)
+    while (m_frames_in_flight.load() > 0)
     {
         profile_marker(profile_colors::render, "wait for render");
         m_pending_frame_convar.wait(lock);
@@ -573,6 +614,8 @@ result<void> renderer::create_render_graph()
 
 result<void> renderer::destroy_render_graph()
 {
+    pause();
+
     std::vector<render_graph::node*> nodes;
     m_render_graph->get_nodes(nodes);
 
@@ -625,7 +668,10 @@ visualization_mode renderer::get_visualization_mode()
 
 void renderer::drain()
 {
-    m_swapchain->drain();
+    if (m_swapchain)
+    {
+        m_swapchain->drain();
+    }
 }
 
 size_t renderer::get_display_width()

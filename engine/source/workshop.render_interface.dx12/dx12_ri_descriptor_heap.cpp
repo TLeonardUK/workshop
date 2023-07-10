@@ -19,7 +19,7 @@ dx12_ri_descriptor_heap::dx12_ri_descriptor_heap(dx12_render_interface& renderer
 
 dx12_ri_descriptor_heap::~dx12_ri_descriptor_heap()
 {
-    SafeRelease(m_heap);
+    m_heap = nullptr;
 }
 
 result<void> dx12_ri_descriptor_heap::create_resources()

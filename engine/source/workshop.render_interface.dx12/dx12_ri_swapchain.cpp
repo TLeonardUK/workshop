@@ -36,7 +36,7 @@ void dx12_ri_swapchain::destroy_resources()
 
     drain();
 
-    SafeRelease(m_swap_chain);
+    m_swap_chain = nullptr;
 }
 
 result<void> dx12_ri_swapchain::create_resources()

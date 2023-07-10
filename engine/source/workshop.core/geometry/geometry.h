@@ -12,6 +12,7 @@
 #include "workshop.core/math/matrix2.h"
 #include "workshop.core/math/matrix3.h"
 #include "workshop.core/math/matrix4.h"
+#include "workshop.core/math/aabb.h"
 
 #include <vector>
 #include <span>
@@ -154,6 +155,11 @@ public:
     // Attempts to load the geometry data from the given file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
     static std::unique_ptr<geometry> load(const char* path);
+
+public:
+
+	// Bounds of all vertices in the mesh.
+	aabb bounds;
 
 private:
 	void add_vertex_stream(const char* field_name, std::span<uint8_t> data, size_t element_size, geometry_data_type type);

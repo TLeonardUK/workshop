@@ -25,13 +25,13 @@ dx12_ri_command_queue::~dx12_ri_command_queue()
     {
         for (auto& resources : context->frame_resources)
         {
-            SafeRelease(resources.allocator);
+            resources.allocator = nullptr;
         }
     }
 
     m_thread_contexts.clear();
 
-    SafeRelease(m_queue);
+    m_queue = nullptr;
 }
 
 result<void> dx12_ri_command_queue::create_resources()

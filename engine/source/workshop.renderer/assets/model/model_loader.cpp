@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 12;
+constexpr size_t k_asset_compiled_version = 13;
 
 };
 
@@ -40,6 +40,8 @@ template<>
 inline void stream_serialize(stream& out, geometry& geo)
 {
     std::vector<geometry_vertex_stream>& streams = geo.get_vertex_streams();
+
+    stream_serialize(out, geo.bounds);
 
     stream_serialize_list(out, streams, [&out](geometry_vertex_stream& stream) {
         stream_serialize(out, stream.name);

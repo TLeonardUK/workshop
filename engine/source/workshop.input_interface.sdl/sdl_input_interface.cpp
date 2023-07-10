@@ -164,7 +164,7 @@ sdl_input_interface::sdl_input_interface(platform_interface* platform_interface,
 void sdl_input_interface::register_init(init_list& list)
 {
     list.add_step(
-        "Initialize SDL Input",
+        "SDL Input",
         [this, &list]() -> result<void> { return create_sdl(list); },
         [this]() -> result<void> { return destroy_sdl(); }
     );

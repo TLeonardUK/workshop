@@ -46,7 +46,7 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
     f.world_normal = normalize(normal_texture.Sample(normal_sampler, input.uv0).xyz * 2.0f - 1.0f);
 #elif 1
     f.world_normal = calculate_world_normal(
-        normal_texture.Sample(normal_sampler, input.uv0).xyz,
+        unpack_compressed_normal(normal_texture.Sample(normal_sampler, input.uv0).xy),
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz,
         normalize(input.world_bitangent).xyz

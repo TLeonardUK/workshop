@@ -34,7 +34,10 @@ dx12_ri_param_block_archetype::~dx12_ri_param_block_archetype()
     for (size_t i = 0; i < m_pages.size(); i++)
     {
         alloc_page& instance = m_pages[i];
-        db_assert(instance.free_list.size() == k_page_size);
+        if (instance.free_list.size() != k_page_size)
+        {
+            db_warning(renderer, "Param block archetype '%s' is being destroyed but not all param blocks have been deallocated.", m_debug_name.c_str());
+        }
 
         if (m_create_params.scope == ri_data_scope::instance)
         {

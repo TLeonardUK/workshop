@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 3;
+constexpr size_t k_asset_compiled_version = 4;
 
 };
 
@@ -315,9 +315,7 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
             }
             else if (asset.usage == texture_usage::normal)
             {
-                // TODO: We can use BC5 if we reconstruct the Z axis in the shader, but for now, lets stick to BC7 ...
-                asset.format = pixmap_format::BC7;
-                //asset.format = pixmap_format::BC5;
+                asset.format = pixmap_format::BC5;
             }
             else if (asset.usage == texture_usage::roughness ||
                      asset.usage == texture_usage::metallic ||

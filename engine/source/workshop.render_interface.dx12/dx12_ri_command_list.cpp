@@ -28,7 +28,7 @@ dx12_ri_command_list::dx12_ri_command_list(dx12_render_interface& renderer, cons
 
 dx12_ri_command_list::~dx12_ri_command_list()
 {
-    SafeRelease(m_command_list);
+    m_command_list = nullptr;
 }
 
 result<void> dx12_ri_command_list::create_resources()

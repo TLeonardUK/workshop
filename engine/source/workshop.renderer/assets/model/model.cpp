@@ -116,6 +116,7 @@ void model::swap(model* other)
 {
     std::swap(materials, other->materials);
     std::swap(geometry, other->geometry);
+    std::swap(bounds, other->bounds);
 
     // Cleared cached data as these point to old data.
     m_param_blocks.clear();

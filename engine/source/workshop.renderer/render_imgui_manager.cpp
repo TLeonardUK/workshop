@@ -52,7 +52,7 @@ void render_imgui_manager::set_clipboard_text_callback(void* userdata, const cha
 void render_imgui_manager::register_init(init_list& list)
 {
     list.add_step(
-        "Initialize ImGui Manager",
+        "ImGui Manager",
         [this, &list]() -> result<void> { return create_imgui(list); },
         [this]() -> result<void> { return destroy_imgui(); }
     );

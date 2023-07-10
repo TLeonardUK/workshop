@@ -248,6 +248,24 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         result->add_material(mat.name.c_str(), mat.indices);
     }
 
+    // Calculate geometry bounds.
+    if (context.positions.empty())
+    {
+        result->bounds.min = vector3::zero;
+        result->bounds.max = vector3::zero;
+    }
+    else
+    {
+        result->bounds.min = context.positions[0];
+        result->bounds.max = context.positions[0];
+
+        for (vector3& pos : context.positions)
+        {
+            result->bounds.min = vector3::min(result->bounds.min, pos);
+            result->bounds.max = vector3::max(result->bounds.max, pos);
+        }
+    }
+
     // Insert all the vertex streams.
     result->add_vertex_stream("position", context.positions);
     result->add_vertex_stream("normal", context.normals);

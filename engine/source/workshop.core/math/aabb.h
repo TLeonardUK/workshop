@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/math/vector3.h"
+#include "workshop.core/filesystem/stream.h"
 
 #include <vector>
 
@@ -155,6 +156,13 @@ inline bool aabb::contains(const aabb& other) const
 	}
 
 	return false;
+}
+
+template<>
+inline void stream_serialize(stream& out, aabb& v)
+{
+	stream_serialize(out, v.min);
+	stream_serialize(out, v.max);
 }
 
 }; // namespace ws

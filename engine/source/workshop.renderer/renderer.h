@@ -196,6 +196,12 @@ private:
     result<void> create_resources();
     result<void> destroy_resources();
 
+    result<void> create_systems(init_list& list);
+    result<void> destroy_systems();
+
+    result<void> create_managers(init_list& list);
+    result<void> destroy_managers();
+
     result<void> register_asset_loaders();
     result<void> unregister_asset_loaders();
 

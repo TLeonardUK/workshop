@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "data:shaders/source/fullscreen_pass.hlsl"
 #include "data:shaders/source/common/gbuffer.hlsl"
+#include "data:shaders/source/common/normal.hlsl"
 
 struct swapchain_output
 {
@@ -48,7 +49,7 @@ swapchain_output pshader(fullscreen_pinput input)
         }
         case visualization_mode_t::world_normal:
         {
-            output.color = float4(f.world_normal, 1.0f);
+            output.color = float4(pack_normal(f.world_normal), 1.0f);
             break;
         }
         case visualization_mode_t::world_position:

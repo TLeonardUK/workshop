@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/math/math.h"
+#include "workshop.core/filesystem/stream.h"
 
 namespace ws {
 
@@ -266,6 +267,13 @@ template <typename element_type>
 inline bool operator!=(const base_vector2<element_type>& first, const base_vector2<element_type>& second)
 {
 	return !(first == second);
+}
+
+template<>
+inline void stream_serialize(stream& out, vector2& v)
+{
+	stream_serialize(out, v.x);
+	stream_serialize(out, v.y);
 }
 
 }; // namespace ws
