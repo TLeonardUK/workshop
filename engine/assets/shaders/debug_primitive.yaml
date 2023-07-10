@@ -1,0 +1,41 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to render simple mono-color'd debug primitives.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  render_debug_primitive:
+    techniques:
+      render_debug_primitive: {}
+
+vertex_layouts:
+  debug_primitive_vertex:
+    position: float3
+    color0: float4
+
+render_states:
+  debug_primitive_render_state: 
+    depth_test_enabled: true  
+    depth_write_enabled: false
+    cull_mode: none
+    topology: line
+    antialiased_line_enabled: true
+
+techniques:
+  render_debug_primitive:
+    vertex_shader: 
+      file: data:shaders/source/debug_primitive.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/debug_primitive.hlsl
+      entry: pshader
+    render_state: debug_primitive_render_state
+    vertex_layout: debug_primitive_vertex
+    output_target: swapchain_and_depth
+    param_blocks: [ view_info ]

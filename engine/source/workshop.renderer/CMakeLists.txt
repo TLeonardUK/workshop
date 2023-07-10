@@ -67,6 +67,8 @@ SET(SOURCES
     "systems/render_system_imgui.cpp"
     "systems/render_system_geometry.h"
     "systems/render_system_geometry.cpp"
+    "systems/render_system_debug.h"
+    "systems/render_system_debug.cpp"
     "systems/render_system_test.h"
     "systems/render_system_test.cpp"
     

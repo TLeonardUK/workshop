@@ -7,6 +7,7 @@
 #include "workshop.core/utils/result.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.core/math/math.h"
+#include "workshop.core/math/vector4.h"
 
 #include <string>
 #include <array>
@@ -94,6 +95,11 @@ public:
         out_g = static_cast<uint8_t>(255 * g);
         out_b = static_cast<uint8_t>(255 * b);
         out_a = static_cast<uint8_t>(255 * a);
+    }
+
+    inline vector4 argb() const
+    {
+        return vector4(r, g, b, a);
     }
 
     inline color lerp(const color& to, float alpha) const

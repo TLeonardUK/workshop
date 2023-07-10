@@ -41,20 +41,12 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
     f.opacity = albedo.a;
     f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
     f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
-
-#if 0
-    f.world_normal = normalize(normal_texture.Sample(normal_sampler, input.uv0).xyz * 2.0f - 1.0f);
-#elif 1
     f.world_normal = calculate_world_normal(
         unpack_compressed_normal(normal_texture.Sample(normal_sampler, input.uv0).xy),
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz,
         normalize(input.world_bitangent).xyz
     );
-#else 
-    f.world_normal = input.world_normal.xyz;
-#endif
-    f.world_position = input.world_position.xyz;
 
     return encode_gbuffer(f);
 }

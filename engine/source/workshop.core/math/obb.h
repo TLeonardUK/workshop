@@ -12,6 +12,21 @@ namespace ws {
 class obb
 {
 public:
+    enum class corner
+    {
+        front_top_left,
+        front_top_right,
+        front_bottom_left,
+        front_bottom_right,
+        back_top_left,
+        back_top_right,
+        back_bottom_left,
+        back_bottom_right
+    };
+
+    static constexpr inline size_t k_corner_count = 8;
+
+public:
 	aabb bounds;
 	matrix4 transform;
 
@@ -25,7 +40,7 @@ public:
 	vector3 get_right_vector() const;
 	vector3 get_forward_vector() const;
 
-	void get_corners(vector3 corners[aabb::k_corner_count]) const;
+	void get_corners(vector3 corners[obb::k_corner_count]) const;
 	aabb get_aligned_bounds() const;
 
 };
@@ -63,11 +78,11 @@ inline vector3 obb::get_forward_vector() const
 	return transform.transform_direction(vector3::forward);
 }
 
-inline void obb::get_corners(vector3 corners[aabb::k_corner_count]) const
+inline void obb::get_corners(vector3 corners[obb::k_corner_count]) const
 {
 	bounds.get_corners(corners);
 
-	for (int i = 0; i < aabb::k_corner_count; i++)
+	for (int i = 0; i < obb::k_corner_count; i++)
 	{
 		corners[i] = corners[i] * transform;
 	}
@@ -75,13 +90,13 @@ inline void obb::get_corners(vector3 corners[aabb::k_corner_count]) const
 
 inline aabb obb::get_aligned_bounds() const
 {
-	vector3 worldCorners[aabb::k_corner_count];
+	vector3 worldCorners[obb::k_corner_count];
 	bounds.get_corners(worldCorners);
 
 	std::vector<vector3> points;
 	points.reserve(8);
 
-	for (int i = 0; i < aabb::k_corner_count; i++)
+	for (int i = 0; i < obb::k_corner_count; i++)
 	{
 		points.push_back(transform.transform_location(worldCorners[i]));
 	}
