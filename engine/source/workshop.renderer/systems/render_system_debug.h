@@ -15,6 +15,8 @@
 #include "workshop.core/math/rect.h"
 #include "workshop.core/math/frustum.h"
 #include "workshop.core/math/sphere.h"
+#include "workshop.core/math/hemisphere.h"
+#include "workshop.core/math/cylinder.h"
 
 namespace ws {
 
@@ -39,12 +41,19 @@ private:
 
     void generate(renderer& renderer, render_pass::generated_state& output, render_view& view);
 
-    void add_line(vector3 start, vector3 end, color color);
-    void add_aabb(aabb bounds, color color);
-    void add_obb(obb bounds, color color);
-    void add_sphere(sphere bounds, color color);
-    void add_frustum(frustum bounds, color color);
-    void add_triangle(vector3 a, vector3 b, vector3 c, color color);
+    void add_line(const vector3& start, const vector3& end, const color& color);
+    void add_aabb(const aabb& bounds, const color& color);
+    void add_obb(const obb& bounds, const color& color);
+    void add_sphere(const sphere& bounds, const color& color);
+    void add_frustum(const frustum& bounds, const color& color);
+    void add_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color);
+    void add_cylinder(const cylinder& bounds, const color& color);
+    void add_capsule(const cylinder& bounds, const color& color);
+    void add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true);
+
+    void add_cone(const vector3& origin, float height, float radius, const color& color);
+    void add_arrow(const vector3& start, const vector3& end, const color& color);
+    void add_spotlight(const vector3& start, const vector3& end, float start_radius, float end_radius);
 
 private:
 

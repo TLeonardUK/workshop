@@ -102,4 +102,9 @@ void render_view::update_view_info_param_block()
     m_view_info_param_block->set("projection_matrix", get_perspective_matrix());
 }
 
+frustum render_view::get_frustum()
+{
+    return frustum(get_view_matrix() * get_perspective_matrix());
+}
+
 }; // namespace ws

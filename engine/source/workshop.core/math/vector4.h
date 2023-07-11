@@ -215,14 +215,14 @@ inline static base_vector4<element_type> base_vector4<element_type>::max(const b
 template <typename element_type>
 inline base_vector4<element_type> base_vector4<element_type>::normalize() const
 {
-	element_type length = length();
-	if (length == 0.0f)
+	element_type len = length();
+	if (len == 0.0f)
 	{
 		return *this;
 	}
 	else
 	{
-		element_type inveseLength = element_type(1.0) / length;
+		element_type inveseLength = element_type(1.0) / len;
 		return base_vector4<element_type>(x * inveseLength, y * inveseLength, z * inveseLength, w * inveseLength);
 	}
 }

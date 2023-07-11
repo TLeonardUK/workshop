@@ -37,9 +37,14 @@ public:
 	base_quat<element_type> conjugate() const;
 	base_quat<element_type> inverse() const;
 
+	base_quat<element_type> rotate_x(element_type radians) const;
+	base_quat<element_type> rotate_y(element_type radians) const;
+	base_quat<element_type> rotate_z(element_type radians) const;
+
 	static element_type dot(const base_quat<element_type>& a, const base_quat<element_type>& b);
 	static base_quat<element_type> angle_axis(element_type angleRadians, const vector3_type& axis);
 	static base_quat<element_type> euler(const vector3_type& angles);
+	static base_quat<element_type> rotate_to(const vector3_type& from, const vector3_type& to);
 };
 
 typedef base_quat<float> quat;
@@ -151,6 +156,57 @@ inline base_quat<element_type> base_quat<element_type>::inverse() const
 }
 
 template <typename element_type>
+inline base_quat<element_type> base_quat<element_type>::rotate_x(element_type radians) const
+{
+	radians *= 0.5f;
+
+	element_type bx = sin(radians);
+	element_type bw = cos(radians);
+
+	base_quat<element_type> result;
+	result.x = x * bw + w * bx;
+	result.y = y * bw + z * bx;
+	result.z = z * bw + y * bx;
+	result.w = w * bw + x * bx;
+
+	return result;
+}
+
+template <typename element_type>
+inline base_quat<element_type> base_quat<element_type>::rotate_y(element_type radians) const
+{
+	radians *= 0.5f;
+
+	element_type by = sin(radians);
+	element_type bw = cos(radians);
+
+	base_quat<element_type> result;
+	result.x = x * bw + z * by;
+	result.y = y * bw + w * by;
+	result.z = z * bw + x * by;
+	result.w = w * bw + y * by;
+
+	return result;
+}
+
+template <typename element_type>
+inline base_quat<element_type> base_quat<element_type>::rotate_z(element_type radians) const
+{
+	radians *= 0.5f;
+
+	element_type bz = sin(radians);
+	element_type bw = cos(radians);
+
+	base_quat<element_type> result;
+	result.x = x * bw + y * bz;
+	result.y = y * bw + x * bz;
+	result.z = z * bw + w * bz;
+	result.w = w * bw + z * bz;
+
+	return result;
+}
+
+template <typename element_type>
 inline element_type base_quat<element_type>::dot(const base_quat<element_type>&a, const base_quat<element_type>&b)
 {
 	base_vector4<element_type> tmp(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w);
@@ -186,6 +242,45 @@ inline base_quat<element_type> base_quat<element_type>::euler(const vector3_type
 	result.z = c.x * c.y * s.z - s.x * s.y * c.z;
 
 	return result;
+}
+
+template <typename element_type>
+inline base_quat<element_type> base_quat<element_type>::rotate_to(const vector3_type& from, const vector3_type& to)
+{
+	element_type dot = vector3::dot(from, to);
+
+	vector3_type x_unit_vector = vector3_type(1.0f, 0.0f, 0.0f);
+	vector3_type y_unit_vector = vector3_type(0.0f, 1.0f, 0.0f);
+
+	// Handle vectors facing opposite directions
+	if (dot < -0.999999f)
+	{
+		vector3_type cross = vector3_type::cross(x_unit_vector, from);
+		if (cross.length() < 0.000001f)
+		{
+			cross = vector3_type::cross(y_unit_vector, to);
+		}
+		cross = cross.normalize();		
+		return angle_axis(math::pi, cross);
+	}
+	// Handle parallel vectors
+	else if (dot > 0.999999f)
+	{
+		return identity;
+	}
+	// Normal rotation.
+	else
+	{
+		vector3_type cross = vector3_type::cross(from, to);
+
+		base_quat<element_type> result;
+		result.x = cross.x;
+		result.y = cross.y;
+		result.z = cross.z;
+		result.w = 1 + dot;
+
+		return result.normalize();
+	}
 }
 
 template <typename element_type>

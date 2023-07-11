@@ -19,8 +19,7 @@
 
 #include "workshop.render_interface/ri_interface.h"
 
-// Note:
-// Some of the geometric creation is based on code in the directxtk12 Geometry.cpp file.
+#pragma optimize("", off)
 
 namespace ws {
 
@@ -49,8 +48,13 @@ void render_system_debug::step(const render_world_state& state)
 
     // Test
     //add_aabb(aabb(vector3(-80.0f, -80.0f, -80.0f), vector3(80.0f, 80.0f, 80.0f)), color::green);
+    //add_sphere(sphere(vector3::zero, 30.0f), color::red);
+//    add_frustum(g_frustum, color::orange);
+//    add_cylinder(cylinder(vector3::zero, vector3::up, 25.0f, 150.0f), color::red);
 
-    add_sphere(sphere(vector3::zero, 30.0f), color::red);
+    vector3 offset(0.0f, 150.0f, 0.0f);
+    add_sphere(sphere(offset, 10.0f), color::green);
+    add_capsule(cylinder(offset, vector3::up, 25.0f, 150.0f), color::red);
 
     if (m_vertices.empty())
     {
@@ -107,7 +111,6 @@ void render_system_debug::generate(renderer& renderer, render_pass::generated_st
         return;
     }
 
-
     render_output output;
     output.color_targets = m_renderer.get_swapchain_output().color_targets;
     output.depth_target = m_renderer.get_gbuffer_output().depth_target;
@@ -149,7 +152,7 @@ void render_system_debug::generate(renderer& renderer, render_pass::generated_st
     state_output.graphics_command_lists.push_back(&list);
 }
 
-void render_system_debug::add_line(vector3 start, vector3 end, color color)
+void render_system_debug::add_line(const vector3& start, const vector3& end, const color& color)
 {
     debug_primitive_vertex& v0 = m_vertices.emplace_back();
     v0.position = start;
@@ -160,7 +163,7 @@ void render_system_debug::add_line(vector3 start, vector3 end, color color)
     v1.color = color.argb();
 }
 
-void render_system_debug::add_aabb(aabb bounds, color color)
+void render_system_debug::add_aabb(const aabb& bounds, const color& color)
 {
     vector3 corners[aabb::k_corner_count];
     bounds.get_corners(corners);
@@ -179,7 +182,7 @@ void render_system_debug::add_aabb(aabb bounds, color color)
     add_line(corners[(int)aabb::corner::front_top_right], corners[(int)aabb::corner::front_bottom_right], color);
 }
 
-void render_system_debug::add_obb(obb bounds, color color)
+void render_system_debug::add_obb(const obb& bounds, const color& color)
 {
     vector3 corners[obb::k_corner_count];
     bounds.get_corners(corners);
@@ -198,67 +201,67 @@ void render_system_debug::add_obb(obb bounds, color color)
     add_line(corners[(int)obb::corner::front_top_right], corners[(int)obb::corner::front_bottom_right], color);
 }
 
-void render_system_debug::add_sphere(sphere bounds, color color)
+void render_system_debug::add_sphere(const sphere& bounds, const color& color)
 {
     constexpr int k_tesselation = 15;
+    constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
 
     float radius = bounds.radius;
     vector3 origin = bounds.origin;
 
-    const size_t k_vertical_segments = k_tesselation;
-    const size_t k_horizontal_segments = k_tesselation * 2;
-
-    std::vector<vector3> positions;
-    positions.reserve(k_vertical_segments * k_horizontal_segments);
-
-    // Construct vertex list for the vertical and horizontal bands on the sphere.
-    for (size_t i = 0; i <= k_vertical_segments; i++)
+    // Make horizontal bands going upwards.
+    for (size_t i = 0; i <= k_tesselation; i++)
     {
-        const float latitude = (static_cast<float>(i) * math::pi / static_cast<float>(k_vertical_segments)) - math::halfpi;
+        float vertical_delta = (i / k_float_tesselation);
+        float plane_radius = sin(vertical_delta * math::pi) * radius;
+        float y = (cos(vertical_delta * math::pi) * radius);
 
-        float dy = sin(latitude);
-        float dxz = cos(latitude);
-
-        for (size_t j = 0; j <= k_horizontal_segments; j++)
+        for (size_t j = 0; j <= k_tesselation; j++)
         {
-            const float longitude = static_cast<float>(i) * math::pi2 / static_cast<float>(k_horizontal_segments);
+            float radial_delta = (j / k_float_tesselation);
+            float next_radial_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
 
-            float dx = sin(longitude);
-            float dz = cos(longitude);
+            float x = sin(radial_delta * math::pi2) * plane_radius;
+            float z = cos(radial_delta * math::pi2) * plane_radius;
+            float next_x = sin(next_radial_delta * math::pi2) * plane_radius;
+            float next_z = cos(next_radial_delta * math::pi2) * plane_radius;
 
-            dx *= dxz;
-            dz *= dxz;
-
-            vector3 normal(dx, dy, dz);
-            positions.push_back(origin + (normal * radius));
-        }
+            add_line(origin + vector3(x, y, z), origin + vector3(next_x, y, next_z), color);
+        }            
     }
 
-    // Generate the line list.
-    const size_t k_stride = k_horizontal_segments + 1;
-
-    for (size_t i = 0; i < k_vertical_segments; i++)
+    // Makes vertical bands going around the sphere.
+    for (size_t i = 0; i <= k_tesselation; i++)
     {
-        for (size_t j = 0; j <= k_horizontal_segments; j++)
+        float horizontal_delta = (i / k_float_tesselation);
+        float angle = horizontal_delta * math::pi2;
+
+        for (size_t j = 0; j < k_tesselation; j++)
         {
-            const size_t next_i = i + 1;
-            const size_t next_j = (j + 1) % k_stride;
+            float vertical_delta = (j / k_float_tesselation);
+            float next_vertical_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
 
-            const size_t i0 = i * k_stride + j;
-            const size_t i1 = next_i * k_stride + j;
-            const size_t i2 = i * k_stride + next_j;
+            float plane_radius = sin(vertical_delta * math::pi) * radius;
+            float next_plane_radius = sin(next_vertical_delta * math::pi) * radius;
 
-            const size_t i3 = i * k_stride + next_j;
-            const size_t i4 = next_i * k_stride + j;
-            const size_t i5 = next_i * k_stride + next_j;
+            float y = (cos(vertical_delta * math::pi) * radius);
+            float next_y = (cos(next_vertical_delta * math::pi) * radius);
 
-            add_triangle(positions[i0], positions[i1], positions[i2], color);
-            add_triangle(positions[i3], positions[i4], positions[i5], color);
+            float radial_delta = sin(radial_delta * math::pi2) * plane_radius;
+            float nex_radial_delta = sin(radial_delta * math::pi2) * next_plane_radius;
+
+            float x = sin(angle) * plane_radius;
+            float next_x = sin(angle) * next_plane_radius;
+
+            float z = cos(angle) * plane_radius;
+            float next_z = cos(angle) * next_plane_radius;
+
+            add_line(origin + vector3(x, y, z), origin + vector3(next_x, next_y, next_z), color);
         }
     }
 }
 
-void render_system_debug::add_frustum(frustum bounds, color color)
+void render_system_debug::add_frustum(const frustum& bounds, const color& color)
 {
     vector3 corners[frustum::k_corner_count];
     bounds.get_corners(corners);
@@ -269,8 +272,8 @@ void render_system_debug::add_frustum(frustum bounds, color color)
     add_line(corners[(int)frustum::corner::far_top_right], corners[(int)frustum::corner::far_bottom_right], color);
 
     add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_top_right], color);
-    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_bottom_right], color);
-    add_line(corners[(int)frustum::corner::near_bottom_left], corners[(int)frustum::corner::near_bottom_left], color);
+    add_line(corners[(int)frustum::corner::near_bottom_left], corners[(int)frustum::corner::near_bottom_right], color);
+    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_bottom_left], color);
     add_line(corners[(int)frustum::corner::near_top_right], corners[(int)frustum::corner::near_bottom_right], color);
 
     add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::far_top_left], color);
@@ -279,11 +282,144 @@ void render_system_debug::add_frustum(frustum bounds, color color)
     add_line(corners[(int)frustum::corner::near_bottom_right], corners[(int)frustum::corner::far_bottom_right], color);
 }
 
-void render_system_debug::add_triangle(vector3 a, vector3 b, vector3 c, color color)
+void render_system_debug::add_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color)
 {
     add_line(a, b, color);
     add_line(b, c, color);
     add_line(c, a, color);
+}
+
+void render_system_debug::add_cylinder(const cylinder& bounds, const color& color)
+{
+    constexpr int k_tesselation = 15;
+    constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
+
+    float top_y = (bounds.height * 0.5f);
+    float bottom_y = -(bounds.height * 0.5f);
+
+    matrix4 transform = bounds.get_transform();
+
+    for (size_t j = 0; j <= k_tesselation; j++)
+    {
+        float radial_delta = (j / k_float_tesselation);
+        float next_radial_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
+
+        float x = sin(radial_delta * math::pi2) * bounds.radius;
+        float z = cos(radial_delta * math::pi2) * bounds.radius;
+        float next_x = sin(next_radial_delta * math::pi2) * bounds.radius;
+        float next_z = cos(next_radial_delta * math::pi2) * bounds.radius;
+
+        vector3 top_vertex = vector3(x, top_y, z) * transform;
+        vector3 bottom_vertex = vector3(x, bottom_y, z) * transform;
+        vector3 next_top_vertex = vector3(next_x, top_y, next_z) * transform;
+        vector3 next_bottom_vertex = vector3(next_x, bottom_y, next_z) * transform;
+
+        add_line(top_vertex, next_top_vertex, color);
+        add_line(bottom_vertex, next_bottom_vertex, color);
+        add_line(bottom_vertex, top_vertex, color);
+    }
+}
+
+void render_system_debug::add_capsule(const cylinder& bounds, const color& color)
+{
+    float cap_radius = bounds.radius;
+    cylinder body_bounds(bounds.origin, bounds.up, bounds.radius, bounds.height - (cap_radius * 2.0f));
+
+    matrix4 transform = bounds.get_transform();
+
+    vector3 bottom_center = vector3(0.0f, -bounds.height * 0.5f, 0.0f) * transform;
+    vector3 top_center = vector3(0.0f, bounds.height * 0.5f, 0.0f) * transform;
+
+    vector3 bottom_normal = transform.transform_direction(-vector3::up);
+    vector3 top_normal = transform.transform_direction(vector3::up);
+
+    // The body of the capsule.
+    add_cylinder(bounds, color);
+
+    // Add hemispheres to top and bottom
+    add_hemisphere(hemisphere(top_center, top_normal, bounds.radius), color, false);
+    add_hemisphere(hemisphere(bottom_center, bottom_normal, bounds.radius), color, false);
+}
+
+void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands)
+{
+    constexpr int k_tesselation = 15;
+    constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
+
+    float radius = bounds.radius;
+    matrix4 transform = bounds.get_transform();
+
+    // Make horizontal bands going upwards.
+    if (horizontal_bands)
+    {
+        for (size_t i = 0; i <= k_tesselation; i++)
+        {
+            float vertical_delta = (i / k_float_tesselation);
+            float plane_radius = sin(vertical_delta * math::halfpi) * radius;
+            float y = cos(vertical_delta * math::halfpi) * radius;
+
+            for (size_t j = 0; j <= k_tesselation; j++)
+            {
+                float radial_delta = (j / k_float_tesselation);
+                float next_radial_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
+
+                float x = sin(radial_delta * math::pi2) * plane_radius;
+                float z = cos(radial_delta * math::pi2) * plane_radius;
+                float next_x = sin(next_radial_delta * math::pi2) * plane_radius;
+                float next_z = cos(next_radial_delta * math::pi2) * plane_radius;
+
+                vector3 vert = vector3(x, y, z) * transform;
+                vector3 next_vert = vector3(next_x, y, next_z) * transform;
+
+                add_line(vert, next_vert, color);
+            }
+        }
+    }
+
+    // Makes vertical bands going around the sphere.
+    for (size_t i = 0; i <= k_tesselation; i++)
+    {
+        float horizontal_delta = (i / k_float_tesselation);
+        float angle = horizontal_delta * math::pi2;
+
+        for (size_t j = 0; j < k_tesselation; j++)
+        {
+            float vertical_delta = (j / k_float_tesselation);
+            float next_vertical_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
+
+            float plane_radius = sin(vertical_delta * math::halfpi) * radius;
+            float next_plane_radius = sin(next_vertical_delta * math::halfpi) * radius;
+
+            float y = cos(vertical_delta * math::halfpi) * radius;
+            float next_y = cos(next_vertical_delta * math::halfpi) * radius;
+
+            float radial_delta = sin(radial_delta * math::pi2) * plane_radius;
+            float nex_radial_delta = sin(radial_delta * math::pi2) * next_plane_radius;
+
+            float x = sin(angle) * plane_radius;
+            float next_x = sin(angle) * next_plane_radius;
+
+            float z = cos(angle) * plane_radius;
+            float next_z = cos(angle) * next_plane_radius;
+
+            vector3 vert = vector3(x, y, z) * transform;
+            vector3 next_vert = vector3(next_x, next_y, next_z) * transform;
+
+            add_line(vert, next_vert, color);
+        }
+    }
+}
+
+void render_system_debug::add_cone(const vector3& start, float height, float radius, const color& color)
+{
+}
+
+void render_system_debug::add_arrow(const vector3& start, const vector3& end, const color& color)
+{
+}
+
+void render_system_debug::add_spotlight(const vector3& start, const vector3& end, float start_radius, float end_radius)
+{
 }
 
 }; // namespace ws

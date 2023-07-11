@@ -416,9 +416,9 @@ template <typename T>
 inline base_matrix4<T> base_matrix4<T>::translate(const vector3& position)
 {
 	base_matrix4 result = identity;
-    result[0][3] = position.x;
-    result[1][3] = position.y;
-    result[2][3] = position.z;
+    result[3][0] = position.x;
+    result[3][1] = position.y;
+    result[3][2] = position.z;
 	return result; 
 }
 

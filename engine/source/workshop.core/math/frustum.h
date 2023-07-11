@@ -8,6 +8,8 @@
 #include "workshop.core/math/obb.h"
 #include "workshop.core/math/plane.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 class frustum
@@ -126,40 +128,40 @@ inline void frustum::calculate_corners()
 inline frustum::frustum(const matrix4& viewProjection)
 {
 	planes[static_cast<int>(planes::left)] = make_plane(
-		viewProjection[0][3] + viewProjection[0][0],
-		viewProjection[1][3] + viewProjection[1][0],
-		viewProjection[2][3] + viewProjection[2][0],
-		viewProjection[3][3] + viewProjection[3][0]
+		viewProjection[3][0] + viewProjection[0][0],
+		viewProjection[3][1] + viewProjection[0][1],
+		viewProjection[3][2] + viewProjection[0][2],
+		viewProjection[3][3] + viewProjection[0][3]
 	);
 	planes[static_cast<int>(planes::right)] = make_plane(
-		viewProjection[0][3] - viewProjection[0][0],
-		viewProjection[1][3] - viewProjection[1][0],
-		viewProjection[2][3] - viewProjection[2][0],
-		viewProjection[3][3] - viewProjection[3][0]
+		viewProjection[3][0] - viewProjection[0][0],
+		viewProjection[3][1] - viewProjection[0][1],
+		viewProjection[3][2] - viewProjection[0][2],
+		viewProjection[3][3] - viewProjection[0][3]
 	);
 	planes[static_cast<int>(planes::top)] = make_plane(
-		viewProjection[0][3] - viewProjection[0][1],
-		viewProjection[1][3] - viewProjection[1][1],
-		viewProjection[2][3] - viewProjection[2][1],
-		viewProjection[3][3] - viewProjection[3][1]
+		viewProjection[3][0] - viewProjection[1][0],
+		viewProjection[3][1] - viewProjection[1][1],
+		viewProjection[3][2] - viewProjection[1][2],
+		viewProjection[3][3] - viewProjection[1][3]
 	);
 	planes[static_cast<int>(planes::bottom)] = make_plane(
-		viewProjection[0][3] + viewProjection[0][1],
-		viewProjection[1][3] + viewProjection[1][1],
-		viewProjection[2][3] + viewProjection[2][1],
-		viewProjection[3][3] + viewProjection[3][1]
+		viewProjection[3][0] + viewProjection[1][0],
+		viewProjection[3][1] + viewProjection[1][1],
+		viewProjection[3][2] + viewProjection[1][2],
+		viewProjection[3][3] + viewProjection[1][3]
 	);
 	planes[static_cast<int>(planes::near)] = make_plane(
-		viewProjection[0][3] + viewProjection[0][2],
-		viewProjection[1][3] + viewProjection[1][2],
-		viewProjection[2][3] + viewProjection[2][2],
-		viewProjection[3][3] + viewProjection[3][2]
+		viewProjection[2][0],
+		viewProjection[2][1],
+		viewProjection[2][2],
+		viewProjection[2][3]
 	);
 	planes[static_cast<int>(planes::far)] = make_plane(
-		viewProjection[0][3] - viewProjection[0][2],
-		viewProjection[1][3] - viewProjection[1][2],
-		viewProjection[2][3] - viewProjection[2][2],
-		viewProjection[3][3] - viewProjection[3][2]
+		viewProjection[3][0] - viewProjection[2][0],
+		viewProjection[3][1] - viewProjection[2][1],
+		viewProjection[3][2] - viewProjection[2][2],
+		viewProjection[3][3] - viewProjection[2][3]
 	);
 
 	calculate_corners();
