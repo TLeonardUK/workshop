@@ -227,7 +227,7 @@ result<void> dx12_render_interface::create_device()
 {
     HRESULT hr = 0;
 
-#ifdef WS_DEBUG
+#if 1//def WS_DEBUG
     hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_debug_interface));
     if (FAILED(hr))
     {
@@ -239,7 +239,7 @@ result<void> dx12_render_interface::create_device()
 #endif
 
     UINT createFactoryFlags = 0;
-#ifdef WS_DEBUG
+#if 1//def WS_DEBUG
     createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
@@ -267,7 +267,7 @@ result<void> dx12_render_interface::create_device()
         return ret;
     }
 
-#ifdef WS_DEBUG
+#if 1//def WS_DEBUG
     hr = m_device.As(&m_info_queue);
     if (FAILED(hr))
     {

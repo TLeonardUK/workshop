@@ -50,10 +50,9 @@ private:
     void add_cylinder(const cylinder& bounds, const color& color);
     void add_capsule(const cylinder& bounds, const color& color);
     void add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true);
-
-    void add_cone(const vector3& origin, float height, float radius, const color& color);
+    void add_cone(const vector3& origin, const vector3& end, float radius, const color& color);
     void add_arrow(const vector3& start, const vector3& end, const color& color);
-    void add_spotlight(const vector3& start, const vector3& end, float start_radius, float end_radius);
+    void add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
 
 private:
 

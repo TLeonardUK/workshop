@@ -21,6 +21,13 @@
 
 #pragma optimize("", off)
 
+namespace {
+
+constexpr int k_tesselation = 15;
+constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
+
+};
+
 namespace ws {
 
 render_system_debug::render_system_debug(renderer& render)
@@ -53,8 +60,10 @@ void render_system_debug::step(const render_world_state& state)
 //    add_cylinder(cylinder(vector3::zero, vector3::up, 25.0f, 150.0f), color::red);
 
     vector3 offset(0.0f, 150.0f, 0.0f);
-    add_sphere(sphere(offset, 10.0f), color::green);
-    add_capsule(cylinder(offset, vector3::up, 25.0f, 150.0f), color::red);
+    //add_sphere(sphere(offset, 10.0f), color::green);
+    //add_capsule(cylinder(offset, vector3::up, 25.0f, 150.0f), color::red);
+    //add_truncated_cone(offset, offset + vector3(0.0f, 100.0f, 0.0f), 20.0f, 5.0f, color::red);
+    add_arrow(offset, offset + vector3(0.0f, 100.0f, 0.0f));
 
     if (m_vertices.empty())
     {
@@ -291,9 +300,6 @@ void render_system_debug::add_triangle(const vector3& a, const vector3& b, const
 
 void render_system_debug::add_cylinder(const cylinder& bounds, const color& color)
 {
-    constexpr int k_tesselation = 15;
-    constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
-
     float top_y = (bounds.height * 0.5f);
     float bottom_y = -(bounds.height * 0.5f);
 
@@ -343,9 +349,6 @@ void render_system_debug::add_capsule(const cylinder& bounds, const color& color
 
 void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands)
 {
-    constexpr int k_tesselation = 15;
-    constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
-
     float radius = bounds.radius;
     matrix4 transform = bounds.get_transform();
 
@@ -410,16 +413,66 @@ void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& 
     }
 }
 
-void render_system_debug::add_cone(const vector3& start, float height, float radius, const color& color)
+void render_system_debug::add_cone(const vector3& start, const vector3& end, float radius, const color& color)
 {
+    vector3 origin = start;
+    vector3 normal = (end - start).normalize();
+
+    float height = (end - start).length();
+
+    quat rotation = quat::rotate_to(vector3::up, normal); 
+
+    matrix4 transform = matrix4::translate(origin) * matrix4::rotation(rotation);
+
+    for (size_t i = 0; i <= k_tesselation; i++)
+    {
+        float horizontal_delta = (i / k_float_tesselation);
+        float angle = horizontal_delta * math::pi2;
+
+        float next_horizontal_delta = ((i + 1) % (k_tesselation + 1)) / k_float_tesselation;
+        float next_angle = next_horizontal_delta * math::pi2;
+
+        vector3 vert(sin(angle) * radius, 0.0f, cos(angle) * radius);
+        vector3 next_vert(sin(next_angle) * radius, 0.0f, cos(next_angle) * radius);
+        vector3 top_vert(0.0f, height, 0.0f);
+
+        add_line(vert, next_vert, color);
+        add_line(vert, top_vert, color);
+    }
 }
 
 void render_system_debug::add_arrow(const vector3& start, const vector3& end, const color& color)
 {
 }
 
-void render_system_debug::add_spotlight(const vector3& start, const vector3& end, float start_radius, float end_radius)
+void render_system_debug::add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color)
 {
+    vector3 origin = start;
+    vector3 normal = (end - start).normalize();
+
+    float height = (end - start).length();
+
+    quat rotation = quat::rotate_to(vector3::up, normal);
+
+    matrix4 transform = matrix4::translate(origin) * matrix4::rotation(rotation);
+
+    for (size_t i = 0; i <= k_tesselation; i++)
+    {
+        float horizontal_delta = (i / k_float_tesselation);
+        float angle = horizontal_delta * math::pi2;
+
+        float next_horizontal_delta = ((i + 1) % (k_tesselation + 1)) / k_float_tesselation;
+        float next_angle = next_horizontal_delta * math::pi2;
+
+        vector3 vert(sin(angle) * start_radius, 0.0f, cos(angle) * start_radius);
+        vector3 next_vert(sin(next_angle) * start_radius, 0.0f, cos(next_angle) * start_radius);
+        vector3 top_vert(sin(angle) * end_radius, height, cos(angle) * end_radius);
+        vector3 next_top_vert(sin(next_angle) * end_radius, height, cos(next_angle) * end_radius);
+
+        add_line(vert, next_vert, color);
+        add_line(top_vert, next_top_vert, color);
+        add_line(vert, top_vert, color);
+    }
 }
 
 }; // namespace ws
