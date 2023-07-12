@@ -322,11 +322,14 @@ inline base_quat<element_type>::vector3_type operator*(const typename base_quat<
 template <typename element_type>
 inline base_quat<element_type>::vector3_type operator*(const base_quat<element_type>& quat, const typename base_quat<element_type>::vector3_type& vec)
 {
-	typename base_quat<element_type>::vector3_type quatVector(quat.x, quat.y, quat.z);
-	typename base_quat<element_type>::vector3_type uv(base_quat<element_type>::vector3_type::cross(quatVector, vec));
-	typename base_quat<element_type>::vector3_type uuv(base_quat<element_type>::vector3_type::cross(quatVector, uv));
+	using vec_type = typename base_quat<element_type>::vector3_type;
 
-	return vec + ((uv * quat.w) + uuv) * static_cast<element_type>(2);
+	vec_type u(quat.x, quat.y, quat.z);
+	float s = quat.w;
+
+	return 2.0f * vec_type::dot(u, vec) * u +
+			(s * s - vec_type::dot(u, u)) * vec +
+			2.0f * s * vec_type::cross(u, vec);
 }
 
 template <typename element_type>

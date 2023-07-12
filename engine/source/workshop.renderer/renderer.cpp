@@ -20,6 +20,7 @@
 #include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/objects/render_view.h"
+#include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
 #include "workshop.renderer/assets/model/model_loader.h"
@@ -431,6 +432,12 @@ void renderer::render_state(render_world_state& state)
     m_batch_manager->begin_frame();
 
     // TODO: Do culling.
+    std::vector<render_static_mesh*> meshes = m_scene_manager->get_static_meshes();
+    for (render_static_mesh* mesh : meshes)
+    {
+        obb bounds = mesh->get_bounds();
+        get_command_queue().draw_obb(bounds, color::red);
+    }
 
     // Render each view.
     std::vector<render_view*> views = m_scene_manager->get_views();

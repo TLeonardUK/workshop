@@ -50,7 +50,6 @@ void render_system_geometry::create_graph(render_graph& graph)
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
     graph.add_node(std::move(pass));
-
 }
 
 void render_system_geometry::step(const render_world_state& state)

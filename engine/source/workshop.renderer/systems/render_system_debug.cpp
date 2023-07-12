@@ -53,18 +53,6 @@ void render_system_debug::step(const render_world_state& state)
 {
     ri_interface& ri = m_renderer.get_render_interface();
 
-    // Test
-    //add_aabb(aabb(vector3(-80.0f, -80.0f, -80.0f), vector3(80.0f, 80.0f, 80.0f)), color::green);
-    //add_sphere(sphere(vector3::zero, 30.0f), color::red);
-//    add_frustum(g_frustum, color::orange);
-//    add_cylinder(cylinder(vector3::zero, vector3::up, 25.0f, 150.0f), color::red);
-
-    vector3 offset(0.0f, 150.0f, 0.0f);
-    //add_sphere(sphere(offset, 10.0f), color::green);
-    //add_capsule(cylinder(offset, vector3::up, 25.0f, 150.0f), color::red);
-    //add_truncated_cone(offset, offset + vector3(0.0f, 100.0f, 0.0f), 20.0f, 5.0f, color::red);
-    add_arrow(offset, offset + vector3(0.0f, 100.0f, 0.0f));
-
     if (m_vertices.empty())
     {
         return;
@@ -329,22 +317,19 @@ void render_system_debug::add_cylinder(const cylinder& bounds, const color& colo
 void render_system_debug::add_capsule(const cylinder& bounds, const color& color)
 {
     float cap_radius = bounds.radius;
-    cylinder body_bounds(bounds.origin, bounds.up, bounds.radius, bounds.height - (cap_radius * 2.0f));
+    cylinder body_bounds(bounds.origin, bounds.orientation, bounds.radius, bounds.height - (cap_radius * 2.0f));
 
     matrix4 transform = bounds.get_transform();
 
     vector3 bottom_center = vector3(0.0f, -bounds.height * 0.5f, 0.0f) * transform;
     vector3 top_center = vector3(0.0f, bounds.height * 0.5f, 0.0f) * transform;
 
-    vector3 bottom_normal = transform.transform_direction(-vector3::up);
-    vector3 top_normal = transform.transform_direction(vector3::up);
-
     // The body of the capsule.
     add_cylinder(bounds, color);
 
     // Add hemispheres to top and bottom
-    add_hemisphere(hemisphere(top_center, top_normal, bounds.radius), color, false);
-    add_hemisphere(hemisphere(bottom_center, bottom_normal, bounds.radius), color, false);
+    add_hemisphere(hemisphere(top_center, bounds.orientation, bounds.radius), color, false);
+    add_hemisphere(hemisphere(bottom_center, bounds.orientation * quat::angle_axis(math::pi, vector3::forward), bounds.radius), color, false);
 }
 
 void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands)
@@ -422,7 +407,7 @@ void render_system_debug::add_cone(const vector3& start, const vector3& end, flo
 
     quat rotation = quat::rotate_to(vector3::up, normal); 
 
-    matrix4 transform = matrix4::translate(origin) * matrix4::rotation(rotation);
+    matrix4 transform = matrix4::rotation(rotation) * matrix4::translate(origin);
 
     for (size_t i = 0; i <= k_tesselation; i++)
     {
@@ -432,9 +417,9 @@ void render_system_debug::add_cone(const vector3& start, const vector3& end, flo
         float next_horizontal_delta = ((i + 1) % (k_tesselation + 1)) / k_float_tesselation;
         float next_angle = next_horizontal_delta * math::pi2;
 
-        vector3 vert(sin(angle) * radius, 0.0f, cos(angle) * radius);
-        vector3 next_vert(sin(next_angle) * radius, 0.0f, cos(next_angle) * radius);
-        vector3 top_vert(0.0f, height, 0.0f);
+        vector3 vert = vector3(sin(angle) * radius, 0.0f, cos(angle) * radius) * transform;
+        vector3 next_vert = vector3(sin(next_angle) * radius, 0.0f, cos(next_angle) * radius) * transform;
+        vector3 top_vert = vector3(0.0f, height, 0.0f) * transform;
 
         add_line(vert, next_vert, color);
         add_line(vert, top_vert, color);
@@ -443,6 +428,18 @@ void render_system_debug::add_cone(const vector3& start, const vector3& end, flo
 
 void render_system_debug::add_arrow(const vector3& start, const vector3& end, const color& color)
 {
+    float total_length = (end - start).length();
+
+    float spoke_radius = total_length * 0.05;
+    float cone_radius = spoke_radius * 3.0f;
+    float cone_length = total_length * 0.3;
+    float spoke_length = (end - start).length() - cone_length;
+
+    vector3 normal = (end - start).normalize();
+    vector3 spoke_center = start + (normal * (spoke_length * 0.5f));
+
+    add_cylinder(cylinder(spoke_center, quat::rotate_to(vector3::up, normal), spoke_radius, spoke_length), color);
+    add_cone(start + (normal * spoke_length), end, cone_radius, color);
 }
 
 void render_system_debug::add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color)
@@ -464,10 +461,10 @@ void render_system_debug::add_truncated_cone(const vector3& start, const vector3
         float next_horizontal_delta = ((i + 1) % (k_tesselation + 1)) / k_float_tesselation;
         float next_angle = next_horizontal_delta * math::pi2;
 
-        vector3 vert(sin(angle) * start_radius, 0.0f, cos(angle) * start_radius);
-        vector3 next_vert(sin(next_angle) * start_radius, 0.0f, cos(next_angle) * start_radius);
-        vector3 top_vert(sin(angle) * end_radius, height, cos(angle) * end_radius);
-        vector3 next_top_vert(sin(next_angle) * end_radius, height, cos(next_angle) * end_radius);
+        vector3 vert = vector3(sin(angle) * start_radius, 0.0f, cos(angle) * start_radius) * transform;
+        vector3 next_vert = vector3(sin(next_angle) * start_radius, 0.0f, cos(next_angle) * start_radius) * transform;
+        vector3 top_vert = vector3(sin(angle) * end_radius, height, cos(angle) * end_radius) * transform;
+        vector3 next_top_vert = vector3(sin(next_angle) * end_radius, height, cos(next_angle) * end_radius) * transform;
 
         add_line(vert, next_vert, color);
         add_line(top_vert, next_top_vert, color);

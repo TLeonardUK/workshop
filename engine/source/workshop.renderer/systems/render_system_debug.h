@@ -37,10 +37,6 @@ public:
     virtual void create_graph(render_graph& graph) override;
     virtual void step(const render_world_state& state) override;
 
-private:
-
-    void generate(renderer& renderer, render_pass::generated_state& output, render_view& view);
-
     void add_line(const vector3& start, const vector3& end, const color& color);
     void add_aabb(const aabb& bounds, const color& color);
     void add_obb(const obb& bounds, const color& color);
@@ -53,6 +49,10 @@ private:
     void add_cone(const vector3& origin, const vector3& end, float radius, const color& color);
     void add_arrow(const vector3& start, const vector3& end, const color& color);
     void add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
+
+private:
+
+    void generate(renderer& renderer, render_pass::generated_state& output, render_view& view);
 
 private:
 

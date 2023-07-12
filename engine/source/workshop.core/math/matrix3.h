@@ -209,7 +209,7 @@ inline base_quat<T> base_matrix3<T>::to_quat()
 template <typename T>
 inline base_matrix3<T> operator*(const base_matrix3<T>& first, const base_matrix3<T>& second)
 {
-	base_matrix2<T> result;
+	base_matrix3<T> result;
 
 	result[0][0] = first[0][0] * second[0][0] + first[1][0] * second[0][1] + first[2][0] * second[0][2];
 	result[0][1] = first[0][1] * second[0][0] + first[1][1] * second[0][1] + first[2][1] * second[0][2];

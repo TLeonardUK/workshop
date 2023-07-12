@@ -6,6 +6,7 @@
 
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/utils/frame_time.h"
+#include "workshop.core/math/sphere.h"
 
 #include "workshop.engine/engine/engine.h"
 
@@ -46,9 +47,9 @@ ws::result<void> rl_game_app::start()
     m_view_id = cmd_queue.create_view("Main View");
     cmd_queue.set_view_viewport(m_view_id, recti(0, 0, static_cast<int>(get_engine().get_main_window().get_width()), static_cast<int>(get_engine().get_main_window().get_height())));
     cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 10000.0f);
-    cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-    m_view_position = vector3(0.0f, 100.0f, 0.0f);
-
+    cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
+    m_view_position = vector3(0.0f, -250.0f, 0.0f);
+    
     render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
@@ -60,16 +61,11 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+    
+    m_tree_id = cmd_queue.create_static_mesh("Sponza Trees");
+    cmd_queue.set_static_mesh_model(m_tree_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
+    cmd_queue.set_object_transform(m_tree_id, vector3::zero, quat::identity, vector3::one);
 
-    /*
-    object_id = cmd_queue.create_static_mesh("Sponza Trees");
-    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
-    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-
- object_id = cmd_queue.create_static_mesh("Cube");
-    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cube/cube.yaml", 0));
-    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3(50.f, 50.f, 50.f));
-    */
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);
     });
@@ -88,8 +84,23 @@ void rl_game_app::step(const frame_time& time)
 
     window& main_window = get_engine().get_main_window();
     input_interface& input = get_engine().get_input_interface();
-    
-    if (input.get_mouse_capture())
+
+    static float angle = 0.0f;
+    angle += 1.0f * time.delta_seconds;
+
+    // TODO: Check these rotation functions are producing expected results.
+    quat rotation = quat::identity.rotate_z(angle);// quat::angle_axis(angle, vector3::forward);
+    cmd_queue.set_object_transform(m_tree_id, vector3(200.1f, 0.0f, 0.0f), rotation, vector3::one);
+
+    // Tree ok:
+    //cmd_queue.draw_cylinder(cylinder(vector3::zero, vector3::up * matrix4::rotation(rotation), 10.0f, 100.0f), color::red);
+
+    // Tree broken:
+    cmd_queue.draw_truncated_cone(vector3::zero, matrix4::rotation(rotation).transform_direction(vector3::up) * 100.0f, 1.0f, 100.0f, color::red);
+
+    cmd_queue.draw_arrow(vector3(0.0f, 100.0f, 0.0f), vector3(0.0f, 100.0f, 0.0f) + (vector3::right * 100.0f), color::blue);
+
+    if (false)//input.get_mouse_capture())
     {
         vector2 center_pos(main_window.get_width() * 0.5f, main_window.get_height() * 0.5f);
         vector2 delta_pos = (input.get_mouse_position() - center_pos);

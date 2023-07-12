@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 
 namespace ws {
     
@@ -21,6 +22,94 @@ void render_command_queue::set_visualization_mode(visualization_mode mode)
 {
     queue_command("set_visualization_mode", [renderer = &m_renderer, mode]() {
         renderer->set_visualization_mode(mode);
+    });
+}
+
+// ===========================================================================================
+//  Debug rendering.
+// ===========================================================================================
+
+void render_command_queue::draw_line(const vector3& start, const vector3& end, const color& color)
+{
+    queue_command("draw_line", [renderer = &m_renderer, start, end, color]() {
+        renderer->get_system<render_system_debug>()->add_line(start, end, color);
+    });
+}
+
+void render_command_queue::draw_aabb(const aabb& bounds, const color& color)
+{
+    queue_command("draw_aabb", [renderer = &m_renderer, bounds, color]() {
+        renderer->get_system<render_system_debug>()->add_aabb(bounds, color);
+    });
+}
+
+void render_command_queue::draw_obb(const obb& bounds, const color& color)
+{
+    queue_command("draw_obb", [renderer = &m_renderer, bounds, color]() {
+        renderer->get_system<render_system_debug>()->add_obb(bounds, color);
+    });
+}
+
+void render_command_queue::draw_sphere(const sphere& bounds, const color& color)
+{
+    queue_command("draw_sphere", [renderer = &m_renderer, bounds, color]() {
+        renderer->get_system<render_system_debug>()->add_sphere(bounds, color);
+    });
+}
+
+void render_command_queue::draw_frustum(const frustum& bounds, const color& color)
+{
+    queue_command("draw_frustum", [renderer = &m_renderer, bounds, color]() {
+        renderer->get_system<render_system_debug>()->add_frustum(bounds, color);
+    });
+}
+
+void render_command_queue::draw_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color)
+{
+    queue_command("draw_triangle", [renderer = &m_renderer, a, b, c, color]() {
+        renderer->get_system<render_system_debug>()->add_triangle(a, b, c, color);
+    });
+}
+
+void render_command_queue::draw_cylinder(const cylinder& bounds, const color& color)
+{
+    queue_command("draw_cylinder", [renderer = &m_renderer, bounds, color]() {
+        renderer->get_system<render_system_debug>()->add_cylinder(bounds, color);
+    });
+}
+
+void render_command_queue::draw_capsule(const cylinder& bounds, const color& color)
+{
+    queue_command("draw_capsule", [renderer = &m_renderer, bounds, color]() {
+        renderer->get_system<render_system_debug>()->add_capsule(bounds, color);
+    });
+}
+
+void render_command_queue::draw_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands)
+{
+    queue_command("draw_hemisphere", [renderer = &m_renderer, bounds, color, horizontal_bands]() {
+        renderer->get_system<render_system_debug>()->add_hemisphere(bounds, color, horizontal_bands);
+    });
+}
+
+void render_command_queue::draw_cone(const vector3& origin, const vector3& end, float radius, const color& color)
+{
+    queue_command("draw_cone", [renderer = &m_renderer, origin, end, radius, color]() {
+        renderer->get_system<render_system_debug>()->add_cone(origin, end, radius, color);
+    });
+}
+
+void render_command_queue::draw_arrow(const vector3& start, const vector3& end, const color& color)
+{
+    queue_command("draw_arrow", [renderer = &m_renderer, start, end, color]() {
+        renderer->get_system<render_system_debug>()->add_arrow(start, end, color);
+    });
+}
+
+void render_command_queue::draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color)
+{
+    queue_command("draw_truncated_cone", [renderer = &m_renderer, start, end, start_radius, end_radius, color]() {
+        renderer->get_system<render_system_debug>()->add_truncated_cone(start, end, start_radius, end_radius, color);
     });
 }
 

@@ -29,6 +29,8 @@ public:
 	static constexpr inline size_t k_corner_count = 8;
 
 public:
+	static const aabb zero;
+
 	vector3 min;
 	vector3 max;
 
@@ -47,6 +49,8 @@ public:
 	bool intersects(const aabb& other) const;
 	bool contains(const aabb& other) const;
 };
+
+inline const aabb aabb::zero = aabb(vector3(0.0f, 0.0f, 0.0f), vector3(0.0f, 0.0f, 0.0f));
 
 inline aabb::aabb(const vector3& in_min, const vector3& in_max)
 	: min(in_min)

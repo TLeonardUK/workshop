@@ -10,6 +10,13 @@
 #include "workshop.core/math/rect.h"
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/math/quat.h"
+#include "workshop.core/math/obb.h"
+#include "workshop.core/math/aabb.h"
+#include "workshop.core/math/sphere.h"
+#include "workshop.core/math/frustum.h"
+#include "workshop.core/math/cylinder.h"
+#include "workshop.core/math/hemisphere.h"
+#include "workshop.core/drawing/color.h"
 
 namespace ws {
 
@@ -45,6 +52,24 @@ public:
 
     // Sets the debug mode we should use for rendering the output.
     void set_visualization_mode(visualization_mode mode);
+
+    // ===========================================================================================
+    //  Debug rendering.
+    // ===========================================================================================
+
+    // Draws various debug wireframe primitives.
+    void draw_line(const vector3& start, const vector3& end, const color& color);
+    void draw_aabb(const aabb& bounds, const color& color);
+    void draw_obb(const obb& bounds, const color& color);
+    void draw_sphere(const sphere& bounds, const color& color);
+    void draw_frustum(const frustum& bounds, const color& color);
+    void draw_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color);
+    void draw_cylinder(const cylinder& bounds, const color& color);
+    void draw_capsule(const cylinder& bounds, const color& color);
+    void draw_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true);
+    void draw_cone(const vector3& origin, const vector3& end, float radius, const color& color);
+    void draw_arrow(const vector3& start, const vector3& end, const color& color);
+    void draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
 
     // ===========================================================================================
     //  Objects

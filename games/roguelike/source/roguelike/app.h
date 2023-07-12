@@ -38,6 +38,9 @@ private:
 
     int m_mouse_control_frames = 0;
 
+
+    render_object_id m_tree_id;
+
 };
 
 };

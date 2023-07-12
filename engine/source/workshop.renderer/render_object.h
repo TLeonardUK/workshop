@@ -6,6 +6,8 @@
 
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/math/quat.h"
+#include "workshop.core/math/matrix4.h"
+#include "workshop.core/math/obb.h"
 
 #include <string>
 
@@ -32,6 +34,11 @@ public:
     vector3 get_local_location();
     vector3 get_local_scale();
     quat get_local_rotation();
+
+    matrix4 get_transform();
+
+    // Gets the bounds of this object in world space.
+    virtual obb get_bounds();
 
 protected:
 

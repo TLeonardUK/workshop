@@ -38,4 +38,16 @@ quat render_object::get_local_rotation()
     return m_local_rotation;
 }
 
+matrix4 render_object::get_transform()
+{
+    return matrix4::scale(m_local_scale) *
+           matrix4::rotation(m_local_rotation) *
+           matrix4::translate(m_local_location);
+}
+
+obb render_object::get_bounds()
+{
+    return obb(aabb::zero, get_transform());
+}
+
 }; // namespace ws

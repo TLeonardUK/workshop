@@ -50,11 +50,8 @@ public:
 	base_vector3<T> extract_rotation() const;
 
 	base_vector3<T> transform_direction(const base_vector3<T>& vec) const;
-	base_vector4<T> transform_direction(const base_vector4<T>& vec) const;
-	base_vector3<T> transform_vector(const base_vector3<T>& vec) const;
-	base_vector4<T> transform_vector(const base_vector4<T>& vec) const;
 	base_vector3<T> transform_location(const base_vector3<T>& vec) const;
-	base_vector4<T> transform_location(const base_vector4<T>& vec) const;
+
 	base_matrix4 inverse() const;
 	base_quat<T> to_quat() const;
 	base_matrix4 transpose() const;
@@ -242,76 +239,31 @@ inline base_vector3<T> base_matrix4<T>::extract_rotation() const
 	return to_quat();
 }
 
+
 template <typename T>
 inline base_vector3<T> base_matrix4<T>::transform_direction(const base_vector3<T>& vec) const
 {
-	base_vector4<T> result(
-		           	1.0f * vec.x + columns[1][0] * vec.y + columns[2][0] * vec.z + columns[3][0] * 0.0f,
-		columns[0][1] * vec.x +          1.0f * vec.y + columns[2][1] * vec.z + columns[3][1] * 0.0f,
-		columns[0][2] * vec.x + columns[1][2] * vec.y +          1.0f * vec.z + columns[3][2] * 0.0f,
-		columns[0][3] * vec.x + columns[1][3] * vec.y + columns[2][3] * vec.z +          1.0f * 0.0f);
+	base_vector3<T> result(
+		vec.x * columns[0][0] + vec.y * columns[0][1] + vec.z * columns[0][2],
+		vec.x * columns[1][0] + vec.y * columns[1][1] + vec.z * columns[1][2],
+		vec.x * columns[2][0] + vec.y * columns[2][1] + vec.z * columns[2][2]
+	);
 
-	return base_vector3<T>(result.x, result.y, result.z);
-}
-
-template <typename T>
-inline base_vector4<T> base_matrix4<T>::transform_direction(const base_vector4<T>& vec) const
-{
-	base_vector4<T> result(
-					1.0f * vec.x + columns[1][0] * vec.y + columns[2][0] * vec.z + columns[3][0] * vec.w,
-		columns[0][1] * vec.x +			 1.0f * vec.y + columns[2][1] * vec.z + columns[3][1] * vec.w,
-		columns[0][2] * vec.x + columns[1][2] * vec.y +			 1.0f * vec.z + columns[3][2] * vec.w,
-		columns[0][3] * vec.x + columns[1][3] * vec.y + columns[2][3] * vec.z +			 1.0f * vec.w);
-
-	return base_vector4<T>(result.x, result.y, result.z, result.w);
-}
-
-template <typename T>
-inline base_vector3<T> base_matrix4<T>::transform_vector(const base_vector3<T>& vec) const
-{
-	base_vector4<T> result(
-		columns[0][0] * vec.x + columns[1][0] * vec.y + columns[2][0] * vec.z + columns[3][0] * 0.0f,
-		columns[0][1] * vec.x + columns[1][1] * vec.y + columns[2][1] * vec.z + columns[3][1] * 0.0f,
-		columns[0][2] * vec.x + columns[1][2] * vec.y + columns[2][2] * vec.z + columns[3][2] * 0.0f,
-		columns[0][3] * vec.x + columns[1][3] * vec.y + columns[2][3] * vec.z + columns[3][3] * 0.0f);
-
-	return base_vector3<T>(result.x, result.y, result.z);
-}
-
-template <typename T>
-inline base_vector4<T> base_matrix4<T>::transform_vector(const base_vector4<T>& vec) const
-{
-	base_vector4<T> result(
-		columns[0][0] * vec.x + columns[1][0] * vec.y + columns[2][0] * vec.z + columns[3][0] * vec.w,
-		columns[0][1] * vec.x + columns[1][1] * vec.y + columns[2][1] * vec.z + columns[3][1] * vec.w,
-		columns[0][2] * vec.x + columns[1][2] * vec.y + columns[2][2] * vec.z + columns[3][2] * vec.w,
-		columns[0][3] * vec.x + columns[1][3] * vec.y + columns[2][3] * vec.z + columns[3][3] * vec.w);
-
-	return base_vector4<T>(result.x, result.y, result.z, result.w);
+	return result;
 }
 
 template <typename T>
 inline base_vector3<T> base_matrix4<T>::transform_location(const base_vector3<T>& vec) const
 {
-	base_vector4<T> result(
-		columns[0][0] * vec.x + columns[1][0] * vec.y + columns[2][0] * vec.z + columns[3][0] * 1.0f,
-		columns[0][1] * vec.x + columns[1][1] * vec.y + columns[2][1] * vec.z + columns[3][1] * 1.0f,
-		columns[0][2] * vec.x + columns[1][2] * vec.y + columns[2][2] * vec.z + columns[3][2] * 1.0f,
-		columns[0][3] * vec.x + columns[1][3] * vec.y + columns[2][3] * vec.z + columns[3][3] * 1.0f);
+	T d = vec.x * columns[3][0] + vec.y * columns[3][1] + vec.z * columns[3][2] + columns[3][3];
 
-	return base_vector3<T>(result.x, result.y, result.z);
-}
+	base_vector3<T> result(
+		(vec.x * columns[0][0] + vec.y * columns[0][1] + vec.z * columns[0][2] + columns[0][3]) / d,
+		(vec.x * columns[1][0] + vec.y * columns[1][1] + vec.z * columns[1][2] + columns[1][3]) / d,
+		(vec.x * columns[2][0] + vec.y * columns[2][1] + vec.z * columns[2][2] + columns[2][3]) / d
+	);
 
-template <typename T>
-inline base_vector4<T> base_matrix4<T>::transform_location(const base_vector4<T>& vec) const
-{
-	base_vector4<T> result(
-		columns[0][0] * vec.x + columns[1][0] * vec.y + columns[2][0] * vec.z + columns[3][0] * vec.w,
-		columns[0][1] * vec.x + columns[1][1] * vec.y + columns[2][1] * vec.z + columns[3][1] * vec.w,
-		columns[0][2] * vec.x + columns[1][2] * vec.y + columns[2][2] * vec.z + columns[3][2] * vec.w,
-		columns[0][3] * vec.x + columns[1][3] * vec.y + columns[2][3] * vec.z + columns[3][3] * vec.w);
-
-	return base_vector4<T>(result.x, result.y, result.z, result.w);
+	return result;
 }
 
 template <typename T>
@@ -416,9 +368,9 @@ template <typename T>
 inline base_matrix4<T> base_matrix4<T>::translate(const vector3& position)
 {
 	base_matrix4 result = identity;
-    result[3][0] = position.x;
-    result[3][1] = position.y;
-    result[3][2] = position.z;
+    result[0][3] = position.x;
+    result[1][3] = position.y;
+    result[2][3] = position.z;
 	return result; 
 }
 
@@ -435,39 +387,49 @@ inline base_matrix4<T> base_matrix4<T>::scale(const vector3& scale)
 template <typename T>
 inline base_matrix4<T> base_matrix4<T>::rotation(const quat& quat)
 {
-	base_matrix4 result = identity;
+	base_matrix4 out = identity;
 
-	T qxx(quat.x * quat.x);
-	T qyy(quat.y * quat.y);
-	T qzz(quat.z * quat.z);
-	T qxz(quat.x * quat.z);
-	T qxy(quat.x * quat.y);
-	T qyz(quat.y * quat.z);
-	T qwx(quat.w * quat.x);
-	T qwy(quat.w * quat.y);
-	T qwz(quat.w * quat.z);
+	T x = quat.x;
+	T y = quat.y;
+	T z = quat.z;
+	T w = quat.w;
 
-	result[0][0] = T(1) - T(2) * (qyy + qzz);
-	result[0][1] = T(2) * (qxy + qwz);
-	result[0][2] = T(2) * (qxz - qwy);
-	result[0][3] = T(0);
+	T x2 = x + x;
+	T y2 = y + y;
+	T z2 = z + z;
+	T w2 = w + w;
 
-	result[1][0] = T(2) * (qxy - qwz);
-	result[1][1] = T(1) - T(2) * (qxx + qzz);
-	result[1][2] = T(2) * (qyz + qwx);
-	result[1][3] = T(0);
+	T xx = x * x2;
+	T xy = x * y2;
+    T xz = x * z2;
+    T yy = y * y2;
+    T yz = y * z2;
+    T zz = z * z2;
+    T wx = w * x2;
+    T wy = w * y2;
+	T wz = w * z2;
 
-	result[2][0] = T(2) * (qxz + qwy);
-	result[2][1] = T(2) * (qyz - qwx);
-	result[2][2] = T(1) - T(2) * (qxx + qyy);
-	result[2][3] = T(0);
+	out[0][0] = 1 - (yy + zz);
+	out[1][0] = xy + wz;
+	out[2][0] = xz - wy;
+	out[3][0] = 0;
 
-	result[3][0] = T(0);
-	result[3][1] = T(0);
-	result[3][2] = T(0);
-	result[3][3] = T(1);
+	out[0][1] = xy - wz;
+	out[1][1] = 1 - (xx + zz);
+	out[2][1] = yz + wx;
+	out[3][1] = 0;
 
-	return result;
+	out[0][2] = xz + wy;
+	out[1][2] = yz - wx;
+	out[2][2] = 1 - (xx + yy);
+	out[3][2] = 0;
+
+	out[0][3] = 0;
+	out[1][3] = 0;
+	out[2][3] = 0;
+	out[3][3] = 1;
+
+	return out;
 }
 
 template <typename T>

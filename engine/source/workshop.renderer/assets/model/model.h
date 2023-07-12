@@ -72,7 +72,6 @@ public:
 public:
     std::vector<material_info> materials;
     std::unique_ptr<geometry> geometry;
-    aabb bounds;
 
 protected:
     virtual bool post_load() override;

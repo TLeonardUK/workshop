@@ -156,11 +156,20 @@ void render_static_mesh::destroy_render_data()
 
 void render_static_mesh::update_render_data()
 {
-    matrix4 transform = matrix4::scale(m_local_scale) * 
-                        matrix4::rotation(m_local_rotation) * 
-                        matrix4::translate(m_local_location);
+    m_geometry_instance_info->set("model_matrix", get_transform());
+}
 
-    m_geometry_instance_info->set("model_matrix", transform);
+obb render_static_mesh::get_bounds()
+{
+    if (!m_model.is_loaded())
+    {
+        return obb(aabb::zero, get_transform());
+    }
+    else
+    {
+
+        return obb(m_model->geometry->bounds, get_transform());
+    }
 }
 
 }; // namespace ws
