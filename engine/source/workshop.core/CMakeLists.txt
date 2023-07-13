@@ -79,7 +79,9 @@ SET(SOURCES
     "utils/version.cpp"
     "utils/version.h"    
     "utils/frame_time.cpp"
-    "utils/frame_time.h"
+    "utils/frame_time.h" 
+    "utils/time.cpp"
+    "utils/time.h"
     
     "math/math.h"
     "math/math.cpp"
@@ -109,6 +111,9 @@ SET(SOURCES
     "geometry/geometry.cpp"
     "geometry/geometry_assimp_loader.h"
     "geometry/geometry_assimp_loader.cpp"
+    
+    "statistics/statistics_manager.h"
+    "statistics/statistics_manager.cpp"
 
     "entry.cpp"
     "entry.h"

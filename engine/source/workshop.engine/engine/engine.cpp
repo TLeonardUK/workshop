@@ -9,12 +9,14 @@
 #include "workshop.core/perf/profile.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/async/async.h"
+#include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
 #include "workshop.core/filesystem/virtual_file_system_redirect_handler.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/app/app.h"
+#include "workshop.core/statistics/statistics_manager.h"
 
 #include "workshop.assets/asset_manager.h"
 #include "workshop.assets/caches/asset_cache_disk.h"
@@ -66,6 +68,9 @@ void engine::step()
         m_asset_manager->apply_hot_reloads();
         m_renderer->resume();
     }
+
+    // Commit engine statistics.
+    statistics_manager::get().commit(statistics_commit_point::end_of_game);
 }
 
 void engine::register_init(init_list& list)
@@ -74,6 +79,11 @@ void engine::register_init(init_list& list)
         "Task Scheduler",
         [this, &list]() -> result<void> { return create_task_scheduler(list); },
         [this, &list]() -> result<void> { return destroy_task_scheduler(); }
+    );
+    list.add_step(
+        "Statistics Manager",
+        [this, &list]() -> result<void> { return create_statistics_manager(list); },
+        [this, &list]() -> result<void> { return destroy_statistics_manager(); }
     );
     list.add_step(
         "Filesystem",
@@ -150,6 +160,11 @@ renderer& engine::get_renderer()
 asset_manager& engine::get_asset_manager()
 {
     return *m_asset_manager.get();
+}
+
+statistics_manager& engine::get_statistics_manager()
+{
+    return *m_statistics.get();
 }
 
 window_interface& engine::get_windowing()
@@ -324,6 +339,19 @@ result<void> engine::destroy_filesystem()
     return true;
 }
 
+result<void> engine::create_statistics_manager(init_list& list)
+{
+    m_statistics = std::make_unique<statistics_manager>();
+
+    return true;
+}
+
+result<void> engine::destroy_statistics_manager()
+{
+    m_statistics = nullptr;
+
+    return true;
+}
 
 result<void> engine::create_asset_manager(init_list& list)
 {

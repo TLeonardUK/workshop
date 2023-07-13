@@ -28,6 +28,7 @@ class presenter;
 class renderer;
 class asset_manager;
 class virtual_file_system;
+class statistics_manager;
 class task_scheduler;
 
 // ================================================================================================
@@ -68,6 +69,9 @@ public:
 
     // Gets the asset manager.
     asset_manager& get_asset_manager();
+
+    // Gets the statistics manager.
+    statistics_manager& get_statistics_manager();
 
     // Gets the windowing manager.
     window_interface& get_windowing();
@@ -140,6 +144,9 @@ private:
     result<void> create_filesystem(init_list& list);
     result<void> destroy_filesystem();
 
+    result<void> create_statistics_manager(init_list& list);
+    result<void> destroy_statistics_manager();
+
     result<void> create_asset_manager(init_list& list);
     result<void> destroy_asset_manager();
 
@@ -157,6 +164,7 @@ protected:
     std::unique_ptr<window> m_window;
     std::unique_ptr<presenter> m_presenter;
     std::unique_ptr<virtual_file_system> m_filesystem;
+    std::unique_ptr<statistics_manager> m_statistics;
     std::unique_ptr<asset_manager> m_asset_manager;
     std::unique_ptr<debug_menu> m_debug_menu;
 

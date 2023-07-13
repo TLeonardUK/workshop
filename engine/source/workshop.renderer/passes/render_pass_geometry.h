@@ -15,6 +15,7 @@
 namespace ws {
 
 class material;
+class statistics_channel;
 
 // ================================================================================================
 //  Render pass that draws a set of geometry visible from the given view. 
@@ -35,10 +36,10 @@ public:
     virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
 
 private:
-//    std::vector<batch> calculate_batches(renderer& renderer);
-
-private:
-//    std::unique_ptr<ri_param_block> m_vertex_info_param_block;
+    statistics_channel* m_stats_triangles_rendered;
+    statistics_channel* m_stats_draw_calls;
+    statistics_channel* m_stats_drawn_instances;
+    statistics_channel* m_stats_culled_instances;
 
 };
 

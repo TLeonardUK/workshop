@@ -40,7 +40,7 @@ public:
     void update_visibility();
 
     // Draw debug bounds of octtree cells.
-    void draw_cell_bounds();
+    void draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds);
 
 public:
 

@@ -50,6 +50,7 @@
 #include "workshop.core/hashing/hash.h"
 #include "workshop.core/containers/command_queue.h"
 #include "workshop.core/drawing/pixmap.h"
+#include "workshop.core/statistics/statistics_manager.h"
 
 namespace ws {
 
@@ -357,6 +358,11 @@ size_t renderer::get_frame_index()
     return m_frame_index;
 }
 
+size_t renderer::get_visibility_frame_index()
+{
+    return m_visibility_frame_index;
+}
+
 render_object_id renderer::next_render_object_id()
 {
     return static_cast<render_object_id>(m_next_render_object_id.fetch_add(1));
@@ -413,9 +419,14 @@ void renderer::render_state(render_world_state& state)
     m_frame_index = state.time.frame_count;
 
     // Debug drawing.
-    if (m_draw_octtree_cell_bounds)
+    if (m_draw_octtree_cell_bounds || m_draw_object_bounds)
     {
-        m_scene_manager->draw_cell_bounds();
+        m_scene_manager->draw_cell_bounds(m_draw_octtree_cell_bounds, m_draw_object_bounds);
+    }
+
+    if (m_draw_debug_overlay)
+    {
+        draw_debug_overlay();
     }
 
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
@@ -438,7 +449,11 @@ void renderer::render_state(render_world_state& state)
     m_batch_manager->begin_frame();
 
     // Perform frustum culling for all views.
-    m_scene_manager->update_visibility();
+    if (!m_rendering_frozen)
+    {
+        m_visibility_frame_index = m_frame_index;
+        m_scene_manager->update_visibility();
+    }
 
     // Render each view.
     std::vector<render_view*> views = m_scene_manager->get_views();
@@ -483,6 +498,9 @@ void renderer::render_state(render_world_state& state)
 
     // End the frame.
     m_render_interface.end_frame();
+
+    // Commit rendering statistics.
+    statistics_manager::get().commit(statistics_commit_point::end_of_render);
 }
 
 void renderer::render_single_view(render_world_state& state, render_view& view, std::vector<render_pass::generated_state>& output)
@@ -644,6 +662,13 @@ result<void> renderer::destroy_render_graph()
 
 result<void> renderer::create_debug_menu()
 {
+    // Grab statistics the debug menu will want.
+    m_stats_triangles_rendered = statistics_manager::get().find_or_create_channel("rendering/triangles_rendered");
+    m_stats_draw_calls = statistics_manager::get().find_or_create_channel("rendering/draw_calls");
+    m_stats_drawn_instances = statistics_manager::get().find_or_create_channel("rendering/drawn_instances");
+    m_stats_culled_instances = statistics_manager::get().find_or_create_channel("rendering/culled_instances");
+
+    // Setup debug menu toggles.
     for (size_t i = 0; i < static_cast<size_t>(visualization_mode::COUNT); i++)
     {
         std::string path = string_format("rendering/visualization/%s", visualization_mode_strings[i]);
@@ -655,9 +680,10 @@ result<void> renderer::create_debug_menu()
         m_debug_menu_options.push_back(std::move(option));
     }
 
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/draw cell bounds", [this]() {
-        m_draw_octtree_cell_bounds = !m_draw_octtree_cell_bounds;
-    }));
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/toggle cell bounds", [this]() { m_draw_octtree_cell_bounds = !m_draw_octtree_cell_bounds; }));
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/toggle object bounds", [this]() { m_draw_object_bounds = !m_draw_object_bounds; }));
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle freeze rendering", [this]() { m_rendering_frozen = !m_rendering_frozen; }));
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle overlay", [this]() { m_draw_debug_overlay = !m_draw_debug_overlay; }));
 
     return true;
 }
@@ -696,6 +722,51 @@ size_t renderer::get_display_width()
 size_t renderer::get_display_height()
 {
     return m_window.get_height();
+}
+
+void renderer::draw_debug_overlay()
+{
+    imgui_scope scope(get_imgui_manager(), "Rendering Debug Overlay");
+
+    const size_t k_width = 250;
+    const size_t k_padding = 30;
+
+    size_t display_width = get_display_width();
+    size_t display_height = get_display_height();
+
+    ImGui::SetNextWindowPos(ImVec2(display_width - k_width - k_padding, k_padding), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(k_width, 0), ImGuiCond_Always);
+    if (ImGui::Begin("Rendering Debug Overlay", &m_draw_debug_overlay, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::BeginTable("Stats Table", 2);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Triangles Rendered");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%zi", static_cast<size_t>(m_stats_triangles_rendered->current_value()));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Draw Calls");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%zi", static_cast<size_t>(m_stats_draw_calls->current_value()));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Instances Rendered");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%zi", static_cast<size_t>(m_stats_drawn_instances->current_value()));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Instances Culled");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%zi", static_cast<size_t>(m_stats_culled_instances->current_value()));
+
+        ImGui::EndTable();
+        ImGui::End();
+    }
 }
 
 }; // namespace ws

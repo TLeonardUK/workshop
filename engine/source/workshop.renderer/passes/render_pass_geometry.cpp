@@ -8,6 +8,7 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/common_types.h"
 #include "workshop.core/geometry/geometry.h"
+#include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/common_types.h"
@@ -21,6 +22,11 @@ namespace ws {
 
 result<void> render_pass_geometry::create_resources(renderer& renderer)
 {
+    m_stats_triangles_rendered  = statistics_manager::get().find_or_create_channel("rendering/triangles_rendered",  1.0f, statistics_commit_point::end_of_render);
+    m_stats_draw_calls          = statistics_manager::get().find_or_create_channel("rendering/draw_calls",          1.0f, statistics_commit_point::end_of_render);
+    m_stats_drawn_instances     = statistics_manager::get().find_or_create_channel("rendering/drawn_instances",     1.0f, statistics_commit_point::end_of_render);
+    m_stats_culled_instances    = statistics_manager::get().find_or_create_channel("rendering/culled_instances",     1.0f, statistics_commit_point::end_of_render);
+
     return true;
 }
 
@@ -35,14 +41,16 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         domain, 
         render_batch_usage::static_mesh);
 
-    size_t frame_index = renderer.get_frame_index();
+    size_t visibility_frame_index = renderer.get_visibility_frame_index();
 
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
-    
-    size_t total_objects = 0;
-    size_t rendered_objects = 0;
 
+    size_t triangles_rendered = 0;
+    size_t draw_calls = 0;
+    size_t drawn_instances = 0;
+    size_t culled_instances = 0;
+    
     {
         profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
 
@@ -98,8 +106,6 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
                 param_block.set("metallic_texture", *material_info.material->get_texture("metallic_texture", default_black));
                 param_block.set("roughness_texture", *material_info.material->get_texture("roughness_texture", default_black));
                 param_block.set("normal_texture", *material_info.material->get_texture("normal_texture", default_normal));
-                //param_block.set("normal_texture", *default_normal);
-
                 param_block.set("albedo_sampler", *material_info.material->get_sampler("albedo_sampler", default_sampler_color));
                 param_block.set("opacity_sampler", *material_info.material->get_sampler("opacity_sampler", default_sampler_color));
                 param_block.set("metallic_sampler", *material_info.material->get_sampler("metallic_sampler", default_sampler_color));
@@ -115,16 +121,13 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             {
                 const render_batch_instance& instance = instances[j];
 
-                total_objects++;
-
                 // Skip instance if its not visibile this frame.
                 if (view.visibility_index != render_view::k_always_visible_index &&
-                    instance.object->last_visible_frame[view.visibility_index] < frame_index)
+                    instance.object->last_visible_frame[view.visibility_index] < visibility_frame_index)
                 {
+                    culled_instances++;
                     continue;
                 }
-
-                rendered_objects++;
 
                 size_t table_index;
                 size_t table_offset;
@@ -132,6 +135,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
                 instance_buffer->add(static_cast<uint32_t>(table_index), static_cast<uint32_t>(table_offset));
                 visible_instance_count++;
+                drawn_instances++;
             }
             instance_buffer->commit();
 
@@ -157,6 +161,9 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             // Draw everything!
             list.set_index_buffer(*material_info.index_buffer);        
             list.draw(material_info.indices.size(), visible_instance_count);
+
+            triangles_rendered += material_info.indices.size() / 3;
+            draw_calls++;
         }
 
         // Transition targets back to initial state.
@@ -173,7 +180,10 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
     list.close();
     state_output.graphics_command_lists.push_back(&list);
 
-    db_log(renderer, "Rendered: %zi / %zi", rendered_objects, total_objects);
+    m_stats_triangles_rendered->submit(triangles_rendered);
+    m_stats_draw_calls->submit(draw_calls);
+    m_stats_culled_instances->submit(culled_instances);
+    m_stats_drawn_instances->submit(drawn_instances);
 }
 
 }; // namespace ws

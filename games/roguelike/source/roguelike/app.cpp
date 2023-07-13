@@ -53,7 +53,7 @@ ws::result<void> rl_game_app::start()
     render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    /*
+    
     object_id = cmd_queue.create_static_mesh("Sponza Curtains");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
@@ -62,11 +62,10 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
     
-    m_tree_id = cmd_queue.create_static_mesh("Sponza Trees");
-    cmd_queue.set_static_mesh_model(m_tree_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
-    cmd_queue.set_object_transform(m_tree_id, vector3(0.0f, 0.0f, 50.0f), quat::identity, vector3::one);
-    */
-
+    object_id = cmd_queue.create_static_mesh("Sponza Trees");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 50.0f), quat::identity, vector3::one);
+    
     for (int x = 0; x < 15; x++)
     {
         object_id = cmd_queue.create_static_mesh("Cube");

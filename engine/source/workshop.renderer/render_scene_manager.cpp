@@ -23,12 +23,23 @@ void render_scene_manager::register_init(init_list& list)
 {
 }
 
-void render_scene_manager::draw_cell_bounds()
+void render_scene_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds)
 {
     auto cells = m_object_oct_tree.get_cells();
     for (auto& cell : cells)
     {
-        m_renderer.get_command_queue().draw_aabb(cell->bounds, color::green);
+        if (draw_cell_bounds)
+        {
+            m_renderer.get_command_queue().draw_aabb(cell->bounds, color::green);
+        }
+
+        for (auto& entry : cell->elements)
+        {
+            if (draw_object_bounds)
+            {
+                m_renderer.get_command_queue().draw_aabb(entry.bounds, color::blue);
+            }
+        }
     }
 }
 
@@ -210,7 +221,7 @@ void render_scene_manager::render_object_bounds_modified(render_object* obj)
 
 void render_scene_manager::update_visibility()
 {
-    size_t frame_index = m_renderer.get_frame_index();
+    size_t frame_index = m_renderer.get_visibility_frame_index();
 
     for (render_view* view : m_active_views)
     {
@@ -221,7 +232,7 @@ void render_scene_manager::update_visibility()
 
         frustum frustum = view->get_frustum();
 
-        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, true);
+        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, false);
         for (render_object* object : visible_objects.elements)
         {
             object->last_visible_frame[view->visibility_index] = frame_index;

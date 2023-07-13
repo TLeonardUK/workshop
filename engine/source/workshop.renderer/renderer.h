@@ -42,6 +42,7 @@ class window;
 class shader;
 class input_interface;
 class debug_menu;
+class statistics_channel;
 
 // Decribes the usage of a specific default texture, used to select
 // an appropriate one when calling renderer::get_default_texture.
@@ -166,6 +167,9 @@ public:
     // Gets the current frame index being constructed.
     size_t get_frame_index();
 
+    // Similar to get_frame_index except its used for culling and can be paused when rendering is frozen. 
+    size_t get_visibility_frame_index();
+
     // Queues a callback that runs on the render thread.
     void queue_callback(void* source, std::function<void()> callback);
 
@@ -241,6 +245,9 @@ private:
     // on the render thread.
     void set_visualization_mode(visualization_mode mode);
 
+    // Draws a little debug display window with general rendering stats.
+    void draw_debug_overlay();
+
 private:
 
     // How many frames can be in the pipeline at a given time.
@@ -267,9 +274,20 @@ private:
     // Debug menu.
 
     visualization_mode m_visualization_mode = visualization_mode::normal;
-    bool m_draw_octtree_cell_bounds = true;
+    bool m_draw_octtree_cell_bounds = false;
+    bool m_draw_object_bounds = false;
+    bool m_rendering_frozen = false;
+#ifndef WS_RELEASE
+    bool m_draw_debug_overlay = true;
+#endif
+    size_t m_frozen_rendering_frame = 0;
 
     std::vector<debug_menu::option_handle> m_debug_menu_options;
+
+    statistics_channel* m_stats_triangles_rendered;
+    statistics_channel* m_stats_draw_calls;
+    statistics_channel* m_stats_drawn_instances;
+    statistics_channel* m_stats_culled_instances;
 
     // Command queue.
 
@@ -290,6 +308,7 @@ private:
     task_handle m_render_job_task;
 
     size_t m_frame_index = 0;
+    size_t m_visibility_frame_index = 0;
 
     bool m_paused = false;
 
