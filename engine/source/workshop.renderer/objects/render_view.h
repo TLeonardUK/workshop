@@ -24,7 +24,7 @@ class ri_param_block;
 class render_view : public render_object
 {
 public:
-    render_view(renderer& renderer);
+    render_view(render_scene_manager* scene_manager, renderer& renderer);
 
     void set_viewport(const recti& viewport);
     recti get_viewport();
@@ -47,6 +47,12 @@ public:
 
     // Overrides the normal set transform to update instance data when the transform changes.
     virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
+
+    // The visibility index is used by render objects to refer to which views they are actively visible in
+    // at the current point in time. Its assigned by the scene manager on creation and recycled ond destruction.
+    inline static constexpr size_t k_always_visible_index = std::numeric_limits<size_t>::max();
+
+    size_t visibility_index = k_always_visible_index;
 
 private:
     void update_view_info_param_block();

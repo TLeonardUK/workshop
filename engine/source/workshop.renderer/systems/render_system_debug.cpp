@@ -55,6 +55,7 @@ void render_system_debug::step(const render_world_state& state)
 
     if (m_vertices.empty())
     {
+        m_draw_vertex_count = 0;
         return;
     }
 

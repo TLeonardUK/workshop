@@ -35,9 +35,14 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         domain, 
         render_batch_usage::static_mesh);
 
+    size_t frame_index = renderer.get_frame_index();
+
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     
+    size_t total_objects = 0;
+    size_t rendered_objects = 0;
+
     {
         profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
 
@@ -104,20 +109,37 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
             // Generate the instance buffer for this batch.
             render_batch_instance_buffer* instance_buffer = batch->find_or_create_instance_buffer(this);
+            size_t visible_instance_count = 0;
+
             for (size_t j = 0; j < instances.size(); j++)
             {
                 const render_batch_instance& instance = instances[j];
 
-                // TODO: Do culling
+                total_objects++;
+
+                // Skip instance if its not visibile this frame.
+                if (view.visibility_index != render_view::k_always_visible_index &&
+                    instance.object->last_visible_frame[view.visibility_index] < frame_index)
+                {
+                    continue;
+                }
+
+                rendered_objects++;
 
                 size_t table_index;
                 size_t table_offset;
-
                 instance.param_block->get_table(table_index, table_offset);
 
                 instance_buffer->add(static_cast<uint32_t>(table_index), static_cast<uint32_t>(table_offset));
+                visible_instance_count++;
             }
             instance_buffer->commit();
+
+            // Nothing to render :(
+            if (visible_instance_count == 0)
+            {
+                continue;
+            }
 
             // Generate the vertex info buffer for this batch.
             ri_param_block* vertex_info_param_block = batch->find_or_create_param_block(this, "vertex_info", {});
@@ -134,7 +156,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
             // Draw everything!
             list.set_index_buffer(*material_info.index_buffer);        
-            list.draw(material_info.indices.size(), instances.size());
+            list.draw(material_info.indices.size(), visible_instance_count);
         }
 
         // Transition targets back to initial state.
@@ -150,6 +172,8 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
     list.close();
     state_output.graphics_command_lists.push_back(&list);
+
+    db_log(renderer, "Rendered: %zi / %zi", rendered_objects, total_objects);
 }
 
 }; // namespace ws

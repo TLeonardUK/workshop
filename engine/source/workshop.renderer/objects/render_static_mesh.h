@@ -18,7 +18,7 @@ namespace ws {
 class render_static_mesh : public render_object
 {
 public:
-    render_static_mesh(renderer& renderer);
+    render_static_mesh(render_scene_manager* scene_manager, renderer& renderer);
     virtual ~render_static_mesh();
 
     // Gets/sets the model this static mesh renders with.

@@ -8,8 +8,9 @@
 
 namespace ws {
 
-render_view::render_view(renderer& renderer)
-    : m_renderer(renderer)
+render_view::render_view(render_scene_manager* scene_manager, renderer& renderer)
+    : render_object(scene_manager, false)
+    , m_renderer(renderer)
 {
 }
 

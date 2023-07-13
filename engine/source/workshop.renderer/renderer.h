@@ -264,7 +264,10 @@ private:
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
 
+    // Debug menu.
+
     visualization_mode m_visualization_mode = visualization_mode::normal;
+    bool m_draw_octtree_cell_bounds = true;
 
     std::vector<debug_menu::option_handle> m_debug_menu_options;
 

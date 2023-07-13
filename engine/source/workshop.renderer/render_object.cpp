@@ -3,8 +3,27 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.renderer/render_object.h"
+#include "workshop.renderer/render_scene_manager.h"
 
 namespace ws {
+
+render_object::render_object(render_scene_manager* scene_manager, bool stored_in_octtree)
+    : m_scene_manager(scene_manager)
+    , m_store_in_octtree(stored_in_octtree)
+{
+    if (m_store_in_octtree)
+    {
+        m_scene_manager->render_object_created(this);
+    }
+}
+
+render_object::~render_object()
+{
+    if (m_store_in_octtree)
+    {
+        m_scene_manager->render_object_destroyed(this);
+    }
+}
 
 void render_object::set_name(const std::string& name)
 {
@@ -21,6 +40,8 @@ void render_object::set_local_transform(const vector3& location, const quat& rot
     m_local_location = location;
     m_local_rotation = rotation;
     m_local_scale = scale;
+
+    bounds_modified();
 }
 
 vector3 render_object::get_local_location()
@@ -48,6 +69,14 @@ matrix4 render_object::get_transform()
 obb render_object::get_bounds()
 {
     return obb(aabb::zero, get_transform());
+}
+
+void render_object::bounds_modified()
+{
+    if (m_store_in_octtree)
+    {
+        m_scene_manager->render_object_bounds_modified(this);
+    }
 }
 
 }; // namespace ws

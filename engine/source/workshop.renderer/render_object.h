@@ -8,10 +8,15 @@
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/matrix4.h"
 #include "workshop.core/math/obb.h"
+#include "workshop.core/containers/oct_tree.h"
+#include "workshop.renderer/common_types.h"
 
 #include <string>
+#include <bitset>
 
 namespace ws {
+
+class render_scene_manager;
 
 // ================================================================================================
 //  Base class for all types of objects that exist within the render scene - meshes, views, etc.
@@ -19,7 +24,8 @@ namespace ws {
 class render_object
 {
 public:
-    virtual ~render_object() {};
+    render_object(render_scene_manager* scene_manager, bool stored_in_octtree = true);
+    virtual ~render_object();
 
 public:
 
@@ -40,7 +46,24 @@ public:
     // Gets the bounds of this object in world space.
     virtual obb get_bounds();
 
+    // Called when the bounds of an object is modified.
+    void bounds_modified();
+
+public:
+
+    // Token representing the cell of the global oct tree this object is contained in.
+    oct_tree<render_object*>::token object_tree_token;
+
+    // Gets the last frame this object was visible for the given view
+    // TODO: This is chonkier than it should be. We should be able to slim this down reasonably easy.
+    std::array<size_t, k_max_render_views> last_visible_frame = {};
+
 protected:
+
+    bool m_store_in_octtree = false;
+
+    // Scene manager that owns us.
+    render_scene_manager* m_scene_manager;
 
     // Name of the effect, use for debugging.
     std::string m_name;

@@ -27,6 +27,8 @@ SET(SOURCES
     "containers/json.h"
     "containers/string.cpp"
     "containers/string.h"
+    "containers/oct_tree.cpp"
+    "containers/oct_tree.h"
     
     "debug/log.h"
     "debug/debug.cpp"

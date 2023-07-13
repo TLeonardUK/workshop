@@ -9,8 +9,9 @@
 
 namespace ws {
 
-render_static_mesh::render_static_mesh(renderer& renderer)
-    : m_renderer(renderer)
+render_static_mesh::render_static_mesh(render_scene_manager* scene_manager, renderer& renderer)
+    : render_object(scene_manager)
+    , m_renderer(renderer)
 {
     create_render_data();
 }
@@ -100,6 +101,8 @@ void render_static_mesh::recreate_render_data()
 {
     destroy_render_data();
     create_render_data();
+
+    bounds_modified();
 }
 
 void render_static_mesh::create_render_data()

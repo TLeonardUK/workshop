@@ -412,6 +412,12 @@ void renderer::render_state(render_world_state& state)
 
     m_frame_index = state.time.frame_count;
 
+    // Debug drawing.
+    if (m_draw_octtree_cell_bounds)
+    {
+        m_scene_manager->draw_cell_bounds();
+    }
+
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
     m_current_backbuffer = &get_next_backbuffer();
 
@@ -431,13 +437,8 @@ void renderer::render_state(render_world_state& state)
     m_render_interface.begin_frame();
     m_batch_manager->begin_frame();
 
-    // TODO: Do culling.
-    std::vector<render_static_mesh*> meshes = m_scene_manager->get_static_meshes();
-    for (render_static_mesh* mesh : meshes)
-    {
-        obb bounds = mesh->get_bounds();
-        get_command_queue().draw_obb(bounds, color::red);
-    }
+    // Perform frustum culling for all views.
+    m_scene_manager->update_visibility();
 
     // Render each view.
     std::vector<render_view*> views = m_scene_manager->get_views();
@@ -653,6 +654,10 @@ result<void> renderer::create_debug_menu()
 
         m_debug_menu_options.push_back(std::move(option));
     }
+
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/draw cell bounds", [this]() {
+        m_draw_octtree_cell_bounds = !m_draw_octtree_cell_bounds;
+    }));
 
     return true;
 }
