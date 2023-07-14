@@ -113,11 +113,19 @@ void win32_path_watcher::poll_changes()
                 DWORD name_len = info->FileNameLength / sizeof(wchar_t);
                 std::wstring relative_filename(info->FileName, name_len);
                 std::string path = m_path + narrow_string(relative_filename);
-                if (std::filesystem::is_regular_file(path))
+
+                try
                 {
-                    event& evt = m_pending_events.emplace_back();
-                    evt.type = event_type::modified;
-                    evt.path = path;
+                    if (std::filesystem::is_regular_file(path))
+                    {
+                        event& evt = m_pending_events.emplace_back();
+                        evt.type = event_type::modified;
+                        evt.path = path;
+                    }
+                }
+                catch (std::filesystem::filesystem_error)
+                {
+                    // Failed to determine if valid file, so just skip it.
                 }
             }
 

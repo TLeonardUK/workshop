@@ -6,12 +6,11 @@
 float3 calculate_world_normal(
     float3 tangent_normal, 
     float3 world_normal, 
-    float3 world_tangent,
-    float3 world_bitangent)
+    float3 world_tangent)
 {
     float3 n = world_normal;
     float3 t = world_tangent;
-    float3 b = world_bitangent;
+    float3 b = cross(n, t);
     float3x3 tbn = float3x3(t, b, n);
 
     return mul(tangent_normal, tbn);

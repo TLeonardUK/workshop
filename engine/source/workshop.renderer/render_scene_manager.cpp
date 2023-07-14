@@ -221,6 +221,8 @@ void render_scene_manager::render_object_bounds_modified(render_object* obj)
 
 void render_scene_manager::update_visibility()
 {
+    profile_marker(profile_colors::render, "update visibility");
+
     size_t frame_index = m_renderer.get_visibility_frame_index();
 
     for (render_view* view : m_active_views)

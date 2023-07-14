@@ -144,6 +144,7 @@ private:
 
     size_t m_frame_index = 0;
 
+    std::mutex m_pending_deletion_mutex;
     std::array<std::vector<deferred_delete_function_t>, k_max_pipeline_depth> m_pending_deletions;
 
 };

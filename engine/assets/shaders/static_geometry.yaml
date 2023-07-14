@@ -29,7 +29,6 @@ vertex_layouts:
     position: float3
     normal: float3
     tangent: float3
-    bitangent: float3
     uv0: float2
 
 param_blocks:

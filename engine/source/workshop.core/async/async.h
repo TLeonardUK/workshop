@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/async/task_scheduler.h"
+#include "workshop.core/perf/profile.h"
 
 namespace ws {
 
@@ -21,12 +22,21 @@ task_handle async(const char* name, task_queue queue, task_scheduler::task_funct
 template <typename work_t>
 void parallel_for(const char* name, task_queue queue, size_t count, work_t work)
 {
+    profile_marker(profile_colors::task, "%s [parallel]", name);
+
     constexpr size_t k_chunks_per_task = 2;
 
     task_scheduler& scheduler = task_scheduler::get();
 
-    size_t task_count = std::min(scheduler.get_worker_count(queue), count);
-    size_t chunk_size = 256;//std::max(1llu, count / task_count / k_chunks_per_task);
+    size_t worker_count = scheduler.get_worker_count(queue);
+    size_t task_count = std::min(worker_count, count);
+    size_t chunk_size = std::max(1llu, count / task_count / k_chunks_per_task);
+
+    // For very small amount of threads allocate them individually so every worker gets something.
+    if (count < worker_count * 2)
+    {
+        chunk_size = 1;
+    }
 
     std::atomic_size_t next_chunk = 0;
 

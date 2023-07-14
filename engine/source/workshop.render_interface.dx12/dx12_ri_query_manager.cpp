@@ -192,6 +192,8 @@ void dx12_ri_query_manager::begin_frame()
 {
     std::scoped_lock lock(m_mutex);
 
+    profile_marker(profile_colors::render, "query readback");
+
     size_t resolve_base_offset = m_resolve_frame_index * m_query_slots * sizeof(uint64_t);
     dx12_ri_command_queue& queue = static_cast<dx12_ri_command_queue&>(m_renderer.get_graphics_queue());
 

@@ -44,6 +44,14 @@ set(DEBUG_LINK_OPTIONS   ${LINK_OPTIONS})
 set(PROFILE_LINK_OPTIONS ${LINK_OPTIONS})
 set(RELEASE_LINK_OPTIONS ${LINK_OPTIONS})
 
+if (WIN32)
+
+    # Enable pix on all non-release builds.
+    set(DEBUG_COMPILE_OPTIONS   ${DEBUG_COMPILE_OPTIONS} -DUSE_PIX)
+    set(PROFILE_COMPILE_OPTIONS ${PROFILE_COMPILE_OPTIONS} -DUSE_PIX)    
+
+endif()
+
 add_compile_options(
     "$<$<CONFIG:Debug>:${DEBUG_COMPILE_OPTIONS}>"
     "$<$<CONFIG:Profile>:${PROFILE_COMPILE_OPTIONS}>"

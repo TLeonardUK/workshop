@@ -131,6 +131,8 @@ void rl_game_app::step(const frame_time& time)
             m_view_rotation = y_rotation * x_rotation;
         }
 
+        db_log(renderer, "delta:%.2f,%.2f", delta_pos.x, delta_pos.y);
+
         if (input.is_key_down(input_key::w))
         {
             m_view_position += (vector3::forward * m_view_rotation) * k_speed * time.delta_seconds;

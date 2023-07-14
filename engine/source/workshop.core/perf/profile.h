@@ -73,7 +73,7 @@ void platform_perf_variable(double value, const char* format, ...);
 template <typename... Args>
 struct scoped_profile_marker
 {
-    scoped_profile_marker(const color& color, const char* format, Args&&... args)
+    scoped_profile_marker(const color& color, const char* format, Args... args)
     {
         platform_perf_begin_marker(color, format, std::forward<Args>(args)...);
     }

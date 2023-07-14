@@ -109,21 +109,25 @@ void dx12_ri_command_queue::begin_frame()
     begin_event(profile_colors::gpu_frame, "frame %zi", m_frame_index);
 
     // Reset resources of all previous frames.
-    for (auto& [thread_id, context] : m_thread_contexts)
     {
-        frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
+        profile_marker(profile_colors::render, "Reset Command Queue Allocators");
 
-        if (resources.last_used_frame_index != m_frame_index)
+        for (auto& [thread_id, context] : m_thread_contexts)
         {
-            resources.allocator->Reset();
+            frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];
 
-            for (size_t i = 0; i < resources.next_free_index; i++)
+            if (resources.last_used_frame_index != m_frame_index)
             {
-                db_assert_message(!context->command_lists[i]->is_open(), "Reusing command list that hasn't been closed. Command lists should only remain open for the duration of the frame they are allocated on.");
-            }
+                resources.allocator->Reset();
 
-            resources.next_free_index = 0;
-            resources.last_used_frame_index = m_frame_index;
+                for (size_t i = 0; i < resources.next_free_index; i++)
+                {
+                    db_assert_message(!context->command_lists[i]->is_open(), "Reusing command list that hasn't been closed. Command lists should only remain open for the duration of the frame they are allocated on.");
+                }
+
+                resources.next_free_index = 0;
+                resources.last_used_frame_index = m_frame_index;
+            }
         }
     }
 }

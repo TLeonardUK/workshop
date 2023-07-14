@@ -48,7 +48,7 @@ std::string get_latest_pix_gpu_dll()
 void platform_perf_init()
 {
 #ifndef WS_RELEASE
-    if (ws::is_option_set("load_pix"))
+    if (ws::is_option_set("load_pix_gpu"))
     {
         std::string pix_gpu_path = get_latest_pix_gpu_dll();
         if (!pix_gpu_path.empty())

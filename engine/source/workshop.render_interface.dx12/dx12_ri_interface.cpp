@@ -21,6 +21,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_query.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
+#include "workshop.core/filesystem/file.h"
 
 #include <algorithm>
 
@@ -245,21 +246,32 @@ result<void> dx12_render_interface::create_device()
 {
     HRESULT hr = 0;
 
-#if 1//def WS_DEBUG
-    hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_debug_interface));
-    if (FAILED(hr))
+    bool should_debug = false;
+#ifdef WS_DEBUG
+    should_debug = true;
+#endif
+    if (ws::is_option_set("directx_debug"))
     {
-        db_error(render_interface, "D3D12GetDebugInterface failed with error 0x%08x.", hr);
-        return false;
+        should_debug = true;
     }
 
-    m_debug_interface->EnableDebugLayer();
-#endif
+    if (should_debug)
+    {
+        hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_debug_interface));
+        if (FAILED(hr))
+        {
+            db_error(render_interface, "D3D12GetDebugInterface failed with error 0x%08x.", hr);
+            return false;
+        }
+
+        m_debug_interface->EnableDebugLayer();
+    }
 
     UINT createFactoryFlags = 0;
-#if 1//def WS_DEBUG
-    createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
+    if (should_debug)
+    {
+        createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+    }
 
     hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&m_dxgi_factory));
     if (FAILED(hr))
@@ -285,18 +297,19 @@ result<void> dx12_render_interface::create_device()
         return ret;
     }
 
-#if 1//def WS_DEBUG
-    hr = m_device.As(&m_info_queue);
-    if (FAILED(hr))
+    if (should_debug)
     {
-        db_error(render_interface, "Failed to get D2D12InfoQueue from device with error 0x%08x.", hr);
-        return false;
-    }
+        hr = m_device.As(&m_info_queue);
+        if (FAILED(hr))
+        {
+            db_error(render_interface, "Failed to get D2D12InfoQueue from device with error 0x%08x.", hr);
+            return false;
+        }
 
-    m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-    m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-    m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-#endif
+        m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+        m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+    }
 
     return true;
 }
@@ -549,11 +562,15 @@ void dx12_render_interface::end_frame()
 
 void dx12_render_interface::flush_uploads()
 {
+    profile_marker(profile_colors::render, "flush uploads");
+
     m_upload_manager->new_frame(m_frame_index);
 }
 
 void dx12_render_interface::drain_deferred()
 {
+    std::scoped_lock lock(m_pending_deletion_mutex);
+
     for (size_t i = 0; i < k_max_pipeline_depth; i++)
     {
         auto& queue = m_pending_deletions[i];
@@ -567,6 +584,10 @@ void dx12_render_interface::drain_deferred()
 
 void dx12_render_interface::process_pending_deletes()
 {
+    std::scoped_lock lock(m_pending_deletion_mutex);
+
+    profile_marker(profile_colors::render, "process pending deletes");
+
     size_t queue_index = (m_frame_index % k_max_pipeline_depth);
     auto& queue = m_pending_deletions[queue_index];
     for (deferred_delete_function_t& functor : queue)
@@ -578,6 +599,8 @@ void dx12_render_interface::process_pending_deletes()
 
 void dx12_render_interface::defer_delete(const deferred_delete_function_t& func)
 {
+    std::scoped_lock lock(m_pending_deletion_mutex);
+
     size_t queue_index = (m_frame_index % k_max_pipeline_depth);
     m_pending_deletions[queue_index].push_back(func);
 }

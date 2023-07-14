@@ -394,6 +394,8 @@ void renderer::run_callbacks()
 {
     std::scoped_lock lock(m_callback_mutex);
 
+    profile_marker(profile_colors::render, "process render callbacks");
+
     for (callback& instance : m_callbacks)
     {
         instance.callback_function();
@@ -404,6 +406,8 @@ void renderer::run_callbacks()
 
 void renderer::process_render_commands(render_world_state& state)
 {
+    profile_marker(profile_colors::render, "process render commands");
+
     render_command_queue& queue = *state.command_queue;
 
     while (!queue.empty())
@@ -427,18 +431,24 @@ void renderer::render_state(render_world_state& state)
     m_frame_index = state.time.frame_count;
 
     // Debug drawing.
-    if (m_draw_octtree_cell_bounds || m_draw_object_bounds)
     {
-        m_scene_manager->draw_cell_bounds(m_draw_octtree_cell_bounds, m_draw_object_bounds);
-    }
+        profile_marker(profile_colors::render, "debug drawing");
 
-    if (m_draw_debug_overlay)
-    {
-        draw_debug_overlay();
+        if (m_draw_octtree_cell_bounds || m_draw_object_bounds)
+        {
+            m_scene_manager->draw_cell_bounds(m_draw_octtree_cell_bounds, m_draw_object_bounds);
+        }
+
+        if (m_draw_debug_overlay)
+        {
+            draw_debug_overlay();
+        }
     }
 
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
     {
+        profile_marker(profile_colors::render, "get next back buffer");
+
         timer wait_timer;
         wait_timer.start();
 
@@ -487,6 +497,8 @@ void renderer::render_state(render_world_state& state)
 
     // Start querying gpu timer.
     {
+        profile_marker(profile_colors::render, "start gpu timer");
+
         if (m_gpu_time_query->are_results_ready())
         {
             double gpu_time = m_gpu_time_query->get_results();
@@ -523,6 +535,8 @@ void renderer::render_state(render_world_state& state)
 
     // Stop querying gpu timer.
     {
+        profile_marker(profile_colors::render, "stop gpu timer");
+
         ri_command_list& list = graphics_command_queue.alloc_command_list();
         list.open();
         list.end_query(m_gpu_time_query.get());

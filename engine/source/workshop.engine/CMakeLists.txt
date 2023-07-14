@@ -49,7 +49,7 @@ target_link_libraries(${PROJECT_NAME}
     workshop.platform_interface
     workshop.debug_menu
     "$<$<CONFIG:Debug>:${NON_RELEASE_LIBS}>"
-    "$<$<CONFIG:Profile>:${NON_RELEASE_MODULES}>"
+    "$<$<CONFIG:Profile>:${NON_RELEASE_LIBS}>"
     yamlcpp
 )
 
