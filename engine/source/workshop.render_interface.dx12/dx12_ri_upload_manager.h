@@ -14,6 +14,9 @@
 #include <span>
 #include <functional>
 
+// Performs a lot of additional debugging checks for the upload manager.
+//#define UPLOAD_DEBUG 
+
 namespace ws {
 
 class engine;
@@ -52,8 +55,10 @@ private:
 
     struct upload_state
     {
+        size_t freed_frame_index;
         size_t queued_frame_index;
         size_t heap_offset;
+        size_t heap_size;
 
         heap_state* heap = nullptr;
 
@@ -61,7 +66,6 @@ private:
         ri_resource_state resource_initial_state;
 
         build_command_list_callback_t build_command_list = nullptr;
-
     };
 
     // Size of the heap, this should be able to store the maximum

@@ -416,6 +416,9 @@ void renderer::render_state(render_world_state& state)
 
     profile_marker(profile_colors::render, "frame %zi", (size_t)state.time.frame_count);
 
+    timer frame_timer;
+    frame_timer.start();
+
     m_frame_index = state.time.frame_count;
 
     // Debug drawing.
@@ -430,7 +433,15 @@ void renderer::render_state(render_world_state& state)
     }
 
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
-    m_current_backbuffer = &get_next_backbuffer();
+    {
+        timer wait_timer;
+        wait_timer.start();
+
+        m_current_backbuffer = &get_next_backbuffer();
+
+        wait_timer.stop();
+        m_stats_frame_time_present_wait->submit(wait_timer.get_elapsed_seconds());
+    }
 
     // Execute any callbacks that have been queued.
     run_callbacks();
@@ -493,11 +504,22 @@ void renderer::render_state(render_world_state& state)
     // Present, we're done with this frame!
     {
         profile_marker(profile_colors::render, "present");
+
+        timer wait_timer;
+        wait_timer.start();
+
         m_swapchain->present();
+
+        wait_timer.stop();
+        m_stats_frame_time_present_wait->submit(wait_timer.get_elapsed_seconds());
     }
 
     // End the frame.
     m_render_interface.end_frame();
+
+    // Store render time.
+    frame_timer.stop();
+    m_stats_frame_time_render->submit(frame_timer.get_elapsed_seconds());
 
     // Commit rendering statistics.
     statistics_manager::get().commit(statistics_commit_point::end_of_render);
@@ -569,12 +591,18 @@ void renderer::step(std::unique_ptr<render_world_state>&& state)
         m_pending_frames.back()->command_queue = m_command_queues[m_command_queue_active_index].get();
         m_frames_in_flight.fetch_add(1);
 
+        timer wait_timer;
+        wait_timer.start();
+
         // Wait for previous frames to complete if depth is high enough.
         while (m_frames_in_flight.load() >= k_frame_depth)
         {
             profile_marker(profile_colors::render, "wait for render");
             m_pending_frame_convar.wait(lock);
         }
+
+        wait_timer.stop();
+        m_stats_frame_time_render_wait->submit(wait_timer.get_elapsed_seconds());
 
         // If previous render job has completed we need to start another to
         // process the queued frame.
@@ -667,6 +695,12 @@ result<void> renderer::create_debug_menu()
     m_stats_draw_calls = statistics_manager::get().find_or_create_channel("rendering/draw_calls");
     m_stats_drawn_instances = statistics_manager::get().find_or_create_channel("rendering/drawn_instances");
     m_stats_culled_instances = statistics_manager::get().find_or_create_channel("rendering/culled_instances");
+    m_stats_frame_time_render = statistics_manager::get().find_or_create_channel("frame time/render", 1.0, statistics_commit_point::end_of_render);
+    m_stats_frame_time_render_wait = statistics_manager::get().find_or_create_channel("frame time/render wait", 1.0, statistics_commit_point::end_of_game);
+    m_stats_frame_time_present_wait = statistics_manager::get().find_or_create_channel("frame time/present wait", 1.0, statistics_commit_point::end_of_render);
+    m_stats_frame_time_game = statistics_manager::get().find_or_create_channel("frame time/game", 1.0, statistics_commit_point::end_of_game);
+    m_stats_frame_time_gpu = statistics_manager::get().find_or_create_channel("frame time/gpu", 1.0, statistics_commit_point::end_of_render);
+    m_stats_frame_rate = statistics_manager::get().find_or_create_channel("frame rate");
 
     // Setup debug menu toggles.
     for (size_t i = 0; i < static_cast<size_t>(visualization_mode::COUNT); i++)
@@ -739,6 +773,43 @@ void renderer::draw_debug_overlay()
     if (ImGui::Begin("Rendering Debug Overlay", &m_draw_debug_overlay, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::BeginTable("Stats Table", 2);
+
+        float render_wait = m_stats_frame_time_render_wait->current_value() * 1000.0f;
+        float present_wait = m_stats_frame_time_present_wait->current_value() * 1000.0f;
+
+        float game_time = m_stats_frame_time_game->current_value() * 1000.0f;
+        float render_time = m_stats_frame_time_render->current_value() * 1000.0f;
+        float gpu_time = m_stats_frame_time_gpu->current_value() * 1000.0f;
+
+        float frame_rate = m_stats_frame_rate->average_value();
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("FPS");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f", frame_rate);
+
+        ImGui::NewLine();
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Game Time");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f ms", game_time - render_wait);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Render Time");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f ms", render_time - present_wait);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("GPU Time");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f ms", gpu_time);
+
+        ImGui::NewLine();
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);

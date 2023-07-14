@@ -50,14 +50,16 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
     m_view_position = vector3(0.0f, -250.0f, 0.0f);
     
-    render_object_id object_id = cmd_queue.create_static_mesh("Sponza");
+    render_object_id object_id;
+
+    object_id = cmd_queue.create_static_mesh("Sponza");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    
+
     object_id = cmd_queue.create_static_mesh("Sponza Curtains");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-
+    
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
@@ -66,6 +68,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 50.0f), quat::identity, vector3::one);
     
+    /*
     for (int x = 0; x < 15; x++)
     {
         object_id = cmd_queue.create_static_mesh("Cube");
@@ -73,7 +76,7 @@ ws::result<void> rl_game_app::start()
         cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(50.0f, 50.0f, 50.0f));
 
         m_rotating_objects.push_back(object_id);
-    }
+    }*/
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);

@@ -30,6 +30,7 @@ class asset_manager;
 class virtual_file_system;
 class statistics_manager;
 class task_scheduler;
+class statistics_channel;
 
 // ================================================================================================
 //  This is the core engine class, its responsible for owning all the individual pieces (such as
@@ -183,6 +184,9 @@ protected:
     std::filesystem::path m_engine_asset_dir;
     std::filesystem::path m_game_asset_dir;
     std::filesystem::path m_asset_cache_dir;
+
+    statistics_channel* m_stats_frame_time_game;
+    statistics_channel* m_stats_frame_rate;
 
 };
 

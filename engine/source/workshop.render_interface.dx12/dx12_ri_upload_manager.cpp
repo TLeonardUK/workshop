@@ -148,6 +148,9 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     upload.resource = source.get_resource();
     upload.resource_initial_state = source.get_initial_state();
 
+    // Zero out upload space as parts of it may be padding.
+    memset(upload.heap->start_ptr + upload.heap_offset, 0, upload.heap_size);
+
     // TODO: All the below is pretty grim, this needs cleaning up and simplifying.
 
     // Copy source data into copy data. Source data is expected to be tightly packed
@@ -199,20 +202,24 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
                 size_t source_data_offset = 0;
 
                 // Copy source data into each row.
+                size_t dest_offset = 0;
                 for (size_t height_index = 0; height_index < height; height_index++)
                 {
                     size_t source_row_size = footprint.Footprint.Width * ri_bytes_per_texel(source.get_format());
                     db_assert(source_row_size == row_size[sub_resource_index]);
 
-                    memcpy(destination, source_data + source_data_offset, source_row_size);
-                    if (source_row_size < pitch)
+#ifdef UPLOAD_DEBUG
+                    if (footprint.Offset + dest_offset + source_row_size > upload.heap_size)
                     {
-                        // Zero out the padding space.
-                        memset(destination + source_row_size, 0, pitch - source_row_size);
+                        __debugbreak();
                     }
+#endif
+
+                    memcpy(destination, source_data + source_data_offset, source_row_size);
 
                     source_data_offset += source_row_size;
                     destination += pitch;
+                    dest_offset += pitch;
                 }
             }
         }
@@ -258,8 +265,23 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
 
     memcpy(upload.heap->start_ptr + upload.heap_offset, data.data(), data.size());
 
-    upload.build_command_list = [source_ptr=source.get_resource(), heap_ptr = upload.heap->handle.Get(), heap_offset=upload.heap_offset, size=data.size(), offset](dx12_ri_command_list& list)
+#ifdef UPLOAD_DEBUG
+    std::vector<uint8_t> debug_copy = std::vector<uint8_t>(data.begin(), data.end());
+    db_log(renderer, "Allocated: %p (%zi)", upload.heap->start_ptr + upload.heap_offset, upload.heap_size);
+    upload.build_command_list = [source_ptr = source.get_resource(), start_ptr = upload.heap->start_ptr, debug_data = debug_copy, heap_ptr = upload.heap->handle.Get(), heap_offset = upload.heap_offset, size = data.size(), offset](dx12_ri_command_list& list)
+#else
+    upload.build_command_list = [source_ptr = source.get_resource(), heap_ptr = upload.heap->handle.Get(), heap_offset = upload.heap_offset, size = data.size(), offset](dx12_ri_command_list& list)
+#endif
     {
+#ifdef UPLOAD_DEBUG
+        db_log(renderer, "Uploading: %p (%zi)", start_ptr + heap_offset, size);
+        if (memcmp(start_ptr + heap_offset, debug_data.data(), size) != 0)
+        {
+            db_log(renderer, "Failed: %p (%zi)", start_ptr + heap_offset, size);
+            __debugbreak();
+        }
+#endif
+
         list.get_dx_command_list()->CopyBufferRegion(
             source_ptr, 
             offset, 
@@ -286,6 +308,7 @@ dx12_ri_upload_manager::upload_state dx12_ri_upload_manager::allocate_upload(siz
         {
             if (heap->memory_heap->alloc(size, alignment, state.heap_offset))
             {
+                state.heap_size = size;
                 state.heap = heap.get();
                 break;
             }
@@ -329,12 +352,17 @@ void dx12_ri_upload_manager::free_uploads()
         return;
     }
 
-    size_t free_frame_index = m_frame_index - pipeline_depth; 
+    size_t free_frame_index = (m_frame_index - pipeline_depth);
 
     for (auto iter = m_pending_free.begin(); iter != m_pending_free.end(); /* empty */)
     {
-        if (iter->queued_frame_index <= free_frame_index)
+        if (iter->freed_frame_index <= free_frame_index)
         {
+#ifdef UPLOAD_DEBUG
+            memset(iter->heap->start_ptr + iter->heap_offset, 0, iter->heap_size);
+            db_log(renderer, "Freeing: %p (%zi)", iter->heap->start_ptr + iter->heap_offset, iter->heap_size);
+#endif
+
             iter->heap->memory_heap->free(iter->heap_offset);
             iter = m_pending_free.erase(iter);
         }
@@ -397,6 +425,7 @@ void dx12_ri_upload_manager::perform_uploads()
         {
             transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::initial, ri_resource_state::common_state);
 
+            state.freed_frame_index = m_frame_index;
             m_pending_free.push_back(state);
         }        
         transition_list.close();
@@ -431,7 +460,8 @@ void dx12_ri_upload_manager::perform_uploads()
             for (upload_state& state : uploads)
             {
                 transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::common_state, ri_resource_state::copy_dest);
-             
+
+                state.freed_frame_index = m_frame_index;
                 m_pending_free.push_back(state);
             }
             transition_list.close();
@@ -457,7 +487,8 @@ void dx12_ri_upload_manager::perform_uploads()
             for (upload_state& state : uploads)
             {
                 transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::copy_dest, ri_resource_state::common_state);
-                
+
+                state.freed_frame_index = m_frame_index;
                 m_pending_free.push_back(state);
             }
             transition_list.close();
@@ -478,6 +509,7 @@ void dx12_ri_upload_manager::perform_uploads()
         {
             transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::common_state, ri_resource_state::initial);
 
+            state.freed_frame_index = m_frame_index;
             m_pending_free.push_back(state);
         }
         transition_list.close();

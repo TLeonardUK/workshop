@@ -47,6 +47,9 @@ public:
     // Gets the latest value in the channel.
     double current_value();
 
+    // Gets the average of all samples in the history.
+    double average_value();
+
     // Gets the name of this channel.
     const char* get_name();
 

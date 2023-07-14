@@ -8,7 +8,7 @@
 gbuffer_output pshader(fullscreen_pinput input)
 {
     gbuffer_fragment f;
-    f.albedo = float3(0.5f, 0.2f, 0.7f);
+    f.albedo = float3(1.0f, 1.0f, 1.0f);
     f.opacity = 1.0f;
     f.metallic = 0.0f;
     f.roughness = 0.0f;

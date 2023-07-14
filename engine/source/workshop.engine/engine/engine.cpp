@@ -17,6 +17,7 @@
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/app/app.h"
 #include "workshop.core/statistics/statistics_manager.h"
+#include "workshop.core/perf/timer.h"
 
 #include "workshop.assets/asset_manager.h"
 #include "workshop.assets/caches/asset_cache_disk.h"
@@ -51,6 +52,9 @@ void engine::step()
     profile_marker(profile_colors::engine, "frame %zi", (size_t)m_frame_time.frame_count);
     profile_variable(m_frame_time.delta_seconds, "delta seconds");
 
+    timer frame_timer;
+    frame_timer.start();
+
     m_frame_time.step();
     m_platform_interface->pump_events();
     m_window_interface->pump_events();
@@ -62,12 +66,17 @@ void engine::step()
 
     m_filesystem->raise_watch_events();
 
+    // If any hot reloads are pending then drain the renderer and swap them.
     if (m_asset_manager->has_pending_hot_reloads())
     {
         m_renderer->pause();
         m_asset_manager->apply_hot_reloads();
         m_renderer->resume();
     }
+
+    frame_timer.stop();
+    m_stats_frame_time_game->submit(frame_timer.get_elapsed_seconds());
+    m_stats_frame_rate->submit(1.0 / m_frame_time.delta_seconds);
 
     // Commit engine statistics.
     statistics_manager::get().commit(statistics_commit_point::end_of_game);
@@ -342,6 +351,9 @@ result<void> engine::destroy_filesystem()
 result<void> engine::create_statistics_manager(init_list& list)
 {
     m_statistics = std::make_unique<statistics_manager>();
+
+    m_stats_frame_time_game = m_statistics->find_or_create_channel("frame time/game", 1.0f);
+    m_stats_frame_rate = m_statistics->find_or_create_channel("frame rate");
 
     return true;
 }

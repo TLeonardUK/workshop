@@ -124,6 +124,29 @@ double statistics_channel::current_value()
     return m_samples.back().value;
 }
 
+double statistics_channel::average_value()
+{
+    std::scoped_lock lock(m_mutex);
+
+    double sum = 0.0;
+    double total = 0.0;
+
+    for (sample& s : m_samples)
+    {
+        sum += s.value;
+        total++;
+    }
+
+    if (total == 0.0)
+    {
+        return 0.0;
+    }
+    else
+    {
+        return sum / total;
+    }
+}
+
 const char* statistics_channel::get_name()
 {
     return m_name.c_str();

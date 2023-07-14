@@ -288,6 +288,12 @@ private:
     statistics_channel* m_stats_draw_calls;
     statistics_channel* m_stats_drawn_instances;
     statistics_channel* m_stats_culled_instances;
+    statistics_channel* m_stats_frame_time_render;
+    statistics_channel* m_stats_frame_time_game;
+    statistics_channel* m_stats_frame_time_gpu;
+    statistics_channel* m_stats_frame_time_render_wait;
+    statistics_channel* m_stats_frame_time_present_wait;
+    statistics_channel* m_stats_frame_rate;
 
     // Command queue.
 
