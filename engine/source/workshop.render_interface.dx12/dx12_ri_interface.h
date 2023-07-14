@@ -13,6 +13,7 @@ namespace ws {
 
 class dx12_ri_command_queue;
 class dx12_ri_upload_manager;
+class dx12_ri_query_manager;
 class dx12_ri_descriptor_table;
 
 // ================================================================================================
@@ -49,6 +50,9 @@ public:
 
     // Maximum amount of descriptors each dsv table can use.
     constexpr static size_t k_dsv_descriptor_table_size = k_dsv_heap_size;
+
+    // Maximum amount of queries that can be allocated.
+    constexpr static size_t k_maximum_queries = 10000;
  
     dx12_render_interface();
     virtual ~dx12_render_interface();
@@ -67,6 +71,7 @@ public:
     virtual std::unique_ptr<ri_sampler> create_sampler(const ri_sampler::create_params& params, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_buffer> create_buffer(const ri_buffer::create_params& params, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout, ri_layout_usage usage) override;
+    virtual std::unique_ptr<ri_query> create_query(const ri_query::create_params& params, const char* debug_name = nullptr) override;
     virtual ri_command_queue& get_graphics_queue() override;
     virtual ri_command_queue& get_copy_queue() override;
     virtual size_t get_pipeline_depth() override;
@@ -78,6 +83,7 @@ public:
     void drain_deferred();
 
     dx12_ri_upload_manager& get_upload_manager();
+    dx12_ri_query_manager& get_query_manager();
 
     bool is_tearing_allowed();
     Microsoft::WRL::ComPtr<IDXGIFactory4> get_dxgi_factory();
@@ -118,6 +124,7 @@ private:
     std::unique_ptr<dx12_ri_command_queue> m_graphics_queue = nullptr;
     std::unique_ptr<dx12_ri_command_queue> m_copy_queue = nullptr;
     std::unique_ptr<dx12_ri_upload_manager> m_upload_manager = nullptr;
+    std::unique_ptr<dx12_ri_query_manager> m_query_manager = nullptr;
 
     std::unique_ptr<dx12_ri_descriptor_heap> m_srv_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_sampler_descriptor_heap = nullptr;

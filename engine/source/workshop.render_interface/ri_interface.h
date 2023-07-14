@@ -12,6 +12,7 @@
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_layout_factory.h"
+#include "workshop.render_interface/ri_query.h"
 
 namespace ws {
 
@@ -25,6 +26,7 @@ class ri_shader_compiler;
 class ri_texture_compiler;
 class ri_buffer;
 class ri_layout_factory;
+class ri_query;
 
 // ================================================================================================
 //  Types of renderer implementations available. Make sure to update if you add new ones.
@@ -92,6 +94,9 @@ public:
 
     // Creates a factory for laying out buffer data in a format consumable by the gpu.
     virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout, ri_layout_usage usage) = 0;
+
+    // Creates a factory for laying out buffer data in a format consumable by the gpu.
+    virtual std::unique_ptr<ri_query> create_query(const ri_query::create_params& params, const char* debug_name = nullptr) = 0;
 
     // Gets the main graphics command queue responsible for raster ops.
     virtual ri_command_queue& get_graphics_queue() = 0;

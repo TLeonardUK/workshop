@@ -33,6 +33,7 @@ class ri_interface;
 class ri_texture;
 class ri_sampler;
 class ri_param_block_archetype; 
+class ri_query;
 class render_view;
 class render_param_block_manager;
 class render_effect_manager;
@@ -283,6 +284,8 @@ private:
     size_t m_frozen_rendering_frame = 0;
 
     std::vector<debug_menu::option_handle> m_debug_menu_options;
+
+    std::unique_ptr<ri_query> m_gpu_time_query;
 
     statistics_channel* m_stats_triangles_rendered;
     statistics_channel* m_stats_draw_calls;

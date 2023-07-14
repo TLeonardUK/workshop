@@ -20,6 +20,7 @@ SET(SOURCES
     "ri_shader_compiler.h"
     "ri_texture_compiler.h"
     "ri_pipeline.h"
+    "ri_query.h"
     "ri_param_block.h"
     "ri_param_block.cpp"
     "ri_param_block_archetype.h"

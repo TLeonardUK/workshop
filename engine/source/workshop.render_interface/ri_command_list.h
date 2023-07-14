@@ -15,6 +15,7 @@ class ri_pipeline;
 class ri_texture;
 class ri_buffer;
 class ri_param_block;
+class ri_query;
 class color;
 
 // ================================================================================================
@@ -88,6 +89,12 @@ public:
 
     // End a profiling scope within the queue.
     virtual void end_event() = 0;
+
+    // Starts the given query.
+    virtual void begin_query(ri_query* query) = 0;
+
+    // Ends the given query.
+    virtual void end_query(ri_query* query) = 0;
 
 };
 

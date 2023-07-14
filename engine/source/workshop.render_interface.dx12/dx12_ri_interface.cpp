@@ -15,8 +15,10 @@
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_ri_sampler.h"
 #include "workshop.render_interface.dx12/dx12_ri_upload_manager.h"
+#include "workshop.render_interface.dx12/dx12_ri_query_manager.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_ri_layout_factory.h"
+#include "workshop.render_interface.dx12/dx12_ri_query.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 
@@ -158,6 +160,17 @@ std::unique_ptr<ri_layout_factory> dx12_render_interface::create_layout_factory(
     return std::make_unique<dx12_ri_layout_factory>(*this, layout, usage);
 }
 
+std::unique_ptr<ri_query> dx12_render_interface::create_query(const ri_query::create_params& params, const char* debug_name)
+{
+    std::unique_ptr<dx12_ri_query> instance = std::make_unique<dx12_ri_query>(*this, debug_name, params);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
+}
+
 bool dx12_render_interface::is_tearing_allowed()
 {
     return m_allow_tearing;
@@ -216,6 +229,11 @@ size_t dx12_render_interface::get_pipeline_depth()
 dx12_ri_upload_manager& dx12_render_interface::get_upload_manager()
 {
     return *m_upload_manager;
+}
+
+dx12_ri_query_manager& dx12_render_interface::get_query_manager()
+{
+    return *m_query_manager;
 }
 
 size_t dx12_render_interface::get_frame_index()
@@ -495,11 +513,18 @@ result<void> dx12_render_interface::create_misc()
         return false;
     }
 
+    m_query_manager = std::make_unique<dx12_ri_query_manager>(*this, k_maximum_queries);
+    if (!m_query_manager->create_resources())
+    {
+        return false;
+    }
+
     return true;
 }
 
 result<void> dx12_render_interface::destroy_misc()
 {
+    m_query_manager = nullptr;
     m_upload_manager = nullptr;
 
     return true;
@@ -513,6 +538,7 @@ void dx12_render_interface::begin_frame()
 
     m_graphics_queue->begin_frame();
     m_copy_queue->begin_frame();
+    m_query_manager->begin_frame();
 }
 
 void dx12_render_interface::end_frame()

@@ -11,6 +11,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_param_block.h"
 #include "workshop.render_interface.dx12/dx12_ri_param_block_archetype.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
+#include "workshop.render_interface.dx12/dx12_ri_query.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.core/drawing/color.h"
 #include "workshop.window_interface/window.h"
@@ -353,6 +354,18 @@ void dx12_ri_command_list::begin_event(const color& color, const char* format, .
 void dx12_ri_command_list::end_event()
 {
     PIXEndEvent(m_command_list.Get());
+}
+
+void dx12_ri_command_list::begin_query(ri_query* query)
+{
+    dx12_ri_query* typed_query = static_cast<dx12_ri_query*>(query);
+    typed_query->begin(m_command_list.Get());
+}
+
+void dx12_ri_command_list::end_query(ri_query* query)
+{
+    dx12_ri_query* typed_query = static_cast<dx12_ri_query*>(query);
+    typed_query->end(m_command_list.Get());
 }
 
 }; // namespace ws

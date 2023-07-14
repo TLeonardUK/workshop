@@ -166,7 +166,7 @@ void render_system_imgui::generate(renderer& renderer, render_pass::generated_st
             ));
             
             list.set_param_blocks({ vertex_info_param_block.get(), imgui_params.get() });
-            list.set_scissor(recti(cmd.scissor.x, cmd.scissor.y, cmd.scissor.width, cmd.scissor.height));
+            list.set_scissor(recti((int)cmd.scissor.x, (int)cmd.scissor.y, (int)cmd.scissor.width, (int)cmd.scissor.height));
             list.draw(cmd.count, 1, cmd.offset);
         }
 

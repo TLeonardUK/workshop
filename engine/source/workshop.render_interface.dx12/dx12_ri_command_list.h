@@ -50,6 +50,8 @@ public:
     virtual void draw(size_t indexes_per_instance, size_t instance_count, size_t start_index_location) override;
     virtual void begin_event(const color& color, const char* name, ...) override;
     virtual void end_event() override;
+    virtual void begin_query(ri_query* query) override;
+    virtual void end_query(ri_query* query) override;
 
     void barrier(ID3D12Resource* resource, ri_resource_state resource_initial_state, ri_resource_state source_state, ri_resource_state destination_state);
 

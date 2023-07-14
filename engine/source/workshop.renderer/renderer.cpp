@@ -35,6 +35,7 @@
 #include "workshop.render_interface/ri_texture.h"
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_param_block.h"
+#include "workshop.render_interface/ri_query.h"
 
 #include "workshop.debug_menu/debug_menu.h"
 
@@ -43,7 +44,6 @@
 #include "workshop.window_interface/window.h"
 
 #include "workshop.core/filesystem/virtual_file_system.h"
-
 #include "workshop.core/async/async.h"
 #include "workshop.core/perf/profile.h"
 #include "workshop.core/perf/timer.h"
@@ -174,6 +174,11 @@ result<void> renderer::create_resources()
     {
         return ret;
     }
+
+    // Create a query for monitoring gpu time.
+    ri_query::create_params params;
+    params.type = ri_query_type::time;
+    m_gpu_time_query = m_render_interface.create_query(params, "Gpu time query");
 
     return true;
 }
@@ -480,6 +485,21 @@ void renderer::render_state(render_world_state& state)
     // Before dispatching command lists flush any uploads that may have been queued as part of generation.
     m_render_interface.flush_uploads();
 
+    // Start querying gpu timer.
+    {
+        if (m_gpu_time_query->are_results_ready())
+        {
+            double gpu_time = m_gpu_time_query->get_results();
+            m_stats_frame_time_gpu->submit(gpu_time);
+        }
+
+        ri_command_list& list = graphics_command_queue.alloc_command_list();
+        list.open();
+        list.begin_query(m_gpu_time_query.get());
+        list.close();
+        graphics_command_queue.execute(list);
+    }
+
     // Dispatch all generated command lists.
     {
         profile_marker(profile_colors::render, "dispatch command lists");
@@ -499,6 +519,15 @@ void renderer::render_state(render_world_state& state)
                 }
             }
         }
+    }
+
+    // Stop querying gpu timer.
+    {
+        ri_command_list& list = graphics_command_queue.alloc_command_list();
+        list.open();
+        list.end_query(m_gpu_time_query.get());
+        list.close();
+        graphics_command_queue.execute(list);
     }
 
     // Present, we're done with this frame!

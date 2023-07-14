@@ -121,7 +121,7 @@ void render_imgui_manager::step(frame_time& time)
             // Emplace indices
             for (size_t idx_index = 0; idx_index < cmd_list->IdxBuffer.Size; idx_index++)
             {
-                indices.emplace_back(vertex_offset + cmd_list->IdxBuffer[idx_index]);
+                indices.emplace_back((uint16_t)(vertex_offset + cmd_list->IdxBuffer[idx_index]));
             }
 
             // Append draw commands.
