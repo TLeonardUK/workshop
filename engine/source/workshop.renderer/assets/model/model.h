@@ -84,6 +84,8 @@ private:
     std::unordered_map<size_t, std::unique_ptr<ri_param_block>> m_param_blocks;
     std::unordered_map<ri_data_layout, std::unique_ptr<vertex_buffer>> m_vertex_buffers;
 
+    std::mutex m_mutex;
+
 };
 
 }; // namespace workshop

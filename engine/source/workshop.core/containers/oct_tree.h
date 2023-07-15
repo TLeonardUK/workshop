@@ -8,6 +8,7 @@
 #include "workshop.core/math/sphere.h"
 #include "workshop.core/math/frustum.h"
 #include "workshop.core/async/async.h"
+#include "workshop.core/utils/time.h"
 
 #include <string>
 #include <array>

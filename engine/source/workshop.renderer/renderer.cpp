@@ -8,6 +8,7 @@
 #include "workshop.renderer/systems/render_system_test.h"
 #include "workshop.renderer/systems/render_system_clear.h"
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
+#include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/systems/render_system_imgui.h"
 #include "workshop.renderer/systems/render_system_geometry.h"
 #include "workshop.renderer/systems/render_system_debug.h"
@@ -51,6 +52,7 @@
 #include "workshop.core/containers/command_queue.h"
 #include "workshop.core/drawing/pixmap.h"
 #include "workshop.core/statistics/statistics_manager.h"
+#include "workshop.core/utils/time.h"
 
 namespace ws {
 
@@ -114,6 +116,7 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
     //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
+    m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
@@ -572,6 +575,12 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
 {
     profile_marker(profile_colors::render, "render view");
 
+    // Give all render systems a chance to do anything view specific.
+    for (auto& system : m_systems)
+    {
+        system->step_view(state, view);
+    }
+
     // Generate command lists for all nodes in parallel.
     std::vector<render_graph::node*> nodes;
     m_render_graph->get_active(nodes);
@@ -744,6 +753,7 @@ result<void> renderer::create_debug_menu()
     m_stats_frame_time_game = statistics_manager::get().find_or_create_channel("frame time/game", 1.0, statistics_commit_point::end_of_game);
     m_stats_frame_time_gpu = statistics_manager::get().find_or_create_channel("frame time/gpu", 1.0, statistics_commit_point::end_of_render);
     m_stats_frame_rate = statistics_manager::get().find_or_create_channel("frame rate");
+    m_stats_render_bytes_uploaded = statistics_manager::get().find_or_create_channel("render/bytes uploaded");
 
     // Setup debug menu toggles.
     for (size_t i = 0; i < static_cast<size_t>(visualization_mode::COUNT); i++)
@@ -877,6 +887,12 @@ void renderer::draw_debug_overlay()
         ImGui::Text("Instances Culled");
         ImGui::TableSetColumnIndex(1);
         ImGui::Text("%zi", static_cast<size_t>(m_stats_culled_instances->current_value()));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Bytes Uploaded");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%zi", static_cast<size_t>(m_stats_render_bytes_uploaded->current_value()));
 
         ImGui::EndTable();
         ImGui::End();

@@ -15,7 +15,10 @@ dx12_ri_param_block_archetype::dx12_ri_param_block_archetype(dx12_render_interfa
     , m_create_params(params)
     , m_debug_name(debug_name)
 {
-    m_layout_factory = m_renderer.create_layout_factory(m_create_params.layout, ri_layout_usage::param_block);
+    m_layout_factory = m_renderer.create_layout_factory(
+        m_create_params.layout, 
+        m_create_params.scope == ri_data_scope::instance ? ri_layout_usage::buffer : ri_layout_usage::param_block
+    );
     m_instance_size = m_layout_factory->get_instance_size();
 
     // Instance param blocks are read as byte address buffers not cbuffers so don't need to follow the cbuffer alignment rules.
@@ -179,7 +182,7 @@ void dx12_ri_param_block_archetype::add_page()
     instance.free_list.resize(k_page_size);
     for (size_t i = 0; i < k_page_size; i++)
     {
-        instance.free_list[i] = i;
+        instance.free_list[i] = (k_page_size - 1) - i;
     }
 
     // If using this param block as instance data, we need to create an SRV in the buffer

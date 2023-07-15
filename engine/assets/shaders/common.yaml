@@ -52,6 +52,9 @@ output_targets:
   swapchain_and_depth:
     color: [ R8G8B8A8 ]
     depth: D24_UNORM_S8_UINT
+  # Light accumulation buffer.
+  light_buffer:
+    color: [ R16G16B16A16_FLOAT ]
 
 param_blocks:
   # Contains all the parameters needed to read/write from the gbuffer.

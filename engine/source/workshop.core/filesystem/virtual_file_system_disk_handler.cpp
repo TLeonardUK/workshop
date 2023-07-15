@@ -230,14 +230,21 @@ void virtual_file_system_disk_handler::raise_watch_events()
     path_watcher::event evt;
     while (m_path_watcher->get_next_change(evt))
     {
-        std::string relative_path = virtual_file_system::normalize(std::filesystem::relative(evt.path, m_root).string().c_str());
-
-        for (virtual_file_system_disk_watcher* watcher : m_registered_watchers)
+        try
         {
-            if (watcher->m_path == relative_path)
+            std::string relative_path = virtual_file_system::normalize(std::filesystem::relative(evt.path, m_root).string().c_str());
+
+            for (virtual_file_system_disk_watcher* watcher : m_registered_watchers)
             {
-                watcher->m_callback(relative_path.c_str());
+                if (watcher->m_path == relative_path)
+                {
+                    watcher->m_callback(relative_path.c_str());
+                }
             }
+        }
+        catch (std::filesystem::filesystem_error)
+        {
+            // File might have been removed causing the calls above to fail.
         }
     }
 }

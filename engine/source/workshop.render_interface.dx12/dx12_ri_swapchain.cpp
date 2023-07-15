@@ -201,7 +201,7 @@ void dx12_ri_swapchain::present()
     profile_marker(profile_colors::wait, "present");
     profile_gpu_marker(m_renderer.get_graphics_queue(), profile_colors::gpu_frame, "present");
 
-    HRESULT hr = m_swap_chain->Present(0, 0);//m_renderer.is_tearing_allowed() ? DXGI_PRESENT_ALLOW_TEARING : 0);
+    HRESULT hr = m_swap_chain->Present(0, DXGI_PRESENT_ALLOW_TEARING);//m_renderer.is_tearing_allowed() ? DXGI_PRESENT_ALLOW_TEARING : 0);
     if (FAILED(hr))
     {
         db_error(render_interface, "Present failed with error 0x%08x.", hr);
@@ -226,6 +226,11 @@ void dx12_ri_swapchain::present()
             db_fatal(render_interface, "Failed to recreate swapchain.");
         }
     }
+
+#if 0
+    // Force waiting until the just submitted frame is complete. Useful for finding cpu syncronization issues.
+    m_fence->wait(m_frame_index - 1);
+#endif
 }
 
 void dx12_ri_swapchain::drain()

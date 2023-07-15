@@ -5,6 +5,7 @@
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_param_block_manager.h"
+#include "workshop.renderer/render_resource_cache.h"
 
 namespace ws {
 
@@ -12,6 +13,7 @@ render_view::render_view(render_scene_manager* scene_manager, renderer& renderer
     : render_object(scene_manager, false)
     , m_renderer(renderer)
 {
+    m_resource_cache = std::make_unique<render_resource_cache>(renderer);
 }
 
 void render_view::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)
@@ -106,6 +108,11 @@ void render_view::update_view_info_param_block()
 frustum render_view::get_frustum()
 {
     return frustum(get_view_matrix() * get_perspective_matrix());
+}
+
+render_resource_cache& render_view::get_resource_cache()
+{
+    return *m_resource_cache;
 }
 
 }; // namespace ws

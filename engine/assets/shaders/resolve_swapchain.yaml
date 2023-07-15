@@ -20,6 +20,8 @@ param_blocks:
     scope: draw
     fields:
       visualization_mode: int
+      light_buffer_texture: texture2d
+      light_buffer_sampler: sampler     
 
 techniques:
   resolve_swapchain:

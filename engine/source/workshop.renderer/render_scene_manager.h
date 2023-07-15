@@ -20,6 +20,7 @@ class asset_manager;
 class shader;
 class render_view;
 class render_static_mesh;
+class render_directional_light;
 
 // ================================================================================================
 //  Handles management of the render scene and the objects within it. 
@@ -86,6 +87,38 @@ public:
     // Gets a list of all active static meshes.
     std::vector<render_static_mesh*> get_static_meshes();
 
+    // ===========================================================================================
+    //  Directional light.
+    // ===========================================================================================
+
+    // Creates a directional light in the scene.
+    void create_directional_light(render_object_id id, const char* name);
+
+    // Destroys a directional light previously created with create_directional_light
+    void destroy_directional_light(render_object_id id);
+
+    // Sets if a directional light will cast shadows.
+    void set_directional_light_shadow_casting(render_object_id id, bool value);
+
+    // Sets the size of of shadow map texture.
+    void set_directional_light_shadow_map_size(render_object_id id, size_t value);
+
+    // Sets the maximum distance at which shadow will be casted by the directional light
+    void set_directional_light_shadow_max_distance(render_object_id id, float value);
+
+    // Sets the number of cascades in the lights shadow map.
+    void set_directional_light_shadow_cascades(render_object_id id, size_t value);
+
+    // Sets the exponent from which the shadow map cascade split will be derived.
+    // The lower the exponent the closer to linear the split becomes.
+    void set_directional_light_shadow_cascade_exponent(render_object_id id, float value);
+
+    // Sets the fraction of a cascade that is blended into the next cascade.
+    void set_directional_light_shadow_cascade_blend(render_object_id id, float value);
+
+    // Gets a list of all active directional lights.
+    std::vector<render_directional_light*> get_directional_lights();
+
 private:
 
     friend class render_object;
@@ -113,6 +146,7 @@ private:
     std::unordered_map<render_object_id, std::unique_ptr<render_object>> m_objects;
     std::vector<render_view*> m_active_views;
     std::vector<render_static_mesh*> m_active_static_meshes;
+    std::vector<render_directional_light*> m_active_directional_lights;
 
 };
 

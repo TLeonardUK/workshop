@@ -66,17 +66,20 @@ ws::result<void> rl_game_app::start()
     
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 50.0f), quat::identity, vector3::one);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 200.0f), quat::identity, vector3::one);
     
-    /*
-    for (int x = 0; x < 15; x++)
+    for (int x = 0; x < 150; x++)
     {
         object_id = cmd_queue.create_static_mesh("Cube");
         cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cube/cube.yaml", 0));
         cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(50.0f, 50.0f, 50.0f));
 
         m_rotating_objects.push_back(object_id);
-    }*/
+    }
+    
+    object_id = cmd_queue.create_directional_light("Sun");
+    cmd_queue.set_directional_light_shadow_casting(object_id, false);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity.rotate_z(math::halfpi), vector3::one);
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);
@@ -100,22 +103,28 @@ void rl_game_app::step(const frame_time& time)
     static float angle = 0.0f;
     angle += 0.1f * time.delta_seconds;
 
-    for (size_t i = 0; i < m_rotating_objects.size(); i++)
+   // if (time.frame_count < 100)
     {
-        render_object_id id = m_rotating_objects[i];
+        for (size_t i = 0; i < m_rotating_objects.size(); i++)
+        {
+            render_object_id id = m_rotating_objects[i];
 
-        matrix4 transform = matrix4::translate(vector3(0.0f, 100.0f, i * 120.0f)) * matrix4::rotation(quat::angle_axis(angle, vector3::up));
+            matrix4 transform = matrix4::translate(vector3(0.0f, 100.0f + ((i/10) * 120.0f), (i%10) * 120.0f)) * matrix4::rotation(quat::angle_axis(angle, vector3::up));
 
-        vector3 location = vector3::zero * transform;
+            vector3 location = vector3::zero * transform;
 
-        cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+            cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+        }
     }
 
     if (input.get_mouse_capture())
     {
         vector2 center_pos(main_window.get_width() * 0.5f, main_window.get_height() * 0.5f);
         vector2 delta_pos = (input.get_mouse_position() - center_pos);
-        input.set_mouse_position(center_pos);
+        if (delta_pos.length() > 0)
+        {
+            input.set_mouse_position(center_pos);
+        }
 
         constexpr float k_sensitivity = 0.001f;
         constexpr float k_speed = 300.0f;
@@ -130,8 +139,6 @@ void rl_game_app::step(const frame_time& time)
             quat y_rotation = quat::angle_axis(m_view_rotation_euler.x, vector3::right);
             m_view_rotation = y_rotation * x_rotation;
         }
-
-        db_log(renderer, "delta:%.2f,%.2f", delta_pos.x, delta_pos.y);
 
         if (input.is_key_down(input_key::w))
         {

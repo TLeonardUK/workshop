@@ -9,6 +9,7 @@
 #include "workshop.core/hashing/string_hash.h"
 #include "workshop.assets/asset_manager.h"
 #include "workshop.renderer/render_effect.h"
+#include "workshop.renderer/render_resource_cache.h"
 #include "workshop.render_interface/ri_param_block.h"
 
 #include <unordered_map>
@@ -106,46 +107,6 @@ struct std::hash<ws::asset_ptr<ws::model>>
 namespace ws {
 
 // ================================================================================================
-//  Represents a buffer that holds offsets of instance param blocks associated with
-//  a batch. 
-// ================================================================================================
-class render_batch_instance_buffer
-{
-public:
-    render_batch_instance_buffer(renderer& render);
-
-    void add(uint32_t table_index, uint32_t table_offset);
-    void commit();
-    size_t size();
-    size_t capacity();
-
-    ri_buffer& get_buffer();
-
-private:
-    void resize(size_t size);
-
-private:
-    renderer& m_renderer;
-    std::unique_ptr<ri_buffer> m_buffer;
-
-    struct slot
-    {
-        bool dirty = false;
-        size_t table_index = 0;
-        size_t table_offset = 0;
-        size_t last_frame_used = 0;
-    };
-    std::vector<slot> m_slots;
-
-    // Minimum number of slots the buffer starts with.
-    static inline constexpr size_t k_min_slot_count = 128;
-
-    // Factor the buffer grows by.
-    static inline constexpr size_t k_slot_growth_factor = 2;
-
-};
-
-// ================================================================================================
 //  A unique render batch that buckets a set of renderable instances
 //  with similar properties.
 // ================================================================================================
@@ -159,16 +120,7 @@ public:
 
     void clear();
 
-    // Finds a param block matching the given key, if one is not found, one is
-    // created and the creation callback is called for it.
-    ri_param_block* find_or_create_param_block(
-        void* key, 
-        const char* param_block_name, 
-        std::function<void(ri_param_block& block)> creation_callback);
-
-    // Finds or creates an instance buffer with the matching key, if one is not
-    // found a new one is created.
-    render_batch_instance_buffer* find_or_create_instance_buffer(void* key);
+    render_resource_cache& get_resource_cache();
 
 private:
     friend class render_batch_manager;
@@ -176,28 +128,12 @@ private:
     void add_instance(const render_batch_instance& instance);
     void remove_instance(const render_batch_instance& instance);
 
-    // Clears all param blocks/instance buffers/etc that are cached in this batch.
-    void clear_cached_data();
-
 private:
     render_batch_key m_key;
     renderer& m_renderer;
     std::vector<render_batch_instance> m_instances;
 
-    struct param_block
-    {
-        void* key;
-        std::string name;
-        std::unique_ptr<ri_param_block> block;
-    };
-    std::vector<param_block> m_blocks;
-
-    struct instance_buffer
-    {
-        void* key;
-        std::unique_ptr<render_batch_instance_buffer> buffer;
-    };
-    std::unordered_map<void*, instance_buffer> m_instance_buffers;    
+    std::unique_ptr<render_resource_cache> m_resource_cache;
 
 };
 
@@ -224,9 +160,6 @@ public:
 
     // Gets all the batches that have the given domain and usage.
     std::vector<render_batch*> get_batches(material_domain domain, render_batch_usage usage);
-
-    // Clears all cached data.
-    void clear_cached_data();
 
     // Invalidates any cached state that uses the given materail.
     void clear_cached_material_data(material* material);

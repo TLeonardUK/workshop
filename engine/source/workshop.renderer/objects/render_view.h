@@ -16,6 +16,7 @@ namespace ws {
 
 class renderer;
 class ri_param_block;
+class render_resource_cache;
 
 // ================================================================================================
 //  Represets a view into the scene to be renderer, including the associated projection
@@ -45,6 +46,8 @@ public:
 
     frustum get_frustum();
 
+    render_resource_cache& get_resource_cache();
+
     // Overrides the normal set transform to update instance data when the transform changes.
     virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
 
@@ -69,6 +72,8 @@ private:
     float m_aspect_ratio = 1.33f;
 
     std::unique_ptr<ri_param_block> m_view_info_param_block;
+
+    std::unique_ptr<render_resource_cache> m_resource_cache;
 
 };
 

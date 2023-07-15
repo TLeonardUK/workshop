@@ -76,6 +76,7 @@ enum class visualization_mode
     roughness,
     world_normal,
     world_position,
+    lighting,
 
     COUNT
 };
@@ -86,7 +87,8 @@ static inline const char* visualization_mode_strings[] = {
     "metallic",
     "roughness",
     "world normal",
-    "world position"
+    "world position",
+    "lighting"
 };
 
 // ================================================================================================
@@ -274,7 +276,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::normal;
+    visualization_mode m_visualization_mode = visualization_mode::lighting;
     bool m_draw_octtree_cell_bounds = false;
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;
@@ -297,6 +299,7 @@ private:
     statistics_channel* m_stats_frame_time_render_wait;
     statistics_channel* m_stats_frame_time_present_wait;
     statistics_channel* m_stats_frame_rate;
+    statistics_channel* m_stats_render_bytes_uploaded;
 
     // Command queue.
 

@@ -83,7 +83,7 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
 
         list.set_pipeline(*technique->pipeline.get());
         list.set_render_targets(output.color_targets, output.depth_target);
-        list.set_param_blocks(param_blocks);
+        list.set_param_blocks(bind_param_blocks(view.get_resource_cache()));
         list.set_viewport(view.get_viewport());
         list.set_scissor(view.get_viewport());
         list.set_primitive_topology(ri_primitive::triangle_list);

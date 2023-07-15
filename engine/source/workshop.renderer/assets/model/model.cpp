@@ -26,6 +26,8 @@ model::~model()
 
 bool model::post_load()
 {
+    std::scoped_lock lock(m_mutex);
+
     for (size_t i = 0; i < materials.size(); i++)
     {
         material_info& mat = materials[i];
@@ -57,6 +59,8 @@ bool model::post_load()
 
 ri_param_block* model::find_or_create_param_block(const char* type, size_t key, param_block_setup_callback_t setup_callback)
 {
+    std::scoped_lock lock(m_mutex);
+
     size_t hash = 0;
     hash_combine(hash, type);
     hash_combine(hash, key);
@@ -77,6 +81,8 @@ ri_param_block* model::find_or_create_param_block(const char* type, size_t key, 
 
 model::vertex_buffer* model::find_or_create_vertex_buffer(const ri_data_layout& layout)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_vertex_buffers.find(layout); iter != m_vertex_buffers.end())
     {
         return iter->second.get();
@@ -114,6 +120,8 @@ model::vertex_buffer* model::find_or_create_vertex_buffer(const ri_data_layout& 
 
 void model::swap(model* other)
 {
+    std::scoped_lock lock(m_mutex);
+
     std::swap(materials, other->materials);
     std::swap(geometry, other->geometry);
 

@@ -20,6 +20,7 @@ enum visualization_mode_t
     roughness,
     world_normal,
     world_position,
+    lighting
 };
 
 swapchain_output pshader(fullscreen_pinput input)
@@ -55,6 +56,11 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::world_position:
         {
             output.color = float4(f.world_position, 1.0f);
+            break;
+        }
+        case visualization_mode_t::lighting:
+        {
+            output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv);
             break;
         }
     }

@@ -10,12 +10,14 @@
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
+#include "workshop.core/statistics/statistics_manager.h"
 
 namespace ws {
 
 dx12_ri_upload_manager::dx12_ri_upload_manager(dx12_render_interface& renderer)
     : m_renderer(renderer)
 {
+    m_stats_render_bytes_uploaded = statistics_manager::get().find_or_create_channel("render/bytes uploaded", 1.0, statistics_commit_point::end_of_render);
 }
 
 dx12_ri_upload_manager::~dx12_ri_upload_manager()
@@ -308,6 +310,8 @@ dx12_ri_upload_manager::upload_state dx12_ri_upload_manager::allocate_upload(siz
         {
             if (heap->memory_heap->alloc(size, alignment, state.heap_offset))
             {
+                heap->last_allocation_frame = m_frame_index;
+
                 state.heap_size = size;
                 state.heap = heap.get();
                 break;
@@ -346,6 +350,8 @@ void dx12_ri_upload_manager::new_frame(size_t index)
 
 void dx12_ri_upload_manager::free_uploads()
 {
+    profile_marker(profile_colors::render, "free uploads");
+
     size_t pipeline_depth = m_renderer.get_pipeline_depth();
     if (m_frame_index < pipeline_depth)
     {
@@ -358,6 +364,8 @@ void dx12_ri_upload_manager::free_uploads()
     {
         if (iter->freed_frame_index <= free_frame_index)
         {
+            profile_marker(profile_colors::render, "free allocation");
+
 #ifdef UPLOAD_DEBUG
             memset(iter->heap->start_ptr + iter->heap_offset, 0, iter->heap_size);
             db_log(renderer, "Freeing: %p (%zi)", iter->heap->start_ptr + iter->heap_offset, iter->heap_size);
@@ -381,6 +389,8 @@ void dx12_ri_upload_manager::free_uploads()
 
             if (heap->memory_heap->empty())
             {
+                profile_marker(profile_colors::render, "free heap");
+
                 D3D12_RANGE range;
                 range.Begin = 0;
                 range.End = k_heap_size;
@@ -398,20 +408,38 @@ void dx12_ri_upload_manager::free_uploads()
         }
     }
 }
-
 void dx12_ri_upload_manager::perform_uploads()
 {
+    profile_marker(profile_colors::render, "perform uploads");
+
     ri_command_queue& copy_queue = m_renderer.get_copy_queue();
     ri_command_queue& graphics_queue = m_renderer.get_graphics_queue();
 
     size_t fence_value = m_frame_index + 1;
+
+    size_t total_bytes = 0;
 
     std::vector<upload_state> uploads = m_pending_uploads;
     m_pending_uploads.clear();
 
     if (uploads.empty())
     {
+        m_stats_render_bytes_uploaded->submit(0.0);
         return;
+    }
+
+    // Seperate out all the unique resources for transitions. We have to do this
+    // as we can perform multiple uploads to the same resource.
+    std::vector<upload_state> unique_resources;
+    for (upload_state& upload : uploads)
+    {
+        auto iter = std::find_if(unique_resources.begin(), unique_resources.end(), [&upload](upload_state& b) {
+            return b.resource == upload.resource;
+        });
+        if (iter == unique_resources.end())
+        {
+            unique_resources.push_back(upload);
+        }
     }
 
     profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "uploads");
@@ -421,12 +449,9 @@ void dx12_ri_upload_manager::perform_uploads()
     {
         dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
         transition_list.open();
-        for (upload_state& state : uploads)
+        for (upload_state& state : unique_resources)
         {
             transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::initial, ri_resource_state::common_state);
-
-            state.freed_frame_index = m_frame_index;
-            m_pending_free.push_back(state);
         }        
         transition_list.close();
 
@@ -457,12 +482,9 @@ void dx12_ri_upload_manager::perform_uploads()
         {
             dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(copy_queue.alloc_command_list());
             transition_list.open();
-            for (upload_state& state : uploads)
+            for (upload_state& state : unique_resources)
             {
                 transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::common_state, ri_resource_state::copy_dest);
-
-                state.freed_frame_index = m_frame_index;
-                m_pending_free.push_back(state);
             }
             transition_list.close();
 
@@ -476,6 +498,11 @@ void dx12_ri_upload_manager::perform_uploads()
         for (upload_state& state : uploads)
         {
             state.build_command_list(list);
+
+            state.freed_frame_index = m_frame_index;
+            m_pending_free.push_back(state);
+
+            total_bytes += state.heap_size;
         }
         list.close();
         copy_queue.execute(list);
@@ -484,12 +511,9 @@ void dx12_ri_upload_manager::perform_uploads()
         {
             dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(copy_queue.alloc_command_list());
             transition_list.open();
-            for (upload_state& state : uploads)
+            for (upload_state& state : unique_resources)
             {
                 transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::copy_dest, ri_resource_state::common_state);
-
-                state.freed_frame_index = m_frame_index;
-                m_pending_free.push_back(state);
             }
             transition_list.close();
 
@@ -505,18 +529,17 @@ void dx12_ri_upload_manager::perform_uploads()
     {
         dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
         transition_list.open();
-        for (upload_state& state : uploads)
+        for (upload_state& state : unique_resources)
         {
             transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::common_state, ri_resource_state::initial);
-
-            state.freed_frame_index = m_frame_index;
-            m_pending_free.push_back(state);
         }
         transition_list.close();
 
         profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources to initial");
         graphics_queue.execute(transition_list);
     }
+
+    m_stats_render_bytes_uploaded->submit(static_cast<double>(total_bytes));
 }
 
 }; // namespace ws

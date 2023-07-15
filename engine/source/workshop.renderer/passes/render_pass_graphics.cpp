@@ -83,19 +83,15 @@ result<void> render_pass_graphics::validate_parameters()
         }
     }
 
-    // Check param block types match.
-    if (pipeline_params.param_block_archetypes.size() != param_blocks.size())
-    {
-        db_error(renderer, "Render pass '%s' has %zi param blocks but pipeline expected %zi.",
-            name.c_str(),
-            param_blocks.size(),
-            pipeline_params.param_block_archetypes.size()
-        );
-        return false;
-    }
-
+    // Check param block types match.    
     for (ri_param_block_archetype* archetype : pipeline_params.param_block_archetypes)
     {
+        // Ignore instanced param buffers, we pass these around in a variety of ways indirectly.
+        if (archetype->get_create_params().scope == ri_data_scope::instance)
+        {
+            continue;
+        }
+
         bool exists = false;
 
         for (ri_param_block* block : param_blocks)
@@ -109,16 +105,29 @@ result<void> render_pass_graphics::validate_parameters()
 
         if (!exists)
         {
-            db_error(renderer, "Render pass '%s' does not have expected param block '%s'.",
-                name.c_str(),
-                archetype->get_name()
-            );
-
-            return false;
+            m_runtime_bound_param_blocks.push_back(archetype);
         }
     }
 
     return true;
+}
+
+std::vector<ri_param_block*> render_pass_graphics::bind_param_blocks(render_resource_cache& cache)
+{
+    std::vector<ri_param_block*> result = param_blocks;
+
+    for (ri_param_block_archetype* archetype : m_runtime_bound_param_blocks)
+    {
+        ri_param_block* block = cache.find_param_block_by_name(archetype->get_name());
+        if (block == nullptr)
+        {
+            db_fatal(renderer, "Missing param block that was expected to be bound at runtime '%s'.", archetype->get_name());
+        }
+
+        result.push_back(block);
+    }
+
+    return result;
 }
 
 }; // namespace ws

@@ -11,6 +11,7 @@ namespace ws {
 class renderer;
 class render_graph;
 class render_world_state;
+class render_view;
 
 // ================================================================================================
 //  Base class. Derived classes are responsible for handling everything required
@@ -40,6 +41,12 @@ public:
     // This is run in parallel with all other passes, so care must be taken
     // with what it accesses.
     virtual void step(const render_world_state& state) = 0;
+
+    // Called once each frame just prior to a given view being rendered.
+    // 
+    // This is run in parallel with the rendering of all other views, so care
+    // must be taken with what it accesses. 
+    virtual void step_view(const render_world_state& state, render_view& view) {};
 
 protected:
 

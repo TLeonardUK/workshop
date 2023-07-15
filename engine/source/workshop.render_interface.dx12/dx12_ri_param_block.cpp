@@ -97,6 +97,10 @@ void dx12_ri_param_block::get_table(size_t& index, size_t& offset)
         mutate();
     }
 
+    // We need to consume the param block if we are referencing the table indices. Otherwise indirect references
+    // to param blocks will never increase the use count and never mutate.
+    consume();
+
     m_archetype.get_table(m_allocation, index, offset);
 }
 

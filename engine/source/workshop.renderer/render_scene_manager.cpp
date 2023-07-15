@@ -6,6 +6,7 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
+#include "workshop.renderer/objects/render_directional_light.h"
 
 namespace ws {
     
@@ -43,6 +44,50 @@ void render_scene_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_obj
     }
 }
 
+void render_scene_manager::render_object_created(render_object* obj)
+{
+    obj->object_tree_token = m_object_oct_tree.insert(obj->get_bounds().get_aligned_bounds(), obj);
+}
+
+void render_scene_manager::render_object_destroyed(render_object* obj)
+{
+    if (obj->object_tree_token.is_valid())
+    {
+        m_object_oct_tree.remove(obj->object_tree_token);
+        obj->object_tree_token.reset();
+    }
+}
+
+void render_scene_manager::render_object_bounds_modified(render_object* obj)
+{
+    // Remove and readd to octtree with the new bounds.
+    obj->object_tree_token = m_object_oct_tree.modify(obj->object_tree_token, obj->get_bounds().get_aligned_bounds(), obj);
+}
+
+void render_scene_manager::update_visibility()
+{
+    profile_marker(profile_colors::render, "update visibility");
+
+    size_t frame_index = m_renderer.get_visibility_frame_index();
+
+    for (render_view* view : m_active_views)
+    {
+        if (view->visibility_index == render_view::k_always_visible_index)
+        {
+            continue;
+        }
+
+        frustum frustum = view->get_frustum();
+
+        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, false);
+        for (render_object* object : visible_objects.elements)
+        {
+            object->last_visible_frame[view->visibility_index] = frame_index;
+        }
+    }
+}
+
+
 render_object* render_scene_manager::resolve_id(render_object_id id)
 {
     if (auto iter = m_objects.find(id); iter != m_objects.end())
@@ -51,6 +96,10 @@ render_object* render_scene_manager::resolve_id(render_object_id id)
     }
     return nullptr;
 }
+
+// ===========================================================================================
+//  Objects
+// ===========================================================================================
 
 void render_scene_manager::set_object_transform(render_object_id id, const vector3& location, const quat& rotation, const vector3& scale)
 {
@@ -63,6 +112,10 @@ void render_scene_manager::set_object_transform(render_object_id id, const vecto
         db_warning(renderer, "set_object_transform called with non-existant id {%zi}.", id);
     }
 }
+
+// ===========================================================================================
+//  Views
+// ===========================================================================================
 
 void render_scene_manager::create_view(render_object_id id, const char* name)
 {
@@ -147,6 +200,10 @@ std::vector<render_view*> render_scene_manager::get_views()
     return m_active_views;
 }
 
+// ===========================================================================================
+//  Static meshes
+// ===========================================================================================
+
 void render_scene_manager::create_static_mesh(render_object_id id, const char* name)
 {
     std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(this, m_renderer);
@@ -199,47 +256,120 @@ std::vector<render_static_mesh*> render_scene_manager::get_static_meshes()
     return m_active_static_meshes;
 }
 
-void render_scene_manager::render_object_created(render_object* obj)
-{
-    obj->object_tree_token = m_object_oct_tree.insert(obj->get_bounds().get_aligned_bounds(), obj);
-}
+// ===========================================================================================
+//  Directional light.
+// ===========================================================================================
 
-void render_scene_manager::render_object_destroyed(render_object* obj)
+void render_scene_manager::create_directional_light(render_object_id id, const char* name)
 {
-    if (obj->object_tree_token.is_valid())
+    std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(this, m_renderer);
+    obj->set_name(name);
+
+    render_directional_light* obj_ptr = obj.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(obj));
+    if (success)
     {
-        m_object_oct_tree.remove(obj->object_tree_token);
-        obj->object_tree_token.reset();
+        m_active_directional_lights.push_back(obj_ptr);
+
+        db_verbose(renderer, "Created new directional light: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "create_directional_light called with a duplicate id {%zi}.", id);
     }
 }
 
-void render_scene_manager::render_object_bounds_modified(render_object* obj)
+void render_scene_manager::destroy_directional_light(render_object_id id)
 {
-    // Remove and readd to octtree with the new bounds.
-    obj->object_tree_token = m_object_oct_tree.modify(obj->object_tree_token, obj->get_bounds().get_aligned_bounds(), obj);
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed directional light: {%zi} %s", id, iter->second->get_name().c_str());
+
+        m_active_directional_lights.erase(std::find(m_active_directional_lights.begin(), m_active_directional_lights.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_directional_light called with non-existant id {%zi}.", id);
+    }
 }
 
-void render_scene_manager::update_visibility()
+void render_scene_manager::set_directional_light_shadow_casting(render_object_id id, bool value)
 {
-    profile_marker(profile_colors::render, "update visibility");
-
-    size_t frame_index = m_renderer.get_visibility_frame_index();
-
-    for (render_view* view : m_active_views)
+    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
     {
-        if (view->visibility_index == render_view::k_always_visible_index)
-        {
-            continue;
-        }
-
-        frustum frustum = view->get_frustum();
-
-        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, false);
-        for (render_object* object : visible_objects.elements)
-        {
-            object->last_visible_frame[view->visibility_index] = frame_index;
-        }
+        object->set_shadow_casting(value);
     }
+    else
+    {
+        db_warning(renderer, "set_directional_light_shadow_casting called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_directional_light_shadow_map_size(render_object_id id, size_t value)
+{
+    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
+    {
+        object->set_shadow_map_size(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_directional_light_shadow_map_size called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_directional_light_shadow_max_distance(render_object_id id, float value)
+{
+    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
+    {
+        object->set_shadow_max_distance(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_directional_light_shadow_max_distance called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_directional_light_shadow_cascades(render_object_id id, size_t value)
+{
+    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
+    {
+        object->set_shadow_cascades(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_directional_light_shadow_cascades called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_directional_light_shadow_cascade_exponent(render_object_id id, float value)
+{
+    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
+    {
+        object->set_shadow_cascade_exponent(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_directional_light_shadow_cascade_exponent called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_directional_light_shadow_cascade_blend(render_object_id id, float value)
+{
+    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
+    {
+        object->set_shadow_cascade_blend(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_directional_light_shadow_cascade_exponent called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_directional_light*> render_scene_manager::get_directional_lights()
+{
+    return m_active_directional_lights;
 }
 
 }; // namespace ws

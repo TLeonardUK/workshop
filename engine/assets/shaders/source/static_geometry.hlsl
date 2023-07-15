@@ -12,14 +12,14 @@ struct geometry_pinput
     float2 uv0 : TEXCOORD0;
     float4 world_normal : TEXCOORD1;
     float4 world_tangent : TEXCOORD2;
-    float4 world_position : TEXCOORD4;
+    float4 world_position : TEXCOORD3;
 };
 
 geometry_pinput vshader(vertex_input input)
 {
     vertex v = load_vertex(input.vertex_id);
     geometry_instance_info vi = load_geometry_instance_info(input.instance_id);
- 
+
     float4x4 mvp_matrix = mul(projection_matrix, mul(view_matrix, vi.model_matrix));
 
     geometry_pinput result;
@@ -27,7 +27,7 @@ geometry_pinput vshader(vertex_input input)
     result.uv0 = v.uv0;
     result.world_normal = mul(vi.model_matrix, float4(v.normal, 0.0f));
     result.world_tangent = mul(vi.model_matrix, float4(v.tangent, 0.0f));
-    result.world_position = mul(vi.model_matrix, float4(v.position, 0.0f));
+    result.world_position = mul(vi.model_matrix, float4(v.position, 1.0f));
 
     return result;
 }
@@ -44,6 +44,7 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz
     );
+    f.world_position = input.world_position;
 
     return encode_gbuffer(f);
 }

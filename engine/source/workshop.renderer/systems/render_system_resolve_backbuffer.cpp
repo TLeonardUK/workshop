@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
+#include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
@@ -44,6 +45,8 @@ void render_system_resolve_backbuffer::step(const render_world_state& state)
 
     // Apply current visualization mode.
     m_resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
+    m_resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
+    m_resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
 }
 
 }; // namespace ws

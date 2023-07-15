@@ -29,10 +29,13 @@ gbuffer_output encode_gbuffer(gbuffer_fragment fragment)
     gbuffer_output output;
     output.buffer0.xyz = fragment.albedo;
     output.buffer0.w = fragment.opacity;
+
     output.buffer1.xyz = fragment.world_normal;
     output.buffer1.w = fragment.roughness;
+
     output.buffer2.xyz = fragment.world_position;
     output.buffer2.w = fragment.metallic;
+    
     return output;
 }
 
@@ -44,14 +47,14 @@ gbuffer_fragment read_gbuffer(float2 uv)
     float4 buffer2 = gbuffer2_texture.Sample(gbuffer_sampler, uv);
 
     gbuffer_fragment result;
-    result.albedo = buffer0.rgb;
-    result.opacity = buffer0.a;
+    result.albedo = buffer0.xyz;
+    result.opacity = buffer0.w;
 
-    result.world_normal = buffer1.rgb;
-    result.metallic = buffer1.a;
+    result.world_normal = buffer1.xyz;
+    result.roughness = buffer1.w;
 
-    result.world_position = buffer2.rgb;
-    result.roughness = buffer2.a;
+    result.world_position = buffer2.xyz;
+    result.metallic = buffer2.w;
 
     return result;
 }

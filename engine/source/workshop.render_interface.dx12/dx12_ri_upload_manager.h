@@ -24,6 +24,7 @@ class dx12_render_interface;
 class dx12_ri_texture;
 class dx12_ri_buffer;
 class dx12_ri_command_list;
+class statistics_channel;
 class ri_fence;
 
 // ================================================================================================
@@ -51,6 +52,8 @@ private:
         uint8_t* start_ptr = nullptr;
 
         std::unique_ptr<memory_heap> memory_heap;
+
+        size_t last_allocation_frame = 0;
     };
 
     struct upload_state
@@ -97,6 +100,8 @@ private:
     //std::unique_ptr<memory_heap> m_upload_heap;
 
     std::vector<std::unique_ptr<heap_state>> m_heaps;
+
+    statistics_channel* m_stats_render_bytes_uploaded = nullptr;
 
 };
 

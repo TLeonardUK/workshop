@@ -107,6 +107,35 @@ public:
     // Set the model that will be rendered on the static mesh.
     void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
 
+    // ===========================================================================================
+    //  Directional light.
+    // ===========================================================================================
+
+    // Creates a directional light in the scene.
+    render_object_id create_directional_light(const char* name);
+
+    // Destroys a directional light previously created with create_directional_light
+    void destroy_directional_light(render_object_id id);
+
+    // Sets if a directional light will cast shadows.
+    void set_directional_light_shadow_casting(render_object_id id, bool value);
+    
+    // Sets the size of of shadow map texture.
+    void set_directional_light_shadow_map_size(render_object_id id, size_t value);
+
+    // Sets the maximum distance at which shadow will be casted by the directional light
+    void set_directional_light_shadow_max_distance(render_object_id id, float value);
+
+    // Sets the number of cascades in the lights shadow map.
+    void set_directional_light_shadow_cascades(render_object_id id, size_t value);
+
+    // Sets the exponent from which the shadow map cascade split will be derived.
+    // The lower the exponent the closer to linear the split becomes.
+    void set_directional_light_shadow_cascade_exponent(render_object_id id, float value);
+
+    // Sets the fraction of a cascade that is blended into the next cascade.
+    void set_directional_light_shadow_cascade_blend(render_object_id id, float value);
+
 private:
     renderer& m_renderer;
 

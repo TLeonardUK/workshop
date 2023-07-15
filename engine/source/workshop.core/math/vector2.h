@@ -133,7 +133,7 @@ inline element_type base_vector2<element_type>::length() const
 template <typename element_type>
 inline element_type base_vector2<element_type>::length_squared() const
 {
-	return Dot(*this, *this);
+	return dot(*this, *this);
 }
 
 template <typename element_type>
@@ -152,7 +152,7 @@ inline base_vector2<element_type> base_vector2<element_type>::normalize() const
 }
 
 template <typename element_type>
-inline static float base_vector2<element_type>::dot(const base_vector2 & a, const base_vector2 & b)
+inline float base_vector2<element_type>::dot(const base_vector2 & a, const base_vector2 & b)
 {
 	base_vector2<element_type> tmp(a * b);
 	return tmp.x + tmp.y;

@@ -13,6 +13,8 @@
 
 namespace ws {
 
+class render_resource_cache;
+
 // ================================================================================================
 //  Base class for all graphics render passes.
 // ================================================================================================
@@ -32,6 +34,15 @@ public:
 
     // The param blocks required by the technique being rendered.
     std::vector<ri_param_block*> param_blocks;
+
+protected:
+
+    // Types of param blocks that are expected to be bound at runtime as were not passed in param_blocks.
+    std::vector<ri_param_block_archetype*> m_runtime_bound_param_blocks;
+
+    // Attempts to get a list that contains param_blocks and if we have any runtime bound param blocks
+    // attempts to extract them out of the given resource cache.
+    std::vector<ri_param_block*> bind_param_blocks(render_resource_cache& cache);
 
 public:
     result<void> validate_parameters();
