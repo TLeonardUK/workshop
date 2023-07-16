@@ -108,7 +108,29 @@ public:
     void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
 
     // ===========================================================================================
-    //  Directional light.
+    //  Lights
+    // ===========================================================================================
+
+    // Sets how brightly a light shines.
+    void set_light_intensity(render_object_id id, float value);
+
+    // Sets how far away the light can effect.
+    void set_light_range(render_object_id id, float value);
+
+    // Sets the color a light produces.
+    void set_light_color(render_object_id id, color color);
+
+    // Sets if a light will cast shadows.
+    void set_light_shadow_casting(render_object_id id, bool value);
+
+    // Sets the size of of shadow map texture.
+    void set_light_shadow_map_size(render_object_id id, size_t value);
+
+    // Sets the maximum distance at which shadow will be casted by the light
+    void set_light_shadow_max_distance(render_object_id id, float value);
+
+    // ===========================================================================================
+    //  Directional light
     // ===========================================================================================
 
     // Creates a directional light in the scene.
@@ -116,15 +138,6 @@ public:
 
     // Destroys a directional light previously created with create_directional_light
     void destroy_directional_light(render_object_id id);
-
-    // Sets if a directional light will cast shadows.
-    void set_directional_light_shadow_casting(render_object_id id, bool value);
-    
-    // Sets the size of of shadow map texture.
-    void set_directional_light_shadow_map_size(render_object_id id, size_t value);
-
-    // Sets the maximum distance at which shadow will be casted by the directional light
-    void set_directional_light_shadow_max_distance(render_object_id id, float value);
 
     // Sets the number of cascades in the lights shadow map.
     void set_directional_light_shadow_cascades(render_object_id id, size_t value);
@@ -135,6 +148,30 @@ public:
 
     // Sets the fraction of a cascade that is blended into the next cascade.
     void set_directional_light_shadow_cascade_blend(render_object_id id, float value);
+
+    // ===========================================================================================
+    //  Point light
+    // ===========================================================================================
+
+    // Creates a point light in the scene.
+    render_object_id create_point_light(const char* name);
+
+    // Destroys a point light previously created with create_point_light
+    void destroy_point_light(render_object_id id);
+
+    // ===========================================================================================
+    //  Spot light
+    // ===========================================================================================
+
+    // Creates a spot light in the scene.
+    render_object_id create_spot_light(const char* name);
+
+    // Destroys a spot light previously created with create_point_light
+    void destroy_spot_light(render_object_id id);
+
+    // Sets the radius of the inner and outer bounds of the spotlight.
+    // Radiuses are in radians are range from [0, pi]
+    void set_spot_light_radius(render_object_id id, float inner_radius, float outer_radius);
 
 private:
     renderer& m_renderer;

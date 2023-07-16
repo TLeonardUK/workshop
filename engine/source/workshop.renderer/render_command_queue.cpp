@@ -192,6 +192,52 @@ void render_command_queue::set_static_mesh_model(render_object_id id, const asse
 }
 
 // ================================================================================================
+//  Lights
+// ================================================================================================
+
+void render_command_queue::set_light_intensity(render_object_id id, float value)
+{
+    queue_command("set_light_intensity", [renderer = &m_renderer, id, value]() {
+        renderer->get_scene_manager().set_light_intensity(id, value);
+    });
+}
+
+void render_command_queue::set_light_range(render_object_id id, float value)
+{
+    queue_command("set_light_range", [renderer = &m_renderer, id, value]() {
+        renderer->get_scene_manager().set_light_range(id, value);
+    });
+}
+
+void render_command_queue::set_light_color(render_object_id id, color color)
+{
+    queue_command("set_light_color", [renderer = &m_renderer, id, color]() {
+        renderer->get_scene_manager().set_light_color(id, color);
+    });
+}
+
+void render_command_queue::set_light_shadow_casting(render_object_id id, bool value)
+{
+    queue_command("set_light_shadow_casting", [renderer = &m_renderer, id, value]() {
+        renderer->get_scene_manager().set_light_shadow_casting(id, value);
+    });
+}
+
+void render_command_queue::set_light_shadow_map_size(render_object_id id, size_t value)
+{
+    queue_command("set_light_shadow_map_size", [renderer = &m_renderer, id, value]() {
+        renderer->get_scene_manager().set_light_shadow_map_size(id, value);
+    });
+}
+
+void render_command_queue::set_light_shadow_max_distance(render_object_id id, float value)
+{
+    queue_command("set_light_shadow_max_distance", [renderer = &m_renderer, id, value]() {
+        renderer->get_scene_manager().set_light_shadow_max_distance(id, value);
+    });
+}
+
+// ================================================================================================
 //  Directional lights
 // ================================================================================================
 
@@ -214,27 +260,6 @@ void render_command_queue::destroy_directional_light(render_object_id id)
     });
 }
 
-void render_command_queue::set_directional_light_shadow_casting(render_object_id id, bool value)
-{
-    queue_command("set_directional_light_shadow_casting", [renderer = &m_renderer, id, value]() {
-        renderer->get_scene_manager().set_directional_light_shadow_casting(id, value);
-    });
-}
-
-void render_command_queue::set_directional_light_shadow_map_size(render_object_id id, size_t value)
-{
-    queue_command("set_directional_light_shadow_map_size", [renderer = &m_renderer, id, value]() {
-        renderer->get_scene_manager().set_directional_light_shadow_map_size(id, value);
-    });
-}
-
-void render_command_queue::set_directional_light_shadow_max_distance(render_object_id id, float value)
-{
-    queue_command("set_directional_light_shadow_max_distance", [renderer = &m_renderer, id, value]() {
-        renderer->get_scene_manager().set_directional_light_shadow_max_distance(id, value);
-    });
-}
-
 void render_command_queue::set_directional_light_shadow_cascades(render_object_id id, size_t value)
 {
     queue_command("set_directional_light_shadow_cascades", [renderer = &m_renderer, id, value]() {
@@ -253,6 +278,59 @@ void render_command_queue::set_directional_light_shadow_cascade_blend(render_obj
 {
     queue_command("set_directional_light_shadow_cascade_blend", [renderer = &m_renderer, id, value]() {
         renderer->get_scene_manager().set_directional_light_shadow_cascade_blend(id, value);
+    });
+}
+
+// ================================================================================================
+//  Point lights
+// ================================================================================================
+
+render_object_id render_command_queue::create_point_light(const char* name)
+{
+    render_object_id id = m_renderer.next_render_object_id();
+    const char* stored_name = allocate_copy(name);
+
+    queue_command("create_point_light", [renderer = &m_renderer, id, stored_name]() {
+        renderer->get_scene_manager().create_point_light(id, stored_name);
+    });
+
+    return id;
+}
+
+void render_command_queue::destroy_point_light(render_object_id id)
+{
+    queue_command("destroy_point_light", [renderer = &m_renderer, id]() {
+        renderer->get_scene_manager().destroy_point_light(id);
+    });
+}
+
+// ================================================================================================
+//  Spot lights
+// ================================================================================================
+
+render_object_id render_command_queue::create_spot_light(const char* name)
+{
+    render_object_id id = m_renderer.next_render_object_id();
+    const char* stored_name = allocate_copy(name);
+
+    queue_command("create_spot_light", [renderer = &m_renderer, id, stored_name]() {
+        renderer->get_scene_manager().create_spot_light(id, stored_name);
+    });
+
+    return id;
+}
+
+void render_command_queue::destroy_spot_light(render_object_id id)
+{
+    queue_command("destroy_spot_light", [renderer = &m_renderer, id]() {
+        renderer->get_scene_manager().destroy_spot_light(id);
+    });
+}
+
+void render_command_queue::set_spot_light_radius(render_object_id id, float inner_radius, float outer_radius)
+{
+    queue_command("set_spot_light_radius", [renderer = &m_renderer, id, inner_radius, outer_radius]() {
+        renderer->get_scene_manager().set_spot_light_radius(id, inner_radius, outer_radius);
     });
 }
 

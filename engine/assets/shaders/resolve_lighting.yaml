@@ -29,6 +29,10 @@ param_blocks:
       position: float3
       direction: float3
       color: float3
+      intensity: float
+      inner_radius: float
+      outer_radius: float
+      range: float
 
 techniques:
   resolve_lighting:

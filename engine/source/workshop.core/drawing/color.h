@@ -102,6 +102,11 @@ public:
         return vector4(r, g, b, a);
     }
 
+    inline vector3 rgb() const
+    {
+        return vector3(r, g, b);
+    }
+
     inline color lerp(const color& to, float alpha) const
     {
         return {

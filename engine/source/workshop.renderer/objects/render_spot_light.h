@@ -13,26 +13,17 @@
 namespace ws {
 
 // ================================================================================================
-//  Represets a global light casting in a specific direction, eg the sun.
+//  Represets a spot light pointing in a specific direction with attenuation.
 // ================================================================================================
-class render_directional_light : public render_light
+class render_spot_light : public render_light
 {
 public:
-    render_directional_light(render_scene_manager* scene_manager, renderer& renderer);
-    virtual ~render_directional_light();
+    render_spot_light(render_scene_manager* scene_manager, renderer& renderer);
+    virtual ~render_spot_light();
 
-    // Gets/sets the number of shadow map cascades 
-    void set_shadow_cascades(size_t value);
-    size_t get_shodow_cascades();
-
-    // Gets/sets the exponent from which the shadow map cascade split will be derived.
-    // The lower the exponent the closer to linear the split becomes.
-    void set_shadow_cascade_exponent(float value);
-    float get_shodow_cascade_exponent();
-
-    // Gets/sets the fraction of a cascade that is blended into the next cascade.
-    void set_shadow_cascade_blend(float value);
-    float get_shodow_cascade_blend();
+    // Gets/sets the inner and outer radii of the spot lights umbra.
+    void set_radius(float inner, float outer);
+    void get_radius(float& inner, float& outer);
 
     // Overrides the default bounds to return the obb of the model bounds.
     virtual obb get_bounds() override;
@@ -43,10 +34,8 @@ private:
     virtual void update_render_data() override;
 
 private:
-    size_t m_shadow_map_size = 512;
-    size_t m_shadow_map_cascades = 3;
-    float m_shadow_map_exponent = 0.5f;
-    float m_shadow_map_blend = 0.1f;
+    float m_inner_radius = 0.0f;
+    float m_outer_radius = 0.0f;
 
 };
 

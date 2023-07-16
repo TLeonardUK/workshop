@@ -10,6 +10,8 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.renderer/objects/render_directional_light.h"
+#include "workshop.renderer/objects/render_point_light.h"
+#include "workshop.renderer/objects/render_spot_light.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/render_resource_cache.h"
 
@@ -85,23 +87,40 @@ void render_system_lighting::step_view(const render_world_state& state, render_v
     render_batch_instance_buffer* instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_lighting_parameters");
 
-    // TODO: Frustum cull the lights.
-    
-
-
-    // Update list of lists.
-    std::vector<render_directional_light*> directional_lights = scene_manager.get_directional_lights();
+    // Grab all lights that can directly effect the frustum.
+    // TODO: Doing an octtree query should be faster than this, reconsider.
+    std::vector<render_light*> visible_lights;
+    for (auto& light : scene_manager.get_directional_lights())
+    {
+        if (view.is_object_visible(light))
+        {
+            visible_lights.push_back(light);
+        }
+    }
+    for (auto& light : scene_manager.get_point_lights())
+    {
+        if (view.is_object_visible(light))
+        {
+            visible_lights.push_back(light);
+        }
+    }
+    for (auto& light : scene_manager.get_spot_lights())
+    {
+        if (view.is_object_visible(light))
+        {
+            visible_lights.push_back(light);
+        }
+    }
 
     // Fill in the buffer.
     int total_lights = 0;
 
-    for (render_directional_light* light : directional_lights)
+    for (render_light* light : visible_lights)
     {
         ri_param_block* block = light->get_light_state_param_block();
 
         size_t index, offset;
         block->get_table(index, offset);
-
         instance_buffer->add(index, offset);
 
         total_lights++;

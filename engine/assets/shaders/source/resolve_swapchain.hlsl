@@ -5,6 +5,7 @@
 #include "data:shaders/source/fullscreen_pass.hlsl"
 #include "data:shaders/source/common/gbuffer.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
+#include "data:shaders/source/common/tonemap.hlsl"
 
 struct swapchain_output
 {
@@ -22,12 +23,13 @@ enum visualization_mode_t
     world_position,
     lighting
 };
-
+ 
 swapchain_output pshader(fullscreen_pinput input)
 {
     gbuffer_fragment f = read_gbuffer(input.uv);
 
     swapchain_output output;
+    bool tonemap = false;
 
     switch (visualization_mode)
     {
@@ -61,8 +63,15 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::lighting:
         {
             output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv);
+            tonemap = true;
             break;
         }
+    }
+    
+    // Gamma correct the output
+    if (tonemap)
+    {
+        output.color.rgb = tonemap_reinhard(output.color.rgb);
     }
 
     return output;

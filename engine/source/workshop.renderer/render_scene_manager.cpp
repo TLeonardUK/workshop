@@ -7,6 +7,8 @@
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/objects/render_directional_light.h"
+#include "workshop.renderer/objects/render_point_light.h"
+#include "workshop.renderer/objects/render_spot_light.h"
 
 namespace ws {
     
@@ -257,6 +259,82 @@ std::vector<render_static_mesh*> render_scene_manager::get_static_meshes()
 }
 
 // ===========================================================================================
+//  Lights
+// ===========================================================================================
+
+void render_scene_manager::set_light_intensity(render_object_id id, float value)
+{
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_intensity(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_intensity called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_light_range(render_object_id id, float value)
+{
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_range(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_range called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_light_color(render_object_id id, color value)
+{
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_color(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_color called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_light_shadow_casting(render_object_id id, bool value)
+{
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_shadow_casting(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_shadow_casting called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_light_shadow_map_size(render_object_id id, size_t value)
+{
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_shadow_map_size(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_shadow_map_size called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_light_shadow_max_distance(render_object_id id, float value)
+{
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_shadow_max_distance(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_shadow_max_distance called with non-existant id {%zi}.", id);
+    }
+}
+
+// ===========================================================================================
 //  Directional light.
 // ===========================================================================================
 
@@ -292,42 +370,6 @@ void render_scene_manager::destroy_directional_light(render_object_id id)
     else
     {
         db_warning(renderer, "destroy_directional_light called with non-existant id {%zi}.", id);
-    }
-}
-
-void render_scene_manager::set_directional_light_shadow_casting(render_object_id id, bool value)
-{
-    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
-    {
-        object->set_shadow_casting(value);
-    }
-    else
-    {
-        db_warning(renderer, "set_directional_light_shadow_casting called with non-existant id {%zi}.", id);
-    }
-}
-
-void render_scene_manager::set_directional_light_shadow_map_size(render_object_id id, size_t value)
-{
-    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
-    {
-        object->set_shadow_map_size(value);
-    }
-    else
-    {
-        db_warning(renderer, "set_directional_light_shadow_map_size called with non-existant id {%zi}.", id);
-    }
-}
-
-void render_scene_manager::set_directional_light_shadow_max_distance(render_object_id id, float value)
-{
-    if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
-    {
-        object->set_shadow_max_distance(value);
-    }
-    else
-    {
-        db_warning(renderer, "set_directional_light_shadow_max_distance called with non-existant id {%zi}.", id);
     }
 }
 
@@ -370,6 +412,106 @@ void render_scene_manager::set_directional_light_shadow_cascade_blend(render_obj
 std::vector<render_directional_light*> render_scene_manager::get_directional_lights()
 {
     return m_active_directional_lights;
+}
+
+// ===========================================================================================
+//  Point light
+// ===========================================================================================
+
+void render_scene_manager::create_point_light(render_object_id id, const char* name)
+{
+    std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(this, m_renderer);
+    obj->set_name(name);
+
+    render_point_light* obj_ptr = obj.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(obj));
+    if (success)
+    {
+        m_active_point_lights.push_back(obj_ptr);
+
+        db_verbose(renderer, "Created new point light: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "create_point_light called with a duplicate id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::destroy_point_light(render_object_id id)
+{
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed point light: {%zi} %s", id, iter->second->get_name().c_str());
+
+        m_active_point_lights.erase(std::find(m_active_point_lights.begin(), m_active_point_lights.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_point_light called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_point_light*> render_scene_manager::get_point_lights()
+{
+    return m_active_point_lights;
+}
+
+// ===========================================================================================
+//  Spot light
+// ===========================================================================================
+
+void render_scene_manager::create_spot_light(render_object_id id, const char* name)
+{
+    std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(this, m_renderer);
+    obj->set_name(name);
+
+    render_spot_light* obj_ptr = obj.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(obj));
+    if (success)
+    {
+        m_active_spot_lights.push_back(obj_ptr);
+
+        db_verbose(renderer, "Created new spot light: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "create_spot_light called with a duplicate id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::destroy_spot_light(render_object_id id)
+{
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed spot light: {%zi} %s", id, iter->second->get_name().c_str());
+
+        m_active_spot_lights.erase(std::find(m_active_spot_lights.begin(), m_active_spot_lights.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_point_light called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_spot_light_radius(render_object_id id, float inner_radius, float outer_radius)
+{
+    if (render_spot_light* object = dynamic_cast<render_spot_light*>(resolve_id(id)))
+    {
+        object->set_radius(inner_radius, outer_radius);
+    }
+    else
+    {
+        db_warning(renderer, "set_spot_light_radius called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_spot_light*> render_scene_manager::get_spot_lights()
+{
+    return m_active_spot_lights;
 }
 
 }; // namespace ws

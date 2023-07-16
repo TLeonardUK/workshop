@@ -122,8 +122,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
                 const render_batch_instance& instance = instances[j];
 
                 // Skip instance if its not visibile this frame.
-                if (view.visibility_index != render_view::k_always_visible_index &&
-                    instance.object->last_visible_frame[view.visibility_index] < visibility_frame_index)
+                if (!view.is_object_visible(instance.object))
                 {
                     culled_instances++;
                     continue;

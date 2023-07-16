@@ -18,6 +18,8 @@ class renderer;
 enum class render_light_type
 {
     directional = 0,
+    point = 1,
+    spotlight = 2,
 };
 
 // ================================================================================================

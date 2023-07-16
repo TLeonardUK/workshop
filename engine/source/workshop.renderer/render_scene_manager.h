@@ -21,6 +21,8 @@ class shader;
 class render_view;
 class render_static_mesh;
 class render_directional_light;
+class render_point_light;
+class render_spot_light;
 
 // ================================================================================================
 //  Handles management of the render scene and the objects within it. 
@@ -88,7 +90,29 @@ public:
     std::vector<render_static_mesh*> get_static_meshes();
 
     // ===========================================================================================
-    //  Directional light.
+    //  Lights
+    // ===========================================================================================
+
+    // Sets how brightly a light shines.
+    void set_light_intensity(render_object_id id, float value);
+
+    // Sets how far away the light can effect.
+    void set_light_range(render_object_id id, float value);
+
+    // Sets the color a light produces.
+    void set_light_color(render_object_id id, color color);
+
+    // Sets if a light will cast shadows.
+    void set_light_shadow_casting(render_object_id id, bool value);
+
+    // Sets the size of of shadow map texture.
+    void set_light_shadow_map_size(render_object_id id, size_t value);
+
+    // Sets the maximum distance at which shadow will be casted by the light
+    void set_light_shadow_max_distance(render_object_id id, float value);
+
+    // ===========================================================================================
+    //  Directional light
     // ===========================================================================================
 
     // Creates a directional light in the scene.
@@ -96,15 +120,6 @@ public:
 
     // Destroys a directional light previously created with create_directional_light
     void destroy_directional_light(render_object_id id);
-
-    // Sets if a directional light will cast shadows.
-    void set_directional_light_shadow_casting(render_object_id id, bool value);
-
-    // Sets the size of of shadow map texture.
-    void set_directional_light_shadow_map_size(render_object_id id, size_t value);
-
-    // Sets the maximum distance at which shadow will be casted by the directional light
-    void set_directional_light_shadow_max_distance(render_object_id id, float value);
 
     // Sets the number of cascades in the lights shadow map.
     void set_directional_light_shadow_cascades(render_object_id id, size_t value);
@@ -118,6 +133,35 @@ public:
 
     // Gets a list of all active directional lights.
     std::vector<render_directional_light*> get_directional_lights();
+
+    // ===========================================================================================
+    //  Point light
+    // ===========================================================================================
+
+    // Creates a point light in the scene.
+    void create_point_light(render_object_id id, const char* name);
+
+    // Destroys a point light previously created with create_point_light
+    void destroy_point_light(render_object_id id);
+
+    // Gets a list of all active point lights.
+    std::vector<render_point_light*> get_point_lights();
+
+    // ===========================================================================================
+    //  Spot light
+    // ===========================================================================================
+
+    // Creates a spot light in the scene.
+    void create_spot_light(render_object_id id, const char* name);
+
+    // Destroys a point light previously created with create_point_light
+    void destroy_spot_light(render_object_id id);
+
+    // Sets the radius of the inner and outer bounds of the spotlight.
+    void set_spot_light_radius(render_object_id id, float inner_radius, float outer_radius);
+
+    // Gets a list of all active spot lights.
+    std::vector<render_spot_light*> get_spot_lights();
 
 private:
 
@@ -147,6 +191,8 @@ private:
     std::vector<render_view*> m_active_views;
     std::vector<render_static_mesh*> m_active_static_meshes;
     std::vector<render_directional_light*> m_active_directional_lights;
+    std::vector<render_point_light*> m_active_point_lights;
+    std::vector<render_spot_light*> m_active_spot_lights;
 
 };
 

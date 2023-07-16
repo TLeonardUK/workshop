@@ -115,4 +115,13 @@ render_resource_cache& render_view::get_resource_cache()
     return *m_resource_cache;
 }
 
+bool render_view::is_object_visible(render_object* object)
+{
+    if (visibility_index == render_view::k_always_visible_index)
+    {
+        return true;
+    }
+    return object->last_visible_frame[visibility_index] >= m_renderer.get_visibility_frame_index();
+}
+
 }; // namespace ws

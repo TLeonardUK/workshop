@@ -57,6 +57,9 @@ public:
 
     size_t visibility_index = k_always_visible_index;
 
+    // Returns true if the given object is visible within this view.
+    bool is_object_visible(render_object* object);
+
 private:
     void update_view_info_param_block();
 

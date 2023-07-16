@@ -5,6 +5,8 @@
 
 #include "data:shaders/source/common/math.hlsl"
 
+static const float3 dielectric_fresnel = 0.04;
+
 float3 fresnel_schlick(float cos_theta, float3 f0)
 {
     return f0 + (1.0 - f0) * pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);

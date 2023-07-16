@@ -31,6 +31,7 @@ private:
     event<frame_time>::delegate_ptr m_on_step_delegate;
 
     render_object_id m_view_id;
+    render_object_id m_light_id;
 
     vector3 m_view_position = vector3::zero;
     vector3 m_view_rotation_euler = vector3::zero;
