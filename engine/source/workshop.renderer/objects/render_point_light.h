@@ -18,7 +18,7 @@ namespace ws {
 class render_point_light : public render_light
 {
 public:
-    render_point_light(render_scene_manager* scene_manager, renderer& renderer);
+    render_point_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
     virtual ~render_point_light();
 
     // Overrides the default bounds to return the obb of the model bounds.

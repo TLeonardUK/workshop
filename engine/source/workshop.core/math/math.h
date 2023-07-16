@@ -94,7 +94,7 @@ inline T abs(T a)
 template <typename T>
 inline T round(T a)
 {
-	return static_cast<T>(round(a));
+	return static_cast<T>(::round(a));
 }
 
 // Rounds up a value to a given multiple.

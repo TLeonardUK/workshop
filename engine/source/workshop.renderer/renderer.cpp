@@ -12,6 +12,7 @@
 #include "workshop.renderer/systems/render_system_imgui.h"
 #include "workshop.renderer/systems/render_system_geometry.h"
 #include "workshop.renderer/systems/render_system_debug.h"
+#include "workshop.renderer/systems/render_system_shadows.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_effect_manager.h"
@@ -116,6 +117,7 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
     //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
+    m_systems.push_back(std::make_unique<render_system_shadows>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
@@ -791,6 +793,11 @@ void renderer::set_visualization_mode(visualization_mode mode)
 visualization_mode renderer::get_visualization_mode()
 {
     return m_visualization_mode;
+}
+
+bool renderer::is_rendering_frozen()
+{
+    return m_rendering_frozen;
 }
 
 void renderer::drain()

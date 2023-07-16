@@ -9,8 +9,8 @@
 
 namespace ws {
 
-render_static_mesh::render_static_mesh(render_scene_manager* scene_manager, renderer& renderer)
-    : render_object(scene_manager)
+render_static_mesh::render_static_mesh(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
+    : render_object(id, scene_manager)
     , m_renderer(renderer)
 {
     create_render_data();

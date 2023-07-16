@@ -196,6 +196,9 @@ public:
     // Gets the current visualization mode on the render thread.
     visualization_mode get_visualization_mode();
 
+    // Returns true if the rendering is frozen and culling/etc should not be updated.
+    bool is_rendering_frozen();
+
 private:
 
     friend class render_command_queue;

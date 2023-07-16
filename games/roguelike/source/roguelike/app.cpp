@@ -79,20 +79,20 @@ ws::result<void> rl_game_app::start()
     }
     */
     
-//    m_light_id = cmd_queue.create_directional_light("Sun");
-//    cmd_queue.set_light_shadow_casting(m_light_id, false);
-//    cmd_queue.set_light_intensity(m_light_id, 1.0f);
-//    cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::identity.rotate_z(math::halfpi), vector3::one);
+    m_light_id = cmd_queue.create_directional_light("Sun");
+    cmd_queue.set_light_shadow_casting(m_light_id, true);
+    cmd_queue.set_light_intensity(m_light_id, 1.0f);
+    cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(math::halfpi*0.5f, vector3::right), vector3::one);
 
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_intensity(object_id, 100000.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
 
-    m_light_id = cmd_queue.create_spot_light("Spot");
-    cmd_queue.set_light_intensity(m_light_id, 100000000.0f);
-    cmd_queue.set_light_range(m_light_id, 1000.0f);
-    cmd_queue.set_spot_light_radius(m_light_id, math::pi * 0.01f, math::pi * 0.1f);
-    cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
+    object_id = cmd_queue.create_spot_light("Spot");
+    cmd_queue.set_light_intensity(object_id, 100000000.0f);
+    cmd_queue.set_light_range(object_id, 1000.0f);
+    cmd_queue.set_spot_light_radius(object_id, math::pi * 0.01f, math::pi * 0.1f);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);

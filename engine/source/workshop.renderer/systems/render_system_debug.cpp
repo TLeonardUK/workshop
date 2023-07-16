@@ -51,6 +51,8 @@ void render_system_debug::create_graph(render_graph& graph)
 
 void render_system_debug::step(const render_world_state& state)
 {
+    std::scoped_lock mutex(m_vertices_mutex);
+
     ri_interface& ri = m_renderer.get_render_interface();
 
     if (m_vertices.empty())
@@ -152,6 +154,8 @@ void render_system_debug::generate(renderer& renderer, render_pass::generated_st
 
 void render_system_debug::add_line(const vector3& start, const vector3& end, const color& color)
 {
+    std::scoped_lock mutex(m_vertices_mutex);
+
     debug_primitive_vertex& v0 = m_vertices.emplace_back();
     v0.position = start;
     v0.color = color.argb();

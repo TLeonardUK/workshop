@@ -18,7 +18,7 @@ namespace ws {
 class render_light : public render_object
 {
 public:
-    render_light(render_scene_manager* scene_manager, renderer& renderer);
+    render_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
     virtual ~render_light();
 
     // Gets/sets the color of the light.
@@ -39,7 +39,7 @@ public:
 
     // Gets/sets the size of the shadow map texture.
     void set_shadow_map_size(size_t value);
-    size_t get_shodow_map_size();
+    size_t get_shadow_map_size();
 
     // Gets/sets the maximum distance at which shadows are rendered, which defines what the cascades are fitted to.
     void set_shadow_max_distance(float value);
@@ -65,7 +65,7 @@ protected:
     bool m_shadow_casting = false;
     size_t m_shadow_map_size = 512;
     size_t m_shadow_map_cascades = 3;
-    float m_shadow_max_distance = 0.0f;
+    float m_shadow_max_distance = 3000.0f;
 
     std::unique_ptr<ri_param_block> m_light_state_param_block;
 

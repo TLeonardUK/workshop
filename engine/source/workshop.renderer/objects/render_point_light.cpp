@@ -10,8 +10,8 @@
 
 namespace ws {
 
-render_point_light::render_point_light(render_scene_manager* scene_manager, renderer& renderer)
-    : render_light(scene_manager, renderer)
+render_point_light::render_point_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
+    : render_light(id, scene_manager, renderer)
 {
 }
 

@@ -10,8 +10,8 @@
 
 namespace ws {
 
-render_light::render_light(render_scene_manager* scene_manager, renderer& renderer)
-    : render_object(scene_manager)
+render_light::render_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
+    : render_object(id, scene_manager)
     , m_renderer(renderer)
 {
     m_light_state_param_block = m_renderer.get_param_block_manager().create_param_block("light_state");
@@ -66,7 +66,7 @@ void render_light::set_shadow_map_size(size_t value)
     m_shadow_map_size = value;
 }
 
-size_t render_light::get_shodow_map_size()
+size_t render_light::get_shadow_map_size()
 {
     return m_shadow_map_size;
 }

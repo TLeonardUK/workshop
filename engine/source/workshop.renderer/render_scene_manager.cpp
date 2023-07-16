@@ -121,7 +121,7 @@ void render_scene_manager::set_object_transform(render_object_id id, const vecto
 
 void render_scene_manager::create_view(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_view> view = std::make_unique<render_view>(this, m_renderer);
+    std::unique_ptr<render_view> view = std::make_unique<render_view>(id, this, m_renderer);
     view->set_name(name);
 
     render_view* view_ptr = view.get();
@@ -208,7 +208,7 @@ std::vector<render_view*> render_scene_manager::get_views()
 
 void render_scene_manager::create_static_mesh(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(this, m_renderer);
+    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(id, this, m_renderer);
     obj->set_name(name);
 
     render_static_mesh* obj_ptr = obj.get();
@@ -340,7 +340,7 @@ void render_scene_manager::set_light_shadow_max_distance(render_object_id id, fl
 
 void render_scene_manager::create_directional_light(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(this, m_renderer);
+    std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(id, this, m_renderer);
     obj->set_name(name);
 
     render_directional_light* obj_ptr = obj.get();
@@ -420,7 +420,7 @@ std::vector<render_directional_light*> render_scene_manager::get_directional_lig
 
 void render_scene_manager::create_point_light(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(this, m_renderer);
+    std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(id, this, m_renderer);
     obj->set_name(name);
 
     render_point_light* obj_ptr = obj.get();
@@ -464,7 +464,7 @@ std::vector<render_point_light*> render_scene_manager::get_point_lights()
 
 void render_scene_manager::create_spot_light(render_object_id id, const char* name)
 {
-    std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(this, m_renderer);
+    std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(id, this, m_renderer);
     obj->set_name(name);
 
     render_spot_light* obj_ptr = obj.get();

@@ -18,7 +18,7 @@ namespace ws {
 class render_directional_light : public render_light
 {
 public:
-    render_directional_light(render_scene_manager* scene_manager, renderer& renderer);
+    render_directional_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
     virtual ~render_directional_light();
 
     // Gets/sets the number of shadow map cascades 
@@ -42,10 +42,13 @@ private:
     // Updates the light state param block any any other render specific resources.
     virtual void update_render_data() override;
 
+    // Builds shadow map resources.
+    void build_shadow_maps();
+
 private:
     size_t m_shadow_map_size = 512;
     size_t m_shadow_map_cascades = 3;
-    float m_shadow_map_exponent = 0.5f;
+    float m_shadow_map_exponent = 0.75f;
     float m_shadow_map_blend = 0.1f;
 
 };

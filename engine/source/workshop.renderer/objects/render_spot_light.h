@@ -18,7 +18,7 @@ namespace ws {
 class render_spot_light : public render_light
 {
 public:
-    render_spot_light(render_scene_manager* scene_manager, renderer& renderer);
+    render_spot_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
     virtual ~render_spot_light();
 
     // Gets/sets the inner and outer radii of the spot lights umbra.

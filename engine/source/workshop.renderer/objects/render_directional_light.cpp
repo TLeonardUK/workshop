@@ -7,11 +7,12 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.render_interface/ri_interface.h"
 
 namespace ws {
 
-render_directional_light::render_directional_light(render_scene_manager* scene_manager, renderer& renderer)
-    : render_light(scene_manager, renderer)
+render_directional_light::render_directional_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
+    : render_light(id, scene_manager, renderer)
 {
 }
 

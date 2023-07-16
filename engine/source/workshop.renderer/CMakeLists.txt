@@ -73,6 +73,8 @@ SET(SOURCES
     "systems/render_system_clear.cpp"
     "systems/render_system_resolve_backbuffer.h"
     "systems/render_system_resolve_backbuffer.cpp"    
+    "systems/render_system_shadows.h"
+    "systems/render_system_shadows.cpp"    
     "systems/render_system_lighting.h"
     "systems/render_system_lighting.cpp"    
     "systems/render_system_imgui.h"

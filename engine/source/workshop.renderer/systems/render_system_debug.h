@@ -64,6 +64,7 @@ private:
     };
 #pragma pack(pop)
 
+    std::mutex m_vertices_mutex;
     std::vector<debug_primitive_vertex> m_vertices;
     size_t m_draw_vertex_count = 0;
 

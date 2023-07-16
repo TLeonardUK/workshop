@@ -25,7 +25,7 @@ class render_resource_cache;
 class render_view : public render_object
 {
 public:
-    render_view(render_scene_manager* scene_manager, renderer& renderer);
+    render_view(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
 
     void set_viewport(const recti& viewport);
     recti get_viewport();
@@ -45,6 +45,7 @@ public:
     ri_param_block* get_view_info_param_block();
 
     frustum get_frustum();
+    frustum get_view_frustum();
 
     render_resource_cache& get_resource_cache();
 

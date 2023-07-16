@@ -10,6 +10,7 @@
 #include "workshop.core/math/obb.h"
 #include "workshop.core/containers/oct_tree.h"
 #include "workshop.renderer/common_types.h"
+#include "workshop.renderer/render_command_queue.h"
 
 #include <string>
 #include <bitset>
@@ -24,7 +25,7 @@ class render_scene_manager;
 class render_object
 {
 public:
-    render_object(render_scene_manager* scene_manager, bool stored_in_octtree = true);
+    render_object(render_object_id id, render_scene_manager* scene_manager, bool stored_in_octtree = true);
     virtual ~render_object();
 
 public:
@@ -32,6 +33,9 @@ public:
     // Gets or sets an arbitrary label used to identify this object in the scene.
     void set_name(const std::string& name);
     std::string get_name();
+
+    // Gets the id of this object as used to reference it via the scene manager.
+    render_object_id get_id();
 
     // Modifies the transform of this object and potentially updates render data.
     virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale);
@@ -61,6 +65,8 @@ public:
 protected:
 
     bool m_store_in_octtree = false;
+
+    render_object_id m_id;
 
     // Scene manager that owns us.
     render_scene_manager* m_scene_manager;

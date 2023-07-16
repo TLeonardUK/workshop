@@ -45,6 +45,16 @@ public:
     // Draw debug bounds of octtree cells.
     void draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds);
 
+    // Gets a pointer to a render object from its id, returns nullptr on failure.
+    render_object* resolve_id(render_object_id id);
+
+    // Gets a pointer to a render object from its id, returns nullptr on failure.
+    template<typename T>
+    T* resolve_id_typed(render_object_id id)
+    {
+        return dynamic_cast<T*>(resolve_id(id));
+    }
+
 public:
 
     // ===========================================================================================
@@ -177,9 +187,6 @@ private:
 
     inline static const vector3 k_octtree_extents = vector3(100000.0f, 100000.0f, 100000.0f);
     inline static const size_t k_octtree_max_depth = 10;
-
-    // Gets a pointer to a render object from its id, returns nullptr on failure.
-    render_object* resolve_id(render_object_id id);
 
     renderer& m_renderer;
 

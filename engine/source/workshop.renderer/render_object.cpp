@@ -7,8 +7,9 @@
 
 namespace ws {
 
-render_object::render_object(render_scene_manager* scene_manager, bool stored_in_octtree)
-    : m_scene_manager(scene_manager)
+render_object::render_object(render_object_id id, render_scene_manager* scene_manager, bool stored_in_octtree)
+    : m_id(id)
+    , m_scene_manager(scene_manager)
     , m_store_in_octtree(stored_in_octtree)
 {
     if (m_store_in_octtree)
@@ -33,6 +34,11 @@ void render_object::set_name(const std::string& name)
 std::string render_object::get_name()
 {
     return m_name;
+}
+
+render_object_id render_object::get_id()
+{
+    return m_id;
 }
 
 void render_object::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)

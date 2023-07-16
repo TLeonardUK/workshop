@@ -124,6 +124,10 @@ void render_system_lighting::step_view(const render_world_state& state, render_v
         instance_buffer->add(index, offset);
 
         total_lights++;
+        if (total_lights >= k_max_lights)
+        {
+            break;
+        }
     }
 
     instance_buffer->commit();
