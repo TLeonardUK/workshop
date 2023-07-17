@@ -83,7 +83,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_shadow_casting(m_light_id, true);
     cmd_queue.set_light_intensity(m_light_id, 1.0f);
     cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(math::halfpi*0.5f, vector3::right), vector3::one);
-
+    /*
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_intensity(object_id, 100000.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
@@ -93,6 +93,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_range(object_id, 1000.0f);
     cmd_queue.set_spot_light_radius(object_id, math::pi * 0.01f, math::pi * 0.1f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
+    */
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);
@@ -128,7 +129,8 @@ void rl_game_app::step(const frame_time& time)
     }
 
     vector3 light_pos = vector3(0.0f, 100.0f, 0.0f);//vector3(sin(angle * 5.0f), 1.0f + (-cos(angle * 5.0f)), cos(angle * 5.0f)) * 200.0f;
-    quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
+    //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
+    quat light_rot = quat::angle_axis(-math::halfpi*0.5f, vector3::right);
     cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
     cmd_queue.draw_sphere(sphere(light_pos, 10.0f), color::red);
     cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);

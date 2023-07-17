@@ -28,6 +28,8 @@ void render_scene_manager::register_init(init_list& list)
 
 void render_scene_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds)
 {
+    std::scoped_lock lock(m_mutex);
+
     auto cells = m_object_oct_tree.get_cells();
     for (auto& cell : cells)
     {
@@ -48,11 +50,15 @@ void render_scene_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_obj
 
 void render_scene_manager::render_object_created(render_object* obj)
 {
+    std::scoped_lock lock(m_mutex);
+
     obj->object_tree_token = m_object_oct_tree.insert(obj->get_bounds().get_aligned_bounds(), obj);
 }
 
 void render_scene_manager::render_object_destroyed(render_object* obj)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (obj->object_tree_token.is_valid())
     {
         m_object_oct_tree.remove(obj->object_tree_token);
@@ -62,12 +68,16 @@ void render_scene_manager::render_object_destroyed(render_object* obj)
 
 void render_scene_manager::render_object_bounds_modified(render_object* obj)
 {
+    std::scoped_lock lock(m_mutex);
+
     // Remove and readd to octtree with the new bounds.
     obj->object_tree_token = m_object_oct_tree.modify(obj->object_tree_token, obj->get_bounds().get_aligned_bounds(), obj);
 }
 
 void render_scene_manager::update_visibility()
 {
+    std::scoped_lock lock(m_mutex);
+
     profile_marker(profile_colors::render, "update visibility");
 
     size_t frame_index = m_renderer.get_visibility_frame_index();
@@ -92,10 +102,13 @@ void render_scene_manager::update_visibility()
 
 render_object* render_scene_manager::resolve_id(render_object_id id)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         return iter->second.get();
     }
+
     return nullptr;
 }
 
@@ -105,6 +118,8 @@ render_object* render_scene_manager::resolve_id(render_object_id id)
 
 void render_scene_manager::set_object_transform(render_object_id id, const vector3& location, const quat& rotation, const vector3& scale)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_object* object = resolve_id(id))
     {
         object->set_local_transform(location, rotation, scale);
@@ -121,6 +136,8 @@ void render_scene_manager::set_object_transform(render_object_id id, const vecto
 
 void render_scene_manager::create_view(render_object_id id, const char* name)
 {
+    std::scoped_lock lock(m_mutex);
+
     std::unique_ptr<render_view> view = std::make_unique<render_view>(id, this, m_renderer);
     view->set_name(name);
 
@@ -152,6 +169,8 @@ void render_scene_manager::create_view(render_object_id id, const char* name)
 
 void render_scene_manager::destroy_view(render_object_id id)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         db_verbose(renderer, "Removed render view: {%zi} %s", id, iter->second->get_name().c_str());
@@ -173,6 +192,8 @@ void render_scene_manager::destroy_view(render_object_id id)
 
 void render_scene_manager::set_view_viewport(render_object_id id, const recti& viewport)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
     {
         object->set_viewport(viewport);
@@ -185,6 +206,8 @@ void render_scene_manager::set_view_viewport(render_object_id id, const recti& v
 
 void render_scene_manager::set_view_projection(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
     {
         object->set_fov(fov);
@@ -208,6 +231,8 @@ std::vector<render_view*> render_scene_manager::get_views()
 
 void render_scene_manager::create_static_mesh(render_object_id id, const char* name)
 {
+    std::scoped_lock lock(m_mutex);
+
     std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(id, this, m_renderer);
     obj->set_name(name);
 
@@ -228,6 +253,8 @@ void render_scene_manager::create_static_mesh(render_object_id id, const char* n
 
 void render_scene_manager::destroy_static_mesh(render_object_id id)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         db_verbose(renderer, "Removed static mesh: {%zi} %s", id, iter->second->get_name().c_str());
@@ -243,6 +270,8 @@ void render_scene_manager::destroy_static_mesh(render_object_id id)
 
 void render_scene_manager::set_static_mesh_model(render_object_id id, const asset_ptr<model>& model)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_static_mesh* object = dynamic_cast<render_static_mesh*>(resolve_id(id)))
     {
         object->set_model(model);
@@ -255,6 +284,8 @@ void render_scene_manager::set_static_mesh_model(render_object_id id, const asse
 
 std::vector<render_static_mesh*> render_scene_manager::get_static_meshes()
 {
+    std::scoped_lock lock(m_mutex);
+
     return m_active_static_meshes;
 }
 
@@ -264,6 +295,8 @@ std::vector<render_static_mesh*> render_scene_manager::get_static_meshes()
 
 void render_scene_manager::set_light_intensity(render_object_id id, float value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
     {
         object->set_intensity(value);
@@ -276,6 +309,8 @@ void render_scene_manager::set_light_intensity(render_object_id id, float value)
 
 void render_scene_manager::set_light_range(render_object_id id, float value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
     {
         object->set_range(value);
@@ -288,6 +323,8 @@ void render_scene_manager::set_light_range(render_object_id id, float value)
 
 void render_scene_manager::set_light_color(render_object_id id, color value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
     {
         object->set_color(value);
@@ -300,6 +337,8 @@ void render_scene_manager::set_light_color(render_object_id id, color value)
 
 void render_scene_manager::set_light_shadow_casting(render_object_id id, bool value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
     {
         object->set_shadow_casting(value);
@@ -312,6 +351,8 @@ void render_scene_manager::set_light_shadow_casting(render_object_id id, bool va
 
 void render_scene_manager::set_light_shadow_map_size(render_object_id id, size_t value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
     {
         object->set_shadow_map_size(value);
@@ -324,6 +365,8 @@ void render_scene_manager::set_light_shadow_map_size(render_object_id id, size_t
 
 void render_scene_manager::set_light_shadow_max_distance(render_object_id id, float value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
     {
         object->set_shadow_max_distance(value);
@@ -340,6 +383,8 @@ void render_scene_manager::set_light_shadow_max_distance(render_object_id id, fl
 
 void render_scene_manager::create_directional_light(render_object_id id, const char* name)
 {
+    std::scoped_lock lock(m_mutex);
+
     std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(id, this, m_renderer);
     obj->set_name(name);
 
@@ -360,6 +405,8 @@ void render_scene_manager::create_directional_light(render_object_id id, const c
 
 void render_scene_manager::destroy_directional_light(render_object_id id)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         db_verbose(renderer, "Removed directional light: {%zi} %s", id, iter->second->get_name().c_str());
@@ -375,6 +422,8 @@ void render_scene_manager::destroy_directional_light(render_object_id id)
 
 void render_scene_manager::set_directional_light_shadow_cascades(render_object_id id, size_t value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
     {
         object->set_shadow_cascades(value);
@@ -387,6 +436,8 @@ void render_scene_manager::set_directional_light_shadow_cascades(render_object_i
 
 void render_scene_manager::set_directional_light_shadow_cascade_exponent(render_object_id id, float value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
     {
         object->set_shadow_cascade_exponent(value);
@@ -399,6 +450,8 @@ void render_scene_manager::set_directional_light_shadow_cascade_exponent(render_
 
 void render_scene_manager::set_directional_light_shadow_cascade_blend(render_object_id id, float value)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_directional_light* object = dynamic_cast<render_directional_light*>(resolve_id(id)))
     {
         object->set_shadow_cascade_blend(value);
@@ -411,6 +464,8 @@ void render_scene_manager::set_directional_light_shadow_cascade_blend(render_obj
 
 std::vector<render_directional_light*> render_scene_manager::get_directional_lights()
 {
+    std::scoped_lock lock(m_mutex);
+
     return m_active_directional_lights;
 }
 
@@ -420,6 +475,8 @@ std::vector<render_directional_light*> render_scene_manager::get_directional_lig
 
 void render_scene_manager::create_point_light(render_object_id id, const char* name)
 {
+    std::scoped_lock lock(m_mutex);
+
     std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(id, this, m_renderer);
     obj->set_name(name);
 
@@ -440,6 +497,8 @@ void render_scene_manager::create_point_light(render_object_id id, const char* n
 
 void render_scene_manager::destroy_point_light(render_object_id id)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         db_verbose(renderer, "Removed point light: {%zi} %s", id, iter->second->get_name().c_str());
@@ -455,6 +514,8 @@ void render_scene_manager::destroy_point_light(render_object_id id)
 
 std::vector<render_point_light*> render_scene_manager::get_point_lights()
 {
+    std::scoped_lock lock(m_mutex);
+
     return m_active_point_lights;
 }
 
@@ -464,6 +525,8 @@ std::vector<render_point_light*> render_scene_manager::get_point_lights()
 
 void render_scene_manager::create_spot_light(render_object_id id, const char* name)
 {
+    std::scoped_lock lock(m_mutex);
+
     std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(id, this, m_renderer);
     obj->set_name(name);
 
@@ -484,6 +547,8 @@ void render_scene_manager::create_spot_light(render_object_id id, const char* na
 
 void render_scene_manager::destroy_spot_light(render_object_id id)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         db_verbose(renderer, "Removed spot light: {%zi} %s", id, iter->second->get_name().c_str());
@@ -499,6 +564,8 @@ void render_scene_manager::destroy_spot_light(render_object_id id)
 
 void render_scene_manager::set_spot_light_radius(render_object_id id, float inner_radius, float outer_radius)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (render_spot_light* object = dynamic_cast<render_spot_light*>(resolve_id(id)))
     {
         object->set_radius(inner_radius, outer_radius);
@@ -511,6 +578,8 @@ void render_scene_manager::set_spot_light_radius(render_object_id id, float inne
 
 std::vector<render_spot_light*> render_scene_manager::get_spot_lights()
 {
+    std::scoped_lock lock(m_mutex);
+
     return m_active_spot_lights;
 }
 

@@ -35,7 +35,7 @@ void render_system_resolve_backbuffer::create_graph(render_graph& graph)
 
     m_render_pass = pass.get();
 
-    graph.add_node(std::move(pass));
+    graph.add_node(std::move(pass), render_view_flags::normal);
 }
 
 void render_system_resolve_backbuffer::step(const render_world_state& state)

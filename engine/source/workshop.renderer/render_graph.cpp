@@ -6,13 +6,14 @@
 
 namespace ws {
 
-render_graph::node_id render_graph::add_node(std::unique_ptr<render_pass>&& pass)
+render_graph::node_id render_graph::add_node(std::unique_ptr<render_pass>&& pass, render_view_flags flags)
 {
     size_t index = m_nodes.size();
     m_nodes.resize(m_nodes.size() + 1);
 
     node& new_node = m_nodes[index];
     new_node.pass = std::move(pass);
+    new_node.required_flags = flags;
     new_node.enabled = true;
 
     return index;
@@ -24,7 +25,7 @@ void render_graph::set_node_enabled(node_id id, bool enabled)
     m_nodes[id].enabled = enabled;
 }
 
-void render_graph::get_active(std::vector<node*>& nodes)
+void render_graph::get_active(std::vector<node*>& nodes, render_view_flags flags)
 {
     nodes.reserve(m_nodes.size());
 
@@ -32,7 +33,10 @@ void render_graph::get_active(std::vector<node*>& nodes)
     {
         if (m_nodes[i].enabled)
         {
-            nodes.push_back(&m_nodes[i]);
+            if ((static_cast<int>(m_nodes[i].required_flags) & static_cast<int>(flags)) == static_cast<int>(m_nodes[i].required_flags))
+            {
+                nodes.push_back(&m_nodes[i]);
+            }
         }
     }
 }

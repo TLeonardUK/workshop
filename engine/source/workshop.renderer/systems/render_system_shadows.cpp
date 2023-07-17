@@ -60,10 +60,7 @@ void render_system_shadows::step(const render_world_state& state)
             // Remove any views these shadows created.
             for (cascade_info& cascade : info.cascades)
             {
-                if (cascade.view_id)
-                {
-                    scene_manager.destroy_view(cascade.view_id);
-                }
+                destroy_cascade(cascade);
             }
 
             iter = m_shadow_info.erase(iter);
@@ -77,6 +74,11 @@ void render_system_shadows::step(const render_world_state& state)
     // Render a directional shadow for each view.
     for (render_view* view : views)
     {
+        if (view->get_flags() != render_view_flags::normal)
+        {
+            continue;
+        }
+
         for (render_directional_light* light : directional_lights)
         {
             if (light->get_shodow_casting())
@@ -91,7 +93,7 @@ void render_system_shadows::step(const render_world_state& state)
     {
         if (light->get_shodow_casting())
         {
-            step_point_shadow(light);
+            step_point_shadow(nullptr, light);
         }
     }
 
@@ -100,7 +102,16 @@ void render_system_shadows::step(const render_world_state& state)
     {
         if (light->get_shodow_casting())
         {
-            step_spot_shadow(light);
+            step_spot_shadow(nullptr, light);
+        }
+    }
+
+    // Update all cascades.
+    for (shadow_info& info : m_shadow_info)
+    {
+        for (cascade_info& cascade : info.cascades)
+        {
+            step_cascade(info, cascade);
         }
     }
 }
@@ -141,14 +152,20 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
     if (!m_renderer.is_rendering_frozen())
     {
         info.view_frustum = view->get_frustum();
-        info.view_view_frustum = view->get_view_frustum();
         info.light_rotation = light->get_local_rotation();
     }
 
     matrix4 rotation_matrix = matrix4::rotation(light->get_local_rotation());
-    vector3 vec = -vector3::forward * rotation_matrix;
+    matrix4 light_view_matrix = matrix4::look_at(vector3::zero, vector3::forward * rotation_matrix.inverse(), vector3::up);
 
-    matrix4 light_view_matrix = matrix4::look_at(vector3::zero, vector3::forward, vector3::up);
+    // Destroy any cascades we are stripping off.
+    if (info.cascades.size() > cascade_count)
+    {
+        for (size_t i = info.cascades.size(); i < cascade_count; i++)
+        {
+            destroy_cascade(info.cascades[i]);
+        }
+    }
 
     info.cascades.resize(cascade_count);
     for (size_t i = 0; i < cascade_count; i++)
@@ -184,23 +201,16 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
 
         cascade.split_min_distance = calculate_cascade_split(cascade_near_z, cascade_far_z, min_delta, cascade_exponent);
         cascade.split_max_distance = calculate_cascade_split(cascade_near_z, cascade_far_z, max_delta, cascade_exponent);
-
         cascade.view_frustum = info.view_frustum.get_cascade(cascade.split_min_distance, cascade.split_max_distance);
-        frustum view_space_frustum = info.view_view_frustum.get_cascade(cascade.split_min_distance, cascade.split_max_distance);
-
-        m_renderer.get_system<render_system_debug>()->add_frustum(cascade.view_frustum, color::purple);
-
-        // Calculate bounds of frustum in view space.
+        
+        // Calculate bounds of frustum in world space.
         vector3 corners[frustum::k_corner_count];
-        view_space_frustum.get_corners(corners);
-
+        cascade.view_frustum.get_corners(corners);
         aabb bounds(corners, frustum::k_corner_count);
 
-        // Calculate sphere that fits inside the orthographic bounds.
+        // Calculate sphere that fits inside the frustum.
         cascade.world_radius = std::min(bounds.get_extents().x, bounds.get_extents().y);        
         sphere centroid(cascade.view_frustum.get_center() * light_view_matrix, cascade.world_radius);
-
-        m_renderer.get_system<render_system_debug>()->add_sphere(centroid, color::green);
 
         // Calculate bounding box in light-space.
         aabb light_space_bounds = centroid.get_bounds();
@@ -212,6 +222,7 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         float min_z = -origin_light_space.z - 10000.0f;
         float max_z = -origin_light_space.z + 10000.0f;
 
+        cascade.view_matrix = light_view_matrix;
         cascade.projection_matrix = matrix4::orthographic(
             light_space_bounds.min.x,
             light_space_bounds.max.x,
@@ -223,7 +234,8 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
 
         // Create the rounding matrix, by projecting the world-space origin and determining the fractional
         // offset in texel space.
-        matrix4 shadow_matrix = cascade.projection_matrix * light_view_matrix;
+        // We do this to avoid shimmering as the camera moves, we always want to move in texel steps.
+        matrix4 shadow_matrix = light_view_matrix * cascade.projection_matrix;
         vector3 shadow_origin = shadow_matrix.transform_location(vector3(0.0f, 0.0f, 0.0f));
         shadow_origin = shadow_origin * cascade.map_size / 2.0f;
 
@@ -231,24 +243,55 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         vector3 rounded_offset = rounded_origin - shadow_origin;
         rounded_offset = rounded_offset * 2.0f / cascade.map_size;
         rounded_offset.z = 0.0f;
-
-        cascade.projection_matrix.set_column(3, cascade.projection_matrix.get_column(3) + vector4(rounded_offset, 0.0f));
  
-        // Calculate the frustum from the projection matrix.
-        cascade.frustum = frustum(cascade.projection_matrix * light_view_matrix);
+        cascade.projection_matrix = cascade.projection_matrix * matrix4::translate(rounded_offset);
 
-        m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
+        // Calculate the frustum from the projection matrix.
+        cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
+
+        // Some useful debugging draws that render the view frustum, the cascade centroid bounds and the shadow frustum.
+        //m_renderer.get_system<render_system_debug>()->add_sphere(sphere(cascade.view_frustum.get_center(), cascade.world_radius), color::green);
+        //m_renderer.get_system<render_system_debug>()->add_frustum(cascade.view_frustum, color::purple);
+        //m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
     }
 }
 
-void render_system_shadows::step_point_shadow(render_point_light* light)
+void render_system_shadows::step_point_shadow(render_view* view, render_point_light* light)
 {
     // TODO
 }
 
-void render_system_shadows::step_spot_shadow(render_spot_light* light)
+void render_system_shadows::step_spot_shadow(render_view* view, render_spot_light* light)
 {
     // TODO
+}
+
+void render_system_shadows::destroy_cascade(cascade_info& info)
+{
+    render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+    
+    if (info.view_id)
+    {
+        scene_manager.destroy_view(info.view_id);
+    }
+}
+
+void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascade)
+{
+    render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+
+    if (!cascade.view_id)
+    {
+        cascade.view_id = m_renderer.next_render_object_id();
+        scene_manager.create_view(cascade.view_id, "Shadow Cascade View");
+    }
+
+    render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
+    view->set_projection_matrix(cascade.projection_matrix);
+    view->set_view_matrix(cascade.view_matrix);
+    view->set_render_target(cascade.shadow_map.get());
+    view->set_viewport(recti(0, 0, cascade.map_size, cascade.map_size));
+    view->set_flags(render_view_flags::depth_only);
 }
 
 }; // namespace ws

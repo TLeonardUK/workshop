@@ -190,6 +190,8 @@ private:
 
     renderer& m_renderer;
 
+    std::recursive_mutex m_mutex;
+
     std::vector<size_t> m_free_view_visibility_indices;
 
     oct_tree<render_object*> m_object_oct_tree;

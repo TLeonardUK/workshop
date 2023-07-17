@@ -19,8 +19,6 @@
 
 #include "workshop.render_interface/ri_interface.h"
 
-#pragma optimize("", off)
-
 namespace {
 
 constexpr int k_tesselation = 15;
@@ -46,7 +44,7 @@ void render_system_debug::create_graph(render_graph& graph)
 
     m_render_pass = pass.get();
 
-    graph.add_node(std::move(pass));
+    graph.add_node(std::move(pass), render_view_flags::normal);
 }
 
 void render_system_debug::step(const render_world_state& state)

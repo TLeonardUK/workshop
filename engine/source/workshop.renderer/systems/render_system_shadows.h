@@ -42,6 +42,7 @@ private:
         float world_radius;
 
         matrix4 projection_matrix;
+        matrix4 view_matrix;
         frustum view_frustum;
         frustum frustum;
     };
@@ -52,7 +53,6 @@ private:
         render_object_id view_id;
 
         frustum view_frustum;
-        frustum view_view_frustum; // *squint*
         quat light_rotation;
 
         std::vector<cascade_info> cascades;
@@ -62,8 +62,11 @@ private:
     result<void> destroy_resources();
 
     void step_directional_shadow(render_view* view, render_directional_light* light);
-    void step_point_shadow(render_point_light* light);
-    void step_spot_shadow(render_spot_light* light);
+    void step_point_shadow(render_view* view, render_point_light* light);
+    void step_spot_shadow(render_view* view, render_spot_light* light);
+
+    void destroy_cascade(cascade_info& info);
+    void step_cascade(shadow_info& info, cascade_info& shadow_info);
 
     shadow_info& find_or_create_shadow_info(render_object_id light_id, render_object_id view_id);
 

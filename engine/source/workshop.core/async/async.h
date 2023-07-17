@@ -24,6 +24,11 @@ void parallel_for(const char* name, task_queue queue, size_t count, work_t work)
 {
     profile_marker(profile_colors::task, "%s [parallel]", name);
 
+    if (count == 0)
+    {
+        return;
+    }
+
     constexpr size_t k_chunks_per_task = 2;
 
     task_scheduler& scheduler = task_scheduler::get();

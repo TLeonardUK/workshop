@@ -584,8 +584,11 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
     }
 
     // Generate command lists for all nodes in parallel.
+    // TODO: Build a render graph for this view, don't use a persistent one.
+    //       Replace create_graph with build_graph which gets called for each view.
+
     std::vector<render_graph::node*> nodes;
-    m_render_graph->get_active(nodes);
+    m_render_graph->get_active(nodes, view.get_flags());
     
     output.resize(nodes.size());
     

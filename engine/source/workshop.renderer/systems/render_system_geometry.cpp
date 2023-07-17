@@ -29,7 +29,7 @@ void render_system_geometry::create_graph(render_graph& graph)
     pass->domain = material_domain::opaque;
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-    graph.add_node(std::move(pass));
+    graph.add_node(std::move(pass), render_view_flags::normal);
 
     // Draw masked geometry.
     pass = std::make_unique<render_pass_geometry>();
@@ -39,7 +39,7 @@ void render_system_geometry::create_graph(render_graph& graph)
     pass->domain = material_domain::masked;
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-    graph.add_node(std::move(pass));
+    graph.add_node(std::move(pass), render_view_flags::normal);
 
     // Draw transparent geometry.
     pass = std::make_unique<render_pass_geometry>();
@@ -49,7 +49,7 @@ void render_system_geometry::create_graph(render_graph& graph)
     pass->domain = material_domain::transparent;
     pass->output = m_renderer.get_gbuffer_output();
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-    graph.add_node(std::move(pass));
+    graph.add_node(std::move(pass), render_view_flags::normal);
 }
 
 void render_system_geometry::step(const render_world_state& state)
