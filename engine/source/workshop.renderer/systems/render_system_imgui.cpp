@@ -9,7 +9,7 @@
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
-#include "workshop.renderer/passes/render_pass_callback.h"
+#include "workshop.renderer/passes/render_pass_imgui.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_command_queue.h"
 #include "workshop.render_interface/ri_command_list.h"
@@ -30,14 +30,28 @@ void render_system_imgui::register_init(init_list& list)
 {
 }
 
-void render_system_imgui::create_graph(render_graph& graph)
+void render_system_imgui::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
-    std::unique_ptr<render_pass_callback> pass = std::make_unique<render_pass_callback>();
-    pass->callback = std::bind(&render_system_imgui::generate, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    if (!view.has_flag(render_view_flags::normal))
+    {
+        return;
+    }
 
-    m_render_pass = pass.get();
+    if (m_draw_vertices.empty() || m_draw_indices.empty())
+    {
+        return;
+    }
 
-    graph.add_node(std::move(pass), render_view_flags::normal);
+    std::unique_ptr<render_pass_imgui> pass = std::make_unique<render_pass_imgui>();
+    pass->name = "imgui";
+    pass->system = this;
+    pass->technique = m_renderer.get_effect_manager().get_technique("render_imgui", {});
+    pass->output = m_renderer.get_swapchain_output();
+    pass->default_texture = m_textures[m_default_texture].get();
+    pass->vertex_buffer = m_vertex_buffer.get();
+    pass->index_buffer = m_index_buffer.get();
+    pass->draw_commands = m_draw_commands;
+    graph.add_node(std::move(pass));
 }
 
 void render_system_imgui::step(const render_world_state& state)
@@ -117,65 +131,6 @@ void render_system_imgui::update_draw_data(const std::vector<draw_command>& comm
     m_draw_commands = commands;
     m_draw_vertices = vertices;
     m_draw_indices = indices;
-}
-
-void render_system_imgui::generate(renderer& renderer, render_pass::generated_state& state_output, render_view& view)
-{
-    if (m_draw_vertices.empty() || m_draw_indices.empty())
-    {
-        return;
-    }
-
-    ri_texture* default_texture = m_textures[m_default_texture].get();
-
-    render_output output = m_renderer.get_swapchain_output();
-    render_effect::technique* technique = m_renderer.get_effect_manager().get_technique("render_imgui", {});
-
-    // TODO: Cache all these param blocks.
-
-    std::unique_ptr<ri_param_block> vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
-    vertex_info_param_block->set("vertex_buffer", *m_vertex_buffer);
-    vertex_info_param_block->set("vertex_buffer_offset", 0u);
-    vertex_info_param_block->clear_buffer("instance_buffer");
-
-    ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
-    list.open();
-    {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "imgui");
-
-        list.barrier(*output.color_targets[0], ri_resource_state::initial, ri_resource_state::render_target);
-        list.set_pipeline(*technique->pipeline.get());
-        list.set_render_targets(output.color_targets, nullptr);
-        list.set_viewport(view.get_viewport());
-        list.set_scissor(view.get_viewport());
-        list.set_primitive_topology(ri_primitive::triangle_list);
-        list.set_index_buffer(*m_index_buffer);
-
-        for (draw_command& cmd : m_draw_commands)
-        {
-            std::unique_ptr<ri_param_block> imgui_params = renderer.get_param_block_manager().create_param_block("imgui_params");
-            imgui_params->set("color_texture", *default_texture);
-            imgui_params->set("color_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-            imgui_params->set("projection_matrix", matrix4::orthographic(
-                cmd.display_pos.x,
-                cmd.display_pos.x + cmd.display_size.x,
-                cmd.display_pos.y,
-                cmd.display_pos.y + cmd.display_size.y,
-                0.0f,
-                1.0f
-            ));
-            
-            list.set_param_blocks({ vertex_info_param_block.get(), imgui_params.get() });
-            list.set_scissor(recti((int)cmd.scissor.x, (int)cmd.scissor.y, (int)cmd.scissor.width, (int)cmd.scissor.height));
-            list.draw(cmd.count, 1, cmd.offset);
-        }
-
-        list.barrier(*output.color_targets[0], ri_resource_state::render_target, ri_resource_state::initial);
-        
-    }
-    list.close();
-
-    state_output.graphics_command_lists.push_back(&list);
 }
 
 }; // namespace ws

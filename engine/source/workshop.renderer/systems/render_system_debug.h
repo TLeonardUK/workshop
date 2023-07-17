@@ -34,8 +34,8 @@ public:
     render_system_debug(renderer& render);
 
     virtual void register_init(init_list& list) override;
-    virtual void create_graph(render_graph& graph) override;
     virtual void step(const render_world_state& state) override;
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
 
     void add_line(const vector3& start, const vector3& end, const color& color);
     void add_aabb(const aabb& bounds, const color& color);
@@ -49,10 +49,6 @@ public:
     void add_cone(const vector3& origin, const vector3& end, float radius, const color& color);
     void add_arrow(const vector3& start, const vector3& end, const color& color);
     void add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
-
-private:
-
-    void generate(renderer& renderer, render_pass::generated_state& output, render_view& view);
 
 private:
 
@@ -70,8 +66,6 @@ private:
 
     std::unique_ptr<ri_buffer> m_vertex_buffer;
     std::unique_ptr<ri_buffer> m_index_buffer;
-
-    render_pass_callback* m_render_pass;
 
 };
 

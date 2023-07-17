@@ -29,16 +29,9 @@ public:
 
 public:
 
-    virtual result<void> create_resources(renderer& renderer) override;
-    virtual result<void> destroy_resources(renderer& renderer) override;
-
     virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
 
 private:
-    std::unique_ptr<ri_buffer> m_vertex_buffer;
-    std::unique_ptr<ri_buffer> m_index_buffer;
-
-    std::unique_ptr<ri_param_block> m_vertex_info_param_block;
 
 };
 

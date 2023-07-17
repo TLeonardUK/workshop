@@ -59,31 +59,14 @@ ri_texture& render_system_lighting::get_lighting_buffer()
     return *m_lighting_buffer;
 }
 
-void render_system_lighting::create_graph(render_graph& graph)
+void render_system_lighting::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
-    // Run compute shader to cluster our lights.
-    // TODO
+    if (!view.has_flag(render_view_flags::normal))
+    {
+        return;
+    }
 
-    // Generate the light accumulation buffer.
-    std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
-    pass->name = "resolve lighting";
-    pass->technique = m_renderer.get_effect_manager().get_technique("resolve_lighting", {});
-    pass->output = m_lighting_output;
-    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-
-    m_render_pass = pass.get();
-
-    graph.add_node(std::move(pass), render_view_flags::normal);
-}
-
-void render_system_lighting::step(const render_world_state& state)
-{
-}
-
-void render_system_lighting::step_view(const render_world_state& state, render_view& view)
-{
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    
     render_batch_instance_buffer* instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_lighting_parameters");
 
@@ -136,6 +119,24 @@ void render_system_lighting::step_view(const render_world_state& state, render_v
     resolve_param_block->set("light_count", total_lights);
     resolve_param_block->set("light_buffer", instance_buffer->get_buffer());
     resolve_param_block->set("view_world_position", view.get_local_location());
+
+    // Add pass to run compute shader to cluster our lights.
+    // TODO
+
+    // Add pass to generate the light accumulation buffer.
+    std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
+    pass->name = "resolve lighting";
+    pass->system = this;
+    pass->technique = m_renderer.get_effect_manager().get_technique("resolve_lighting", {});
+    pass->output = m_lighting_output;
+    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+    pass->param_blocks.push_back(resolve_param_block);
+
+    graph.add_node(std::move(pass));
+}
+
+void render_system_lighting::step(const render_world_state& state)
+{
 }
 
 }; // namespace ws

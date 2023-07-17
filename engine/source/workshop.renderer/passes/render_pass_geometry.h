@@ -30,8 +30,7 @@ public:
 
 public:
 
-    virtual result<void> create_resources(renderer& renderer) override;
-    virtual result<void> destroy_resources(renderer& renderer) override;
+    render_pass_geometry();
 
     virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
 

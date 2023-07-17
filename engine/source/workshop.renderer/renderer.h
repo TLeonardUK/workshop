@@ -199,6 +199,9 @@ public:
     // Returns true if the rendering is frozen and culling/etc should not be updated.
     bool is_rendering_frozen();
 
+    // Gets buffers desc
+    void get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index);
+
 private:
 
     friend class render_command_queue;
@@ -221,15 +224,6 @@ private:
     // exposed by the renderer.
     result<void> create_debug_menu();
     result<void> destroy_debug_menu();
-
-    // Rebuilds the render graph. This should only occur on start or
-    // when settings have changed that require the graph to be rebuilt
-    // (eg. quality settings have changed).
-    // Its not expected that this should be called regularly.
-    result<void> create_render_graph();
-
-    // Tears down the render grpah.
-    result<void> destroy_render_graph();
 
     // Called to run one or more render jobs currently in the queue.
     void render_job();
@@ -269,13 +263,24 @@ private:
     debug_menu& m_debug_menu;
 
     std::vector<std::unique_ptr<render_system>> m_systems;
-    std::unique_ptr<render_graph> m_render_graph;
 
     std::unique_ptr<render_param_block_manager> m_param_block_manager;
     std::unique_ptr<render_effect_manager> m_effect_manager;
     std::unique_ptr<render_scene_manager> m_scene_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
+
+    // Fullscreen buffers.
+
+    struct fullscreen_buffers
+    {
+        ri_data_layout layout;
+        std::unique_ptr<ri_buffer> vertex_buffer;
+        std::unique_ptr<ri_buffer> index_buffer;
+    };
+
+    std::mutex m_fullscreen_buffers_mutex;
+    std::vector<fullscreen_buffers> m_fullscreen_buffers;
 
     // Debug menu.
 

@@ -19,37 +19,81 @@ void render_system_geometry::register_init(init_list& list)
 {
 }
 
-void render_system_geometry::create_graph(render_graph& graph)
+void render_system_geometry::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
-    // Draw opaque geometry.
-    std::unique_ptr<render_pass_geometry> pass = std::make_unique<render_pass_geometry>();
-    pass->name = "opaque static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","opaque"}, {"wireframe","false"} });
-    pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"} });
-    pass->domain = material_domain::opaque;
-    pass->output = m_renderer.get_gbuffer_output();
-    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-    graph.add_node(std::move(pass), render_view_flags::normal);
+    // Standard pass.
+    if (view.has_flag(render_view_flags::normal))
+    {
+        // Draw opaque geometry.
+        std::unique_ptr<render_pass_geometry> pass = std::make_unique<render_pass_geometry>();
+        pass->name = "opaque static geometry";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","opaque"}, {"wireframe","false"}, {"depth_only","false"} });
+        pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"}, {"depth_only","false"} });
+        pass->domain = material_domain::opaque;
+        pass->output = m_renderer.get_gbuffer_output();
+        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+        graph.add_node(std::move(pass));
 
-    // Draw masked geometry.
-    pass = std::make_unique<render_pass_geometry>();
-    pass->name = "masked static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","masked"}, {"wireframe","false"} });
-    pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"} });
-    pass->domain = material_domain::masked;
-    pass->output = m_renderer.get_gbuffer_output();
-    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-    graph.add_node(std::move(pass), render_view_flags::normal);
+        // Draw masked geometry.
+        pass = std::make_unique<render_pass_geometry>();
+        pass->name = "masked static geometry";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","masked"}, {"wireframe","false"}, {"depth_only","false"} });
+        pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"}, {"depth_only","false"} });
+        pass->domain = material_domain::masked;
+        pass->output = m_renderer.get_gbuffer_output();
+        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+        graph.add_node(std::move(pass));
 
-    // Draw transparent geometry.
-    pass = std::make_unique<render_pass_geometry>();
-    pass->name = "transparent static geometry";
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain","transparent"}, {"wireframe","false"} });
-    pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"} });
-    pass->domain = material_domain::transparent;
-    pass->output = m_renderer.get_gbuffer_output();
-    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-    graph.add_node(std::move(pass), render_view_flags::normal);
+        // Draw transparent geometry.
+        pass = std::make_unique<render_pass_geometry>();
+        pass->name = "transparent static geometry";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { { "domain","transparent"}, {"wireframe","false"}, {"depth_only","false"} });
+        pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"}, {"depth_only","false"} });
+        pass->domain = material_domain::transparent;
+        pass->output = m_renderer.get_gbuffer_output();
+        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+        graph.add_node(std::move(pass));
+    }
+    // Depth-only pass
+    else if (view.has_flag(render_view_flags::depth_only))
+    {
+        render_output output;
+        if (view.get_render_target())
+        {
+            output.depth_target = view.get_render_target();
+        }
+        else
+        {
+            output.depth_target = m_renderer.get_gbuffer_output().depth_target;
+        }
+
+        // Draw opaque geometry.
+        std::unique_ptr<render_pass_geometry> pass = std::make_unique<render_pass_geometry>();
+        pass->name = "opaque static geometry (depth only)";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","opaque"}, {"wireframe","false"}, {"depth_only","true"} });
+        pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"}, {"depth_only","true"} });
+        pass->domain = material_domain::opaque;
+        pass->output = output;
+        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+        graph.add_node(std::move(pass));
+
+        // Draw masked geometry.
+        pass = std::make_unique<render_pass_geometry>();
+        pass->name = "masked static geometry (depth only)";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"domain","masked"}, {"wireframe","false"}, {"depth_only","true"} });
+        pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { {"wireframe","true"}, {"depth_only","true"} });
+        pass->domain = material_domain::masked;
+        pass->output = output;
+        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+        graph.add_node(std::move(pass));
+
+        // TODO: Do we want to handle transparent objects here?
+    }
 }
 
 void render_system_geometry::step(const render_world_state& state)

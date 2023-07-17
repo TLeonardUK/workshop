@@ -21,12 +21,10 @@ public:
     render_system_resolve_backbuffer(renderer& render);
 
     virtual void register_init(init_list& list) override;
-    virtual void create_graph(render_graph& graph) override;
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
 
 private:
-    render_pass_fullscreen* m_render_pass;
-    std::unique_ptr<ri_param_block> m_resolve_param_block;
 
 };
 

@@ -47,6 +47,17 @@ enum class render_view_flags
 };
 
 // ================================================================================================
+//  Order of rendering a view. This is treated as an int, the named values are just rough
+//  guidelines.
+// ================================================================================================
+enum class render_view_order
+{
+    shadows = -1000,
+
+    normal = 0,
+};
+
+// ================================================================================================
 //  Represets a view into the scene to be renderer, including the associated projection
 //  matrices, viewports and such.
 // ================================================================================================
@@ -74,9 +85,14 @@ public:
     void set_render_target(ri_texture* type);
     ri_texture* get_render_target();
 
+    // Gets or sets the order of rendering of this view.
+    void set_view_order(render_view_order order);
+    render_view_order get_view_order();
+
     // Gets or sets the flags determining how this view is rendered.
     void set_flags(render_view_flags flags);
     render_view_flags get_flags();
+    bool has_flag(render_view_flags flags);
 
     void set_viewport(const recti& viewport);
     recti get_viewport();
@@ -129,6 +145,8 @@ private:
 
     matrix4 m_custom_view_matrix = matrix4::identity;
     matrix4 m_custom_projection_matrix = matrix4::identity;
+
+    render_view_order m_render_view_order = render_view_order::normal;
 
     std::unique_ptr<ri_param_block> m_view_info_param_block;
 

@@ -32,9 +32,8 @@ public:
     render_system_lighting(renderer& render);
 
     virtual void register_init(init_list& list) override;
-    virtual void create_graph(render_graph& graph) override;
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
-    virtual void step_view(const render_world_state& state, render_view& view) override;
 
     ri_texture& get_lighting_buffer();
 
@@ -43,9 +42,6 @@ private:
     result<void> destroy_resources();
 
 private:
-
-
-    render_pass_fullscreen* m_render_pass;
 
     std::unique_ptr<ri_texture> m_lighting_buffer;
     render_output m_lighting_output;

@@ -57,7 +57,7 @@ public:
     render_system_imgui(renderer& render);
 
     virtual void register_init(init_list& list) override;
-    virtual void create_graph(render_graph& graph) override;
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
 
     // Registers a texture that can be used in imgui rendering.
@@ -68,10 +68,6 @@ public:
 
     // Updates the render data we will use to draw to screen.
     void update_draw_data(const std::vector<draw_command>& commands, const std::vector<vertex>& vertices, const std::vector<uint16_t>& indices);
-
-private:
-
-    void generate(renderer& renderer, render_pass::generated_state& output, render_view& view);
 
 private:
     
@@ -85,8 +81,6 @@ private:
 
     std::unique_ptr<ri_buffer> m_vertex_buffer;
     std::unique_ptr<ri_buffer> m_index_buffer;
-
-    render_pass_callback* m_render_pass;
 
 };
 

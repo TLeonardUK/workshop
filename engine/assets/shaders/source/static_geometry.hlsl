@@ -69,6 +69,19 @@ gbuffer_output pshader_masked(geometry_pinput input)
     return pshader_common(input, albedo);
 }
 
+void pshader_opaque_depth_only(geometry_pinput input)
+{
+}
+
+void pshader_masked_depth_only(geometry_pinput input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    if (albedo.a < 0.5)
+    {
+        discard;
+    }
+}
+
 gbuffer_output pshader_transparent(geometry_pinput input)
 {
     float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);

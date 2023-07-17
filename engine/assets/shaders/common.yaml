@@ -55,6 +55,10 @@ output_targets:
   # Light accumulation buffer.
   light_buffer:
     color: [ R16G16B16A16_FLOAT ]
+  # Depth only output
+  depth_only_buffer:
+    color: [ ]
+    depth: D32_FLOAT
 
 param_blocks:
   # Contains all the parameters needed to read/write from the gbuffer.

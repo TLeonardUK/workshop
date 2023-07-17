@@ -20,19 +20,12 @@
 
 namespace ws {
 
-result<void> render_pass_geometry::create_resources(renderer& renderer)
+render_pass_geometry::render_pass_geometry()
 {
     m_stats_triangles_rendered  = statistics_manager::get().find_or_create_channel("rendering/triangles_rendered",  1.0f, statistics_commit_point::end_of_render);
     m_stats_draw_calls          = statistics_manager::get().find_or_create_channel("rendering/draw_calls",          1.0f, statistics_commit_point::end_of_render);
     m_stats_drawn_instances     = statistics_manager::get().find_or_create_channel("rendering/drawn_instances",     1.0f, statistics_commit_point::end_of_render);
-    m_stats_culled_instances    = statistics_manager::get().find_or_create_channel("rendering/culled_instances",     1.0f, statistics_commit_point::end_of_render);
-
-    return true;
-}
-
-result<void> render_pass_geometry::destroy_resources(renderer& renderer)
-{
-    return true;
+    m_stats_culled_instances    = statistics_manager::get().find_or_create_channel("rendering/culled_instances",    1.0f, statistics_commit_point::end_of_render);
 }
 
 void render_pass_geometry::generate(renderer& renderer, generated_state& state_output, render_view& view)
@@ -100,7 +93,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             model::vertex_buffer* vertex_buffer = key.model->find_or_create_vertex_buffer(active_technique->pipeline->get_create_params().vertex_layout);
 
             // Generate the geometry_info block for this material.  
-            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(this, "geometry_info",  [&material_info, default_black, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
+            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(view), "geometry_info",  [&material_info, default_black, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
                 param_block.set("albedo_texture", *material_info.material->get_texture("albedo_texture", default_black));
                 param_block.set("opacity_texture", *material_info.material->get_texture("opacity_texture", default_white));
                 param_block.set("metallic_texture", *material_info.material->get_texture("metallic_texture", default_black));
@@ -114,7 +107,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             });
 
             // Generate the instance buffer for this batch.
-            render_batch_instance_buffer* instance_buffer = batch->get_resource_cache().find_or_create_instance_buffer(this);
+            render_batch_instance_buffer* instance_buffer = batch->get_resource_cache().find_or_create_instance_buffer(get_cache_key(view));
             size_t visible_instance_count = 0;
 
             for (size_t j = 0; j < instances.size(); j++)
@@ -145,7 +138,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             }
 
             // Generate the vertex info buffer for this batch.
-            ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block(this, "vertex_info", {});
+            ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(view), "vertex_info", {});
             vertex_info_param_block->set("vertex_buffer", *vertex_buffer->vertex_buffer.get());
             vertex_info_param_block->set("vertex_buffer_offset", 0u);
             vertex_info_param_block->set("instance_buffer", instance_buffer->get_buffer());        

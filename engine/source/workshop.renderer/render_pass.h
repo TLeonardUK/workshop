@@ -12,6 +12,7 @@ class renderer;
 class render_effect;
 class render_world_state;
 class render_view;
+class render_system;
 class ri_command_list;
 
 // ================================================================================================
@@ -36,12 +37,14 @@ public:
     // Debugging name for this pass, will show up in profiles.
     std::string name;
 
+    // System that created this render pass.
+    render_system* system;
+
 public:
 
-    // Creates or destroys any rendering resources which will be needed
-    // by this render pass.
-    virtual result<void> create_resources(renderer& renderer) { return true; };
-    virtual result<void> destroy_resources(renderer& renderer) { return true; };
+    // Gets an opaque value that can be used to uniquely identify this pass within its render system.
+    // This can be used for storing and retrieving values from render_resource_cache's
+    void* get_cache_key(render_view& view);
 
     // Generates any command lists or other state required to execute this pass.
     // This is run in parallel with all other passes, so care must be taken

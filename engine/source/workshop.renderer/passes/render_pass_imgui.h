@@ -10,28 +10,30 @@
 #include "workshop.renderer/render_output.h"
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_param_block.h"
+#include "workshop.renderer/systems/render_system_imgui.h"
 
 namespace ws {
 
 // ================================================================================================
-//  Render pass that simply invokes a callback for something else to handle the 
-//  command list generation.
-// 
-//  This is typically used for graphics systems that are either trivial or specialized enough
-//  that making a pass just adds overhead for no direct benefit.
+//  Render pass that draws a set of imgui draw commands
 // ================================================================================================
-class render_pass_callback
-    : public render_pass
+class render_pass_imgui
+    : public render_pass_graphics
 {
 public:
 
-    using callback_type_t = std::function<void(renderer& renderer, generated_state& output, render_view& view)>;
+    ri_texture* default_texture = nullptr;
 
-    callback_type_t callback;
+    ri_buffer* vertex_buffer = nullptr;
+    ri_buffer* index_buffer = nullptr;
+
+    std::vector<render_system_imgui::draw_command> draw_commands;
 
 public:
 
     virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
+
+private:
 
 };
 

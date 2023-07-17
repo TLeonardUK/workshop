@@ -14,24 +14,22 @@
 namespace ws {
 
 // ================================================================================================
-//  Render pass that simply invokes a callback for something else to handle the 
-//  command list generation.
-// 
-//  This is typically used for graphics systems that are either trivial or specialized enough
-//  that making a pass just adds overhead for no direct benefit.
+//  Render pass that just draws a given set of primitives.
 // ================================================================================================
-class render_pass_callback
-    : public render_pass
+class render_pass_primitives
+    : public render_pass_graphics
 {
 public:
 
-    using callback_type_t = std::function<void(renderer& renderer, generated_state& output, render_view& view)>;
-
-    callback_type_t callback;
+    ri_buffer* vertex_buffer;
+    ri_buffer* index_buffer;
+    size_t vertex_count = 0;
 
 public:
 
     virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
+
+private:
 
 };
 

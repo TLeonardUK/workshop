@@ -10,6 +10,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_callback.h"
+#include "workshop.renderer/passes/render_pass_primitives.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_command_queue.h"
 #include "workshop.render_interface/ri_command_list.h"
@@ -37,14 +38,23 @@ void render_system_debug::register_init(init_list& list)
 {
 }
 
-void render_system_debug::create_graph(render_graph& graph)
+void render_system_debug::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
-    std::unique_ptr<render_pass_callback> pass = std::make_unique<render_pass_callback>();
-    pass->callback = std::bind(&render_system_debug::generate, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    if (!view.has_flag(render_view_flags::normal))
+    {
+        return;
+    }
 
-    m_render_pass = pass.get();
-
-    graph.add_node(std::move(pass), render_view_flags::normal);
+    std::unique_ptr<render_pass_primitives> pass = std::make_unique<render_pass_primitives>();
+    pass->name = "debug primitives";
+    pass->system = this;
+    pass->technique = m_renderer.get_effect_manager().get_technique("render_debug_primitive", {});
+    pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
+    pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
+    pass->vertex_buffer = m_vertex_buffer.get();
+    pass->index_buffer = m_index_buffer.get();
+    pass->vertex_count = m_draw_vertex_count;
+    graph.add_node(std::move(pass));
 }
 
 void render_system_debug::step(const render_world_state& state)
@@ -100,54 +110,6 @@ void render_system_debug::step(const render_world_state& state)
     // Reset vertex buffer so we can start filling it again.
     m_draw_vertex_count = m_vertices.size();
     m_vertices.clear();
-}
-
-void render_system_debug::generate(renderer& renderer, render_pass::generated_state& state_output, render_view& view)
-{
-    if (m_draw_vertex_count == 0)
-    {
-        return;
-    }
-
-    render_output output;
-    output.color_targets = m_renderer.get_swapchain_output().color_targets;
-    output.depth_target = m_renderer.get_gbuffer_output().depth_target;
-
-    render_effect::technique* technique = m_renderer.get_effect_manager().get_technique("render_debug_primitive", {});
-
-    // TODO: Cache all the param blocks.
-
-    std::unique_ptr<ri_param_block> vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
-    vertex_info_param_block->set("vertex_buffer", *m_vertex_buffer);
-    vertex_info_param_block->set("vertex_buffer_offset", 0u);
-    vertex_info_param_block->clear_buffer("instance_buffer");
-
-    ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
-    list.open();
-    {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "debug");
-
-        list.barrier(*output.color_targets[0], ri_resource_state::initial, ri_resource_state::render_target);
-        list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_read);
-        list.set_pipeline(*technique->pipeline.get());
-        list.set_render_targets(output.color_targets, output.depth_target);
-        list.set_viewport(view.get_viewport());
-        list.set_scissor(view.get_viewport());
-        list.set_primitive_topology(ri_primitive::line_list);
-        list.set_index_buffer(*m_index_buffer);
-        list.set_param_blocks({ 
-            vertex_info_param_block.get(), 
-            view.get_view_info_param_block()
-        });
-        list.draw(m_draw_vertex_count, 1, 0);
-
-        list.barrier(*output.depth_target, ri_resource_state::depth_read, ri_resource_state::initial);
-        list.barrier(*output.color_targets[0], ri_resource_state::render_target, ri_resource_state::initial);
-        
-    }
-    list.close();
-
-    state_output.graphics_command_lists.push_back(&list);
 }
 
 void render_system_debug::add_line(const vector3& start, const vector3& end, const color& color)

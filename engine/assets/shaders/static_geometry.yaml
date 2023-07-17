@@ -14,15 +14,32 @@ effects:
     techniques:
       static_geometry_wireframe: 
         wireframe: [ true ]
+        depth_only: [ false ]
+
       static_geometry_masked: 
         domain: [ masked ]
         wireframe: [ false ]
+        depth_only: [ false ]
+
       static_geometry_opaque: 
         domain: [ opaque ]
         wireframe: [ false ]
+        depth_only: [ false ]
+
       static_geometry_transparent: 
         domain: [ transparent ]
         wireframe: [ false ]
+        depth_only: [ false ]
+
+      static_geometry_masked_depth_only: 
+        domain: [ masked ]
+        wireframe: [ false ]
+        depth_only: [ true ]
+
+      static_geometry_opaque_depth_only: 
+        domain: [ opaque ]
+        wireframe: [ false ]
+        depth_only: [ true ]
 
 vertex_layouts:
   geometry_vertex:
@@ -101,4 +118,30 @@ techniques:
     render_state: transparent
     vertex_layout: geometry_vertex
     output_target: gbuffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
+  # Same as static_geometry_opaque but only outputs a depth value.
+  static_geometry_opaque_depth_only:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_opaque_depth_only
+    render_state: default
+    vertex_layout: geometry_vertex
+    output_target: depth_only_buffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
+  # Same as static_geometry_masked but only outputs a depth value.
+  static_geometry_masked_depth_only:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_masked_depth_only
+    render_state: default
+    vertex_layout: geometry_vertex
+    output_target: depth_only_buffer
     param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]

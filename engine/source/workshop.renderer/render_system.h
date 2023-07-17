@@ -31,10 +31,6 @@ public:
     // Registers all the steps required to initialize the system.
     virtual void register_init(init_list& list) = 0;
 
-    // Called during setup of the rendering pipeline. During this call the system
-    // should insert whatever render passes it needs into the render graph.
-    virtual void create_graph(render_graph& graph) = 0;
-
     // Called each frame. Responsible for doing things like updating uniforms
     // using during rendering.
     // //
@@ -42,11 +38,12 @@ public:
     // with what it accesses.
     virtual void step(const render_world_state& state) = 0;
 
-    // Called once each frame just prior to a given view being rendered.
+    // Called once each frame for each view, should create any render passes
+    // needed to render the system.
     // 
     // This is run in parallel with the rendering of all other views, so care
     // must be taken with what it accesses. 
-    virtual void step_view(const render_world_state& state, render_view& view) {};
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) {};
 
 protected:
 

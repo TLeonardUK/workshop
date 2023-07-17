@@ -5,7 +5,6 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.render_interface/ri_interface.h"
 
-#include "workshop.renderer/systems/render_system_test.h"
 #include "workshop.renderer/systems/render_system_clear.h"
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
@@ -96,13 +95,6 @@ void renderer::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_systems(); }
     );
 
-
-    list.add_step(
-        "Build Render Graph",
-        [this, &list]() -> result<void> { return create_render_graph(); },
-        [this, &list]() -> result<void> { return destroy_render_graph(); }
-    );
-
     list.add_step(
         "Renderer Debug Menu",
         [this, &list]() -> result<void> { return create_debug_menu(); },
@@ -115,7 +107,6 @@ result<void> renderer::create_systems(init_list& list)
     // Note: Order is important here, this is the order the 
     //       stages will be added to the render graph in.
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
-    //m_systems.push_back(std::make_unique<render_system_test>(*this, m_asset_manager));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
@@ -489,12 +480,26 @@ void renderer::render_state(render_world_state& state)
     // Render each view.
     std::vector<render_view*> views = m_scene_manager->get_views();
 
-    std::vector<std::vector<render_pass::generated_state>> view_generated_states;
+    struct view_generated_state
+    {
+        std::vector<render_pass::generated_state> states;
+        render_view* view;
+    };
+    std::vector<view_generated_state> view_generated_states;
     view_generated_states.resize(views.size());
 
     parallel_for("render views", task_queue::standard, views.size(), [this, &state, &views, &view_generated_states](size_t index) {
         profile_marker(profile_colors::render, "render view: %s", views[index]->get_name().c_str());
-        render_single_view(state, *views[index], view_generated_states[index]);
+
+        view_generated_state& view_state = view_generated_states[index];
+        view_state.view = views[index];
+
+        render_single_view(state, *views[index], view_state.states);
+    });
+
+    // Sort generated states by view render order.
+    std::sort(view_generated_states.begin(), view_generated_states.end(), [](const view_generated_state& a, const view_generated_state& b) {
+        return a.view->get_view_order() < b.view->get_view_order();
     });
 
     // Before dispatching command lists flush any uploads that may have been queued as part of generation.
@@ -521,14 +526,13 @@ void renderer::render_state(render_world_state& state)
     {
         profile_marker(profile_colors::render, "dispatch command lists");
 
-        for (size_t i = 0; i < views.size(); i++)
+        for (size_t i = 0; i < view_generated_states.size(); i++)
         {            
-            std::vector<render_pass::generated_state>& generated_state_list = view_generated_states[i];
-            render_view& view = *views[i];
+            view_generated_state& generated_state_list = view_generated_states[i];
 
-            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", view.get_name().c_str());
+            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", generated_state_list.view->get_name().c_str());
 
-            for (render_pass::generated_state& state : generated_state_list)
+            for (render_pass::generated_state& state : generated_state_list.states)
             {
                 for (auto& graphics_list : state.graphics_command_lists)
                 {
@@ -577,21 +581,18 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
 {
     profile_marker(profile_colors::render, "render view");
 
-    // Give all render systems a chance to do anything view specific.
+    // Generate a render graph for rendering this graph.
+    render_graph graph;
     for (auto& system : m_systems)
     {
-        system->step_view(state, view);
+        system->build_graph(graph, state, view);
     }
 
-    // Generate command lists for all nodes in parallel.
-    // TODO: Build a render graph for this view, don't use a persistent one.
-    //       Replace create_graph with build_graph which gets called for each view.
-
     std::vector<render_graph::node*> nodes;
-    m_render_graph->get_active(nodes, view.get_flags());
-    
+    graph.get_active(nodes);
     output.resize(nodes.size());
     
+    // Render each pass in parallel.
     parallel_for("generate render passs", task_queue::standard, nodes.size(), [this, &state, &output, &nodes, &view](size_t index) {
         render_graph::node* node = nodes[index];
         
@@ -702,49 +703,6 @@ void renderer::resume()
     m_paused = false;
 }
 
-result<void> renderer::create_render_graph()
-{
-    m_render_graph = std::make_unique<render_graph>();
-
-    for (auto& system : m_systems)
-    {
-        system->create_graph(*m_render_graph);
-    }
-
-    std::vector<render_graph::node*> nodes;
-    m_render_graph->get_nodes(nodes);
-
-    for (auto& node : nodes)
-    {
-        if (result<void> ret = node->pass->create_resources(*this); !ret)
-        {
-            return ret;
-        }
-    }
-
-    return true;
-}
-
-result<void> renderer::destroy_render_graph()
-{
-    pause();
-
-    std::vector<render_graph::node*> nodes;
-    m_render_graph->get_nodes(nodes);
-
-    for (auto& node : nodes)
-    {
-        if (result<void> ret = node->pass->destroy_resources(*this); !ret)
-        {
-            return ret;
-        }
-    }
-
-    m_render_graph = nullptr;
-
-    return true;
-}
-
 result<void> renderer::create_debug_menu()
 {
     // Grab statistics the debug menu will want.
@@ -801,6 +759,34 @@ visualization_mode renderer::get_visualization_mode()
 bool renderer::is_rendering_frozen()
 {
     return m_rendering_frozen;
+}
+
+void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index)
+{
+    std::scoped_lock lock(m_fullscreen_buffers_mutex);
+
+    auto iter = std::find_if(m_fullscreen_buffers.begin(), m_fullscreen_buffers.end(), [&layout](auto& buffers) {
+        return buffers.layout == layout;
+    });
+
+    if (iter != m_fullscreen_buffers.end())
+    {
+        out_vertex = iter->vertex_buffer.get();
+        out_index = iter->index_buffer.get();
+        return;
+    }
+
+    std::unique_ptr<ri_layout_factory> factory = m_render_interface.create_layout_factory(layout, ri_layout_usage::buffer);
+    factory->add("position", { vector2(-1.0f, -1.0f), vector2(1.0f, -1.0f), vector2(-1.0f,  1.0f), vector2(1.0f,  1.0f) });
+    factory->add("uv", { vector2(0.0f,  1.0f), vector2(1.0f,  1.0f), vector2(0.0f,  0.0f), vector2(1.0f,  0.0f) });
+
+    fullscreen_buffers& buffers = m_fullscreen_buffers.emplace_back();
+    buffers.layout = layout;
+    buffers.vertex_buffer = factory->create_vertex_buffer("Fullscreen Vertex Buffer");
+    buffers.index_buffer = factory->create_index_buffer("Fullscreen Index Buffer", std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
+    
+    out_vertex = buffers.vertex_buffer.get();
+    out_index = buffers.index_buffer.get();
 }
 
 void renderer::drain()

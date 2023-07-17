@@ -53,6 +53,10 @@ SET(SOURCES
     "passes/render_pass_geometry.cpp"
     "passes/render_pass_callback.h"
     "passes/render_pass_callback.cpp"
+    "passes/render_pass_primitives.h"
+    "passes/render_pass_primitives.cpp"
+    "passes/render_pass_imgui.h"
+    "passes/render_pass_imgui.cpp"
 
     "objects/render_view.h"
     "objects/render_view.cpp"

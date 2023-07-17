@@ -20,7 +20,7 @@ public:
     render_system_geometry(renderer& render);
 
     virtual void register_init(init_list& list) override;
-    virtual void create_graph(render_graph& graph) override;
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
 
 private:

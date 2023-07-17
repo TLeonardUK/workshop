@@ -16,46 +16,31 @@
 
 namespace ws {
 
-result<void> render_pass_fullscreen::create_resources(renderer& renderer)
-{
-    ri_data_layout layout = technique->pipeline->get_create_params().vertex_layout;
-
-    // Generate vertex/index buffers for rendering a rect across the entire screen.
-    std::unique_ptr<ri_layout_factory> factory = renderer.get_render_interface().create_layout_factory(layout, ri_layout_usage::buffer);
-    factory->add("position", { vector2(-1.0f, -1.0f), vector2( 1.0f, -1.0f), vector2(-1.0f,  1.0f), vector2( 1.0f,  1.0f) });    
-    factory->add("uv",       { vector2( 0.0f,  1.0f), vector2( 1.0f,  1.0f), vector2( 0.0f,  0.0f), vector2( 1.0f,  0.0f) });
-
-    m_vertex_buffer = factory->create_vertex_buffer(string_format("%s - Vertex buffer", name.c_str()).c_str());
-    m_index_buffer  = factory->create_index_buffer(string_format("%s - Index buffer", name.c_str()).c_str(), std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
-
-    // Create the main vertex info param block.
-    m_vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
-    m_vertex_info_param_block->set("vertex_buffer", *m_vertex_buffer);
-    m_vertex_info_param_block->set("vertex_buffer_offset", 0u);
-    m_vertex_info_param_block->clear_buffer("instance_buffer");
-    param_blocks.push_back(m_vertex_info_param_block.get());
-
-    // Validate the parameters we've been passed.
-    if (result<void> ret = validate_parameters(); !ret)
-    {
-        return ret;
-    }
-
-    return true;
-}
-
-result<void> render_pass_fullscreen::destroy_resources(renderer& renderer)
-{
-    m_vertex_info_param_block = nullptr;
-
-    m_index_buffer = nullptr;
-    m_vertex_buffer = nullptr;
-
-    return true;
-}
-
 void render_pass_fullscreen::generate(renderer& renderer, generated_state& state_output, render_view& view)
 {
+    // Grab fullscreen buffers for the render pass.
+    ri_data_layout layout;
+    ri_buffer* vertex_buffer = nullptr;
+    ri_buffer* index_buffer = nullptr;
+    if (technique)
+    {
+        layout = technique->pipeline->get_create_params().vertex_layout;
+        renderer.get_fullscreen_buffers(layout, vertex_buffer, index_buffer);
+    }
+
+    // Grab and update the vertex info buffer.
+    ri_param_block* vertex_info_param_block = nullptr;
+    
+    if (technique)
+    {
+        vertex_info_param_block = view.get_resource_cache().find_or_create_param_block(get_cache_key(view), "vertex_info");
+        vertex_info_param_block->set("vertex_buffer", *vertex_buffer);
+        vertex_info_param_block->set("vertex_buffer_offset", 0u);
+        vertex_info_param_block->clear_buffer("instance_buffer");
+        param_blocks.push_back(vertex_info_param_block);
+    }
+
+    // Create the command list.
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
@@ -81,14 +66,18 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
             }
         }
 
-        list.set_pipeline(*technique->pipeline.get());
-        list.set_render_targets(output.color_targets, output.depth_target);
-        list.set_param_blocks(bind_param_blocks(view.get_resource_cache()));
-        list.set_viewport(view.get_viewport());
-        list.set_scissor(view.get_viewport());
-        list.set_primitive_topology(ri_primitive::triangle_list);
-        list.set_index_buffer(*m_index_buffer);
-        list.draw(6, 1);
+        // Technique can be null if we are just using this pass as an excuse to clear the depth depth/color targets.
+        if (technique)
+        {
+            list.set_pipeline(*technique->pipeline.get());
+            list.set_render_targets(output.color_targets, output.depth_target);
+            list.set_param_blocks(bind_param_blocks(view.get_resource_cache()));
+            list.set_viewport(view.get_viewport());
+            list.set_scissor(view.get_viewport());
+            list.set_primitive_topology(ri_primitive::triangle_list);
+            list.set_index_buffer(*index_buffer);
+            list.draw(6, 1);
+        }
 
         // Transition targets back to initial state.
         for (ri_texture* texture : output.color_targets)

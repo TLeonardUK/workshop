@@ -153,6 +153,8 @@ void render_batch_instance_buffer::resize(buffer& buf, size_t size)
 
 ri_param_block* render_resource_cache::find_param_block_by_name(const char* param_block_name)
 {
+    std::scoped_lock lock(m_mutex);
+
     auto iter = std::find_if(m_blocks.begin(), m_blocks.end(), [param_block_name](const param_block& block)
     {
         return param_block_name == block.name;
@@ -171,6 +173,8 @@ ri_param_block* render_resource_cache::find_or_create_param_block(
     const char* param_block_name,
     std::function<void(ri_param_block& block)> creation_callback)
 {
+    std::scoped_lock lock(m_mutex);
+
     auto iter = std::find_if(m_blocks.begin(), m_blocks.end(), [key, param_block_name](const param_block& block)
     {
         return key == block.key && param_block_name == block.name;
@@ -219,6 +223,8 @@ ri_param_block* render_resource_cache::find_or_create_param_block(
 
 render_batch_instance_buffer* render_resource_cache::find_or_create_instance_buffer(void* key)
 {
+    std::scoped_lock lock(m_mutex);
+
     if (auto iter = m_instance_buffers.find(key); iter != m_instance_buffers.end())
     {
         return iter->second.buffer.get();
@@ -238,6 +244,8 @@ render_batch_instance_buffer* render_resource_cache::find_or_create_instance_buf
 
 void render_resource_cache::clear()
 {
+    std::scoped_lock lock(m_mutex);
+
     m_blocks.clear();
     m_instance_buffers.clear();
 }

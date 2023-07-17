@@ -16,16 +16,6 @@
 
 namespace ws {
 
-result<void> render_pass_callback::create_resources(renderer& renderer)
-{
-    return true;
-}
-
-result<void> render_pass_callback::destroy_resources(renderer& renderer)
-{
-    return true;
-}
-
 void render_pass_callback::generate(renderer& renderer, generated_state& state_output, render_view& view)
 {
     if (callback)

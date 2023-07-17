@@ -34,7 +34,7 @@ void render_system_shadows::register_init(init_list& list)
 {
 }
 
-void render_system_shadows::create_graph(render_graph& graph)
+void render_system_shadows::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
     // This does't have any independent passes, it instead creates render views in the step.
 }
@@ -114,10 +114,6 @@ void render_system_shadows::step(const render_world_state& state)
             step_cascade(info, cascade);
         }
     }
-}
-
-void render_system_shadows::step_view(const render_world_state& state, render_view& view)
-{
 }
 
 render_system_shadows::shadow_info& render_system_shadows::find_or_create_shadow_info(render_object_id light_id, render_object_id view_id)
@@ -219,8 +215,8 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         vector3 origin_light_space = info.view_frustum.get_origin() * light_view_matrix;
 
         // TODO: This seems wrong ... Depth should probably be based on scene bounds?
-        float min_z = -origin_light_space.z - 10000.0f;
-        float max_z = -origin_light_space.z + 10000.0f;
+        float min_z = origin_light_space.z - 10000.0f;
+        float max_z = origin_light_space.z + 10000.0f;
 
         cascade.view_matrix = light_view_matrix;
         cascade.projection_matrix = matrix4::orthographic(
@@ -292,6 +288,8 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     view->set_render_target(cascade.shadow_map.get());
     view->set_viewport(recti(0, 0, cascade.map_size, cascade.map_size));
     view->set_flags(render_view_flags::depth_only);
+    view->set_view_type(render_view_type::custom);
+    view->set_view_order(render_view_order::shadows);
 }
 
 }; // namespace ws

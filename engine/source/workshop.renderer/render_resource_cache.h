@@ -94,6 +94,8 @@ public:
 public:
     renderer& m_renderer;
 
+    std::mutex m_mutex;
+
     struct param_block
     {
         void* key;

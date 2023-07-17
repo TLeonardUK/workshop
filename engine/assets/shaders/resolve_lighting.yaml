@@ -21,6 +21,8 @@ param_blocks:
     fields:
       light_count: int
       light_buffer: byteaddressbuffer
+      #shadow_map_count: int
+      #shadow_map_buffer: byteaddressbuffer
       view_world_position: float3
   light_state:
     scope: instance
@@ -33,6 +35,13 @@ param_blocks:
       inner_radius: float
       outer_radius: float
       range: float
+#      shadow_map_start_index: int
+#      shadow_map_count: int
+#  shadow_map_state:
+#    scope: instance
+#    fields:
+#      light_matrix: matrix4
+#      depth_map: texture2d
 
 techniques:
   resolve_lighting:

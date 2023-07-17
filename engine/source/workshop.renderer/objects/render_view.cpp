@@ -57,6 +57,21 @@ render_view_flags render_view::get_flags()
     return m_flags;
 }
 
+bool render_view::has_flag(render_view_flags flags)
+{
+    return (static_cast<int>(m_flags) & static_cast<int>(flags)) != 0; 
+}
+
+void render_view::set_view_order(render_view_order order)
+{
+    m_render_view_order = order;
+}
+
+render_view_order render_view::get_view_order()
+{
+    return m_render_view_order;
+}
+
 void render_view::set_viewport(const recti& viewport)
 {
     m_viewport = viewport;
