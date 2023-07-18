@@ -72,24 +72,28 @@ enum class default_sampler_type
 enum class visualization_mode
 {
     normal, 
+    albedo,
     wireframe,
     metallic,
     roughness,
     world_normal,
     world_position,
     lighting,
+    shadow_cascades,
 
     COUNT
 };
 
 static inline const char* visualization_mode_strings[] = {
     "normal",
+    "albedo",
     "wireframe",
     "metallic",
     "roughness",
     "world normal",
     "world position",
-    "lighting"
+    "lighting",
+    "shadow cascades"
 };
 
 // ================================================================================================
@@ -285,7 +289,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::lighting;
+    visualization_mode m_visualization_mode = visualization_mode::normal;
     bool m_draw_octtree_cell_bounds = false;
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;

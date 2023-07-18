@@ -64,7 +64,6 @@ protected:
 
     bool m_shadow_casting = false;
     size_t m_shadow_map_size = 512;
-    size_t m_shadow_map_cascades = 3;
     float m_shadow_max_distance = 3000.0f;
 
     std::unique_ptr<ri_param_block> m_light_state_param_block;

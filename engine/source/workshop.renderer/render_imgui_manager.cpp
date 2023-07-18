@@ -438,8 +438,6 @@ void render_imgui_manager::start_context_frame(context* context)
         m_input.set_mouse_position(vector2(io.MousePos.x, io.MousePos.y));
     }
 
-    m_input.set_mouse_capture(ImGui::IsAnyMouseDown());
-
     ImGui::NewFrame();
 }
 

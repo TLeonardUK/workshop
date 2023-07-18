@@ -11,6 +11,10 @@ render_states:
   # Default geometry rendering state.
   default: 
     cull_mode: none
+  # Default geometry rendering state that is used for rendering depth only data - shadow maps etc.
+  depth_only_render_state: 
+    cull_mode: none
+    depth_clip_enabled: false
   # Default geometry rendering state in wireframe.
   default_wireframe: 
     cull_mode: none
@@ -43,7 +47,7 @@ vertex_layouts:
 output_targets:
   # Main gbuffer target with all MRT targets.
   gbuffer:
-    color: [ R16G16B16A16, R16G16B16A16_FLOAT, R16G16B16A16_FLOAT ]
+    color: [ R16G16B16A16, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT ]
     depth: D24_UNORM_S8_UINT
   # Swapchain output target.
   swapchain:

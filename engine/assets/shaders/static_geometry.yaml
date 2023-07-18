@@ -128,7 +128,7 @@ techniques:
     pixel_shader: 
       file: data:shaders/source/static_geometry.hlsl
       entry: pshader_opaque_depth_only
-    render_state: default
+    render_state: depth_only_render_state
     vertex_layout: geometry_vertex
     output_target: depth_only_buffer
     param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
@@ -141,7 +141,7 @@ techniques:
     pixel_shader: 
       file: data:shaders/source/static_geometry.hlsl
       entry: pshader_masked_depth_only
-    render_state: default
+    render_state: depth_only_render_state
     vertex_layout: geometry_vertex
     output_target: depth_only_buffer
     param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]

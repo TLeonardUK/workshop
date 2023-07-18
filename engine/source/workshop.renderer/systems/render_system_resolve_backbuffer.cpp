@@ -30,7 +30,6 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
 
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_parameters");
     resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
-    resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
     resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
     resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
 

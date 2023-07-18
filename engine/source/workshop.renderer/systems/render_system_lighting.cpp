@@ -143,6 +143,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
     resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
     resolve_param_block->set("view_world_position", view.get_local_location());
+    resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
 
     // Add pass to run compute shader to cluster our lights.
     // TODO

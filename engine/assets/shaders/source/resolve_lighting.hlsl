@@ -6,10 +6,21 @@
 #include "data:shaders/source/common/gbuffer.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
 #include "data:shaders/source/common/lighting.hlsl"
+#include "data:shaders/source/common/consts.hlsl"
 
 // ================================================================================================
 //  Types
 // ================================================================================================
+
+static const float3 shadow_cascade_colors[6] = 
+{
+   float3(0.0f, 1.0f, 0.0f),
+   float3(1.0f, 1.0f, 0.0f),
+   float3(1.0f, 0.0f, 0.0f),   
+   float3(0.0f, 1.0f, 1.0f),
+   float3(1.0f, 0.0f, 1.0f),
+   float3(1.0f, 1.0f, 1.0f),
+};
 
 struct lightbuffer_output
 {
@@ -64,8 +75,8 @@ cascade_info get_shadow_cascade_info(gbuffer_fragment frag, light_state light)
         if (world_position_light_clip_space.z > -1.0 && world_position_light_clip_space.z < 1.0)
         {
             float2 shadow_map_coord = world_position_light_clip_space.xy * 0.5 + 0.5;
-            
-            // TODO: Fix shadow maps being upside down :squint:
+
+            // Invert y axis as directx's uv's are inverted.            
             shadow_map_coord = float2(shadow_map_coord.x, 1.0f - shadow_map_coord.y);
 
             if (shadow_map_coord.x >= 0.0 && shadow_map_coord.y >= 0.0 && shadow_map_coord.x <= 1.0 && shadow_map_coord.y <= 1.0)
@@ -91,7 +102,69 @@ cascade_info get_shadow_cascade_info(gbuffer_fragment frag, light_state light)
     return info;
 }
 
-float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_index)
+enum shadow_filter
+{
+    // Blocky, woo.
+    no_filter,
+    // Percentage closer filter.
+    pcf,
+    // PCF using a rotated poisson disc for tap locations.
+    pcf_poisson
+};
+
+/*
+float calcSearchWidth(float receiverDepth)
+{
+    return gCalibratedLightSize * (receiverDepth - NEAR) / gViewPos.z;
+}
+ 
+// Calculates the average distance to blocking points on the depth map.
+float calculate_blocker_distance(float bias)
+{
+    float sumBlockerDistances = 0.0f;
+    int numBlockerDistances = 0;
+    float receiverDepth = LIGHT_SPACE_POS_POST_W.z;
+ 
+    int sw = int(calcSearchWidth(receiverDepth));
+    for (int i = 0; i < NUM_SAMPLES; ++i)
+    {
+        vec2 offset = vec2(
+            ROTATION.x * POISSON_DISK[i].x - ROTATION.y * POISSON_DISK[i].y,
+            ROTATION.y * POISSON_DISK[i].x + ROTATION.x * POISSON_DISK[i].y);
+ 
+        float depth = texture(gShadowMap, LIGHT_SPACE_POS_POST_W.xy + offset * TEXEL_SIZE * sw).r;
+        if (depth < receiverDepth - bias)
+        {
+            ++numBlockerDistances;
+            sumBlockerDistances += depth;
+        }
+    }
+ 
+    if (numBlockerDistances > 0)
+    {
+        return sumBlockerDistances / numBlockerDistances;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+// Calculates the kernel size used when using pcf filtering. This essentially
+// estimates the width of the shadow penumbra.
+float calculate_pcf_kernel_size(float bias, float depth, float light_range)
+{
+    float blocker_distance = calculate_blocker_distance(bias);
+    if (blocker_distance == -1)
+    {
+        return 1;
+    }
+ 
+    float penumbra_width = (depth - blocker_distance) / blocker_distance;
+    return penumbra_width * light_range;// * NEAR / depth;
+}*/
+
+float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_index, shadow_filter filter, int samples)
 {
     // If outside cascade count, return no shadow.
     if (cascade_index >= light.shadow_map_count)
@@ -103,6 +176,9 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     float4 world_position_light_space = mul(state.shadow_matrix, float4(frag.world_position, 1.0));
     float4 world_position_light_clip_space = world_position_light_space / world_position_light_space.w;
 
+    float n_dot_l = dot(light.position, frag.world_position);
+    float2 texel_size = float2(1.0 / state.depth_map_size, 1.0 / state.depth_map_size);
+
     // If outside shadow map, return no shadow.
     if (world_position_light_clip_space.z <= -1.0 || world_position_light_clip_space.z >= 1.0)
     {
@@ -111,41 +187,111 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
 
     float2 shadow_map_coord = world_position_light_clip_space.xy * 0.5 + 0.5;
 
-    // TODO: Fix shadow maps being upside down :squint:
+    // Invert y axis as directx's uv's are inverted.
     shadow_map_coord = float2(shadow_map_coord.x, 1.0f - shadow_map_coord.y);
 
-    // TODO: Do some fancier sampling here.
-    float depth = table_texture_2d[NonUniformResourceIndex(state.depth_map_index)].Sample(shadow_map_sampler, shadow_map_coord).r;
-    float bias = 0.001f;
+    // Sloped bias to filter out acne on slanted surfaces.
+    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.0001f, 0.01f); 
+    float result = 0.0f;
 
-    return depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0;
+    // Filter if required.
+    Texture2D shadow_map = table_texture_2d[NonUniformResourceIndex(state.depth_map_index)];
+    switch (filter)
+    {
+        default:
+        case shadow_filter::no_filter:
+        {
+            float depth = shadow_map.Sample(shadow_map_sampler, shadow_map_coord).r;
+            result = (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
+            break;
+        }
+        case shadow_filter::pcf:
+        {
+            int direction_samples = sqrt(samples) / 2;
+            int sample_count = 0;
+
+            for (int y = -direction_samples; y <= direction_samples; y++)
+            {
+                for (int x = -direction_samples; x <= direction_samples; x++)
+                {
+                    float2 uv = shadow_map_coord + float2(x, y) * texel_size;      
+                    float depth = shadow_map.Sample(shadow_map_sampler, uv).r;
+                    result += (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
+                    sample_count++;
+                }
+            }
+
+            result /= sample_count;
+            break;
+        }
+        case shadow_filter::pcf_poisson:
+        {
+            // TODO: For future consideration, use a variable penumbra
+            // https://andrew-pham.blog/2019/08/03/percentage-closer-soft-shadows/
+            // https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
+
+            float kernel_size = 2.0f;
+            
+            for (int i = 0; i < samples; i++)
+            {
+                int disk_index = i % 16;
+                float angle = random(float4(frag.world_position.xyz, i));
+                float2 rotation = float2(
+                    cos(angle),
+                    sin(angle)
+                );		
+                float2 poisson_offset = float2(
+                    rotation.x * poisson_disk[disk_index].x - rotation.y * poisson_disk[disk_index].y,
+                    rotation.y * poisson_disk[disk_index].x + rotation.x * poisson_disk[disk_index].y
+                );
+       
+                float2 uv = shadow_map_coord + poisson_offset * texel_size * kernel_size;
+                float depth = shadow_map.Sample(shadow_map_sampler, uv).r;
+                result += (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
+            }
+
+            result /= samples;
+            break;
+        }
+    }
+    
+    return result;
 }
 
-float calculate_shadow_directional(gbuffer_fragment frag, light_state light)
+float2 calculate_shadow_directional(gbuffer_fragment frag, light_state light)
 {
+    cascade_info cascade_info = get_shadow_cascade_info(frag, light);
+
     // If normal is in direction of the light, we know we are in shadow as the light
     // is hitting our back.
     if (dot(frag.world_normal, light.direction) > 0.0f)
     {
-        return 0.0f;
+        return float2(0.0f, cascade_info.primary_cascade_index);
     }
 
-    cascade_info cascade_info = get_shadow_cascade_info(frag, light);
+    float primary_cascade_value = sample_shadow_map(frag, light, cascade_info.primary_cascade_index, shadow_filter::pcf_poisson, 16);
+    float secondary_cascade_value = sample_shadow_map(frag, light, cascade_info.secondary_cascade_index, shadow_filter::pcf_poisson, 16);
 
-    float primary_cascade_value = sample_shadow_map(frag, light, cascade_info.primary_cascade_index);
-    float secondary_cascade_value = sample_shadow_map(frag, light, cascade_info.secondary_cascade_index);
-
-    return lerp(primary_cascade_value, secondary_cascade_value, cascade_info.blend);
+    return float2(
+        lerp(primary_cascade_value, secondary_cascade_value, cascade_info.blend),
+        cascade_info.primary_cascade_index
+    );
 }
 
-float calculate_shadow_point(gbuffer_fragment frag, light_state light)
+float2 calculate_shadow_point(gbuffer_fragment frag, light_state light)
 {
-    return 1.0f;
+    return float2(
+        1.0f,
+        1.0f
+    );
 }
 
-float calculate_shadow_spotlight(gbuffer_fragment frag, light_state light)
+float2 calculate_shadow_spotlight(gbuffer_fragment frag, light_state light)
 {
-    return 1.0f;
+    return float2(
+        1.0f,
+        1.0f
+    );
 }
 
 // ================================================================================================
@@ -198,6 +344,12 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
     float3 view_direction = normalize(view_world_position - frag.world_position);
     float3 metallic = frag.metallic;
 
+    float3 albedo = frag.albedo;
+    if (visualization_mode == visualization_mode_t::lighting)
+    {
+        albedo = float3(1.0f, 1.0f, 1.0f);
+    }
+
     // Direction between light and frag.    
     float3 light_frag_direction = 0.0f;
     if (light.type == light_type::directional)
@@ -214,26 +366,26 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
     
     // Calculate radiance based on the light type.
     float attenuation = 1.0f;
-    float shadow_attenuation = 1.0f;
+    float2 shadow_attenuation_and_cascade_index = 1.0f;
     if (light.type == light_type::directional)
     {
         attenuation = calculate_attenuation_directional(frag, light);
-        shadow_attenuation = calculate_shadow_directional(frag, light);
+        shadow_attenuation_and_cascade_index = calculate_shadow_directional(frag, light);
     }
     else if (light.type == light_type::point_)
     {
         attenuation = calculate_attenuation_point(frag, light);
-        shadow_attenuation = calculate_attenuation_point(frag, light);
+        shadow_attenuation_and_cascade_index = calculate_attenuation_point(frag, light);
     }
     else if (light.type == light_type::spotlight)
     {
         attenuation = calculate_attenuation_spotlight(frag, light);
-        shadow_attenuation = calculate_attenuation_spotlight(frag, light);
+        shadow_attenuation_and_cascade_index = calculate_attenuation_spotlight(frag, light);
     }
-
+    
     // Calculate fresnel reflection
-    float3 radiance = light.color * light.intensity * attenuation * shadow_attenuation;
-    float3 fresnel_reflectance = lerp(dielectric_fresnel, frag.albedo, metallic);
+    float3 radiance = light.color * light.intensity * attenuation * shadow_attenuation_and_cascade_index.r;
+    float3 fresnel_reflectance = lerp(dielectric_fresnel, albedo, metallic);
 
     // Calculate fresnel term.
     float3 f = fresnel_schlick(max(dot(view_light_half, view_direction), 0.0), fresnel_reflectance);
@@ -246,7 +398,7 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
     float3 kd = lerp(float3(1.0, 1.0, 1.0) - f, float3(0.0, 0.0, 0.0), metallic);
 
     // Lambert diffuse brdf.
-    float3 diffuse_brdf = (kd * frag.albedo) / pi;
+    float3 diffuse_brdf = (kd * albedo) / pi;
 
     // Cook-Torrance brdf
     float3 numerator = d * g * f;
@@ -255,13 +407,28 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
 
     // Total contribution for this light.
     float n_dot_l = max(dot(normal, light_frag_direction), 0.0);
-    return (diffuse_brdf + specular_brdf) * radiance * n_dot_l;
+    float3 result = (diffuse_brdf + specular_brdf) * radiance * n_dot_l;
+
+    // If visualizing the shadow cascades tint the radiance.
+    if (visualization_mode == visualization_mode_t::shadow_cascades)
+    {
+        result = (result + 0.02) * shadow_cascade_colors[int(shadow_attenuation_and_cascade_index.g) % 6];
+    }    
+
+    return result;
 }
 
 float3 calculate_ambient_lighting(gbuffer_fragment frag)
 {
+    float3 albedo = frag.albedo;
+    if (visualization_mode == visualization_mode_t::lighting)
+    {
+        albedo = float3(1.0f, 1.0f, 1.0f);
+    }
+
     // TODO: Do IBL.
-    return float3(0.03, 0.03, 0.03) * frag.albedo;
+//    return 0;
+    return float3(0.03, 0.03, 0.03) * albedo;
 }
 
 // ================================================================================================

@@ -25,6 +25,7 @@ param_blocks:
       shadow_map_buffer: byteaddressbuffer
       view_world_position: float3
       shadow_map_sampler: sampler
+      visualization_mode: int
   # TODO: Pack all this data down.
   light_state:
     scope: instance

@@ -60,11 +60,9 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
     
-    /*
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    */
 
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
@@ -85,6 +83,7 @@ ws::result<void> rl_game_app::start()
     m_light_id = cmd_queue.create_directional_light("Sun");
     cmd_queue.set_light_shadow_casting(m_light_id, true);
     cmd_queue.set_light_shadow_map_size(m_light_id, 1024);
+    //cmd_queue.set_directional_light_shadow_cascades(m_light_id, 6);
     cmd_queue.set_light_intensity(m_light_id, 1.0f);
     cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(math::halfpi*1.6f, vector3::right), vector3::one);
     /*
@@ -193,6 +192,8 @@ void rl_game_app::step(const frame_time& time)
             m_view_rotation,
             vector3::one
         );
+
+//        db_log(core, "position:%.2f,%.2f,%.2f", m_view_position.x, m_view_position.y, m_view_position.z);
     }
     else
     {
