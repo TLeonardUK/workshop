@@ -49,6 +49,9 @@ private:
     // Maximum number of lights we can handle on screen at once.
     static inline constexpr size_t k_max_lights = 10000;
 
+    // Maximum number of shadow maps we can handle on screen at once.
+    static inline constexpr size_t k_max_shadow_maps = 10000;
+
 };
 
 }; // namespace ws

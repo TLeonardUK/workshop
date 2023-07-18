@@ -57,6 +57,7 @@ void render_directional_light::update_render_data()
     m_light_state_param_block->set("type", (int)render_light_type::directional);
     m_light_state_param_block->set("inner_radius", 0.0f);
     m_light_state_param_block->set("outer_radius", 0.0f);
+    m_light_state_param_block->set("cascade_blend_factor", get_shodow_cascade_blend());
 }
 
 obb render_directional_light::get_bounds()

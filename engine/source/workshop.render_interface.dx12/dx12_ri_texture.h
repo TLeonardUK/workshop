@@ -40,6 +40,7 @@ public:
     virtual float get_optimal_clear_depth() override;
     virtual uint8_t get_optimal_clear_stencil() override;
     virtual bool is_render_target() override;
+    virtual bool is_depth_stencil() override;
 
     virtual ri_resource_state get_initial_state() override;
 
@@ -52,6 +53,7 @@ public:
 
     ID3D12Resource* get_resource();
 
+    void calculate_formats();
     void create_views();
 
 private:
@@ -61,8 +63,14 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
 
+    D3D12_SHADER_RESOURCE_VIEW_DESC m_srv_view_desc = {};
+    D3D12_DEPTH_STENCIL_VIEW_DESC m_dsv_view_desc = {};
+    D3D12_RENDER_TARGET_VIEW_DESC m_rtv_view_desc = {};
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC m_view_desc = {};
+    DXGI_FORMAT m_resource_format;
+    DXGI_FORMAT m_srv_format;
+    DXGI_FORMAT m_dsv_format;
+    DXGI_FORMAT m_rtv_format;
 
     dx12_ri_descriptor_table::allocation m_rtv;
     dx12_ri_descriptor_table::allocation m_dsv;

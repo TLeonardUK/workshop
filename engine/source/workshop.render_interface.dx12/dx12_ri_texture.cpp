@@ -16,6 +16,7 @@ dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* de
     , m_debug_name(debug_name)
     , m_create_params(params)
 {
+    calculate_formats();
 }
 
 dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* debug_name, const ri_texture::create_params& params, Microsoft::WRL::ComPtr<ID3D12Resource> resource, ri_resource_state common_state)
@@ -25,6 +26,7 @@ dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* de
     , m_handle(resource)
     , m_common_state(common_state)
 {
+    calculate_formats();
     create_views();
 }
 
@@ -55,7 +57,7 @@ result<void> dx12_ri_texture::create_resources()
     desc.Width = static_cast<UINT64>(m_create_params.width);
     desc.Height = static_cast<UINT>(m_create_params.height);
     desc.MipLevels = static_cast<UINT16>(m_create_params.mip_levels);
-    desc.Format = ri_to_dx12(m_create_params.format);
+    desc.Format = m_resource_format;
     desc.Flags = D3D12_RESOURCE_FLAG_NONE;
     desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 
@@ -97,22 +99,26 @@ result<void> dx12_ri_texture::create_resources()
     D3D12_RESOURCE_STATES initial_state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
     m_common_state = ri_resource_state::pixel_shader_resource;
 
+    DXGI_FORMAT clear_format = m_srv_format;
+
     if (m_create_params.is_render_target)
     {
         if (ri_is_format_depth_target(m_create_params.format))
         {
             initial_state = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+            clear_format = m_dsv_format;
             m_common_state = ri_resource_state::depth_write;
         }
         else
         {
             initial_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+            clear_format = m_rtv_format;
             m_common_state = ri_resource_state::render_target;
         }
     }
 
     D3D12_CLEAR_VALUE clear_color;
-    clear_color.Format = desc.Format;
+    clear_color.Format = clear_format;
     clear_color.Color[0] = m_create_params.optimal_clear_color.r;
     clear_color.Color[1] = m_create_params.optimal_clear_color.g;
     clear_color.Color[2] = m_create_params.optimal_clear_color.b;
@@ -156,6 +162,106 @@ result<void> dx12_ri_texture::create_resources()
     return true;
 }
 
+void dx12_ri_texture::calculate_formats()
+{
+    size_t mip_levels = m_create_params.mip_levels;
+
+    // Calculate formats appropate for this texture.
+    m_resource_format = ri_to_dx12(m_create_params.format);
+    m_srv_format = m_resource_format;
+    m_dsv_format = m_resource_format;
+    m_rtv_format = m_resource_format;
+
+    // We use typeless formats for depth as we will specialize with the views.
+    if (ri_is_format_depth_target(m_create_params.format))
+    {
+        if (m_create_params.format == ri_texture_format::D16)
+        {
+            m_resource_format = DXGI_FORMAT_R16_TYPELESS;
+            m_srv_format = DXGI_FORMAT_R16_FLOAT;
+            m_dsv_format = DXGI_FORMAT_D16_UNORM;
+            m_rtv_format = DXGI_FORMAT_D16_UNORM;
+        }
+        else if (m_create_params.format == ri_texture_format::D32_FLOAT)
+        {
+            m_resource_format = DXGI_FORMAT_R32_TYPELESS;
+            m_srv_format = DXGI_FORMAT_R32_FLOAT;
+            m_dsv_format = DXGI_FORMAT_D32_FLOAT;
+            m_rtv_format = DXGI_FORMAT_D32_FLOAT;
+        }
+        else if (m_create_params.format == ri_texture_format::D24_UNORM_S8_UINT)
+        {
+            m_resource_format = DXGI_FORMAT_R24G8_TYPELESS;
+            m_srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            m_dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+            m_rtv_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        }
+    }
+
+    // Create views for all the view types.
+    m_srv_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+    m_srv_view_desc.Format = m_srv_format;
+    m_dsv_view_desc.Format = m_dsv_format;
+    m_rtv_view_desc.Format = m_rtv_format;
+
+    switch (m_create_params.dimensions)
+    {
+    case ri_texture_dimension::texture_1d:
+        {
+            m_srv_table = ri_descriptor_table::texture_1d;
+
+            m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+            m_srv_view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
+
+            m_dsv_view_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
+            m_dsv_view_desc.Texture1D.MipSlice = 0;
+            m_dsv_view_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+            m_rtv_view_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
+            m_rtv_view_desc.Texture1D.MipSlice = 0;
+
+            break;
+        }
+    case ri_texture_dimension::texture_2d:
+        {
+            m_srv_table = ri_descriptor_table::texture_2d;
+
+            m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            m_srv_view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
+
+            m_dsv_view_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+            m_dsv_view_desc.Texture2D.MipSlice = 0;
+            m_dsv_view_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+            m_rtv_view_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+            m_rtv_view_desc.Texture2D.MipSlice = 0;
+            m_rtv_view_desc.Texture2D.PlaneSlice = 0;
+
+            break;
+        }
+    case ri_texture_dimension::texture_3d:
+        {
+            m_srv_table = ri_descriptor_table::texture_3d;
+
+            m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+            m_srv_view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
+
+            break;
+        }
+    case ri_texture_dimension::texture_cube:
+        {
+            m_srv_table = ri_descriptor_table::texture_cube;
+
+            m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+            m_srv_view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
+
+            break;
+        }
+    }   
+
+}
+
 void dx12_ri_texture::create_views()
 {
     // Set a debug name.
@@ -167,68 +273,18 @@ void dx12_ri_texture::create_views()
         if (ri_is_format_depth_target(m_create_params.format))
         {
             m_dsv = m_renderer.get_descriptor_table(ri_descriptor_table::depth_stencil).allocate();
-            m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), nullptr, m_dsv.cpu_handle);
+            m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_desc, m_dsv.cpu_handle);
         }
         else
         {
             m_rtv = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
-            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), nullptr, m_rtv.cpu_handle);
+            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_desc, m_rtv.cpu_handle);
         }
     }
 
-    // Create SRV view for buffer.
-    // TODO: need to create a UAV if writable
-    m_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    m_view_desc.Format = ri_to_dx12(m_create_params.format);
-
-    size_t mip_levels = m_create_params.mip_levels;
-
-    switch (m_create_params.dimensions)
-    {
-    case ri_texture_dimension::texture_1d:
-        {
-            m_srv_table = ri_descriptor_table::texture_1d;
-
-            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-            m_view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
-
-            break;
-        }
-    case ri_texture_dimension::texture_2d:
-        {
-            m_srv_table = ri_descriptor_table::texture_2d;
-
-            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-            m_view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
-
-            break;
-        }
-    case ri_texture_dimension::texture_3d:
-        {
-            m_srv_table = ri_descriptor_table::texture_3d;
-
-            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-            m_view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
-
-            break;
-        }
-    case ri_texture_dimension::texture_cube:
-        {
-            m_srv_table = ri_descriptor_table::texture_cube;
-
-            m_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            m_view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
-
-            break;
-        }
-    }   
-
-    // TODO: We need to figure out how to handle the format for depth buffer reading. 
-    if (!ri_is_format_depth_target(m_create_params.format))
-    {
-        m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
-        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_view_desc, m_srv.cpu_handle);
-    }
+    // Depth targets need to be interpreted differently for srvs.
+    m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
+    m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_srv_view_desc, m_srv.cpu_handle);
 }
 
 dx12_ri_descriptor_table::allocation dx12_ri_texture::get_srv() const
@@ -301,6 +357,11 @@ bool dx12_ri_texture::is_render_target()
     return m_create_params.is_render_target;
 }
 
+bool dx12_ri_texture::is_depth_stencil()
+{
+    return ri_is_format_depth_target(m_create_params.format);
+}
+
 ID3D12Resource* dx12_ri_texture::get_resource()
 {
     return m_handle.Get();
@@ -327,15 +388,15 @@ void dx12_ri_texture::swap(ri_texture* other)
     // in param blocks etc valid, no need to replace everything.
     if (m_rtv.is_valid())
     {
-        m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), nullptr, m_rtv.cpu_handle);
+        m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_desc, m_rtv.cpu_handle);
     }
     if (m_dsv.is_valid())
     {
-        m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), nullptr, m_dsv.cpu_handle);
+        m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_desc, m_dsv.cpu_handle);
     }
     if (m_srv.is_valid())
     {
-        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_view_desc, m_srv.cpu_handle);
+        m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_srv_view_desc, m_srv.cpu_handle);
     }
 }
 

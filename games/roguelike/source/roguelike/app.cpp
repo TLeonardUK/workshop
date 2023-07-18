@@ -60,14 +60,17 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
     
+    /*
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    
+    */
+
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 200.0f), quat::identity, vector3::one);
-    
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+
+
     /*
     for (int x = 0; x < 150; x++)
     {
@@ -81,8 +84,9 @@ ws::result<void> rl_game_app::start()
     
     m_light_id = cmd_queue.create_directional_light("Sun");
     cmd_queue.set_light_shadow_casting(m_light_id, true);
+    cmd_queue.set_light_shadow_map_size(m_light_id, 1024);
     cmd_queue.set_light_intensity(m_light_id, 1.0f);
-    cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(math::halfpi*0.5f, vector3::right), vector3::one);
+    cmd_queue.set_object_transform(m_light_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(math::halfpi*1.6f, vector3::right), vector3::one);
     /*
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_intensity(object_id, 100000.0f);
@@ -129,8 +133,9 @@ void rl_game_app::step(const frame_time& time)
     }
 
     vector3 light_pos = vector3(0.0f, 100.0f, 0.0f);//vector3(sin(angle * 5.0f), 1.0f + (-cos(angle * 5.0f)), cos(angle * 5.0f)) * 200.0f;
+    //quat light_rot =  quat::angle_axis(angle * 0.5f, vector3::right);
     //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
-    quat light_rot = quat::angle_axis(-math::halfpi*0.5f, vector3::right);
+    quat light_rot = quat::angle_axis(-math::halfpi*0.85f, vector3::right);
     cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
     cmd_queue.draw_sphere(sphere(light_pos, 10.0f), color::red);
     cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);

@@ -162,7 +162,8 @@ void dx12_ri_param_block_archetype::add_page()
     }
 
     // Set a debug name.
-    instance.handle->SetName(L"Param Block Archetype Page");
+    std::string debug_name = string_format("Param Block Page [%s]", m_debug_name.c_str());
+    instance.handle->SetName(widen_string(debug_name).c_str());
     instance.base_address_gpu = reinterpret_cast<uint8_t*>(instance.handle->GetGPUVirtualAddress());
 
     // TODO: We should copy to default heap after modifying.

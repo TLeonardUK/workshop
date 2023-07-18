@@ -148,6 +148,7 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
     if (!m_renderer.is_rendering_frozen())
     {
         info.view_frustum = view->get_frustum();
+        info.view_view_frustum = view->get_view_frustum();
         info.light_rotation = light->get_local_rotation();
     }
 
@@ -198,14 +199,18 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         cascade.split_min_distance = calculate_cascade_split(cascade_near_z, cascade_far_z, min_delta, cascade_exponent);
         cascade.split_max_distance = calculate_cascade_split(cascade_near_z, cascade_far_z, max_delta, cascade_exponent);
         cascade.view_frustum = info.view_frustum.get_cascade(cascade.split_min_distance, cascade.split_max_distance);
-        
-        // Calculate bounds of frustum in world space.
+        cascade.blend_factor = light->get_shodow_cascade_blend();
+
+        // Calculate bounds of frustum in light space so the radius won't change
+        // as we rotate the view.
+        frustum view_view_frustum = info.view_view_frustum.get_cascade(cascade.split_min_distance, cascade.split_max_distance);;
+
         vector3 corners[frustum::k_corner_count];
-        cascade.view_frustum.get_corners(corners);
+        view_view_frustum.get_corners(corners);
         aabb bounds(corners, frustum::k_corner_count);
 
         // Calculate sphere that fits inside the frustum.
-        cascade.world_radius = std::min(bounds.get_extents().x, bounds.get_extents().y);        
+        cascade.world_radius = std::max(bounds.get_extents().x, bounds.get_extents().y) * 2.0f;        
         sphere centroid(cascade.view_frustum.get_center() * light_view_matrix, cascade.world_radius);
 
         // Calculate bounding box in light-space.
@@ -239,8 +244,12 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         vector3 rounded_offset = rounded_origin - shadow_origin;
         rounded_offset = rounded_offset * 2.0f / cascade.map_size;
         rounded_offset.z = 0.0f;
- 
-        cascade.projection_matrix = cascade.projection_matrix * matrix4::translate(rounded_offset);
+
+        cascade.projection_matrix[0][3] = cascade.projection_matrix[0][3] + rounded_offset.x;
+        cascade.projection_matrix[1][3] = cascade.projection_matrix[1][3] + rounded_offset.y;
+
+
+//        cascade.projection_matrix = matrix4::translate(-offset_shadow_space) * cascade.projection_matrix;
 
         // Calculate the frustum from the projection matrix.
         cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
@@ -280,6 +289,8 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     {
         cascade.view_id = m_renderer.next_render_object_id();
         scene_manager.create_view(cascade.view_id, "Shadow Cascade View");
+
+        cascade.shadow_map_state_param_block = m_renderer.get_param_block_manager().create_param_block("shadow_map_state");
     }
 
     render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
@@ -290,6 +301,10 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     view->set_flags(render_view_flags::depth_only);
     view->set_view_type(render_view_type::custom);
     view->set_view_order(render_view_order::shadows);
+
+    cascade.shadow_map_state_param_block->set("shadow_matrix", cascade.view_matrix * cascade.projection_matrix);
+    cascade.shadow_map_state_param_block->set("depth_map", *cascade.shadow_map);
+    cascade.shadow_map_state_param_block->set("depth_map_size", (int)cascade.map_size);
 }
 
 }; // namespace ws

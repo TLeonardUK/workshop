@@ -22,18 +22,13 @@ class render_system_shadows
     : public render_system
 {
 public:
-    render_system_shadows(renderer& render);
-
-    virtual void register_init(init_list& list) override;
-    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
-    virtual void step(const render_world_state& state) override;
-
-private:
     struct cascade_info
     {
         render_object_id view_id = 0;
         std::unique_ptr<ri_texture> shadow_map;
         size_t map_size = 0;
+
+        float blend_factor = 0.0f;
 
         float split_min_distance;
         float split_max_distance;
@@ -44,6 +39,8 @@ private:
         matrix4 view_matrix;
         frustum view_frustum;
         frustum frustum;
+
+        std::unique_ptr<ri_param_block> shadow_map_state_param_block;
     };
 
     struct shadow_info
@@ -52,11 +49,22 @@ private:
         render_object_id view_id;
 
         frustum view_frustum;
+        frustum view_view_frustum;
         quat light_rotation;
 
         std::vector<cascade_info> cascades;
     };
 
+    shadow_info& find_or_create_shadow_info(render_object_id light_id, render_object_id view_id);
+
+public:
+    render_system_shadows(renderer& render);
+
+    virtual void register_init(init_list& list) override;
+    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
+    virtual void step(const render_world_state& state) override;
+
+private:
     result<void> create_resources();
     result<void> destroy_resources();
 
@@ -66,8 +74,6 @@ private:
 
     void destroy_cascade(cascade_info& info);
     void step_cascade(shadow_info& info, cascade_info& shadow_info);
-
-    shadow_info& find_or_create_shadow_info(render_object_id light_id, render_object_id view_id);
 
 private:
     std::vector<shadow_info> m_shadow_info;

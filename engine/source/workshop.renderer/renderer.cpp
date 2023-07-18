@@ -273,6 +273,13 @@ result<void> renderer::recreate_resizable_targets()
     m_default_samplers[static_cast<int>(default_sampler_type::color)] = m_render_interface.create_sampler(sampler_params,  "default color sampler");
     m_default_samplers[static_cast<int>(default_sampler_type::normal)] = m_render_interface.create_sampler(sampler_params,  "default normal sampler");
 
+    sampler_params.address_mode_u = ri_texture_address_mode::clamp_to_border;
+    sampler_params.address_mode_v = ri_texture_address_mode::clamp_to_border;
+    sampler_params.address_mode_w = ri_texture_address_mode::clamp_to_border;
+    sampler_params.filter = ri_texture_filter::linear;
+    sampler_params.border_color = ri_texture_border_color::opaque_white;
+    m_default_samplers[static_cast<int>(default_sampler_type::shadow_map)] = m_render_interface.create_sampler(sampler_params, "default shadow map sampler");
+
     return true;
 }
 

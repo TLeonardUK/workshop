@@ -21,9 +21,11 @@ param_blocks:
     fields:
       light_count: int
       light_buffer: byteaddressbuffer
-      #shadow_map_count: int
-      #shadow_map_buffer: byteaddressbuffer
+      shadow_map_count: int
+      shadow_map_buffer: byteaddressbuffer
       view_world_position: float3
+      shadow_map_sampler: sampler
+  # TODO: Pack all this data down.
   light_state:
     scope: instance
     fields:
@@ -35,13 +37,15 @@ param_blocks:
       inner_radius: float
       outer_radius: float
       range: float
-#      shadow_map_start_index: int
-#      shadow_map_count: int
-#  shadow_map_state:
-#    scope: instance
-#    fields:
-#      light_matrix: matrix4
-#      depth_map: texture2d
+      shadow_map_start_index: int
+      shadow_map_count: int
+      cascade_blend_factor: float
+  shadow_map_state:
+    scope: instance
+    fields:
+      shadow_matrix: float4x4
+      depth_map: texture2d
+      depth_map_size: int
 
 techniques:
   resolve_lighting:
@@ -54,4 +58,4 @@ techniques:
     render_state: no_depth_test
     vertex_layout: vertex2d_pos_uv
     output_target: light_buffer
-    param_blocks: [ light_state, gbuffer, resolve_lighting_parameters ]
+    param_blocks: [ light_state, shadow_map_state, gbuffer, resolve_lighting_parameters ]

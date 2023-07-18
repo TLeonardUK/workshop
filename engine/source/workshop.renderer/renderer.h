@@ -62,6 +62,7 @@ enum class default_sampler_type
 {
     color,      // Configured for sampling color data.
     normal,     // Configured for sampling normal data.
+    shadow_map, // Configured for sampling shadow maps - clamps edges.
 
     COUNT
 };
