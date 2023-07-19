@@ -77,6 +77,7 @@ public:
     virtual size_t get_pipeline_depth() override;
     virtual void defer_delete(const deferred_delete_function_t& func) override;
     virtual size_t get_vram_usage() override;
+    virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
 
     // Drains all of the defered deletes without regard for which frame they should
     // be destroyed on. Be -very- careful with this, the only real usecase is when we are

@@ -137,12 +137,18 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     shadow_map_instance_buffer->commit();
 
     // Update the number of lights we have in the buffer.
+    float z_near = 0.0f;
+    float z_far = 0.0f;
+    view.get_clip(z_near, z_far);
+
     resolve_param_block->set("light_count", total_lights);
     resolve_param_block->set("light_buffer", light_instance_buffer->get_buffer());
     resolve_param_block->set("shadow_map_count", total_shadow_maps);
     resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
     resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
     resolve_param_block->set("view_world_position", view.get_local_location());
+    resolve_param_block->set("view_z_near", z_near);
+    resolve_param_block->set("view_z_far", z_far);
     resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
 
     // Add pass to run compute shader to cluster our lights.

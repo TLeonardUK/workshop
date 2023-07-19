@@ -611,7 +611,20 @@ size_t dx12_render_interface::get_vram_usage()
     m_dxgi_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &video_memory_info);
 
     return video_memory_info.CurrentUsage;
+}
 
+size_t dx12_render_interface::get_cube_map_face_index(ri_cube_map_face face)
+{
+    std::array<size_t, 6> lookup = {
+        0, // x_pos
+        1, // x_neg
+        2, // y_pos
+        3, // y_neg
+        4, // z_pos
+        5, // z_neg
+    };
+
+    return lookup[static_cast<size_t>(face)];
 }
 
 }; // namespace ws

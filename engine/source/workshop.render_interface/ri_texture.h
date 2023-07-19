@@ -11,6 +11,34 @@
 
 namespace ws {
 
+class ri_texture;
+
+// ================================================================================================
+//  Represents a view to a specific part of a texture.
+// ================================================================================================
+struct ri_texture_view
+{
+public:
+    ri_texture_view() = default;
+
+    ri_texture_view(ri_texture* in_texture)
+        : texture(in_texture)
+    {
+    }
+
+    ri_texture_view(ri_texture* in_texture, size_t in_slice)
+        : texture(in_texture)
+        , slice(in_slice)
+    {
+    }
+
+public:
+
+    ri_texture* texture = nullptr;
+    size_t slice = 0;
+
+};
+
 // ================================================================================================
 //  Represents a block of texture memory, which can optionally be flagged for use
 //  as a render target.

@@ -32,7 +32,7 @@ result<void> render_pass_graphics::validate_parameters()
 
     for (size_t i = 0; i < output.color_targets.size(); i++)
     {
-        ri_texture_format format = output.color_targets[i]->get_format();
+        ri_texture_format format = output.color_targets[i].texture->get_format();
         ri_texture_format expected_format = pipeline_params.color_formats[i];
 
         if (format != expected_format)
@@ -51,7 +51,7 @@ result<void> render_pass_graphics::validate_parameters()
     // Check depth target matches.
     if (pipeline_params.depth_format != ri_texture_format::Undefined)
     {
-        if (output.depth_target == nullptr)
+        if (output.depth_target.texture == nullptr)
         {
             db_error(renderer, "Render pass '%s' has no depth target assigned, but one is expected by technique '%s'.",
                 name.c_str(),
@@ -60,20 +60,20 @@ result<void> render_pass_graphics::validate_parameters()
             return false;
         }
 
-        if (output.depth_target->get_format() != pipeline_params.depth_format)
+        if (output.depth_target.texture->get_format() != pipeline_params.depth_format)
         {
             db_error(renderer, "Render pass '%s' using technique '%s' expected depth format '%s' but got '%s'.",
                 name.c_str(),
                 technique->name.c_str(),
                 to_string<ri_texture_format>(pipeline_params.depth_format).c_str(),
-                to_string<ri_texture_format>(output.depth_target->get_format()).c_str()
+                to_string<ri_texture_format>(output.depth_target.texture->get_format()).c_str()
             );
             return false;
         }
     }
     else
     {
-        if (output.depth_target != nullptr)
+        if (output.depth_target.texture != nullptr)
         {
             db_error(renderer, "Render pass '%s' has depth target assigned, but no depth target is expected by technique '%s'.",
                 name.c_str(),

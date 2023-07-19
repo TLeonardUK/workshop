@@ -91,9 +91,9 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
-    cmd_queue.set_light_shadow_max_distance(object_id, 1500);
-    cmd_queue.set_light_intensity(object_id, 50000.0f);
-    cmd_queue.set_light_range(object_id, 1500.0f);
+    cmd_queue.set_light_shadow_max_distance(object_id, 3000);
+    cmd_queue.set_light_intensity(object_id, 500000.0f);
+    cmd_queue.set_light_range(object_id, 3000.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
     
     /*
@@ -129,7 +129,7 @@ void rl_game_app::step(const frame_time& time)
     input_interface& input = get_engine().get_input_interface();
     
     static float angle = 0.0f;
-    angle += 0.5f * time.delta_seconds;
+    angle += 0.2f * time.delta_seconds;
 
     for (size_t i = 0; i < m_rotating_objects.size(); i++)
     {
@@ -142,11 +142,11 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
-    vector3 light_pos = vector3(0.0f, 100.0f, 0.0f);//vector3(sin(angle * 5.0f), 1.0f + (-cos(angle * 5.0f)), cos(angle * 5.0f)) * 200.0f;
+    vector3 light_pos = vector3(-cos(angle * 3.0f) * 400.0f, 200.0f, 0.0f);
     quat light_rot =  quat::angle_axis(angle * 0.5f, vector3::up);
     //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
     //quat light_rot = quat::angle_axis(-math::halfpi*0.85f, vector3::right);
-    //cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
+    cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
     cmd_queue.draw_sphere(sphere(light_pos, 10.0f), color::red);
     cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);
 

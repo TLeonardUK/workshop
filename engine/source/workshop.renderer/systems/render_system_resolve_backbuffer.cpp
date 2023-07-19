@@ -38,9 +38,9 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     pass->system = this;
     pass->technique = m_renderer.get_effect_manager().get_technique("resolve_swapchain", {});
 
-    if (ri_texture* target = view.get_render_target())
+    if (view.has_render_target())
     {   
-        pass->output.color_targets.push_back(target);
+        pass->output.color_targets.push_back(view.get_render_target());
     }
     else
     {

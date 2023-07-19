@@ -57,6 +57,16 @@ struct cascade_info
     int secondary_cascade_index;
 };
 
+enum shadow_filter
+{
+    // Blocky, woo.
+    no_filter,
+    // Percentage closer filter.
+    pcf,
+    // PCF using a rotated poisson disc for tap locations.
+    pcf_poisson
+};
+
 // Takes the position of a fragment and a light and determines the best cascade to use.
 // If in the blending area of two cascades also returns the blend factor and the other cascade to use.
 cascade_info get_shadow_cascade_info(gbuffer_fragment frag, light_state light)
@@ -102,68 +112,6 @@ cascade_info get_shadow_cascade_info(gbuffer_fragment frag, light_state light)
     return info;
 }
 
-enum shadow_filter
-{
-    // Blocky, woo.
-    no_filter,
-    // Percentage closer filter.
-    pcf,
-    // PCF using a rotated poisson disc for tap locations.
-    pcf_poisson
-};
-
-/*
-float calcSearchWidth(float receiverDepth)
-{
-    return gCalibratedLightSize * (receiverDepth - NEAR) / gViewPos.z;
-}
- 
-// Calculates the average distance to blocking points on the depth map.
-float calculate_blocker_distance(float bias)
-{
-    float sumBlockerDistances = 0.0f;
-    int numBlockerDistances = 0;
-    float receiverDepth = LIGHT_SPACE_POS_POST_W.z;
- 
-    int sw = int(calcSearchWidth(receiverDepth));
-    for (int i = 0; i < NUM_SAMPLES; ++i)
-    {
-        vec2 offset = vec2(
-            ROTATION.x * POISSON_DISK[i].x - ROTATION.y * POISSON_DISK[i].y,
-            ROTATION.y * POISSON_DISK[i].x + ROTATION.x * POISSON_DISK[i].y);
- 
-        float depth = texture(gShadowMap, LIGHT_SPACE_POS_POST_W.xy + offset * TEXEL_SIZE * sw).r;
-        if (depth < receiverDepth - bias)
-        {
-            ++numBlockerDistances;
-            sumBlockerDistances += depth;
-        }
-    }
- 
-    if (numBlockerDistances > 0)
-    {
-        return sumBlockerDistances / numBlockerDistances;
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-// Calculates the kernel size used when using pcf filtering. This essentially
-// estimates the width of the shadow penumbra.
-float calculate_pcf_kernel_size(float bias, float depth, float light_range)
-{
-    float blocker_distance = calculate_blocker_distance(bias);
-    if (blocker_distance == -1)
-    {
-        return 1;
-    }
- 
-    float penumbra_width = (depth - blocker_distance) / blocker_distance;
-    return penumbra_width * light_range;// * NEAR / depth;
-}*/
-
 float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_index, shadow_filter filter, int samples)
 {
     // If outside cascade count, return no shadow.
@@ -195,13 +143,14 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     float result = 0.0f;
 
     // Filter if required.
-    Texture2D shadow_map = table_texture_2d[NonUniformResourceIndex(state.depth_map_index)];
+    Texture2D shadow_map =  table_texture_2d[NonUniformResourceIndex(state.depth_map_index)];
     switch (filter)
     {
         default:
         case shadow_filter::no_filter:
         {
             float depth = shadow_map.Sample(shadow_map_sampler, shadow_map_coord).r;
+
             result = (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
             break;
         }
@@ -258,6 +207,49 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     return result;
 }
 
+float linearize_shadow_depth(float depth)
+{
+    float z_n = depth;//2.0 * (depth) - 1.0;
+    float z_e = 2.0 * view_z_near * view_z_far / (view_z_far + view_z_near - z_n * (view_z_far - view_z_near));
+    return z_e;
+}
+
+float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascade_index, shadow_filter filter, int samples)
+{
+    // If outside cascade count, return no shadow.
+    if (cascade_index >= light.shadow_map_count)
+    {
+        return 1.0;
+    }
+
+    shadow_map_state state = get_shadow_map_state(light.shadow_map_start_index + cascade_index);
+    float n_dot_l = dot(light.position, frag.world_position);
+    float3 frag_to_light = frag.world_position.xyz - light.position.xyz;
+
+    // Sloped bias to filter out acne on slanted surfaces.
+    float bias = 0.0f;// clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.0001f, 0.001f); 
+    float result = 0.0f;
+
+    TextureCube shadow_map_cube = table_texture_cube[NonUniformResourceIndex(state.depth_map_index)];
+    switch (filter)
+    {
+        // TODO: Add new filters.
+        default:
+        {
+            float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r;
+            depth = linearize_shadow_depth(depth);
+
+            float current_depth = length(frag_to_light);        
+
+            result += (depth < current_depth - bias ? 0.0 : 1.0);
+
+            break;
+        }
+    }
+
+    return result;
+}
+
 float2 calculate_shadow_directional(gbuffer_fragment frag, light_state light)
 {
     cascade_info cascade_info = get_shadow_cascade_info(frag, light);
@@ -280,8 +272,10 @@ float2 calculate_shadow_directional(gbuffer_fragment frag, light_state light)
 
 float2 calculate_shadow_point(gbuffer_fragment frag, light_state light)
 {
+    float cascade_value = sample_shadow_cubemap(frag, light, 0, shadow_filter::pcf_poisson, 16);
+
     return float2(
-        1.0f,
+        cascade_value,
         0.0f
     );
 }

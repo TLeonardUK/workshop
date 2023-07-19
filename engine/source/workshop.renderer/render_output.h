@@ -4,6 +4,8 @@
 // ================================================================================================
 #pragma once
 
+#include "workshop.render_interface/ri_texture.h"
+
 #include <vector>
 
 namespace ws {
@@ -18,10 +20,10 @@ class render_output
 public:
 
     // Color targets, multiple can be used for MRT rendering.
-    std::vector<ri_texture*> color_targets;
+    std::vector<ri_texture_view> color_targets;
 
     // Depth target used for depth reading/writing.
-    ri_texture* depth_target = nullptr;
+    ri_texture_view depth_target;
 
 };
 

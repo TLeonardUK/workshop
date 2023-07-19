@@ -140,19 +140,19 @@ void dx12_ri_command_list::barrier(ID3D12Resource* resource, ri_resource_state r
     //db_log(core, "barrier: %p : %i -> %i", resource, (int)source_state, (int)destination_state);
 }
 
-void dx12_ri_command_list::clear(ri_texture& resource, const color& destination)
+void dx12_ri_command_list::clear(ri_texture_view resource, const color& destination)
 {
-    dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(resource);
+    dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(*resource.texture);
 
     FLOAT color[] = { destination.r, destination.g, destination.b, destination.a };
-    m_command_list->ClearRenderTargetView(dx12_resource.get_rtv().cpu_handle, color, 0, nullptr);
+    m_command_list->ClearRenderTargetView(dx12_resource.get_rtv(resource.slice).cpu_handle, color, 0, nullptr);
 }
 
-void dx12_ri_command_list::clear_depth(ri_texture& resource, float depth, size_t stencil)
+void dx12_ri_command_list::clear_depth(ri_texture_view resource, float depth, size_t stencil)
 {
-    dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(resource);
+    dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(*resource.texture);
 
-    m_command_list->ClearDepthStencilView(dx12_resource.get_dsv().cpu_handle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, static_cast<UINT8>(stencil), 0, nullptr);
+    m_command_list->ClearDepthStencilView(dx12_resource.get_dsv(resource.slice).cpu_handle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, static_cast<UINT8>(stencil), 0, nullptr);
 }
 
 void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
@@ -300,27 +300,27 @@ void dx12_ri_command_list::set_index_buffer(ri_buffer& buffer)
     m_command_list->IASetIndexBuffer(&view);
 }
 
-void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture*>& colors, ri_texture* depth)
+void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture_view>& colors, ri_texture_view depth)
 {
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> color_handles;
-    for (ri_texture* value : colors)
+    for (ri_texture_view value : colors)
     {
-        dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(value);
-        color_handles.push_back(dx12_tex->get_rtv().cpu_handle);
+        dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(value.texture);
+        color_handles.push_back(dx12_tex->get_rtv(value.slice).cpu_handle);
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE depth_handle = {};
-    if (depth != nullptr)
+    if (depth.texture != nullptr)
     {
-        dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(depth);
-        depth_handle = dx12_tex->get_dsv().cpu_handle;
+        dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(depth.texture);
+        depth_handle = dx12_tex->get_dsv(depth.slice).cpu_handle;
     }
 
     m_command_list->OMSetRenderTargets(
         static_cast<UINT>(color_handles.size()),
         color_handles.data(),
         false,
-        depth == nullptr ? nullptr : &depth_handle
+        depth.texture == nullptr ? nullptr : &depth_handle
     );
 }
 

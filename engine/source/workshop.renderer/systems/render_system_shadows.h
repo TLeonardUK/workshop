@@ -26,7 +26,11 @@ public:
     {
         render_object_id view_id = 0;
         std::unique_ptr<ri_texture> shadow_map;
+        ri_texture_view shadow_map_view;
         size_t map_size = 0;
+
+        float z_near = 0.0f;
+        float z_far = 0.0f;
 
         float blend_factor = 0.0f;
 

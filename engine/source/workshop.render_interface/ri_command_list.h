@@ -8,11 +8,11 @@
 #include "workshop.core/math/vector4.h"
 
 #include "workshop.render_interface/ri_types.h"
+#include "workshop.render_interface/ri_texture.h"
 
 namespace ws {
 
 class ri_pipeline;
-class ri_texture;
 class ri_buffer;
 class ri_param_block;
 class ri_query;
@@ -38,10 +38,10 @@ public:
     virtual void barrier(ri_buffer& resource, ri_resource_state source_state, ri_resource_state destination_state) = 0;
 
     // Clears a render target to a specific color.
-    virtual void clear(ri_texture& resource, const color& destination) = 0;
+    virtual void clear(ri_texture_view resource, const color& destination) = 0;
 
     // Clears a depth target to a specific color.
-    virtual void clear_depth(ri_texture& resource, float depth, size_t stencil) = 0;
+    virtual void clear_depth(ri_texture_view resource, float depth, size_t stencil) = 0;
 
     // Changes the rendering pipeline state.
     virtual void set_pipeline(ri_pipeline& pipeline) = 0;
@@ -77,7 +77,7 @@ public:
 
     // Sets the output targets that should be rendered to. This should
     // match the set of output targets defined in the active pipeline.
-    virtual void set_render_targets(const std::vector<ri_texture*>& colors, ri_texture* depth) = 0;
+    virtual void set_render_targets(const std::vector<ri_texture_view>& colors, ri_texture_view depth) = 0;
 
     // Dispatches a draw call with all the set state. 
     // Note: Vertex buffers are accessed bindlessly, so offsets for

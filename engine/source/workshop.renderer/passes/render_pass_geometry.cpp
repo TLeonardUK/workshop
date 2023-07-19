@@ -48,13 +48,13 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
 
         // Transition targets to the relevant state.
-        for (ri_texture* texture : output.color_targets)
+        for (ri_texture_view texture : output.color_targets)
         {
-            list.barrier(*texture, ri_resource_state::initial, ri_resource_state::render_target);
+            list.barrier(*texture.texture, ri_resource_state::initial, ri_resource_state::render_target);
         }
-        if (output.depth_target)
+        if (output.depth_target.texture)
         {
-            list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_write);
+            list.barrier(*output.depth_target.texture, ri_resource_state::initial, ri_resource_state::depth_write);
         }
 
         // Select the technique to use.
@@ -159,13 +159,13 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         }
 
         // Transition targets back to initial state.
-        for (ri_texture* texture : output.color_targets)
+        for (ri_texture_view texture : output.color_targets)
         {
-            list.barrier(*texture, ri_resource_state::render_target, ri_resource_state::initial);
+            list.barrier(*texture.texture, ri_resource_state::render_target, ri_resource_state::initial);
         }
-        if (output.depth_target)
+        if (output.depth_target.texture)
         {
-            list.barrier(*output.depth_target, ri_resource_state::depth_write, ri_resource_state::initial);
+            list.barrier(*output.depth_target.texture, ri_resource_state::depth_write, ri_resource_state::initial);
         }
     }
 

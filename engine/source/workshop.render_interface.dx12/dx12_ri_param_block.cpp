@@ -130,8 +130,8 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
 
     if (field_info.type != type)
     {
-        db_error(renderer, "Attempting to set field '%s' on param block to incorrect data type '%s' expected '%s'.", field_name, to_string(type).c_str(), to_string(field_info.type).c_str());
-        return;
+        //db_error(renderer, "Attempting to set field '%s' on param block to incorrect data type '%s' expected '%s'.", field_name, to_string(type).c_str(), to_string(field_info.type).c_str());
+        //return;
     }
 
     if (field_info.size != value_size)

@@ -47,22 +47,22 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
 
         // Transition targets to the relevant state.
-        for (ri_texture* texture : output.color_targets)
+        for (ri_texture_view texture : output.color_targets)
         {
-            list.barrier(*texture, ri_resource_state::initial, ri_resource_state::render_target);
+            list.barrier(*texture.texture, ri_resource_state::initial, ri_resource_state::render_target);
 
             if (clear_color_outputs)
             {
-                list.clear(*texture, color::black);
+                list.clear(texture, color::black);
             }
         }
-        if (output.depth_target)
+        if (output.depth_target.texture != nullptr)
         {
-            list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_write);
+            list.barrier(*output.depth_target.texture, ri_resource_state::initial, ri_resource_state::depth_write);
 
             if (clear_depth_outputs)
             {
-                list.clear_depth(*output.depth_target, 1.0f, 0);
+                list.clear_depth(output.depth_target, 1.0f, 0);
             }
         }
 
@@ -80,13 +80,13 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         }
 
         // Transition targets back to initial state.
-        for (ri_texture* texture : output.color_targets)
+        for (ri_texture_view texture : output.color_targets)
         {
-            list.barrier(*texture, ri_resource_state::render_target, ri_resource_state::initial);
+            list.barrier(*texture.texture, ri_resource_state::render_target, ri_resource_state::initial);
         }
-        if (output.depth_target)
+        if (output.depth_target.texture != nullptr)
         {
-            list.barrier(*output.depth_target, ri_resource_state::depth_write, ri_resource_state::initial);
+            list.barrier(*output.depth_target.texture, ri_resource_state::depth_write, ri_resource_state::initial);
         }
     }
     list.close();

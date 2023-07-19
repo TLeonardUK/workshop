@@ -40,16 +40,21 @@ render_view_type render_view::get_view_type()
     return m_view_type;
 }
 
-void render_view::set_render_target(ri_texture* texture)
+void render_view::set_render_target(ri_texture_view view)
 {
-    m_render_target = texture;
+    m_render_target = view;
 
     update_view_info_param_block();
 }
 
-ri_texture* render_view::get_render_target()
+ri_texture_view render_view::get_render_target()
 {
     return m_render_target;
+}
+
+bool render_view::has_render_target()
+{
+    return m_render_target.texture != nullptr;
 }
 
 void render_view::set_flags(render_view_flags flags)

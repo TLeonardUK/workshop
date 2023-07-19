@@ -28,7 +28,7 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
     {
         profile_gpu_marker(list, profile_colors::gpu_pass, "imgui");
 
-        list.barrier(*output.color_targets[0], ri_resource_state::initial, ri_resource_state::render_target);
+        list.barrier(*output.color_targets[0].texture, ri_resource_state::initial, ri_resource_state::render_target);
         list.set_pipeline(*technique->pipeline.get());
         list.set_render_targets(output.color_targets, nullptr);
         list.set_viewport(view.get_viewport());
@@ -55,7 +55,7 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
             list.draw(cmd.count, 1, cmd.offset);
         }
 
-        list.barrier(*output.color_targets[0], ri_resource_state::render_target, ri_resource_state::initial);
+        list.barrier(*output.color_targets[0].texture, ri_resource_state::render_target, ri_resource_state::initial);
         
     }
     list.close();

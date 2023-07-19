@@ -32,19 +32,25 @@ dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* de
 
 dx12_ri_texture::~dx12_ri_texture()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv_table = m_srv_table, srv = m_srv, rtv = m_rtv, dsv = m_dsv]()
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv_table = m_srv_table, srv = m_srv, rtvs = m_rtvs, dsvs = m_dsvs]()
     {
         if (srv.is_valid())
         {
             renderer->get_descriptor_table(srv_table).free(srv);
         }
-        if (rtv.is_valid())
+        for (auto& rtv : rtvs)
         {
-            renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
+            if (rtv.is_valid())
+            {
+                renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
+            }
         }
-        if (dsv.is_valid())
+        for (auto& dsv : dsvs)
         {
-            renderer->get_descriptor_table(ri_descriptor_table::depth_stencil).free(dsv);
+            if (dsv.is_valid())
+            {
+                renderer->get_descriptor_table(ri_descriptor_table::depth_stencil).free(dsv);
+            }
         }
         //CheckedRelease(handle);    
     });
@@ -202,8 +208,12 @@ void dx12_ri_texture::calculate_formats()
     m_srv_view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     m_srv_view_desc.Format = m_srv_format;
-    m_dsv_view_desc.Format = m_dsv_format;
-    m_rtv_view_desc.Format = m_rtv_format;
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsv_template_desc;
+    dsv_template_desc.Format = m_dsv_format;
+
+    D3D12_RENDER_TARGET_VIEW_DESC rtv_template_desc;
+    rtv_template_desc.Format = m_rtv_format;
 
     switch (m_create_params.dimensions)
     {
@@ -213,13 +223,20 @@ void dx12_ri_texture::calculate_formats()
 
             m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
             m_srv_view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_srv_view_desc.Texture1D.MostDetailedMip = 0;
+            m_srv_view_desc.Texture1D.ResourceMinLODClamp = 0;
 
-            m_dsv_view_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
-            m_dsv_view_desc.Texture1D.MipSlice = 0;
-            m_dsv_view_desc.Flags = D3D12_DSV_FLAG_NONE;
+            dsv_template_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
+            dsv_template_desc.Texture1D.MipSlice = 0;
+            dsv_template_desc.Flags = D3D12_DSV_FLAG_NONE;
 
-            m_rtv_view_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
-            m_rtv_view_desc.Texture1D.MipSlice = 0;
+            rtv_template_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
+            rtv_template_desc.Texture1D.MipSlice = 0;
+
+            m_dsv_view_descs.push_back(dsv_template_desc);
+            m_rtv_view_descs.push_back(rtv_template_desc);
+            m_dsvs.resize(1);
+            m_rtvs.resize(1);
 
             break;
         }
@@ -229,14 +246,22 @@ void dx12_ri_texture::calculate_formats()
 
             m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             m_srv_view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_srv_view_desc.Texture2D.MostDetailedMip = 0;
+            m_srv_view_desc.Texture2D.ResourceMinLODClamp = 0;
+            m_srv_view_desc.Texture2D.PlaneSlice = 0;
 
-            m_dsv_view_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-            m_dsv_view_desc.Texture2D.MipSlice = 0;
-            m_dsv_view_desc.Flags = D3D12_DSV_FLAG_NONE;
+            dsv_template_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+            dsv_template_desc.Texture2D.MipSlice = 0;
+            dsv_template_desc.Flags = D3D12_DSV_FLAG_NONE;
 
-            m_rtv_view_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-            m_rtv_view_desc.Texture2D.MipSlice = 0;
-            m_rtv_view_desc.Texture2D.PlaneSlice = 0;
+            rtv_template_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+            rtv_template_desc.Texture2D.MipSlice = 0;
+            rtv_template_desc.Texture2D.PlaneSlice = 0;
+
+            m_dsv_view_descs.push_back(dsv_template_desc);
+            m_rtv_view_descs.push_back(rtv_template_desc);
+            m_dsvs.resize(1);
+            m_rtvs.resize(1);
 
             break;
         }
@@ -246,6 +271,29 @@ void dx12_ri_texture::calculate_formats()
 
             m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
             m_srv_view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_srv_view_desc.Texture3D.MostDetailedMip = 0;
+            m_srv_view_desc.Texture3D.ResourceMinLODClamp = 0;
+
+            dsv_template_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+            dsv_template_desc.Texture2DArray.MipSlice = 0;
+            dsv_template_desc.Texture2DArray.FirstArraySlice = 0;
+            dsv_template_desc.Texture2DArray.ArraySize = 1;
+            dsv_template_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+            rtv_template_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
+            rtv_template_desc.Texture2D.MipSlice = 0;
+            rtv_template_desc.Texture2D.PlaneSlice = 0;
+
+            m_dsvs.resize(m_create_params.depth);
+            m_rtvs.resize(m_create_params.depth);
+            for (size_t i = 0; i < m_create_params.depth; i++)
+            {
+                dsv_template_desc.Texture2DArray.FirstArraySlice = i;
+                rtv_template_desc.Texture2D.PlaneSlice = i;
+
+                m_dsv_view_descs.push_back(dsv_template_desc);
+                m_rtv_view_descs.push_back(rtv_template_desc);
+            }
 
             break;
         }
@@ -255,11 +303,35 @@ void dx12_ri_texture::calculate_formats()
 
             m_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
             m_srv_view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
+            m_srv_view_desc.TextureCube.MostDetailedMip = 0;
+            m_srv_view_desc.TextureCube.ResourceMinLODClamp = 0;
+
+            dsv_template_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+            dsv_template_desc.Texture2DArray.MipSlice = 0;
+            dsv_template_desc.Texture2DArray.FirstArraySlice = 0;
+            dsv_template_desc.Texture2DArray.ArraySize = 1;
+            dsv_template_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+            rtv_template_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+            rtv_template_desc.Texture2DArray.MipSlice = 0;
+            rtv_template_desc.Texture2DArray.PlaneSlice = 0;
+            rtv_template_desc.Texture2DArray.FirstArraySlice = 0;
+            rtv_template_desc.Texture2DArray.ArraySize = 1;
+
+            m_dsvs.resize(m_create_params.depth);
+            m_rtvs.resize(m_create_params.depth);
+            for (size_t i = 0; i < m_create_params.depth; i++)
+            {
+                dsv_template_desc.Texture2DArray.FirstArraySlice = i;
+                rtv_template_desc.Texture2DArray.FirstArraySlice = i;
+
+                m_dsv_view_descs.push_back(dsv_template_desc);
+                m_rtv_view_descs.push_back(rtv_template_desc);
+            }
 
             break;
         }
     }   
-
 }
 
 void dx12_ri_texture::create_views()
@@ -272,13 +344,19 @@ void dx12_ri_texture::create_views()
     {
         if (ri_is_format_depth_target(m_create_params.format))
         {
-            m_dsv = m_renderer.get_descriptor_table(ri_descriptor_table::depth_stencil).allocate();
-            m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_desc, m_dsv.cpu_handle);
+            for (size_t i = 0; i < m_dsvs.size(); i++)
+            {
+                m_dsvs[i] = m_renderer.get_descriptor_table(ri_descriptor_table::depth_stencil).allocate();
+                m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_descs[i], m_dsvs[i].cpu_handle);
+            }
         }
         else
         {
-            m_rtv = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
-            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_desc, m_rtv.cpu_handle);
+            for (size_t i = 0; i < m_rtvs.size(); i++)
+            {
+                m_rtvs[i] = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
+                m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[i], m_rtvs[i].cpu_handle);
+            }
         }
     }
 
@@ -292,14 +370,14 @@ dx12_ri_descriptor_table::allocation dx12_ri_texture::get_srv() const
     return m_srv;
 }
 
-dx12_ri_descriptor_table::allocation dx12_ri_texture::get_rtv() const
+dx12_ri_descriptor_table::allocation dx12_ri_texture::get_rtv(size_t slice) const
 {
-    return m_rtv;
+    return m_rtvs[slice];
 }
 
-dx12_ri_descriptor_table::allocation dx12_ri_texture::get_dsv() const
+dx12_ri_descriptor_table::allocation dx12_ri_texture::get_dsv(size_t slice) const
 {
-    return m_dsv;
+    return m_dsvs[slice];
 }
 
 size_t dx12_ri_texture::get_width()
@@ -386,13 +464,19 @@ void dx12_ri_texture::swap(ri_texture* other)
 
     // Recreate our views in the same descriptor slots. This keeps all the handles used elsewhere
     // in param blocks etc valid, no need to replace everything.
-    if (m_rtv.is_valid())
+    for (size_t i = 0; i < m_rtvs.size(); i++)
     {
-        m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_desc, m_rtv.cpu_handle);
+        if (m_rtvs[i].is_valid())
+        {
+            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[i], m_rtvs[i].cpu_handle);
+        }
     }
-    if (m_dsv.is_valid())
+    for (size_t i = 0; i < m_rtvs.size(); i++)
     {
-        m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_desc, m_dsv.cpu_handle);
+        if (m_dsvs[i].is_valid())
+        {
+            m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_descs[i], m_dsvs[i].cpu_handle);
+        }
     }
     if (m_srv.is_valid())
     {

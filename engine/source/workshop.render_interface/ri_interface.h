@@ -113,6 +113,8 @@ public:
     // Gets the number of bytes of vram currently in use by the application.
     virtual size_t get_vram_usage() = 0; 
 
+    // Gets the texture slice that represents a given cube map face.
+    virtual size_t get_cube_map_face_index(ri_cube_map_face face) = 0;
 
 };
 

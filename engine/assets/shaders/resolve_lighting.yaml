@@ -24,6 +24,8 @@ param_blocks:
       shadow_map_count: int
       shadow_map_buffer: byteaddressbuffer
       view_world_position: float3
+      view_z_near: float
+      view_z_far: float
       shadow_map_sampler: sampler
       visualization_mode: int
   # TODO: Pack all this data down.

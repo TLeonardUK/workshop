@@ -9,6 +9,7 @@
 #include "workshop.core/math/matrix4.h"
 
 #include "workshop.renderer/render_object.h"
+#include "workshop.render_interface/ri_texture.h"
 
 #include <memory>
 
@@ -17,7 +18,6 @@ namespace ws {
 class renderer;
 class ri_param_block;
 class render_resource_cache;
-class ri_texture;
 
 // ================================================================================================
 //  Represets how the view and projection matrices are generated for the view.
@@ -82,8 +82,9 @@ public:
 
     // Sets the render target this view will render to. If not set
     // the view will be rendered to the swapchain.
-    void set_render_target(ri_texture* type);
-    ri_texture* get_render_target();
+    void set_render_target(ri_texture_view view);
+    ri_texture_view get_render_target();
+    bool has_render_target();
 
     // Gets or sets the order of rendering of this view.
     void set_view_order(render_view_order order);
@@ -157,7 +158,7 @@ private:
     float m_field_of_view = 45.0f;
     float m_aspect_ratio = 1.33f;
 
-    ri_texture* m_render_target = nullptr;
+    ri_texture_view m_render_target;
 
     render_view_type m_view_type = render_view_type::perspective;
     render_view_flags m_flags = render_view_flags::normal;

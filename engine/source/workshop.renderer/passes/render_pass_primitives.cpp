@@ -28,8 +28,8 @@ void render_pass_primitives::generate(renderer& renderer, generated_state& state
     {
         profile_gpu_marker(list, profile_colors::gpu_pass, "primitives");
 
-        list.barrier(*output.color_targets[0], ri_resource_state::initial, ri_resource_state::render_target);
-        list.barrier(*output.depth_target, ri_resource_state::initial, ri_resource_state::depth_read);
+        list.barrier(*output.color_targets[0].texture, ri_resource_state::initial, ri_resource_state::render_target);
+        list.barrier(*output.depth_target.texture, ri_resource_state::initial, ri_resource_state::depth_read);
         list.set_pipeline(*technique->pipeline.get());
         list.set_render_targets(output.color_targets, output.depth_target);
         list.set_viewport(view.get_viewport());
@@ -42,8 +42,8 @@ void render_pass_primitives::generate(renderer& renderer, generated_state& state
             });
         list.draw(vertex_count, 1, 0);
 
-        list.barrier(*output.depth_target, ri_resource_state::depth_read, ri_resource_state::initial);
-        list.barrier(*output.color_targets[0], ri_resource_state::render_target, ri_resource_state::initial);
+        list.barrier(*output.depth_target.texture, ri_resource_state::depth_read, ri_resource_state::initial);
+        list.barrier(*output.color_targets[0].texture, ri_resource_state::render_target, ri_resource_state::initial);
 
     }
     list.close();

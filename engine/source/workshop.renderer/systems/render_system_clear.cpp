@@ -36,7 +36,7 @@ void render_system_clear::build_graph(render_graph& graph, const render_world_st
     else if (view.has_flag(render_view_flags::depth_only))
     {
         render_output output;
-        if (view.get_render_target())
+        if (view.has_render_target())
         {
             output.depth_target = view.get_render_target();
         }
