@@ -53,6 +53,7 @@
 #include "workshop.core/drawing/pixmap.h"
 #include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/utils/time.h"
+#include "workshop.core/platform/platform.h"
 
 namespace ws {
 
@@ -471,7 +472,7 @@ void renderer::render_state(render_world_state& state)
     parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {
         profile_marker(profile_colors::render, "step render system: %s", m_systems[index]->name.c_str());
         m_systems[index]->step(state);
-    });
+        });
 
     // Begin the new frame.
     m_render_interface.begin_frame();
@@ -486,6 +487,13 @@ void renderer::render_state(render_world_state& state)
 
     // Render each view.
     std::vector<render_view*> views = m_scene_manager->get_views();
+
+    // Strip out any views not markled for rendering this frame.
+    auto iter = std::remove_if(views.begin(), views.end(), [](render_view* view) { return !view->should_render(); });
+    if (iter != views.end())
+    {
+        views.erase(iter, views.end());
+    }
 
     struct view_generated_state
     {
@@ -608,6 +616,8 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
 
         node->pass->generate(*this, output[index], view);
     });
+
+    view.clear_dirty();
 }
 
 void renderer::render_job()
@@ -864,6 +874,26 @@ void renderer::draw_debug_overlay()
         ImGui::Text("GPU Time");
         ImGui::TableSetColumnIndex(1);
         ImGui::Text("%.2f ms", gpu_time);
+
+        ImGui::NewLine();
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Virtual Memory Usage");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f mb", get_memory_usage() / (1024.0 * 1024.0f));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("Pagefile Memory Usage");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f mb", get_pagefile_usage() / (1024.0 * 1024.0f));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("VRAM Memory Usage");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f mb", m_render_interface.get_vram_usage() / (1024.0 * 1024.0f));
 
         ImGui::NewLine();
 

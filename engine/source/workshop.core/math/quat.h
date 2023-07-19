@@ -351,4 +351,20 @@ inline base_quat<element_type> operator/(const base_quat<element_type>& first, f
 	return base_quat<element_type>(first) /= second;
 }
 
+template <typename element_type>
+inline bool operator==(const base_quat<element_type>& first, const base_quat<element_type>& second)
+{
+	return
+		first.x == second.x &&
+		first.y == second.y &&
+		first.z == second.z &&
+		first.w == second.w;
+}
+
+template <typename element_type>
+inline bool operator!=(const base_vector3<element_type>& first, const base_quat<element_type>& second)
+{
+	return !(first == second);
+}
+
 }; // namespace ws

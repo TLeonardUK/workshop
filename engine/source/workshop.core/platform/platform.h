@@ -45,4 +45,10 @@ platform_type get_platform();
 // Gets the configuration the application is running under.
 config_type get_config();
 
+// Gets the current memory usage, in bytes.
+size_t get_memory_usage();
+
+// Gets the amount, in bytes,  of the page file currently being used.
+size_t get_pagefile_usage();
+
 }; // namespace ws::math

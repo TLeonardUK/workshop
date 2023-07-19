@@ -51,7 +51,7 @@ public:
     virtual obb get_bounds();
 
     // Called when the bounds of an object is modified.
-    void bounds_modified();
+    virtual void bounds_modified();
 
 public:
 

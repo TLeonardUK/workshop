@@ -43,6 +43,13 @@ render_object_id render_object::get_id()
 
 void render_object::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)
 {
+    if (location == m_local_location &&
+        rotation == m_local_rotation &&
+        scale == m_local_scale)
+    {
+        return;
+    }
+
     m_local_location = location;
     m_local_rotation = rotation;
     m_local_scale = scale;

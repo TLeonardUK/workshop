@@ -43,7 +43,7 @@ public:
 
     // Gets/sets the maximum distance at which shadows are rendered, which defines what the cascades are fitted to.
     void set_shadow_max_distance(float value);
-    float get_shodow_max_distance();
+    float get_shadow_max_distance();
 
     // Gets the light_state block that describes the light in a shader.
     ri_param_block* get_light_state_param_block();

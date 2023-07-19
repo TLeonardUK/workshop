@@ -605,4 +605,13 @@ void dx12_render_interface::defer_delete(const deferred_delete_function_t& func)
     m_pending_deletions[queue_index].push_back(func);
 }
 
+size_t dx12_render_interface::get_vram_usage()
+{
+    DXGI_QUERY_VIDEO_MEMORY_INFO video_memory_info;
+    m_dxgi_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &video_memory_info);
+
+    return video_memory_info.CurrentUsage;
+
+}
+
 }; // namespace ws

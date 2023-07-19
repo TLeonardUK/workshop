@@ -191,7 +191,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     shadow_map_coord = float2(shadow_map_coord.x, 1.0f - shadow_map_coord.y);
 
     // Sloped bias to filter out acne on slanted surfaces.
-    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.0001f, 0.01f); 
+    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.0001f, 0.001f); 
     float result = 0.0f;
 
     // Filter if required.
@@ -282,15 +282,24 @@ float2 calculate_shadow_point(gbuffer_fragment frag, light_state light)
 {
     return float2(
         1.0f,
-        1.0f
+        0.0f
     );
 }
 
 float2 calculate_shadow_spotlight(gbuffer_fragment frag, light_state light)
 {
+    // If normal is in direction of the light, we know we are in shadow as the light
+    // is hitting our back.
+    if (dot(frag.world_normal, light.direction) > 0.0f)
+    {
+        return float2(0.0f, 0.0f);
+    }
+
+    float cascade_value = sample_shadow_map(frag, light, 0, shadow_filter::pcf_poisson, 16);
+
     return float2(
-        1.0f,
-        1.0f
+        cascade_value,
+        0.0f
     );
 }
 
@@ -305,12 +314,13 @@ float calculate_attenuation_directional(gbuffer_fragment frag, light_state light
 
 float calculate_attenuation_point(gbuffer_fragment frag, light_state light)
 {
-    float distanceSqr = square(length(light.position - frag.world_position));
-    float light_range_inv = 1.0f / square(light.range);
-    float range_attenuation = square(saturate(1.0 - square(distanceSqr * light_range_inv)));
-    float attenuation = range_attenuation / distanceSqr;
+    float range_squared = square(light.range * light.range);
+    float distanced_squared = square(length(light.position - frag.world_position));
+    float inv_range = 1.0 / max(range_squared, 0.00001f);
+    float range_attenuation = square(saturate(1.0 - square(distanced_squared * inv_range)));
+    float attenuation = range_attenuation / distanced_squared;
 
-    return attenuation;
+    return saturate(attenuation);
 }
 
 float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light)
@@ -318,8 +328,11 @@ float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light)
     float3 light_to_pixel = normalize(frag.world_position - light.position);
     float spot = dot(light_to_pixel, light.direction);
 
-    float inner_dot = 1.0f - (light.inner_radius / half_pi);
-    float outer_dot = 1.0f - (light.outer_radius / half_pi);
+    float inner_radius = light.inner_radius;
+    float outer_radius = light.outer_radius;
+
+    float inner_dot = 1.0f - saturate(inner_radius / pi);
+    float outer_dot = 1.0f - saturate(outer_radius / pi);
 
     if (spot > outer_dot)
     {
@@ -367,6 +380,7 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
     // Calculate radiance based on the light type.
     float attenuation = 1.0f;
     float2 shadow_attenuation_and_cascade_index = 1.0f;
+    
     if (light.type == light_type::directional)
     {
         attenuation = calculate_attenuation_directional(frag, light);
@@ -375,12 +389,12 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
     else if (light.type == light_type::point_)
     {
         attenuation = calculate_attenuation_point(frag, light);
-        shadow_attenuation_and_cascade_index = calculate_attenuation_point(frag, light);
+        shadow_attenuation_and_cascade_index = calculate_shadow_point(frag, light);
     }
     else if (light.type == light_type::spotlight)
     {
         attenuation = calculate_attenuation_spotlight(frag, light);
-        shadow_attenuation_and_cascade_index = calculate_attenuation_spotlight(frag, light);
+        shadow_attenuation_and_cascade_index = calculate_shadow_spotlight(frag, light);
     }
     
     // Calculate fresnel reflection

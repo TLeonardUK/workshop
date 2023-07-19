@@ -97,6 +97,10 @@ public:
     void set_viewport(const recti& viewport);
     recti get_viewport();
 
+    // GEts or sets if this view should be rendered this frame.
+    void set_should_render(bool value);
+    bool should_render();
+
     // Gets and sets all the perspective matrice parameters.
     void set_clip(float near, float far);
     void get_clip(float& near, float& far);
@@ -123,6 +127,21 @@ public:
 
     // Returns true if the given object is visible within this view.
     bool is_object_visible(render_object* object);
+
+    // Gets an opaque numeric value determining when this view changed last.
+    size_t get_last_change();
+
+    // Marks this view as dirty (eg. something inside it has changed) and uses the
+    // passed numeric value as its new last_change value.
+    void mark_dirty(size_t last_change);
+
+    // Returns true if view is currently dirty.
+    bool is_dirty();
+
+    // Clears dirty flag of the view.
+    void clear_dirty();
+
+    virtual void bounds_modified() override;
 
 private:
     void update_view_info_param_block();
@@ -151,6 +170,11 @@ private:
     std::unique_ptr<ri_param_block> m_view_info_param_block;
 
     std::unique_ptr<render_resource_cache> m_resource_cache;
+
+    bool m_dirty = true;
+    size_t m_last_change = 0;
+
+    bool m_should_render = true;
 
 };
 

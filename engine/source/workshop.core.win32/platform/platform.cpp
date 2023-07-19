@@ -4,6 +4,9 @@
 // ================================================================================================
 #include "workshop.core/platform/platform.h"
 
+#include <Windows.h>
+#include <psapi.h>
+
 namespace ws {
 
 platform_type get_platform()
@@ -22,6 +25,20 @@ config_type get_config()
 #else
     #error Unknown configuration mode
 #endif
+}
+
+size_t get_memory_usage()
+{
+    PROCESS_MEMORY_COUNTERS_EX counters;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&counters, sizeof(counters));
+    return counters.PrivateUsage;
+}
+
+size_t get_pagefile_usage()
+{
+    PROCESS_MEMORY_COUNTERS_EX counters;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&counters, sizeof(counters));
+    return counters.QuotaPagedPoolUsage;
 }
 
 }; // namespace workshop

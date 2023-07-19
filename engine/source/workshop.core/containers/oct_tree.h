@@ -38,6 +38,7 @@ public:
         entry_id id;
         aabb bounds;
         element_type value;
+        size_t last_changed;
     };
 
     struct cell
@@ -51,6 +52,8 @@ public:
         size_t child_elements = 0;
         cell* parent = nullptr;
         size_t parent_division_index = 0;
+
+        size_t last_changed = 0;
 
         bool valid = false;
 
@@ -91,8 +94,10 @@ public:
 
     struct intersect_result
     {
+        std::vector<const entry*> entries;
         element_list_t elements;
         std::vector<const cell*> cells;
+        size_t last_changed;
     };
 
 public:
@@ -143,12 +148,17 @@ private:
     // Removes a cell from its parent and the nodes list.
     void remove_cell(cell& cell);
 
+    // Marks a cell as changed and propogates it up the tree.
+    void propogate_change(cell* cell);
+
 private:
 
     size_t m_max_depth;
     entry_id m_next_entry_id = 1; 
     vector3 m_extents;
     std::vector<std::unique_ptr<cell>> m_cells;
+
+    size_t m_change_counter = 0;
 
 };
 
@@ -173,6 +183,8 @@ inline void oct_tree<element_type>::clear()
     m_cells.push_back(std::make_unique<cell>(0, aabb(-m_extents * 0.5f, m_extents * 0.5f)));
 
     get_root().valid = true;
+
+    propogate_change(&get_root());
 }
 
 template <typename element_type>
@@ -182,6 +194,7 @@ inline oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& 
     entry.id = m_next_entry_id++;
     entry.bounds = bounds;
     entry.value = value;
+    entry.last_changed = m_change_counter++;
 
     return insert(bounds, entry, get_root());
 }
@@ -217,21 +230,42 @@ void oct_tree<element_type>::remove(token token)
         return;
     }
 
+    // Mark cell as changed.
+    propogate_change(token.cell);
+
     // Reduce child count up the tree, and remove any empty cells along the way.
     cell* iter = token.cell;
     while (iter != nullptr)
     {
-        iter->child_elements--;
-
         auto parent = iter->parent;
 
         if (iter->parent != nullptr && iter->child_elements == 0)
         {
+            // If the lower cell was modified more recently than the parent then
+            // propogate the new change value to its parent.
+            parent->last_changed = std::max(parent->last_changed, iter->last_changed);
+
             remove_cell(*iter);
         }
 
         iter = parent;
     }
+}
+
+template <typename element_type>
+void oct_tree<element_type>::propogate_change(cell* value)
+{
+    m_change_counter++;
+
+    // Note: Don't propogate upwards anymore, we only care about individual cells
+    // being dirty now, we propogate up only when cells are removed.
+    /*
+    cell* iter = value;
+    while (iter != nullptr)
+    {
+        iter->last_changed = m_change_counter;
+        iter = iter->parent;
+    }*/
 }
 
 template <typename element_type>
@@ -305,6 +339,7 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
     return result;
 }
 
+
 template <typename element_type>
 typename oct_tree<element_type>::cell& oct_tree<element_type>::get_root()
 {
@@ -368,6 +403,8 @@ oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& bounds,
     {
         insert_cell.elements.push_back(entry);
         insert_cell.child_elements++;
+        
+        propogate_change(&insert_cell);
 
         token ret;
         ret.id = entry.id;
@@ -405,6 +442,7 @@ void oct_tree<element_type>::get_elements(intersect_result& result, intersect_fu
     }
 
     result.elements.resize(max_results);
+    result.entries.resize(max_results);
 
     std::atomic_size_t total_results = 0;
 
@@ -417,12 +455,31 @@ void oct_tree<element_type>::get_elements(intersect_result& result, intersect_fu
             if (coarse || insersect_function(entry.bounds))
             {
                 size_t result_index = total_results.fetch_add(1);
+                result.entries[result_index] = &entry;
                 result.elements[result_index] = entry.value;
             }
         }
     });
 
     result.elements.resize(total_results);
+    result.entries.resize(total_results);
+
+    // Grab the most recent change while we are at this.
+    result.last_changed = 0;
+    if (coarse)
+    {
+        for (auto& cell : result.cells)
+        {
+            result.last_changed = std::max(result.last_changed, cell->last_changed);
+        }
+    }
+    else
+    {
+        for (auto& entry : result.entries)
+        {
+            result.last_changed = std::max(result.last_changed, entry->last_changed);
+        }
+    }
 }
 
 }; // namespace workshop

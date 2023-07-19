@@ -40,6 +40,9 @@ public:
         frustum view_frustum;
         frustum frustum;
 
+        bool needs_render = true;
+        size_t last_rendered_frame = 0;
+
         std::unique_ptr<ri_param_block> shadow_map_state_param_block;
     };
 
@@ -51,9 +54,12 @@ public:
         frustum view_frustum;
         frustum view_view_frustum;
         quat light_rotation;
+        vector3 light_location;
 
         std::vector<cascade_info> cascades;
     };
+
+    static inline constexpr size_t k_max_cascades_updates_per_frame = 1;
 
     shadow_info& find_or_create_shadow_info(render_object_id light_id, render_object_id view_id);
 
@@ -74,6 +80,8 @@ private:
 
     void destroy_cascade(cascade_info& info);
     void step_cascade(shadow_info& info, cascade_info& shadow_info);
+
+    void update_cascade_param_block(cascade_info& cascade);
 
 private:
     std::vector<shadow_info> m_shadow_info;

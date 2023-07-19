@@ -96,6 +96,12 @@ void render_scene_manager::update_visibility()
         {
             object->last_visible_frame[view->visibility_index] = frame_index;
         }
+
+        // Mark view as dirty if something in the view has changed.
+        if (view->get_last_change() != visible_objects.last_changed)
+        {
+            view->mark_dirty(visible_objects.last_changed);
+        }
     }
 }
 

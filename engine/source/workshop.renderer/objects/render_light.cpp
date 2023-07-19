@@ -76,7 +76,7 @@ void render_light::set_shadow_max_distance(float value)
     m_shadow_max_distance = value;
 }
 
-float render_light::get_shodow_max_distance()
+float render_light::get_shadow_max_distance()
 {
     return m_shadow_max_distance;
 }

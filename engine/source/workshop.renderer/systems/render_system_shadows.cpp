@@ -54,8 +54,8 @@ void render_system_shadows::step(const render_world_state& state)
         shadow_info& info = *iter;
 
         // If the combination of light and view is no longer valid we can nuke the shadow data.
-        if (scene_manager.resolve_id_typed<render_view>(info.view_id) == nullptr ||
-            scene_manager.resolve_id_typed<render_light>(info.light_id) == nullptr)
+        if ((info.view_id > 0 && scene_manager.resolve_id_typed<render_view>(info.view_id) == nullptr) ||
+            (info.light_id > 0 && scene_manager.resolve_id_typed<render_light>(info.light_id) == nullptr))
         {
             // Remove any views these shadows created.
             for (cascade_info& cascade : info.cascades)
@@ -107,11 +107,47 @@ void render_system_shadows::step(const render_world_state& state)
     }
 
     // Update all cascades.
+    std::vector<cascade_info*> cascades_needing_render;
+
     for (shadow_info& info : m_shadow_info)
     {
         for (cascade_info& cascade : info.cascades)
         {
             step_cascade(info, cascade);
+
+            if (cascade.needs_render)
+            {
+                cascades_needing_render.push_back(&cascade);
+            }
+        }
+    }
+
+    // Grab all cascades that need an update, and sort by last time they updated, then
+    // mark the top x as should update. Spreads out any large updates over a few frames.
+    size_t frame_index = state.time.frame_count;
+    std::sort(cascades_needing_render.begin(), cascades_needing_render.end(), [frame_index](const cascade_info* a, const cascade_info* b) {
+        size_t frames_elapsed_a = (frame_index - a->last_rendered_frame);
+        size_t frames_elapsed_b = (frame_index - b->last_rendered_frame);
+        return frames_elapsed_b < frames_elapsed_a;
+    });
+
+    for (size_t i = 0; i < cascades_needing_render.size(); i++)
+    {
+        cascade_info* cascade = cascades_needing_render[i];
+        bool should_render = (i < k_max_cascades_updates_per_frame);
+
+        if (cascade->view_id)
+        {
+            render_view* view = scene_manager.resolve_id_typed<render_view>(cascade->view_id);
+            view->set_should_render(should_render);
+
+            if (should_render)
+            {
+                cascade->needs_render = false;
+                cascade->last_rendered_frame = frame_index;
+
+                update_cascade_param_block(*cascade);
+            }
         }
     }
 }
@@ -120,7 +156,7 @@ render_system_shadows::shadow_info& render_system_shadows::find_or_create_shadow
 {
     for (shadow_info& info : m_shadow_info)
     {
-        if (info.light_id == light_id && info.view_id == view_id)
+        if (info.light_id == light_id && (info.view_id == view_id || info.view_id == 0))
         {
             return info;
         }
@@ -139,7 +175,7 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
     float cascade_near_z;
     float cascade_far_z;
     view->get_clip(cascade_near_z, cascade_far_z);
-    cascade_far_z = std::min(cascade_far_z, light->get_shodow_max_distance());
+    cascade_far_z = std::min(cascade_far_z, light->get_shadow_max_distance());
 
     size_t cascade_count = light->get_shodow_cascades();
     size_t map_size = light->get_shadow_map_size();
@@ -152,7 +188,7 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         info.light_rotation = light->get_local_rotation();
     }
 
-    matrix4 rotation_matrix = matrix4::rotation(light->get_local_rotation());
+    matrix4 rotation_matrix = matrix4::rotation(info.light_rotation);
     matrix4 light_view_matrix = matrix4::look_at(vector3::zero, vector3::forward * rotation_matrix.inverse(), vector3::up);
 
     // Destroy any cascades we are stripping off.
@@ -189,7 +225,7 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
             params.dimensions = ri_texture_dimension::texture_2d;
             params.is_render_target = true;
             params.format = ri_texture_format::D32_FLOAT;
-            cascade.shadow_map = m_renderer.get_render_interface().create_texture(params, "shadow map cascade");
+            cascade.shadow_map = m_renderer.get_render_interface().create_texture(params, "directional shadow map cascade");
         }
 
         // Determine shadow map extents.
@@ -263,12 +299,119 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
 
 void render_system_shadows::step_point_shadow(render_view* view, render_point_light* light)
 {
-    // TODO
+    shadow_info& info = find_or_create_shadow_info(light->get_id(), 0);
+
+    // TODO: We should expose this somewhere.
+    float cascade_near_z = 10.0f;
+    float cascade_far_z = std::min(light->get_shadow_max_distance(), light->get_range());
+
+    float range = light->get_range();
+
+    if (!m_renderer.is_rendering_frozen())
+    {
+        info.light_rotation = light->get_local_rotation();
+        info.light_location = light->get_local_location();
+    }
+
+    // Which direction each face of our cubemap faces.
+    std::array<vector3, 6> cascade_directions = {
+         vector3::up,
+        -vector3::up,
+         vector3::right,
+        -vector3::right,
+         vector3::forward,
+        -vector3::forward
+    };
+
+    info.cascades.resize(6);
+    for (size_t i = 0; i < 6; i++)
+    {
+        cascade_info& cascade = info.cascades[i];
+
+        // Create shadow map if required.
+        if (cascade.shadow_map == nullptr || cascade.map_size != light->get_shadow_map_size())
+        {
+            cascade.map_size = light->get_shadow_map_size();
+
+            ri_texture::create_params params;
+            params.width = cascade.map_size;
+            params.height = cascade.map_size;
+            params.dimensions = ri_texture_dimension::texture_2d;
+            params.is_render_target = true;
+            params.format = ri_texture_format::D32_FLOAT;
+            cascade.shadow_map = m_renderer.get_render_interface().create_texture(params, "point shadow map cascade");
+        }
+
+        matrix4 rotation_matrix = matrix4::rotation(info.light_rotation);
+        matrix4 light_view_matrix = matrix4::look_at(info.light_location, info.light_location + (cascade_directions[i] * rotation_matrix.inverse()), vector3::up);
+
+        // Setup an appropriate matrix to capture the shadow map.
+        cascade.view_matrix = light_view_matrix;
+        cascade.projection_matrix = matrix4::perspective(
+            math::halfpi,
+            1.0f,
+            cascade_near_z,
+            cascade_far_z
+        );
+
+        // Calculate the frustum from the projection matrix.
+        cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
+        
+        m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
+    }
 }
 
 void render_system_shadows::step_spot_shadow(render_view* view, render_spot_light* light)
 {
-    // TODO
+    shadow_info& info = find_or_create_shadow_info(light->get_id(), 0);
+
+    // TODO: We should expose this somewhere.
+    float cascade_near_z = 10.0f;
+    float cascade_far_z = std::min(light->get_shadow_max_distance(), light->get_range());
+
+    float inner_radius = 0.0f;
+    float outer_radius = 0.0f;
+    light->get_radius(inner_radius, outer_radius);
+
+    if (!m_renderer.is_rendering_frozen())
+    {
+        info.light_rotation = light->get_local_rotation();
+        info.light_location = light->get_local_location();
+    }
+
+    matrix4 rotation_matrix = matrix4::rotation(info.light_rotation);
+    matrix4 light_view_matrix = matrix4::look_at(info.light_location, info.light_location + (vector3::forward * rotation_matrix.inverse()), vector3::up);
+
+    info.cascades.resize(1);
+    cascade_info& cascade = info.cascades[0];
+
+    // Create shadow map if required.
+    if (cascade.shadow_map == nullptr || cascade.map_size != light->get_shadow_map_size())
+    {
+        cascade.map_size = light->get_shadow_map_size();
+
+        ri_texture::create_params params;
+        params.width = cascade.map_size;
+        params.height = cascade.map_size;
+        params.dimensions = ri_texture_dimension::texture_2d;
+        params.is_render_target = true;
+        params.format = ri_texture_format::D32_FLOAT;
+        cascade.shadow_map = m_renderer.get_render_interface().create_texture(params, "spotlight shadow map cascade");
+    }
+
+    // Setup an appropriate matrix to capture the shadow map.
+    cascade.view_matrix = light_view_matrix;
+    cascade.projection_matrix = matrix4::perspective(
+        outer_radius * 2.5f,
+        1.0f,
+        cascade_near_z,
+        cascade_far_z
+    );
+
+    // Calculate the frustum from the projection matrix.
+    cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
+
+    //m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
 }
 
 void render_system_shadows::destroy_cascade(cascade_info& info)
@@ -291,6 +434,7 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
         scene_manager.create_view(cascade.view_id, "Shadow Cascade View");
 
         cascade.shadow_map_state_param_block = m_renderer.get_param_block_manager().create_param_block("shadow_map_state");
+        update_cascade_param_block(cascade);
     }
 
     render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
@@ -302,6 +446,14 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     view->set_view_type(render_view_type::custom);
     view->set_view_order(render_view_order::shadows);
 
+    if (view->is_dirty())
+    {
+        cascade.needs_render = true;
+    }    
+}
+
+void render_system_shadows::update_cascade_param_block(cascade_info& cascade)
+{
     cascade.shadow_map_state_param_block->set("shadow_matrix", cascade.view_matrix * cascade.projection_matrix);
     cascade.shadow_map_state_param_block->set("depth_map", *cascade.shadow_map);
     cascade.shadow_map_state_param_block->set("depth_map_size", (int)cascade.map_size);
