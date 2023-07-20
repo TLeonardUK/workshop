@@ -37,3 +37,18 @@ float random(float4 seed)
 	float dot_product = dot(seed, float4(12.9898, 78.233, 45.164, 94.673));
     return frac(sin(dot_product) * 43758.5453);
 }
+
+float3 make_perpendicular(float3 normal)
+{
+    float3 c1 = cross(normal, float3(0.0, 0.0, 1.0));
+    float3 c2 = cross(normal, float3(0.0, 1.0, 0.0));
+
+    if (length(c1) > length(c2))
+    {
+        return c1;
+    }
+    else
+    {
+        return c2;
+    }
+}

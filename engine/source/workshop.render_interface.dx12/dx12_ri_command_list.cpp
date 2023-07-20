@@ -134,7 +134,7 @@ void dx12_ri_command_list::barrier(ID3D12Resource* resource, ri_resource_state r
     barrier.Transition.pResource = resource;
     barrier.Transition.StateBefore = ri_to_dx12(source_state);
     barrier.Transition.StateAfter = ri_to_dx12(destination_state);
-    barrier.Transition.Subresource = 0;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     m_command_list->ResourceBarrier(1, &barrier);
 
     //db_log(core, "barrier: %p : %i -> %i", resource, (int)source_state, (int)destination_state);

@@ -79,3 +79,6 @@ param_blocks:
     fields:
       view_matrix: float4x4
       projection_matrix: float4x4
+      world_position: float3
+      z_far: float
+      z_near: float

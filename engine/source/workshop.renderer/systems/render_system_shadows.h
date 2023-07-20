@@ -29,6 +29,8 @@ public:
         ri_texture_view shadow_map_view;
         size_t map_size = 0;
 
+        bool use_linear_depth = false;
+
         float z_near = 0.0f;
         float z_far = 0.0f;
 
@@ -63,7 +65,7 @@ public:
         std::vector<cascade_info> cascades;
     };
 
-    static inline constexpr size_t k_max_cascades_updates_per_frame = 1;
+    static inline constexpr size_t k_max_cascades_updates_per_frame = 9;
 
     shadow_info& find_or_create_shadow_info(render_object_id light_id, render_object_id view_id);
 

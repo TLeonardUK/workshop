@@ -207,13 +207,6 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     return result;
 }
 
-float linearize_shadow_depth(float depth)
-{
-    float z_n = depth;//2.0 * (depth) - 1.0;
-    float z_e = 2.0 * view_z_near * view_z_far / (view_z_far + view_z_near - z_n * (view_z_far - view_z_near));
-    return z_e;
-}
-
 float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascade_index, shadow_filter filter, int samples)
 {
     // If outside cascade count, return no shadow.
@@ -224,25 +217,92 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
 
     shadow_map_state state = get_shadow_map_state(light.shadow_map_start_index + cascade_index);
     float n_dot_l = dot(light.position, frag.world_position);
-    float3 frag_to_light = frag.world_position.xyz - light.position.xyz;
+
+    // If outside shadow map, return no shadow.
+    float current_depth = length(frag.world_position.xyz - light.position.xyz);        
+    if (current_depth < 0 || current_depth > state.z_far)
+    {
+        return 1.0;
+    }
 
     // Sloped bias to filter out acne on slanted surfaces.
-    float bias = 0.0f;// clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.0001f, 0.001f); 
+    float bias = state.z_near;
     float result = 0.0f;
 
     TextureCube shadow_map_cube = table_texture_cube[NonUniformResourceIndex(state.depth_map_index)];
     switch (filter)
     {
-        // TODO: Add new filters.
+        // TODO: Calculate sampled UV's so we can do "normal" filtering.
+        //       The filtering below is temporary at best.
         default:
+        case shadow_filter::no_filter:
         {
-            float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r;
-            depth = linearize_shadow_depth(depth);
-
+            float3 frag_to_light = frag.world_position.xyz - light.position.xyz;
             float current_depth = length(frag_to_light);        
+            float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r * state.z_far;
 
             result += (depth < current_depth - bias ? 0.0 : 1.0);
 
+            break;
+        }
+        case shadow_filter::pcf: 
+        {
+            float kernel_size = 1.0f * (1024.0f / state.depth_map_size);
+
+            int direction_samples = sqrt(samples) / 2;
+            int sample_count = 0;
+
+            for (int y = -direction_samples; y <= direction_samples; y++)
+            {
+                for (int x = -direction_samples; x <= direction_samples; x++)
+                {
+                    float3 normal = normalize(frag.world_position.xyz - light.position.xyz);
+                    float3 tangent = make_perpendicular(normal);
+                    float3 bitangent = cross(normal, tangent);
+
+                    float3 offset = ((tangent * x) + (bitangent * y)) * kernel_size;
+                    float3 frag_to_light = (frag.world_position.xyz + offset) - light.position.xyz;
+                    float current_depth = length(frag_to_light);        
+        
+                    float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r * state.z_far;
+                    result += (depth < current_depth - bias ? 0.0 : 1.0);
+                    sample_count++;
+                }
+            }
+
+            result /= sample_count;
+            break;
+        }
+        case shadow_filter::pcf_poisson:
+        {
+            float kernel_size = 2.0f * (1024.0f / state.depth_map_size);
+            
+            for (int i = 0; i < samples; i++)
+            {
+                int disk_index = i % 16;
+                float angle = random(float4(frag.world_position.xyz, i));
+                float2 rotation = float2(
+                    cos(angle),
+                    sin(angle)
+                );		
+                float2 poisson_offset = float2(
+                    rotation.x * poisson_disk[disk_index].x - rotation.y * poisson_disk[disk_index].y,
+                    rotation.y * poisson_disk[disk_index].x + rotation.x * poisson_disk[disk_index].y
+                );
+
+                float3 normal = normalize(frag.world_position.xyz - light.position.xyz);
+                float3 tangent = make_perpendicular(normal);
+                float3 bitangent = cross(normal, tangent);
+       
+                float3 offset = ((tangent * poisson_offset.x) + (bitangent * poisson_offset.y)) * kernel_size;
+                float3 frag_to_light = (frag.world_position.xyz + offset) - light.position.xyz;
+                float current_depth = length(frag_to_light);        
+       
+                float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r * state.z_far;
+                result += (depth < current_depth - bias ? 0.0 : 1.0);
+            }
+
+            result /= samples;
             break;
         }
     }

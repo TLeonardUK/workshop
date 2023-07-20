@@ -49,6 +49,8 @@ param_blocks:
       shadow_matrix: float4x4
       depth_map: texture2d
       depth_map_size: int
+      z_far: float
+      z_near: float
 
 techniques:
   resolve_lighting:

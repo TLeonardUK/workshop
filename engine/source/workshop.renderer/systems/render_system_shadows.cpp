@@ -115,10 +115,6 @@ void render_system_shadows::step(const render_world_state& state)
         {
             step_cascade(info, cascade);
 
-            // DEBUG DEBUG DEBUG
-            cascade.needs_render = true;
-            // DEBUG DEBUG DEBUG
-
             if (cascade.needs_render)
             {
                 cascades_needing_render.push_back(&cascade);
@@ -133,6 +129,8 @@ void render_system_shadows::step(const render_world_state& state)
 
     // Grab all cascades that need an update, and sort by last time they updated, then
     // mark the top x as should update. Spreads out any large updates over a few frames.
+    // TODO: Cubemaps should be updated all at once or we get some really nasty problems.
+
     size_t frame_index = state.time.frame_count;
     std::sort(cascades_needing_render.begin(), cascades_needing_render.end(), [frame_index](const cascade_info* a, const cascade_info* b) {
         size_t frames_elapsed_a = (frame_index - a->last_rendered_frame);
@@ -143,7 +141,7 @@ void render_system_shadows::step(const render_world_state& state)
     for (size_t i = 0; i < cascades_needing_render.size(); i++)
     {
         cascade_info* cascade = cascades_needing_render[i];
-        bool should_render = true;//(i < k_max_cascades_updates_per_frame);
+        bool should_render = (i < k_max_cascades_updates_per_frame);
 
         if (cascade->view_id)
         {
@@ -296,7 +294,6 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         cascade.projection_matrix[0][3] = cascade.projection_matrix[0][3] + rounded_offset.x;
         cascade.projection_matrix[1][3] = cascade.projection_matrix[1][3] + rounded_offset.y;
 
-
 //        cascade.projection_matrix = matrix4::translate(-offset_shadow_space) * cascade.projection_matrix;
 
         // Calculate the frustum from the projection matrix.
@@ -326,14 +323,14 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
     }
 
     // Which direction each face of our cubemap faces.
-    std::array<vector3, 6> cascade_directions;
+    std::array<matrix4, 6> cascade_directions;
     ri_interface& ri_interface = m_renderer.get_render_interface();
-    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::x_pos)] = vector3::right;
-    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::x_neg)] = -vector3::right;
-    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::y_pos)] = vector3::up;
-    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::y_neg)] = -vector3::up;
-    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::z_pos)] = vector3::forward;
-    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::z_neg)] = -vector3::forward;
+    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::x_pos)] = matrix4::look_at(info.light_location, info.light_location + vector3(1.0f, 0.0f, 0.0f),  vector3(0.0f, 1.0f, 0.0f));
+    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::x_neg)] = matrix4::look_at(info.light_location, info.light_location + vector3(-1.0f, 0.0f, 0.0f), vector3(0.0f, 1.0f, 0.0f));
+    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::y_pos)] = matrix4::look_at(info.light_location, info.light_location + vector3(0.0f, 1.0f, 0.0f),  vector3(0.0f, 0.0f, -1.0f));
+    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::y_neg)] = matrix4::look_at(info.light_location, info.light_location + vector3(0.0f, -1.0f, 0.0f), vector3(0.0f, 0.0f, 1.0f));
+    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::z_pos)] = matrix4::look_at(info.light_location, info.light_location + vector3(0.0f, 0.0f, 1.0f),  vector3(0.0f, 1.0f, 0.0f));
+    cascade_directions[ri_interface.get_cube_map_face_index(ri_cube_map_face::z_neg)] = matrix4::look_at(info.light_location, info.light_location + vector3(0.0f, 0.0f, -1.0f), vector3(0.0f, 1.0f, 0.0f));
 
     info.cascades.resize(6);
     for (size_t i = 0; i < 6; i++)
@@ -354,6 +351,7 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
                 params.dimensions = ri_texture_dimension::texture_cube;
                 params.is_render_target = true;
                 params.format = ri_texture_format::D32_FLOAT;
+
                 cascade.shadow_map = m_renderer.get_render_interface().create_texture(params, "point shadow map cascade");
                 cascade.shadow_map_view.texture = cascade.shadow_map.get();
                 cascade.shadow_map_view.slice = i;
@@ -365,8 +363,9 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
             cascade.shadow_map_view.slice = i;
             cascade.map_size = info.cascades[0].map_size;
         }
-
-        matrix4 light_view_matrix = matrix4::look_at(info.light_location, info.light_location + cascade_directions[i], vector3::up);
+        
+        //matrix4 light_view_matrix = matrix4::look_at(info.light_location, info.light_location + cascade_directions[i], vector3::up);
+        matrix4 light_view_matrix = cascade_directions[i];
 
         // Setup an appropriate matrix to capture the shadow map.
         cascade.view_matrix = light_view_matrix;
@@ -378,6 +377,7 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
         );
         cascade.z_near = cascade_near_z;
         cascade.z_far = cascade_far_z;
+        cascade.use_linear_depth = true;
 
         // Calculate the frustum from the projection matrix.
         cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
@@ -470,10 +470,18 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     view->set_view_matrix(cascade.view_matrix);
     view->set_render_target(cascade.shadow_map_view);
     view->set_viewport(recti(0, 0, cascade.map_size, cascade.map_size));
-    view->set_flags(render_view_flags::depth_only);
+    if (cascade.use_linear_depth)
+    {
+        view->set_flags(render_view_flags::linear_depth_only);
+    }
+    else
+    {
+        view->set_flags(render_view_flags::depth_only);
+    }
     view->set_view_type(render_view_type::custom);
     view->set_view_order(render_view_order::shadows);
     view->set_clip(cascade.z_near, cascade.z_far);
+    view->set_local_transform(info.light_location, quat::identity, vector3::one);
 
     if (view->is_dirty())
     {
@@ -486,6 +494,8 @@ void render_system_shadows::update_cascade_param_block(cascade_info& cascade)
     cascade.shadow_map_state_param_block->set("shadow_matrix", cascade.view_matrix * cascade.projection_matrix);
     cascade.shadow_map_state_param_block->set("depth_map", *cascade.shadow_map_view.texture);
     cascade.shadow_map_state_param_block->set("depth_map_size", (int)cascade.map_size);
+    cascade.shadow_map_state_param_block->set("z_far", cascade.z_far);
+    cascade.shadow_map_state_param_block->set("z_near", cascade.z_near);
 }
 
 }; // namespace ws

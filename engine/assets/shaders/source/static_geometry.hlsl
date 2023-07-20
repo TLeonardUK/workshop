@@ -6,6 +6,10 @@
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
 
+// ================================================================================================
+//  Standard path
+// ================================================================================================
+
 struct geometry_pinput
 {
     float4 position : SV_POSITION;
@@ -69,19 +73,6 @@ gbuffer_output pshader_masked(geometry_pinput input)
     return pshader_common(input, albedo);
 }
 
-void pshader_opaque_depth_only(geometry_pinput input)
-{
-}
-
-void pshader_masked_depth_only(geometry_pinput input)
-{
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
-    if (albedo.a < 0.5)
-    {
-        discard;
-    }
-}
-
 gbuffer_output pshader_transparent(geometry_pinput input)
 {
     float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
@@ -95,3 +86,98 @@ gbuffer_output pshader_transparent_masked(geometry_pinput input)
     albedo *= opacity;
     return pshader_common(input, albedo);
 }
+
+// ================================================================================================
+//  Depth only
+// ================================================================================================
+
+struct geometry_pinput_depth_only
+{
+    float4 position : SV_POSITION;
+    float2 uv0 : TEXCOORD0;
+};
+
+geometry_pinput_depth_only vshader_depth_only(vertex_input input)
+{
+    vertex v = load_vertex(input.vertex_id);
+    geometry_instance_info vi = load_geometry_instance_info(input.instance_id);
+
+    float4x4 mvp_matrix = mul(projection_matrix, mul(view_matrix, vi.model_matrix));
+
+    geometry_pinput_depth_only result;
+    result.position = mul(mvp_matrix, float4(v.position, 1.0f));
+    result.uv0 = v.uv0;
+
+    return result;
+}
+
+void pshader_opaque_depth_only(geometry_pinput_depth_only input)
+{
+}
+
+void pshader_masked_depth_only(geometry_pinput_depth_only input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    if (albedo.a < 0.5)
+    {
+        discard;
+    }
+}
+
+// ================================================================================================
+//  Linear depth only
+// ================================================================================================
+
+struct geometry_pinput_linear_depth_only
+{
+    float4 position : SV_POSITION;
+    float2 uv0 : TEXCOORD0;
+    float4 world_position : TEXCOORD3;
+};
+
+struct linear_depth_output
+{
+    float depth : SV_DEPTH;
+};
+
+geometry_pinput_linear_depth_only vshader_linear_depth_only(vertex_input input)
+{
+    vertex v = load_vertex(input.vertex_id);
+    geometry_instance_info vi = load_geometry_instance_info(input.instance_id);
+
+    float4x4 mvp_matrix = mul(projection_matrix, mul(view_matrix, vi.model_matrix));
+
+    geometry_pinput_linear_depth_only result;
+    result.position = mul(mvp_matrix, float4(v.position, 1.0f));
+    result.uv0 = v.uv0;
+    result.world_position = mul(vi.model_matrix, float4(v.position, 1.0f));
+
+    return result;
+}
+
+linear_depth_output pshader_common_linear_depth_only(geometry_pinput_linear_depth_only input)
+{
+    float distance = length(input.world_position.xyz - world_position);
+    distance = distance / z_far;
+    
+    linear_depth_output output;
+    output.depth = distance;    
+    return output;
+}
+
+linear_depth_output pshader_opaque_linear_depth_only(geometry_pinput_linear_depth_only input)
+{
+    return pshader_common_linear_depth_only(input);
+}
+
+linear_depth_output pshader_masked_linear_depth_only(geometry_pinput_linear_depth_only input)
+{
+    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    if (albedo.a < 0.5)
+    {
+        discard;
+    }
+
+    return pshader_common_linear_depth_only(input);
+}
+

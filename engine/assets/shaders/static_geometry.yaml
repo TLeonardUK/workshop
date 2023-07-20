@@ -35,11 +35,25 @@ effects:
         domain: [ masked ]
         wireframe: [ false ]
         depth_only: [ true ]
+        depth_linear: [ false ]
 
       static_geometry_opaque_depth_only: 
         domain: [ opaque ]
         wireframe: [ false ]
         depth_only: [ true ]
+        depth_linear: [ false ]
+        
+      static_geometry_masked_depth_only_linear: 
+        domain: [ masked ]
+        wireframe: [ false ]
+        depth_only: [ true ]
+        depth_linear: [ true ]
+
+      static_geometry_opaque_depth_only_linear: 
+        domain: [ opaque ]
+        wireframe: [ false ]
+        depth_only: [ true ]
+        depth_linear: [ true ]
 
 vertex_layouts:
   geometry_vertex:
@@ -124,7 +138,7 @@ techniques:
   static_geometry_opaque_depth_only:
     vertex_shader: 
       file: data:shaders/source/static_geometry.hlsl
-      entry: vshader
+      entry: vshader_depth_only
     pixel_shader: 
       file: data:shaders/source/static_geometry.hlsl
       entry: pshader_opaque_depth_only
@@ -137,10 +151,36 @@ techniques:
   static_geometry_masked_depth_only:
     vertex_shader: 
       file: data:shaders/source/static_geometry.hlsl
-      entry: vshader
+      entry: vshader_depth_only
     pixel_shader: 
       file: data:shaders/source/static_geometry.hlsl
       entry: pshader_masked_depth_only
+    render_state: depth_only_render_state
+    vertex_layout: geometry_vertex
+    output_target: depth_only_buffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
+  # Same as static_geometry_opaque but only outputs a depth value, in a linear format.
+  static_geometry_opaque_depth_only_linear:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader_linear_depth_only
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_opaque_linear_depth_only
+    render_state: depth_only_render_state
+    vertex_layout: geometry_vertex
+    output_target: depth_only_buffer
+    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
+
+  # Same as static_geometry_masked but only outputs a depth value, in a linear format
+  static_geometry_masked_depth_only_linear:
+    vertex_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: vshader_linear_depth_only
+    pixel_shader: 
+      file: data:shaders/source/static_geometry.hlsl
+      entry: pshader_masked_linear_depth_only
     render_state: depth_only_render_state
     vertex_layout: geometry_vertex
     output_target: depth_only_buffer

@@ -37,13 +37,16 @@ enum class render_view_type
 // ================================================================================================
 enum class render_view_flags
 {
-    none,
+    none                    = 0,
 
     // Standard path we use to render the scene.
-    normal,
+    normal                  = 1,
 
     // Only renders a depth map of the scene.
-    depth_only
+    depth_only              = 2,
+
+    // Same as depth_only but depth is stored in a linear format.
+    linear_depth_only       = 4
 };
 
 // ================================================================================================

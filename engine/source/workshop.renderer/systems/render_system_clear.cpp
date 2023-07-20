@@ -33,7 +33,7 @@ void render_system_clear::build_graph(render_graph& graph, const render_world_st
         pass->clear_depth_outputs = true;  
         graph.add_node(std::move(pass));
     }
-    else if (view.has_flag(render_view_flags::depth_only))
+    else if (view.has_flag(render_view_flags::depth_only) || view.has_flag(render_view_flags::linear_depth_only))
     {
         render_output output;
         if (view.has_render_target())
