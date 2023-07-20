@@ -66,7 +66,7 @@ result<void> render_effect_manager::destroy_shaders()
 
 render_effect_manager::effect_id render_effect_manager::register_effect(std::unique_ptr<render_effect>&& effect)
 {
-    std::scoped_lock lock(m_resource_mutex);
+    std::unique_lock lock(m_resource_mutex);
 
     effect_id id = m_id_counter++;
     m_effects[id] = std::move(effect);
@@ -75,7 +75,7 @@ render_effect_manager::effect_id render_effect_manager::register_effect(std::uni
 
 void render_effect_manager::unregister_effect(effect_id id)
 {
-    std::scoped_lock lock(m_resource_mutex);
+    std::unique_lock lock(m_resource_mutex);
 
     // TODO: Handle if the effect is in use.
 
@@ -87,7 +87,7 @@ void render_effect_manager::unregister_effect(effect_id id)
 
 render_effect* render_effect_manager::get_effect(effect_id id)
 {
-    std::scoped_lock lock(m_resource_mutex);
+    std::shared_lock lock(m_resource_mutex);
 
     if (auto iter = m_effects.find(id); iter != m_effects.end())
     {
@@ -98,7 +98,7 @@ render_effect* render_effect_manager::get_effect(effect_id id)
 
 render_effect::technique* render_effect_manager::get_technique(const char* name, const std::unordered_map<std::string, std::string>& parameters)
 {
-    std::scoped_lock lock(m_resource_mutex);
+    std::shared_lock lock(m_resource_mutex);
 
     // Start with list of all techniques.
     std::vector<render_effect::technique*> techniques;
@@ -185,7 +185,7 @@ render_effect::technique* render_effect_manager::get_technique(const char* name,
 
 void render_effect_manager::swap_effect(effect_id id, effect_id other_id)
 {
-    std::scoped_lock lock(m_resource_mutex);
+    std::unique_lock lock(m_resource_mutex);
 
     render_effect* effect_1 = m_effects[id].get();
     render_effect* effect_2 = m_effects[other_id].get();

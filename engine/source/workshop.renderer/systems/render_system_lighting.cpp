@@ -103,53 +103,62 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     int total_lights = 0;
     int total_shadow_maps = 0;
 
-    for (render_light* light : visible_lights)
     {
-        ri_param_block* light_state_block = light->get_light_state_param_block();
-        render_system_shadows::shadow_info& shadows = shadow_system->find_or_create_shadow_info(light->get_id(), view.get_id());
+        profile_marker(profile_colors::render, "Build light buffer");
 
-        // Make sure we have space left in the lists.
-        if (total_lights + 1 >= k_max_lights ||
-            total_shadow_maps + shadows.cascades.size() >= k_max_shadow_maps)
+        for (render_light* light : visible_lights)
         {
-            break;
+            ri_param_block* light_state_block = light->get_light_state_param_block();
+            render_system_shadows::shadow_info& shadows = shadow_system->find_or_create_shadow_info(light->get_id(), view.get_id());
+
+            // Make sure we have space left in the lists.
+            if (total_lights + 1 >= k_max_lights ||
+                total_shadow_maps + shadows.cascades.size() >= k_max_shadow_maps)
+            {
+                break;
+            }
+
+            // Add light instance to buffer.
+            size_t index, offset;
+            light_state_block->set("shadow_map_start_index", total_shadow_maps);
+            light_state_block->set("shadow_map_count", (int)shadows.cascades.size());
+            light_state_block->get_table(index, offset);
+            light_instance_buffer->add(index, offset);
+
+            // Add each shadow info to buffer.
+            for (render_system_shadows::cascade_info& cascade : shadows.cascades)
+            {
+                cascade.shadow_map_state_param_block->get_table(index, offset);
+                shadow_map_instance_buffer->add(index, offset);
+            }
+
+            total_lights++;
+            total_shadow_maps += shadows.cascades.size();
         }
 
-        // Add light instance to buffer.
-        size_t index, offset;
-        light_state_block->set("shadow_map_start_index", total_shadow_maps);
-        light_state_block->set("shadow_map_count", (int)shadows.cascades.size());
-        light_state_block->get_table(index, offset);
-        light_instance_buffer->add(index, offset);
-
-        // Add each shadow info to buffer.
-        for (render_system_shadows::cascade_info& cascade : shadows.cascades)
-        {
-            cascade.shadow_map_state_param_block->get_table(index, offset);
-            shadow_map_instance_buffer->add(index, offset);
-        }
-
-        total_lights++;
-        total_shadow_maps += shadows.cascades.size();
+        light_instance_buffer->commit();
+        shadow_map_instance_buffer->commit();
     }
-
-    light_instance_buffer->commit();
-    shadow_map_instance_buffer->commit();
 
     // Update the number of lights we have in the buffer.
     float z_near = 0.0f;
     float z_far = 0.0f;
     view.get_clip(z_near, z_far);
 
-    resolve_param_block->set("light_count", total_lights);
-    resolve_param_block->set("light_buffer", light_instance_buffer->get_buffer());
-    resolve_param_block->set("shadow_map_count", total_shadow_maps);
-    resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
-    resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
-    resolve_param_block->set("view_world_position", view.get_local_location());
-    resolve_param_block->set("view_z_near", z_near);
-    resolve_param_block->set("view_z_far", z_far);
-    resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
+
+    {
+        profile_marker(profile_colors::render, "Update resolve params");
+
+        resolve_param_block->set("light_count", total_lights);
+        resolve_param_block->set("light_buffer", light_instance_buffer->get_buffer());
+        resolve_param_block->set("shadow_map_count", total_shadow_maps);
+        resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
+        resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
+        resolve_param_block->set("view_world_position", view.get_local_location());
+        resolve_param_block->set("view_z_near", z_near);
+        resolve_param_block->set("view_z_far", z_far);
+        resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
+    }
 
     // Add pass to run compute shader to cluster our lights.
     // TODO

@@ -232,7 +232,7 @@ protected:
 
     // Queues the task so it can be picked up and run.
     void dispatch_task(task_index_t index);
-    void dispatch_task_lockless(task_index_t index);
+    void dispatch_tasks_lockless(const std::vector<task_index_t>& indices);
 
 private:
 

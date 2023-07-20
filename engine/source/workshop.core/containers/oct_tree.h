@@ -125,9 +125,9 @@ public:
     // 
     // If coarse is set then only the aabb of the cell containing the elements
     // is checked, otherwise the bounds of each individual element is checked.
-    intersect_result intersect(const sphere& bounds, bool coarse) const;
-    intersect_result intersect(const aabb& bounds, bool coarse) const;
-    intersect_result intersect(const frustum& bounds, bool coarse) const;
+    intersect_result intersect(const sphere& bounds, bool coarse, bool parallel = false) const;
+    intersect_result intersect(const aabb& bounds, bool coarse, bool parallel = false) const;
+    intersect_result intersect(const frustum& bounds, bool coarse, bool parallel = false) const;
 
 private:
 
@@ -143,7 +143,7 @@ private:
     void get_cells(intersect_result& result, const cell& cell, intersect_function_t& insersect_function) const;
 
     // Gets all the elements with the cells that pass the insersection function.
-    void get_elements(intersect_result& result, intersect_function_t& insersect_function, bool coarse) const;
+    void get_elements(intersect_result& result, intersect_function_t& insersect_function, bool coarse, bool parallel) const;
 
     // Removes a cell from its parent and the nodes list.
     void remove_cell(cell& cell);
@@ -298,7 +298,7 @@ oct_tree<element_type>::cell_list_t oct_tree<element_type>::get_cells()
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const sphere& bounds, bool coarse) const
+oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const sphere& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds);
@@ -306,13 +306,13 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
 
     intersect_result result;
     get_cells(result, get_root(), func);
-    get_elements(result, func, coarse);
+    get_elements(result, func, coarse, parallel);
 
     return result;
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const aabb& bounds, bool coarse) const
+oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const aabb& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds);
@@ -320,13 +320,13 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
 
     intersect_result result;
     get_cells(result, get_root(), func);
-    get_elements(result, func, coarse);
+    get_elements(result, func, coarse, parallel);
 
     return result;
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const frustum& bounds, bool coarse) const
+oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const frustum& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds) != frustum::intersection::outside;
@@ -334,7 +334,7 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
 
     intersect_result result;
     get_cells(result, get_root(), func);
-    get_elements(result, func, coarse);
+    get_elements(result, func, coarse, parallel);
 
     return result;
 }
@@ -432,7 +432,7 @@ void oct_tree<element_type>::get_cells(intersect_result& result, const cell& cel
 }
 
 template <typename element_type>
-void oct_tree<element_type>::get_elements(intersect_result& result, intersect_function_t& insersect_function, bool coarse) const
+void oct_tree<element_type>::get_elements(intersect_result& result, intersect_function_t& insersect_function, bool coarse, bool parallel) const
 {
     size_t max_results = 0;
 
@@ -446,7 +446,7 @@ void oct_tree<element_type>::get_elements(intersect_result& result, intersect_fu
 
     std::atomic_size_t total_results = 0;
 
-    parallel_for("octtree gather", task_queue::standard, result.cells.size(), [&result, &total_results, coarse, &insersect_function](size_t i) mutable {
+    auto callback = [&result, &total_results, coarse, &insersect_function](size_t i) mutable {
 
         const cell& cell = *result.cells[i];
         for (size_t j = 0; j < cell.elements.size(); j++)
@@ -459,7 +459,19 @@ void oct_tree<element_type>::get_elements(intersect_result& result, intersect_fu
                 result.elements[result_index] = entry.value;
             }
         }
-    });
+    };
+
+    if (parallel)
+    {
+        parallel_for("octtree gather", task_queue::standard, result.cells.size(), callback, true);
+    }
+    else
+    {
+        for (size_t i = 0; i < result.cells.size(); i++)
+        {
+            callback(i);
+        }
+    }
 
     result.elements.resize(total_results);
     result.entries.resize(total_results);

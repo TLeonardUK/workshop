@@ -598,15 +598,23 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
 
     // Generate a render graph for rendering this graph.
     render_graph graph;
-    for (auto& system : m_systems)
     {
-        system->build_graph(graph, state, view);
+        profile_marker(profile_colors::render, "build graph");
+
+        for (auto& system : m_systems)
+        {
+            system->build_graph(graph, state, view);
+        }
     }
 
     std::vector<render_graph::node*> nodes;
-    graph.get_active(nodes);
-    output.resize(nodes.size());
-    
+    {
+        profile_marker(profile_colors::render, "get active nodes");
+
+        graph.get_active(nodes);
+        output.resize(nodes.size());
+    }
+ 
     // Render each pass in parallel.
     parallel_for("generate render passs", task_queue::standard, nodes.size(), [this, &state, &output, &nodes, &view](size_t index) {
         render_graph::node* node = nodes[index];

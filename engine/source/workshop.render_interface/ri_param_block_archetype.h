@@ -29,7 +29,7 @@ public:
 
     virtual std::unique_ptr<ri_param_block> create_param_block() = 0;
 
-    virtual create_params get_create_params() = 0;
+    virtual const create_params& get_create_params() = 0;
     virtual const char* get_name() = 0;
 
 };

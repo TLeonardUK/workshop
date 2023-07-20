@@ -20,7 +20,7 @@ task_handle async(const char* name, task_queue queue, task_scheduler::task_funct
 //  Work is expected to be homogenous to spread the execution optimally.
 // ================================================================================================
 template <typename work_t>
-void parallel_for(const char* name, task_queue queue, size_t count, work_t work)
+void parallel_for(const char* name, task_queue queue, size_t count, work_t work, bool do_not_chunk = false)
 {
     profile_marker(profile_colors::task, "%s [parallel]", name);
 
@@ -38,7 +38,7 @@ void parallel_for(const char* name, task_queue queue, size_t count, work_t work)
     size_t chunk_size = std::max(1llu, count / task_count / k_chunks_per_task);
 
     // For very small amount of threads allocate them individually so every worker gets something.
-    if (count < worker_count * 2)
+    if (do_not_chunk || count < worker_count * 2)
     {
         chunk_size = 1;
     }
@@ -69,10 +69,16 @@ void parallel_for(const char* name, task_queue queue, size_t count, work_t work)
     });
 
     // Dispatch all tasks.
-    scheduler.dispatch_tasks(handles);
+    {
+        profile_marker(profile_colors::task, "dispatch tasks");
+        scheduler.dispatch_tasks(handles);
+    }
 
     // Wait for all tasks to complete.
-    scheduler.wait_for_tasks(handles);
+    {
+        profile_marker(profile_colors::task, "waiting for tasks");
+        scheduler.wait_for_tasks(handles, true);
+    }
 }
 
 }; // namespace workshop

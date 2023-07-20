@@ -219,7 +219,7 @@ const char* dx12_ri_param_block_archetype::get_name()
     return m_debug_name.c_str();
 }
 
-dx12_ri_param_block_archetype::create_params dx12_ri_param_block_archetype::get_create_params()
+const dx12_ri_param_block_archetype::create_params& dx12_ri_param_block_archetype::get_create_params()
 {
     return m_create_params;
 }

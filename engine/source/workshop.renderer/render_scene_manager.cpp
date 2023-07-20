@@ -82,16 +82,20 @@ void render_scene_manager::update_visibility()
 
     size_t frame_index = m_renderer.get_visibility_frame_index();
 
-    for (render_view* view : m_active_views)
-    {
+    parallel_for("update views", task_queue::standard, m_active_views.size(), [this, frame_index](size_t index) {
+
+        profile_marker(profile_colors::render, "update view visibility");
+
+        render_view* view = m_active_views[index];
+
         if (view->visibility_index == render_view::k_always_visible_index)
         {
-            continue;
+            return;
         }
 
         frustum frustum = view->get_frustum();
 
-        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, false);
+        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, false, false);
         for (render_object* object : visible_objects.elements)
         {
             object->last_visible_frame[view->visibility_index] = frame_index;
@@ -102,7 +106,8 @@ void render_scene_manager::update_visibility()
         {
             view->mark_dirty(visible_objects.last_changed);
         }
-    }
+
+    });
 }
 
 

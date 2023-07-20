@@ -9,6 +9,7 @@
 #include "workshop.renderer/render_effect.h"
 
 #include <unordered_map>
+#include <shared_mutex>
 
 namespace ws {
 
@@ -62,7 +63,7 @@ private:
 
 private:
 
-    std::recursive_mutex m_resource_mutex;
+    std::shared_mutex m_resource_mutex;
 
     size_t m_id_counter = 1;
     std::unordered_map<effect_id, std::unique_ptr<render_effect>> m_effects;

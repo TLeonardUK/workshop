@@ -55,7 +55,7 @@ public:
     dx12_ri_layout_factory& get_layout_factory();
 
     virtual const char* get_name() override;
-    virtual create_params get_create_params() override;
+    virtual const create_params& get_create_params() override;
 
     void get_table(allocation alloc, size_t& index, size_t& offset);
 

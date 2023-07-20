@@ -119,8 +119,6 @@ void dx12_ri_param_block::transpose_matrices(void* field, ri_data_type type)
 
 void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
 {
-    mutate();
-
     dx12_ri_layout_factory::field field_info;
     if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
     {
@@ -141,6 +139,18 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
     }
 
     db_assert_message(values.size() == value_size, "Array values are not yet supported in param blocks.");
+
+    // Early out if nothing has changed, to avoid the cost of mutating.
+    if (m_allocation.is_valid() && m_fields_set[field_info.index])
+    {
+        void* field_ptr = static_cast<uint8_t*>(m_allocation.cpu_address) + field_info.offset;
+        if (memcmp(field_ptr, values.data(), values.size()) == 0)
+        {
+            return;
+        }
+    }
+
+    mutate();
 
     m_fields_set[field_info.index] = true;
 

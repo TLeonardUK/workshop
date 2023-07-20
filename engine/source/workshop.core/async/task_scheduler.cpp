@@ -5,6 +5,7 @@
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/containers/string.h"
+#include "workshop.core/perf/profile.h"
 
 #include <algorithm>
 #include <thread>
@@ -350,37 +351,59 @@ void task_scheduler::add_task_dependency(task_index_t task_index, task_index_t d
 void task_scheduler::dispatch_task(task_index_t index)
 {
     std::scoped_lock lock(m_task_dispatch_mutex);
-    dispatch_task_lockless(index);
+
+    std::vector<task_index_t> indices;
+    indices.push_back(index);
+
+    dispatch_tasks_lockless(indices);
 }
 
-void task_scheduler::dispatch_task_lockless(task_index_t index)
+void task_scheduler::dispatch_tasks_lockless(const std::vector<task_index_t>& indices)
 {
-    task_state& state = m_tasks[index];
-    db_assert(state.state == task_run_state::pending_dispatch ||
-              state.state == task_run_state::pending_dependencies);
+    std::array<bool, static_cast<int>(task_queue::COUNT)> queues_used = {};
 
-    // If we are pending dependencies we will be dispatched when they are complete.
-    if (state.outstanding_dependencies > 0)
+    for (task_index_t index : indices)
     {
-        state.state = task_run_state::pending_dependencies;
-        return;
-    }
+        task_state& state = m_tasks[index];
+        db_assert(state.state == task_run_state::pending_dispatch ||
+                  state.state == task_run_state::pending_dependencies);
 
-    queue_state& queue_state = m_queues[static_cast<int>(state.queue)];
+        // If we are pending dependencies we will be dispatched when they are complete.
+        if (state.outstanding_dependencies > 0)
+        {
+            state.state = task_run_state::pending_dependencies;
+            return;
+        }
+
+        queue_state& queue_state = m_queues[static_cast<int>(state.queue)];
     
-    {
-        std::unique_lock lock(queue_state.work_mutex);
-        queue_state.work.push(index);
-        state.state = task_run_state::pending_run;
+        {
+            std::unique_lock lock(queue_state.work_mutex);
+            queue_state.work.push(index);
+            state.state = task_run_state::pending_run;
+        }
+
+        queues_used[static_cast<int>(state.queue)] = true;
     }
 
     // Wake up all workers that can process the queue the task was pushed into.
     for (size_t i = 0; i < m_workers.size(); i++)
     {
         worker_state& worker = m_workers[i];
-        if (worker.queues.contains(&queue_state))
+
+        for (size_t j = 0; j < queues_used.size(); j++)
         {
-            worker.work_sempahore.release();
+            if (!queues_used[j])
+            {
+                continue;
+            }
+
+            queue_state& queue_state = m_queues[j];
+            if (worker.queues.contains(&queue_state))
+            {
+                // TODO: This bad boy is slow as fuck when we have a couple of dozen workers, we need to rejig this.
+                worker.work_sempahore.release();
+            }
         }
     }
 
@@ -394,10 +417,14 @@ void task_scheduler::dispatch_task_lockless(task_index_t index)
 void task_scheduler::dispatch_tasks(const std::vector<task_handle>& handles)
 {
     std::scoped_lock lock(m_task_dispatch_mutex);
+
+    std::vector< task_index_t> indices;
     for (const task_handle& handle : handles)
     {
-        dispatch_task_lockless(handle.get_task_index());
+        indices.push_back(handle.get_task_index());
     }
+
+    dispatch_tasks_lockless(indices);
 }
 
 void task_scheduler::wait_for_task(task_index_t index, bool can_help)

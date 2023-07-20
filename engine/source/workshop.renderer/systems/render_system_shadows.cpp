@@ -49,80 +49,99 @@ void render_system_shadows::step(const render_world_state& state)
     std::vector<render_spot_light*> spot_lights = scene_manager.get_spot_lights();
 
     // Erase any cached shadow info that is no longer needed.
-    for (auto iter = m_shadow_info.begin(); iter != m_shadow_info.end(); /*empty*/)
     {
-        shadow_info& info = *iter;
+        profile_marker(profile_colors::render, "Cascade Cleanup");
 
-        // If the combination of light and view is no longer valid we can nuke the shadow data.
-        if ((info.view_id > 0 && scene_manager.resolve_id_typed<render_view>(info.view_id) == nullptr) ||
-            (info.light_id > 0 && scene_manager.resolve_id_typed<render_light>(info.light_id) == nullptr))
+        for (auto iter = m_shadow_info.begin(); iter != m_shadow_info.end(); /*empty*/)
         {
-            // Remove any views these shadows created.
-            for (cascade_info& cascade : info.cascades)
+            shadow_info& info = *iter;
+
+            // If the combination of light and view is no longer valid we can nuke the shadow data.
+            if ((info.view_id > 0 && scene_manager.resolve_id_typed<render_view>(info.view_id) == nullptr) ||
+                (info.light_id > 0 && scene_manager.resolve_id_typed<render_light>(info.light_id) == nullptr))
             {
-                destroy_cascade(cascade);
-            }
+                // Remove any views these shadows created.
+                for (cascade_info& cascade : info.cascades)
+                {
+                    destroy_cascade(cascade);
+                }
 
-            iter = m_shadow_info.erase(iter);
-        }
-        else
-        {
-            iter++;
+                iter = m_shadow_info.erase(iter);
+            }
+            else
+            {
+                iter++;
+            }
         }
     }
 
     // Render a directional shadow for each view.
-    for (render_view* view : views)
     {
-        if (view->get_flags() != render_view_flags::normal)
-        {
-            continue;
-        }
+        profile_marker(profile_colors::render, "Directional Lights");
 
-        for (render_directional_light* light : directional_lights)
+        for (render_view* view : views)
         {
-            if (light->get_shodow_casting())
+            if (view->get_flags() != render_view_flags::normal)
             {
-                step_directional_shadow(view, light);
+                continue;
+            }
+
+            for (render_directional_light* light : directional_lights)
+            {
+                if (light->get_shodow_casting())
+                {
+                    step_directional_shadow(view, light);
+                }
             }
         }
     }
 
     // Render point lights independently of view.
-    for (render_point_light* light : point_lights)
     {
-        if (light->get_shodow_casting())
+        profile_marker(profile_colors::render, "Point Lights");
+
+        for (render_point_light* light : point_lights)
         {
-            step_point_shadow(nullptr, light);
+            if (light->get_shodow_casting())
+            {
+                step_point_shadow(nullptr, light);
+            }
         }
     }
 
     // Render spot lights independently of view.
-    for (render_spot_light* light : spot_lights)
     {
-        if (light->get_shodow_casting())
+        profile_marker(profile_colors::render, "Spot Lights");
+
+        for (render_spot_light* light : spot_lights)
         {
-            step_spot_shadow(nullptr, light);
+            if (light->get_shodow_casting())
+            {
+                step_spot_shadow(nullptr, light);
+            }
         }
     }
 
     // Update all cascades.
     std::vector<cascade_info*> cascades_needing_render;
+    {        
+        profile_marker(profile_colors::render, "Step Cascades");
 
-    for (shadow_info& info : m_shadow_info)
-    {
-        for (cascade_info& cascade : info.cascades)
+        for (shadow_info& info : m_shadow_info)
         {
-            step_cascade(info, cascade);
+            for (cascade_info& cascade : info.cascades)
+            {
+                step_cascade(info, cascade);
 
-            if (cascade.needs_render)
-            {
-                cascades_needing_render.push_back(&cascade);
-            }
-            else if (cascade.view_id)
-            {
-                render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
-                view->set_should_render(false);
+                if (cascade.needs_render)
+                {
+                    cascades_needing_render.push_back(&cascade);
+                }
+                else if (cascade.view_id)
+                {
+                    render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
+                    view->set_should_render(false);
+                }
             }
         }
     }
@@ -132,28 +151,36 @@ void render_system_shadows::step(const render_world_state& state)
     // TODO: Cubemaps should be updated all at once or we get some really nasty problems.
 
     size_t frame_index = state.time.frame_count;
-    std::sort(cascades_needing_render.begin(), cascades_needing_render.end(), [frame_index](const cascade_info* a, const cascade_info* b) {
-        size_t frames_elapsed_a = (frame_index - a->last_rendered_frame);
-        size_t frames_elapsed_b = (frame_index - b->last_rendered_frame);
-        return frames_elapsed_b < frames_elapsed_a;
-    });
-
-    for (size_t i = 0; i < cascades_needing_render.size(); i++)
     {
-        cascade_info* cascade = cascades_needing_render[i];
-        bool should_render = (i < k_max_cascades_updates_per_frame);
+        profile_marker(profile_colors::render, "Cascade Sort");
 
-        if (cascade->view_id)
+        std::sort(cascades_needing_render.begin(), cascades_needing_render.end(), [frame_index](const cascade_info* a, const cascade_info* b) {
+            size_t frames_elapsed_a = (frame_index - a->last_rendered_frame);
+            size_t frames_elapsed_b = (frame_index - b->last_rendered_frame);
+            return frames_elapsed_b < frames_elapsed_a;
+        });
+    }
+
+    {
+        profile_marker(profile_colors::render, "Update Cascade Params");
+
+        for (size_t i = 0; i < cascades_needing_render.size(); i++)
         {
-            render_view* view = scene_manager.resolve_id_typed<render_view>(cascade->view_id);
-            view->set_should_render(should_render);
+            cascade_info* cascade = cascades_needing_render[i];
+            bool should_render = (i < k_max_cascades_updates_per_frame);
 
-            if (should_render)
+            if (cascade->view_id)
             {
-                cascade->needs_render = false;
-                cascade->last_rendered_frame = frame_index;
+                render_view* view = scene_manager.resolve_id_typed<render_view>(cascade->view_id);
+                view->set_should_render(should_render);
 
-                update_cascade_param_block(*cascade);
+                if (should_render)
+                {
+                    cascade->needs_render = false;
+                    cascade->last_rendered_frame = frame_index;
+
+                    update_cascade_param_block(*cascade);
+                }
             }
         }
     }

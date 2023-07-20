@@ -280,6 +280,12 @@ result<void> dx12_ri_pipeline::create_resources()
         return false;
     }
 
+    // Clear bytecode data, we don't need it any longer.
+    for (auto& stage : m_create_params.stages)
+    {
+        stage.bytecode.clear();
+    }
+
     return true;
 }
 
@@ -293,7 +299,7 @@ ID3D12RootSignature* dx12_ri_pipeline::get_root_signature()
     return m_root_signature.Get();
 }
 
-ri_pipeline::create_params dx12_ri_pipeline::get_create_params()
+const ri_pipeline::create_params& dx12_ri_pipeline::get_create_params()
 {
     return m_create_params;
 }

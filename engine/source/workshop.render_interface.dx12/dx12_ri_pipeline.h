@@ -29,7 +29,7 @@ public:
     ID3D12PipelineState* get_pipeline_state();
     ID3D12RootSignature* get_root_signature();
 
-    virtual create_params get_create_params() override;
+    virtual const create_params& get_create_params() override;
 
 protected:
 
