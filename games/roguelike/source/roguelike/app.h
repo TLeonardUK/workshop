@@ -41,6 +41,7 @@ private:
 
     std::vector<render_object_id> m_rotating_objects;
 
+    std::vector<render_object_id> m_moving_lights;
 };
 
 };

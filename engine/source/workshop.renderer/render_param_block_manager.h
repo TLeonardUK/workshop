@@ -51,6 +51,9 @@ public:
     // Gets a param block archetype from its id.
     ri_param_block_archetype* get_param_block_archetype(param_block_archetype_id id);
 
+    // Gets a param block archetype from its name.
+    ri_param_block_archetype* get_param_block_archetype(const char* name);
+
     // Shortcut for creating a param block from a registered archetype.
     std::unique_ptr<ri_param_block> create_param_block(const char* name);
 

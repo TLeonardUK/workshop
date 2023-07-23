@@ -2,6 +2,8 @@
 //  workshop
 //  Copyright (C) 2022 Tim Leonard
 // ================================================================================================
+#ifndef _TONEMAP_HLSL_
+#define _TONEMAP_HLSL_
 
 static const float3 tonemap_gamma = 2.2;
 
@@ -45,3 +47,5 @@ float3 tonemap_filmic(float3 input)
 
     return input;//pow(input, tonemap_gamma);
 }
+
+#endif

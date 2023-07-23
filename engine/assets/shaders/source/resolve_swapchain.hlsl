@@ -7,6 +7,7 @@
 #include "data:shaders/source/common/normal.hlsl"
 #include "data:shaders/source/common/tonemap.hlsl"
 #include "data:shaders/source/common/consts.hlsl"
+#include "data:shaders/source/common/lighting.hlsl"
 
 struct swapchain_output
 {
@@ -52,6 +53,8 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::normal:
         case visualization_mode_t::lighting:
         case visualization_mode_t::shadow_cascades:
+        case visualization_mode_t::light_clusters:
+        case visualization_mode_t::light_heatmap:        
         {
             output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv);
             tonemap = true;

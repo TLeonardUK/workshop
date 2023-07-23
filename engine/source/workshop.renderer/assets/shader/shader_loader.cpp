@@ -23,7 +23,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 5;
+constexpr size_t k_asset_compiled_version = 6;
 
 };
 
@@ -739,85 +739,90 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
         return false;
     }
 
-    // Parse render state.
-    if (!render_state_node.IsDefined())
-    {
-        db_error(asset, "[%s] technique '%s' has no defined render state.", path, name);
-        return false;
-    }
+    bool is_compute = !block.stages[(int)ri_shader_stage::compute].file.empty();
 
-    if (render_state_node.Type() != YAML::NodeType::Scalar)
+    if (!is_compute)
     {
-        db_error(asset, "[%s] render state for technique '%s' was not a scalar type.", path, name);
-        return false;
-    }
+        // Parse render state.
+        if (!render_state_node.IsDefined())
+        {
+            db_error(asset, "[%s] technique '%s' has no defined render state.", path, name);
+            return false;
+        }
 
-    std::string render_state_name = render_state_node.as<std::string>();
-    auto render_state_iter = std::find_if(asset.render_states.begin(), asset.render_states.end(), [&render_state_name](const shader::render_state& state) {
-        return state.name == render_state_name;
-    });
-    if (render_state_iter == asset.render_states.end())
-    {
-        db_error(asset, "[%s] render state '%s' for technique '%s' was not found.", path, render_state_name.c_str(), name);
-        return false;                
-    }
-    else
-    {
-        block.render_state_index = std::distance(asset.render_states.begin(), render_state_iter);
-    }
+        if (render_state_node.Type() != YAML::NodeType::Scalar)
+        {
+            db_error(asset, "[%s] render state for technique '%s' was not a scalar type.", path, name);
+            return false;
+        }
 
-    // Parse vertex layout.
-    if (!vertex_layout_node.IsDefined())
-    {
-        db_error(asset, "[%s] technique '%s' has no defined vertex layout.", path, name);
-        return false;
-    }
+        std::string render_state_name = render_state_node.as<std::string>();
+        auto render_state_iter = std::find_if(asset.render_states.begin(), asset.render_states.end(), [&render_state_name](const shader::render_state& state) {
+            return state.name == render_state_name;
+        });
+        if (render_state_iter == asset.render_states.end())
+        {
+            db_error(asset, "[%s] render state '%s' for technique '%s' was not found.", path, render_state_name.c_str(), name);
+            return false;                
+        }
+        else
+        {
+            block.render_state_index = std::distance(asset.render_states.begin(), render_state_iter);
+        }
 
-    if (vertex_layout_node.Type() != YAML::NodeType::Scalar)
-    {
-        db_error(asset, "[%s] vertex layout for technique '%s' was not a scalar type.", path, name);
-        return false;
-    }
+        // Parse vertex layout.
+        if (!vertex_layout_node.IsDefined())
+        {
+            db_error(asset, "[%s] technique '%s' has no defined vertex layout.", path, name);
+            return false;
+        }
+
+        if (vertex_layout_node.Type() != YAML::NodeType::Scalar)
+        {
+            db_error(asset, "[%s] vertex layout for technique '%s' was not a scalar type.", path, name);
+            return false;
+        }
     
-    std::string vertex_layout_name = vertex_layout_node.as<std::string>();
-    auto vertex_layout_iter = std::find_if(asset.vertex_layouts.begin(), asset.vertex_layouts.end(), [&vertex_layout_name](const shader::vertex_layout& state) {
-        return state.name == vertex_layout_name;
-    });
-    if (vertex_layout_iter == asset.vertex_layouts.end())
-    {
-        db_error(asset, "[%s] vertex layout '%s' for technique '%s' was not found.", path, vertex_layout_name.c_str(), name);
-        return false;                
-    }
-    else
-    {
-        block.vertex_layout_index = std::distance(asset.vertex_layouts.begin(), vertex_layout_iter);
-    }
+        std::string vertex_layout_name = vertex_layout_node.as<std::string>();
+        auto vertex_layout_iter = std::find_if(asset.vertex_layouts.begin(), asset.vertex_layouts.end(), [&vertex_layout_name](const shader::vertex_layout& state) {
+            return state.name == vertex_layout_name;
+        });
+        if (vertex_layout_iter == asset.vertex_layouts.end())
+        {
+            db_error(asset, "[%s] vertex layout '%s' for technique '%s' was not found.", path, vertex_layout_name.c_str(), name);
+            return false;                
+        }
+        else
+        {
+            block.vertex_layout_index = std::distance(asset.vertex_layouts.begin(), vertex_layout_iter);
+        }
 
-    // Parse output target
-    if (!output_target_node.IsDefined())
-    {
-        db_error(asset, "[%s] technique '%s' has no defined output target.", path, name);
-        return false;
-    }
+        // Parse output target
+        if (!output_target_node.IsDefined())
+        {
+            db_error(asset, "[%s] technique '%s' has no defined output target.", path, name);
+            return false;
+        }
 
-    if (output_target_node.Type() != YAML::NodeType::Scalar)
-    {
-        db_error(asset, "[%s] output layout for technique '%s' was not a scalar type.", path, name);
-        return false;
-    }
+        if (output_target_node.Type() != YAML::NodeType::Scalar)
+        {
+            db_error(asset, "[%s] output layout for technique '%s' was not a scalar type.", path, name);
+            return false;
+        }
     
-    std::string output_target_name = output_target_node.as<std::string>();
-    auto output_target_iter = std::find_if(asset.output_targets.begin(), asset.output_targets.end(), [&output_target_name](const shader::output_target& state) {
-        return state.name == output_target_name;
-    });
-    if (output_target_iter == asset.output_targets.end())
-    {
-        db_error(asset, "[%s] output target '%s' for technique '%s' was not found.", path, output_target_name.c_str(), name);
-        return false;                
-    }
-    else
-    {
-        block.output_target_index = std::distance(asset.output_targets.begin(), output_target_iter);
+        std::string output_target_name = output_target_node.as<std::string>();
+        auto output_target_iter = std::find_if(asset.output_targets.begin(), asset.output_targets.end(), [&output_target_name](const shader::output_target& state) {
+            return state.name == output_target_name;
+        });
+        if (output_target_iter == asset.output_targets.end())
+        {
+            db_error(asset, "[%s] output target '%s' for technique '%s' was not found.", path, output_target_name.c_str(), name);
+            return false;                
+        }
+        else
+        {
+            block.output_target_index = std::distance(asset.output_targets.begin(), output_target_iter);
+        }
     }
 
     // Parse param blocks.
@@ -1025,6 +1030,8 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
     std::string result = "";
     size_t cbuffer_register_count = 0;
 
+    bool is_compute = !technique.stages[(int)ri_shader_stage::compute].file.empty();
+
     result += "// ================================================================================================\n";
     result += "//  workshop\n";
     result += "//  Copyright (C) 2023 Tim Leonard\n";
@@ -1042,6 +1049,7 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
     result += "TextureCube table_texture_cube[] : register(t0, space4);\n";
     result += "sampler table_samplers[] : register(t0, space5);\n";
     result += "ByteAddressBuffer table_byte_buffers[] : register(t0, space6);\n";
+    result += "RWByteAddressBuffer table_rw_byte_buffers[] : register(u0, space7);\n";
     result += "\n";
 
     // Add param block struct definitions.
@@ -1071,7 +1079,8 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
                 field.data_type == ri_data_type::t_texture3d ||
                 field.data_type == ri_data_type::t_texturecube ||
                 field.data_type == ri_data_type::t_sampler ||
-                field.data_type == ri_data_type::t_byteaddressbuffer)
+                field.data_type == ri_data_type::t_byteaddressbuffer ||
+                field.data_type == ri_data_type::t_rwbyteaddressbuffer)
             {
                 data_type = "uint";
                 field_name += "_index";
@@ -1116,6 +1125,10 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
                 {
                     table_name = "table_byte_buffers";
                 }
+                else if (field.data_type == ri_data_type::t_rwbyteaddressbuffer)
+                {
+                    table_name = "table_rw_byte_buffers";
+                }
                 else
                 {
                     continue;
@@ -1136,21 +1149,24 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
         }
     }
 
-    // Add vertex layout struct.
-    shader::vertex_layout& layout = asset.vertex_layouts[technique.vertex_layout_index];
-    result += string_format("struct vertex {\n");
-    for (ri_data_layout::field& field : layout.layout.fields)
+    if (!is_compute)
     {
-        std::string data_type = ri_data_type_hlsl_type[static_cast<int>(field.data_type)];
-        std::string field_name = field.name;
+        // Add vertex layout struct.
+        shader::vertex_layout& layout = asset.vertex_layouts[technique.vertex_layout_index];
+        result += string_format("struct vertex {\n");
+        for (ri_data_layout::field& field : layout.layout.fields)
+        {
+            std::string data_type = ri_data_type_hlsl_type[static_cast<int>(field.data_type)];
+            std::string field_name = field.name;
 
-        result += string_format("\t%s %s;\n", data_type.c_str(), field_name.c_str());
+            result += string_format("\t%s %s;\n", data_type.c_str(), field_name.c_str());
+        }
+        result += "};\n";
+        result += "\n";
+
+        // Defines for loading vertex information.
+        result += "#define load_vertex(vertex_id) vertex_buffer.Load<vertex>((vertex_buffer_offset + vertex_id) * sizeof(vertex))\n";
     }
-    result += "};\n";
-    result += "\n";
-
-    // Defines for loading vertex information.
-    result += "#define load_vertex(vertex_id) vertex_buffer.Load<vertex>((vertex_buffer_offset + vertex_id) * sizeof(vertex))\n";
 
     // Add defines for loading each instance param block.
     size_t read_offset = 0;
@@ -1173,7 +1189,7 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
     result += "};\n";
     result += "\n";
 
-    if (total_instance_pbs > 0)
+    if (total_instance_pbs > 0 && !is_compute)
     {
         for (uint64_t index : technique.param_block_indices)
         {
@@ -1195,9 +1211,6 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
     }
 
     result += "\n";
-
-    db_log(renderer, "==============================================================================");
-    db_log(renderer, "%s", result.c_str());
 
     return result;
 }
@@ -1311,20 +1324,33 @@ bool shader_loader::compile(const char* input_path, const char* output_path, pla
         return false;
     }
 
-    // Add an implicit vertex_info param block which is used for indexing
-    // our bindless vertex buffer.
-    shader::param_block& vertex_info_block = asset.param_blocks.emplace_back();
-    vertex_info_block.name = "vertex_info";
-    vertex_info_block.scope = ri_data_scope::draw;
-    vertex_info_block.layout.fields = {
-        { "vertex_buffer", ri_data_type::t_byteaddressbuffer },
-        { "vertex_buffer_offset", ri_data_type::t_uint },
-        { "instance_buffer", ri_data_type::t_byteaddressbuffer },
-    };
-
+    // Check if its a compute shader.
+    bool is_compute = true;
     for (shader::technique& technique : asset.techniques)
     {
-        technique.param_block_indices.push_back(asset.param_blocks.size() - 1);
+        if (technique.stages[(int)ri_shader_stage::compute].file.empty())
+        {
+            is_compute = false;
+        }
+    }
+
+    // Add an implicit vertex_info param block which is used for indexing
+    // our bindless vertex buffer.
+    if (!is_compute)
+    {
+        shader::param_block& vertex_info_block = asset.param_blocks.emplace_back();
+        vertex_info_block.name = "vertex_info";
+        vertex_info_block.scope = ri_data_scope::draw;
+        vertex_info_block.layout.fields = {
+            { "vertex_buffer", ri_data_type::t_byteaddressbuffer },
+            { "vertex_buffer_offset", ri_data_type::t_uint },
+            { "instance_buffer", ri_data_type::t_byteaddressbuffer },
+        };
+
+        for (shader::technique& technique : asset.techniques)
+        {
+            technique.param_block_indices.push_back(asset.param_blocks.size() - 1);
+        }
     }
 
     // For each technique, compile the shader bytecode.

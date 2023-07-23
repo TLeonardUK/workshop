@@ -30,6 +30,9 @@ public:
 
 public:
 
+    // Simple function called after the constructor to do any setup required that cannot occur in the constructor.
+    virtual void init();
+
     // Gets or sets an arbitrary label used to identify this object in the scene.
     void set_name(const std::string& name);
     std::string get_name();

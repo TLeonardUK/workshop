@@ -1,0 +1,53 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect takes the list of lights and determines which clusters within the frustum they 
+# can affect.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  cull_lights:
+    techniques:
+      cull_lights: {}
+  create_light_clusters:
+    techniques:
+      create_light_clusters: {}
+
+techniques:
+  create_light_clusters:
+    compute_shader: 
+      file: data:shaders/source/create_light_clusters.hlsl
+      entry: create_clusters_cshader
+    param_blocks: [ view_info, light_state, light_cluster, resolve_lighting_parameters ]
+    defines:
+      LIGHT_GRID_SIZE_X: 16
+      LIGHT_GRID_SIZE_Y: 9
+      LIGHT_GRID_SIZE_Z: 24
+      GROUP_SIZE_X: 1
+      GROUP_SIZE_Y: 1
+      GROUP_SIZE_Z: 1
+      DISPATCH_SIZE_X: 16
+      DISPATCH_SIZE_Y: 9
+      DISPATCH_SIZE_Z: 24
+      MAX_LIGHTS_PER_CLUSTER: 100
+  cull_lights:
+    compute_shader: 
+      file: data:shaders/source/cull_lights.hlsl
+      entry: cull_lights_cshader
+    param_blocks: [ view_info, light_state, light_cluster, resolve_lighting_parameters ]
+    defines:
+      LIGHT_GRID_SIZE_X: 16
+      LIGHT_GRID_SIZE_Y: 9
+      LIGHT_GRID_SIZE_Z: 24
+      GROUP_SIZE_X: 16
+      GROUP_SIZE_Y: 9
+      GROUP_SIZE_Z: 4
+      DISPATCH_SIZE_X: 1
+      DISPATCH_SIZE_Y: 1
+      DISPATCH_SIZE_Z: 6
+      MAX_LIGHTS_PER_CLUSTER: 100

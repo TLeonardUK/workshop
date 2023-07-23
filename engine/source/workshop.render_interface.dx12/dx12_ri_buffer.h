@@ -41,6 +41,7 @@ public:
 
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
+    dx12_ri_descriptor_table::allocation get_uav() const;
 
     ID3D12Resource* get_resource();
 
@@ -54,6 +55,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
 
     dx12_ri_descriptor_table::allocation m_srv;
+    dx12_ri_descriptor_table::allocation m_uav;
 
     struct mapped_buffer
     {

@@ -31,15 +31,22 @@ public:
 
     virtual const create_params& get_create_params() override;
 
+    bool is_compute();
+
 protected:
 
     bool create_root_signature();
+
+    result<void> create_graphics_pso();
+    result<void> create_compute_pso();
 
 private:
     dx12_render_interface& m_renderer;
     std::string m_debug_name;
 
     ri_pipeline::create_params m_create_params;
+
+    bool m_is_compute = false;
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipeline_state = nullptr;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_root_signature = nullptr;

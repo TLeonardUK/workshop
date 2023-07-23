@@ -52,6 +52,26 @@ public:
         // The actual pipeline that is used to render this effect. Ownership over this pipeline
         // is held by the creator of the render_effect (normally a shader asset). If 
         std::unique_ptr<ri_pipeline> pipeline;
+
+        // Set of defines passed into the technique that were defined in in the source file.
+        std::unordered_map<std::string, std::string> defines;
+
+        // Grabs a define and casts it to the given type, returns false if the 
+        // define was not found or was not convertible.
+        template <typename output_result>
+        bool get_define(const char* name, output_result& output)
+        {
+            if (auto iter = defines.find(name); iter != defines.end())
+            {
+                if (result<output_result> ret = from_string<output_result>(iter->second))
+                {
+                    output = ret.get();
+                    return true;
+                }
+            }
+            
+            return false;
+        }
     };
 
     // Name of the effect, used by render 

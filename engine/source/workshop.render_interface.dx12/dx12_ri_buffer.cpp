@@ -20,11 +20,15 @@ dx12_ri_buffer::dx12_ri_buffer(dx12_render_interface& renderer, const char* debu
 
 dx12_ri_buffer::~dx12_ri_buffer()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv]()
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav]()
     {
         if (srv.is_valid())
         {
             renderer->get_descriptor_table(ri_descriptor_table::buffer).free(srv);
+        }
+        if (uav.is_valid())
+        {
+            renderer->get_descriptor_table(ri_descriptor_table::rwbuffer).free(uav);
         }
         //CheckedRelease(handle);    
     });
@@ -51,6 +55,11 @@ result<void> dx12_ri_buffer::create_resources()
     desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
+
+    if (m_create_params.usage == ri_buffer_usage::generic)
+    {
+        desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    }
 
     switch (m_create_params.usage)
     {
@@ -96,7 +105,6 @@ result<void> dx12_ri_buffer::create_resources()
     }
 
     // Create SRV view for buffer.
-    // TODO: need to create a UAV if writable
     D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
     view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
@@ -108,6 +116,21 @@ result<void> dx12_ri_buffer::create_resources()
 
     m_srv = m_renderer.get_descriptor_table(ri_descriptor_table::buffer).allocate();
     m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &view_desc, m_srv.cpu_handle);
+
+    // Create a UAV view for the buffer as well incase we need unordered access later.
+    if (m_create_params.usage == ri_buffer_usage::generic)
+    {
+        D3D12_UNORDERED_ACCESS_VIEW_DESC uav_view_desc = {};
+        uav_view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+        uav_view_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+        uav_view_desc.Buffer.FirstElement = 0;
+        uav_view_desc.Buffer.NumElements = static_cast<UINT>((m_create_params.element_count * m_create_params.element_size) / 4);
+        uav_view_desc.Buffer.StructureByteStride = 0;
+        uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+
+        m_uav = m_renderer.get_descriptor_table(ri_descriptor_table::rwbuffer).allocate();
+        m_renderer.get_device()->CreateUnorderedAccessView(m_handle.Get(), nullptr, &uav_view_desc, m_uav.cpu_handle);
+    }
 
     return true;
 }
@@ -140,6 +163,11 @@ ri_resource_state dx12_ri_buffer::get_initial_state()
 dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_srv() const
 {
     return m_srv;
+}
+
+dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_uav() const
+{
+    return m_uav;
 }
 
 void* dx12_ri_buffer::map(size_t offset, size_t size)

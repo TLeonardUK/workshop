@@ -207,12 +207,25 @@ void dx12_ri_param_block::set(const char* field_name, const ri_sampler& resource
     set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_sampler);
 }
 
-void dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource)
+void dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource, bool writable)
 {
     const dx12_ri_buffer& dx12_resource = static_cast<const dx12_ri_buffer&>(resource);
-    uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_srv().get_table_index());
 
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_byteaddressbuffer);
+    uint32_t table_index;
+    ri_data_type type;
+
+    if (writable)
+    {
+        table_index = static_cast<uint32_t>(dx12_resource.get_uav().get_table_index());
+        type = ri_data_type::t_rwbyteaddressbuffer;
+    }
+    else
+    {
+        table_index = static_cast<uint32_t>(dx12_resource.get_srv().get_table_index());
+        type = ri_data_type::t_byteaddressbuffer;
+    }
+
+    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), type);
 }
 
 void dx12_ri_param_block::clear_buffer(const char* field_name)

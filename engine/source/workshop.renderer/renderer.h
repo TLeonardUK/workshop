@@ -80,6 +80,8 @@ enum class visualization_mode
     world_position,
     lighting,
     shadow_cascades,
+    light_clusters,
+    light_heatmap,
 
     COUNT
 };
@@ -93,7 +95,9 @@ static inline const char* visualization_mode_strings[] = {
     "world normal",
     "world position",
     "lighting",
-    "shadow cascades"
+    "shadow cascades",
+    "light clusters",
+    "light heatmap"
 };
 
 // ================================================================================================
@@ -289,7 +293,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::normal;
+    visualization_mode m_visualization_mode = visualization_mode::light_heatmap;
     bool m_draw_octtree_cell_bounds = false;
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;
@@ -349,7 +353,7 @@ private:
 
     // gbuffer
 
-    static inline constexpr size_t k_gbuffer_count = 3;
+    static inline constexpr size_t k_gbuffer_count = 4;
     std::unique_ptr<ri_texture> m_depth_texture;
     std::array<std::unique_ptr<ri_texture>, k_gbuffer_count> m_gbuffer_textures;
     std::unique_ptr<ri_sampler> m_gbuffer_sampler;

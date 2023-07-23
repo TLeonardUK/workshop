@@ -5,6 +5,7 @@
 #include "data:shaders/source/fullscreen_pass.hlsl"
 #include "data:shaders/source/common/gbuffer.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
+#include "data:shaders/source/common/math.hlsl"
 #include "data:shaders/source/common/lighting.hlsl"
 #include "data:shaders/source/common/consts.hlsl"
 
@@ -12,26 +13,9 @@
 //  Types
 // ================================================================================================
 
-static const float3 shadow_cascade_colors[6] = 
-{
-   float3(0.0f, 1.0f, 0.0f),
-   float3(1.0f, 1.0f, 0.0f),
-   float3(1.0f, 0.0f, 0.0f),   
-   float3(0.0f, 1.0f, 1.0f),
-   float3(1.0f, 0.0f, 1.0f),
-   float3(1.0f, 1.0f, 1.0f),
-};
-
 struct lightbuffer_output
 {
     float4 color : SV_Target0;
-};
-
-enum light_type
-{
-    directional,
-    point_,
-    spotlight
 };
 
 light_state get_light_state(int index)
@@ -368,13 +352,18 @@ float calculate_attenuation_directional(gbuffer_fragment frag, light_state light
 
 float calculate_attenuation_point(gbuffer_fragment frag, light_state light)
 {
+    float frag_to_light_distance = length(light.position - frag.world_position);
+
+#ifdef USE_INVERSE_SQUARE_LAW
     float range_squared = square(light.range * light.range);
-    float distanced_squared = square(length(light.position - frag.world_position));
+    float distanced_squared = square(frag_to_light_distance);
     float inv_range = 1.0 / max(range_squared, 0.00001f);
     float range_attenuation = square(saturate(1.0 - square(distanced_squared * inv_range)));
     float attenuation = range_attenuation / distanced_squared;
-
     return saturate(attenuation);
+#else
+    return saturate(1.0f - (frag_to_light_distance / light.range));
+#endif
 }
 
 float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light)
@@ -405,7 +394,13 @@ float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light)
 //  Lighting calculation
 // ================================================================================================
 
-float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
+struct direct_lighting_result
+{
+    float3 lighting;
+    float2 shadow_attenuation_and_cascade_index;
+};
+
+direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light)
 {
     float3 normal = normalize(frag.world_normal);
     float3 view_direction = normalize(view_world_position - frag.world_position);
@@ -475,15 +470,13 @@ float3 calculate_direct_lighting(gbuffer_fragment frag, light_state light)
 
     // Total contribution for this light.
     float n_dot_l = max(dot(normal, light_frag_direction), 0.0);
-    float3 result = (diffuse_brdf + specular_brdf) * radiance * n_dot_l;
+    float3 lighting = (diffuse_brdf + specular_brdf) * radiance * n_dot_l;
 
-    // If visualizing the shadow cascades tint the radiance.
-    if (visualization_mode == visualization_mode_t::shadow_cascades)
-    {
-        result = (result + 0.02) * shadow_cascade_colors[int(shadow_attenuation_and_cascade_index.g) % 6];
-    }    
-
-    return result;
+    // Bundle up relevant values and return.
+    direct_lighting_result ret;
+    ret.lighting = lighting;
+    ret.shadow_attenuation_and_cascade_index = shadow_attenuation_and_cascade_index;
+    return ret;
 }
 
 float3 calculate_ambient_lighting(gbuffer_fragment frag)
@@ -512,13 +505,57 @@ lightbuffer_output pshader(fullscreen_pinput input)
     
     // Calculate direct contribution of all lights that effect us.
     float3 direct_lighting = float3(0.0, 0.0, 0.0);
+    int max_cascade = 0;
     for (int i = 0; i < light_count; i++)
     {
         light_state light = get_light_state(i);
-        direct_lighting += calculate_direct_lighting(frag, light);
+        
+        direct_lighting_result result = calculate_direct_lighting(frag, light);
+        direct_lighting += result.lighting;
+        max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
+    }
+
+    // Mix final color.
+    float3 final_color = float4(direct_lighting + ambient_lighting, 1.0f);
+
+    // If we are in a visualization mode, tint colors as appropriate.
+    if (visualization_mode == visualization_mode_t::shadow_cascades)
+    {
+        final_color = (final_color + 0.02) * debug_colors[max_cascade % 8];
+    }    
+    else if (visualization_mode == visualization_mode_t::light_clusters)
+    {
+        float4x4 vp_matrix = mul(projection_matrix, view_matrix);
+        float4 view_space_pos = clip_space_to_viewport_space(
+            mul(vp_matrix, float4(frag.world_position.xyz, 1.0f)), 
+            view_dimensions
+        );
+
+        float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
+        uint cluster_index = get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
+
+        final_color = (final_color + 0.02) * debug_colors[cluster_index % 7];
+    }
+    else if (visualization_mode == visualization_mode_t::light_heatmap)
+    {
+        float4x4 vp_matrix = mul(projection_matrix, view_matrix);
+        float4 view_space_pos = clip_space_to_viewport_space(
+            mul(vp_matrix, float4(frag.world_position.xyz, 1.0f)), 
+            view_dimensions
+        );
+
+        float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
+        uint cluster_index = get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
+
+        light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
+        final_color = (final_color * 0.5) + lerp(
+            float3(0.0f, 1.0f, 0.0f),
+            float3(1.0f, 0.0f, 0.0f),
+            cluster.visible_light_count / 3.0f // value is arbitrary, set to whatever "high light count" you want
+        ) * 0.5;
     }
 
     lightbuffer_output output;
-    output.color = float4(direct_lighting + ambient_lighting, 1.0f);
+    output.color = float4(final_color, 0.0f);
     return output;
 }

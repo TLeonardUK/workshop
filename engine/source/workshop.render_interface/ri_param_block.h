@@ -69,7 +69,7 @@ public:
 	// Resources
 	virtual void set(const char* field_name, const ri_texture& resource) = 0;
 	virtual void set(const char* field_name, const ri_sampler& resource) = 0;
-	virtual void set(const char* field_name, const ri_buffer& resource) = 0;
+	virtual void set(const char* field_name, const ri_buffer& resource, bool writable = false) = 0;
 
 	virtual void clear_buffer(const char* field_name) = 0;
 

@@ -15,43 +15,6 @@ effects:
     techniques:
       resolve_lighting: {}
 
-param_blocks:
-  resolve_lighting_parameters:
-    scope: draw
-    fields:
-      light_count: int
-      light_buffer: byteaddressbuffer
-      shadow_map_count: int
-      shadow_map_buffer: byteaddressbuffer
-      view_world_position: float3
-      view_z_near: float
-      view_z_far: float
-      shadow_map_sampler: sampler
-      visualization_mode: int
-  # TODO: Pack all this data down.
-  light_state:
-    scope: instance
-    fields:
-      type: int
-      position: float3
-      direction: float3
-      color: float3
-      intensity: float
-      inner_radius: float
-      outer_radius: float
-      range: float
-      shadow_map_start_index: int
-      shadow_map_count: int
-      cascade_blend_factor: float
-  shadow_map_state:
-    scope: instance
-    fields:
-      shadow_matrix: float4x4
-      depth_map: texture2d
-      depth_map_size: int
-      z_far: float
-      z_near: float
-
 techniques:
   resolve_lighting:
     vertex_shader: 
@@ -63,4 +26,4 @@ techniques:
     render_state: no_depth_test
     vertex_layout: vertex2d_pos_uv
     output_target: light_buffer
-    param_blocks: [ light_state, shadow_map_state, gbuffer, resolve_lighting_parameters ]
+    param_blocks: [ view_info, light_state, light_cluster, shadow_map_state, gbuffer, resolve_lighting_parameters ]

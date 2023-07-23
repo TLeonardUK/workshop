@@ -160,7 +160,15 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
     dx12_ri_pipeline& dx12_pipeline = static_cast<dx12_ri_pipeline&>(pipeline);
     m_active_pipeline = &dx12_pipeline;
 
-    m_command_list->SetGraphicsRootSignature(dx12_pipeline.get_root_signature());
+    if (dx12_pipeline.is_compute())
+    {
+        m_command_list->SetComputeRootSignature(dx12_pipeline.get_root_signature());
+    }
+    else
+    {
+        m_command_list->SetGraphicsRootSignature(dx12_pipeline.get_root_signature());
+    }
+
     m_command_list->SetPipelineState(dx12_pipeline.get_pipeline_state());
 
     std::array<ID3D12DescriptorHeap*, 2> heaps = {
@@ -178,7 +186,15 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
         ri_descriptor_table& table = create_params.descriptor_tables[i];        
 
         dx12_ri_descriptor_table& descriptor_table = m_renderer.get_descriptor_table(table);
-        m_command_list->SetGraphicsRootDescriptorTable(table_index++, descriptor_table.get_base_allocation().gpu_handle);
+
+        if (dx12_pipeline.is_compute())
+        {
+            m_command_list->SetComputeRootDescriptorTable(table_index++, descriptor_table.get_base_allocation().gpu_handle);
+        }
+        else
+        {
+            m_command_list->SetGraphicsRootDescriptorTable(table_index++, descriptor_table.get_base_allocation().gpu_handle);
+        }
     }
 }
 
@@ -210,10 +226,20 @@ void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> p
             dx12_ri_param_block* input = static_cast<dx12_ri_param_block*>(base);
             if (input->get_archetype() == archetype)
             {
-                m_command_list->SetGraphicsRootConstantBufferView(
-                    static_cast<UINT>(base_param_block_root_parameter + cbv_index),
-                    reinterpret_cast<UINT64>(input->consume())
-                );
+                if (m_active_pipeline->is_compute())
+                {
+                    m_command_list->SetComputeRootConstantBufferView(
+                        static_cast<UINT>(base_param_block_root_parameter + cbv_index),
+                        reinterpret_cast<UINT64>(input->consume())
+                    );
+                }
+                else
+                {
+                    m_command_list->SetGraphicsRootConstantBufferView(
+                        static_cast<UINT>(base_param_block_root_parameter + cbv_index),
+                        reinterpret_cast<UINT64>(input->consume())
+                    );
+                }
 
                 cbv_index++;
                 found = true;
@@ -327,6 +353,11 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture_view>
 void dx12_ri_command_list::draw(size_t indexes_per_instance, size_t instance_count, size_t start_index_location)
 {
     m_command_list->DrawIndexedInstanced(static_cast<UINT>(indexes_per_instance), static_cast<UINT>(instance_count), start_index_location, 0, 0);
+}
+
+void dx12_ri_command_list::dispatch(size_t group_size_x, size_t group_size_y, size_t group_size_z)
+{
+    m_command_list->Dispatch(static_cast<UINT>(group_size_x), static_cast<UINT>(group_size_y), static_cast<UINT>(group_size_z));
 }
 
 void dx12_ri_command_list::begin_event(const color& color, const char* format, ...)

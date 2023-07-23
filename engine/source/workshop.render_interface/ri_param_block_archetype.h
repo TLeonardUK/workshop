@@ -32,6 +32,8 @@ public:
     virtual const create_params& get_create_params() = 0;
     virtual const char* get_name() = 0;
 
+    virtual size_t get_size() = 0;
+
 };
 
 }; // namespace ws

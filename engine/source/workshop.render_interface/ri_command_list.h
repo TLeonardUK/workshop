@@ -84,6 +84,9 @@ public:
     // selecting instance specific data is handled in the shader.
     virtual void draw(size_t indexes_per_instance, size_t instance_count, size_t start_index_location = 0) = 0;
 
+    // Dispatches a compute shader with the given thread group size.
+    virtual void dispatch(size_t group_size_x, size_t group_size_y, size_t group_size_z) = 0;
+
     // Begins a profiling scope within the queue.
     virtual void begin_event(const color& color, const char* name, ...) = 0;
 

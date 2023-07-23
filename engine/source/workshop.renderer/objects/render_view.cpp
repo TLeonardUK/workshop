@@ -231,11 +231,14 @@ void render_view::update_view_info_param_block()
     {
         m_view_info_param_block = m_renderer.get_param_block_manager().create_param_block("view_info");
     }
-    m_view_info_param_block->set("z_near", m_near_clip);
-    m_view_info_param_block->set("z_far", m_far_clip);
-    m_view_info_param_block->set("world_position", m_local_location);
+    m_view_info_param_block->set("view_z_near", m_near_clip);
+    m_view_info_param_block->set("view_z_far", m_far_clip);
+    m_view_info_param_block->set("view_world_position", m_local_location);
+    m_view_info_param_block->set("view_dimensions", vector2(m_viewport.width, m_viewport.height));
     m_view_info_param_block->set("view_matrix", get_view_matrix());
     m_view_info_param_block->set("projection_matrix", get_projection_matrix());
+    m_view_info_param_block->set("inverse_view_matrix", get_view_matrix().inverse());
+    m_view_info_param_block->set("inverse_projection_matrix", get_projection_matrix().inverse());
 }
 
 frustum render_view::get_frustum()

@@ -24,7 +24,13 @@ dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& render
             m_heap = &m_renderer.get_srv_descriptor_heap();
             m_size = dx12_render_interface::k_srv_descriptor_table_size;
             break;
-        }        
+        }
+        case ri_descriptor_table::rwbuffer:
+        {
+            m_heap = &m_renderer.get_srv_descriptor_heap();
+            m_size = dx12_render_interface::k_uav_descriptor_table_size;
+            break;
+        }
         case ri_descriptor_table::sampler:
         {
             m_heap = &m_renderer.get_sampler_descriptor_heap();

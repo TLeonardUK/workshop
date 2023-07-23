@@ -89,11 +89,11 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
-    cmd_queue.set_light_shadow_max_distance(object_id, 5000);
-    cmd_queue.set_light_intensity(object_id, 500000.0f);
-    cmd_queue.set_light_range(object_id, 3000.0f);
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
-   
+    cmd_queue.set_light_shadow_max_distance(object_id, 100);
+    cmd_queue.set_light_intensity(object_id, 1.0f);
+    cmd_queue.set_light_range(object_id, 100.0f);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+
     /*
     object_id = cmd_queue.create_spot_light("Spot");
     cmd_queue.set_light_shadow_casting(object_id, true);
@@ -106,6 +106,19 @@ ws::result<void> rl_game_app::start()
     */
 
     m_light_id = object_id;
+
+
+    /*
+    for (size_t i = 0; i < 2.0f; i++)
+    {
+        object_id = cmd_queue.create_point_light("Point");
+        cmd_queue.set_light_intensity(object_id, 1.0f);
+        cmd_queue.set_light_range(object_id, 100.0f);
+        cmd_queue.set_light_range(object_id, 10.0f * (i*50.0f));
+        cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+        m_moving_lights.push_back(object_id);
+    }*/
+
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);
@@ -140,12 +153,29 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
-    vector3 light_pos = vector3(-cos(angle * 3.0f) * 400.0f, 200.0f, 0.0f);
-    quat light_rot =  quat::angle_axis(angle * 0.5f, vector3::up);
+    for (size_t i = 0; i < m_moving_lights.size(); i++)
+    {
+        render_object_id id = m_moving_lights[i];
+
+        float distance = 200.0f * i;
+        float sub_angle = angle + (i * 0.1f);
+
+        matrix4 transform = matrix4::translate(vector3(sin(angle * 5.0f) * distance, 100.0f + (sin(angle) * 50.0f), cos(angle * 5.0f) * distance));
+
+        vector3 location = vector3::zero * transform;
+
+        cmd_queue.draw_sphere(sphere(location, 100.0f), color::red);
+
+        cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+    }
+
+    vector3 light_pos = vector3(-cos(angle * 3.0f) * 400.0f, 150.0f + (cos(angle*3.0f) * 200.0f), 0.0f);
+    //vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);
+    quat light_rot =  quat::identity;//quat::angle_axis(angle * 0.5f, vector3::up);
     //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
     //quat light_rot = quat::angle_axis(-math::halfpi*0.85f, vector3::right);
     cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
-    cmd_queue.draw_sphere(sphere(light_pos, 10.0f), color::red);
+    cmd_queue.draw_sphere(sphere(light_pos, 100.0f), color::red);
     cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);
 
     if (input.get_mouse_capture())
@@ -196,11 +226,13 @@ void rl_game_app::step(const frame_time& time)
             m_view_position -= (vector3::up * m_view_rotation) * k_speed * time.delta_seconds;
         }
 
+        #if 1
         cmd_queue.set_object_transform(m_view_id,
             m_view_position,
             m_view_rotation,
             vector3::one
         );
+        #endif
 
 //        db_log(core, "position:%.2f,%.2f,%.2f", m_view_position.x, m_view_position.y, m_view_position.z);
     }

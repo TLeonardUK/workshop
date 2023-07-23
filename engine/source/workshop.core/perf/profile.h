@@ -38,10 +38,13 @@ inline static const color gpu_view = color::blue;
 inline static const color gpu_transition = color::red;
 
 // Base color for an individual render pass in the gpu pipeline.
-inline static const color gpu_pass = color::green;
+inline static const color gpu_pass = color::light_green;
 
 // Base color for an individual frame in the gpu pipeline.
 inline static const color gpu_frame = color::grey;
+
+// Base color for compute dispatches on the gpu pipeline.
+inline static const color gpu_compute = color::light_blue;
 
 }; // namespace profile_color.
 

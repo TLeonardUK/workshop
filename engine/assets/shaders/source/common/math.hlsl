@@ -2,6 +2,8 @@
 //  workshop
 //  Copyright (C) 2022 Tim Leonard
 // ================================================================================================
+#ifndef _MATH_HLSL_
+#define _MATH_HLSL_
 
 static const float pi = 3.14159265359;
 static const float half_pi = pi / 2.0;
@@ -52,3 +54,51 @@ float3 make_perpendicular(float3 normal)
         return c2;
     }
 }
+
+// Takes a location in screen space and converts it into view space.
+float4 screen_space_to_view_space(float4 location, float2 screen_dimensions, float4x4 inverse_projection)
+{
+    // Convert to NDC
+    float2 uv = location.xy / screen_dimensions.xy;
+
+    // Convert to clipspace.
+    float4 clip = float4(
+        uv.x * 2 - 1,
+        uv.y * 2 - 1,
+        location.z,
+        location.w
+    );
+
+    // Convert to view
+    float4 view = mul(inverse_projection, clip);
+    
+    // Perspective projection.
+    view = view / view.w;
+
+    return view;
+}
+
+// Create a line segment from the eye to the screen location, then finds it 
+// intersection with a z plane located the given distance from the origin.
+float3 intersect_line_to_z_plane(float3 a, float3 b, float distance)
+{
+    float3 normal = float3(0.0, 0.0, 1.0);
+    float3 a_to_b = b - a;
+    float t = (distance - dot(normal, a)) / dot(normal, a_to_b);
+    return a + (t * a_to_b);
+}
+
+// Converts clip space into viewport space.
+float4 clip_space_to_viewport_space(float4 input, float2 screen_dimensions)
+{
+    // clip space to NDC        
+    input.xyz = input.xyz / input.w;
+    input.w = 1.0f;
+    // NDC to viewport space.
+    input.xy = (input.xy + 1.0f) * 0.5f;
+    input.xy = input.xy * screen_dimensions;
+
+    return input;
+}
+
+#endif // _MATH_HLSL_

@@ -5,6 +5,7 @@
 #include "data:shaders/source/common/gbuffer.hlsl"
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
+#include "data:shaders/source/common/lighting.hlsl"
 
 // ================================================================================================
 //  Standard path
@@ -53,6 +54,8 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
     );
 #endif
     f.world_position = input.world_position;
+
+    f.debug_data.x = length(f.world_position.xyz - view_world_position);
 
     return encode_gbuffer(f);
 }
@@ -157,8 +160,8 @@ geometry_pinput_linear_depth_only vshader_linear_depth_only(vertex_input input)
 
 linear_depth_output pshader_common_linear_depth_only(geometry_pinput_linear_depth_only input)
 {
-    float distance = length(input.world_position.xyz - world_position);
-    distance = distance / z_far;
+    float distance = length(input.world_position.xyz - view_world_position);
+    distance = distance / view_z_far;
     
     linear_depth_output output;
     output.depth = distance;    

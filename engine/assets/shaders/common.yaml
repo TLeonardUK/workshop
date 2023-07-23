@@ -47,7 +47,7 @@ vertex_layouts:
 output_targets:
   # Main gbuffer target with all MRT targets.
   gbuffer:
-    color: [ R16G16B16A16, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT ]
+    color: [ R16G16B16A16, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT ]
     depth: D24_UNORM_S8_UINT
   # Swapchain output target.
   swapchain:
@@ -72,6 +72,7 @@ param_blocks:
       gbuffer0_texture: texture2d
       gbuffer1_texture: texture2d
       gbuffer2_texture: texture2d
+      gbuffer3_texture: texture2d
       gbuffer_sampler: sampler
   # Describes the projection information for the view being rendered.
   view_info:
@@ -79,6 +80,59 @@ param_blocks:
     fields:
       view_matrix: float4x4
       projection_matrix: float4x4
-      world_position: float3
+      inverse_view_matrix: float4x4
+      inverse_projection_matrix: float4x4
+      view_world_position: float3
+      view_z_far: float
+      view_z_near: float      
+      view_dimensions: float2
+  # Format of an instance in a buffer that contains a set of lights
+  # TODO: Pack all this data down.
+  light_state:
+    scope: instance
+    fields:
+      type: int
+      position: float3
+      direction: float3
+      color: float3
+      intensity: float
+      inner_radius: float
+      outer_radius: float
+      range: float
+      shadow_map_start_index: int
+      shadow_map_count: int
+      cascade_blend_factor: float
+  # Format of an instance in a buffer that contains a set of shadow maps
+  shadow_map_state:
+    scope: instance
+    fields:
+      shadow_matrix: float4x4
+      depth_map: texture2d
+      depth_map_size: int
       z_far: float
       z_near: float
+  # Structure of an individual light cluster
+  light_cluster:
+    scope: instance
+    fields:
+      cell: uint3
+      aabb_min: float3
+      aabb_max: float3    
+      z_range: float2
+      visible_light_offset: uint
+      visible_light_count: uint
+  # All the information required to resolve lighting. This is used by several stages
+  # (such as light color/lighting resolve/etc).
+  resolve_lighting_parameters:
+    scope: draw
+    fields:
+      light_count: int
+      light_buffer: byteaddressbuffer
+      light_cluster_buffer: rwbyteaddressbuffer
+      light_cluster_visibility_buffer: rwbyteaddressbuffer      
+      light_cluster_visibility_count_buffer: rwbyteaddressbuffer      
+      shadow_map_count: int
+      shadow_map_buffer: byteaddressbuffer
+      shadow_map_sampler: sampler
+      visualization_mode: int
+      light_grid_size: uint3

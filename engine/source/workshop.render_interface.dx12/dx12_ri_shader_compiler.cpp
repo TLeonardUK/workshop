@@ -327,6 +327,13 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
 
         parse_output(output, errors_string);
 
+        //if (FAILED(compileRet))
+        {
+            db_log(renderer, "=============== COMPILE RESULT ===============");
+            db_log(renderer, "%s", source);
+            db_log(renderer, "%s", errors_string.c_str());
+        }
+
         // If we failed to compile and got no useful error messages out of the output,
         // then just dump the whole output into an error message as its probably barfed
         // up something in an incorrect format.

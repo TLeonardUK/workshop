@@ -67,6 +67,12 @@ bool dx12_ri_pipeline::create_root_signature()
                 range.NumDescriptors = dx12_render_interface::k_srv_descriptor_table_size;
                 break;
             }
+        case ri_descriptor_table::rwbuffer:
+            {
+                range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+                range.NumDescriptors = dx12_render_interface::k_uav_descriptor_table_size;
+                break;
+            }
         default:
             {
                 db_fatal(renderer, "Attempted to bind unsupported descriptor table to root parameter.");
@@ -144,16 +150,9 @@ bool dx12_ri_pipeline::create_root_signature()
     return true;
 }
 
-result<void> dx12_ri_pipeline::create_resources()
+result<void> dx12_ri_pipeline::create_graphics_pso()
 {
     D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-
-    // Create root signature up front.
-    
-    if (!create_root_signature())
-    {
-        return false;
-    }
 
     // Shader bytecode.
 
@@ -280,13 +279,80 @@ result<void> dx12_ri_pipeline::create_resources()
         return false;
     }
 
+    m_is_compute = false;
+
+    return true;
+}
+
+result<void> dx12_ri_pipeline::create_compute_pso()
+{
+    D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+    desc.pRootSignature = m_root_signature.Get();
+
+    // Bytecode.
+
+    ri_pipeline::create_params::stage& stage_params = m_create_params.stages[(int)ri_shader_stage::compute];
+    if (stage_params.bytecode.size() > 0)
+    {
+        desc.CS.BytecodeLength = stage_params.bytecode.size();
+        desc.CS.pShaderBytecode = stage_params.bytecode.data();
+    }
+
+    // PSO caching
+
+    desc.CachedPSO.CachedBlobSizeInBytes = 0;
+    desc.CachedPSO.pCachedBlob = nullptr;
+
+    // Misc
+
+    desc.NodeMask = 0;
+    desc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+
+    // Create the actual pipeline state.
+
+    HRESULT hr = m_renderer.get_device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_pipeline_state));
+    if (FAILED(hr))
+    {
+        db_error(render_interface, "CreateComputePipelineState failed with error 0x%08x.", hr);
+        return false;
+    }
+
+    m_is_compute = true;
+
+    return true;
+}
+
+result<void> dx12_ri_pipeline::create_resources()
+{
+    // Create root signature up front.    
+    if (!create_root_signature())
+    {
+        return false;
+    }
+
+    // Generate the PSO based on what pipeline type we are.
+    result<void> ret = false;
+    if (!m_create_params.stages[(int)ri_shader_stage::compute].bytecode.empty())
+    {
+        ret = create_compute_pso();
+    }
+    else
+    {
+        ret = create_graphics_pso();
+    }
+
     // Clear bytecode data, we don't need it any longer.
     for (auto& stage : m_create_params.stages)
     {
         stage.bytecode.clear();
     }
 
-    return true;
+    return ret;
+}
+
+bool dx12_ri_pipeline::is_compute()
+{
+    return m_is_compute;   
 }
 
 ID3D12PipelineState* dx12_ri_pipeline::get_pipeline_state()

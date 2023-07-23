@@ -233,6 +233,7 @@ result<void> renderer::recreate_resizable_targets()
     params.format = ri_texture_format::R32G32B32A32_FLOAT;
     m_gbuffer_textures[1] = m_render_interface.create_texture(params, "gbuffer[1] rgb:world normal a:roughness");
     m_gbuffer_textures[2] = m_render_interface.create_texture(params, "gbuffer[2] rgb:world position a:metallic");
+    m_gbuffer_textures[3] = m_render_interface.create_texture(params, "gbuffer[3] rgba:debug data");
 
     // Create sampler used for reading the gbuffer.
     ri_sampler::create_params sampler_params;
@@ -243,6 +244,7 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_param_block->set("gbuffer0_texture", *m_gbuffer_textures[0]);
     m_gbuffer_param_block->set("gbuffer1_texture", *m_gbuffer_textures[1]);
     m_gbuffer_param_block->set("gbuffer2_texture", *m_gbuffer_textures[2]);
+    m_gbuffer_param_block->set("gbuffer3_texture", *m_gbuffer_textures[3]);
     m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
 
     // Create default resources.
@@ -314,6 +316,7 @@ render_output renderer::get_gbuffer_output()
     output.color_targets.push_back(m_gbuffer_textures[0].get());
     output.color_targets.push_back(m_gbuffer_textures[1].get());
     output.color_targets.push_back(m_gbuffer_textures[2].get());
+    output.color_targets.push_back(m_gbuffer_textures[3].get());
     return output;
 }
 

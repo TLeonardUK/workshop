@@ -56,6 +56,7 @@ size_t ri_bytes_for_data_type(ri_data_type value)
 
         4, // t_sampler,
         4, // t_byteaddressbuffer,
+        4, // t_rwbyteaddressbuffer,
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

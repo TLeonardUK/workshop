@@ -57,6 +57,8 @@ SET(SOURCES
     "passes/render_pass_primitives.cpp"
     "passes/render_pass_imgui.h"
     "passes/render_pass_imgui.cpp"
+    "passes/render_pass_compute.h"
+    "passes/render_pass_compute.cpp"
 
     "objects/render_view.h"
     "objects/render_view.cpp"

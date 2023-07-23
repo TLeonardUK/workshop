@@ -150,6 +150,7 @@ void render_scene_manager::create_view(render_object_id id, const char* name)
     std::scoped_lock lock(m_mutex);
 
     std::unique_ptr<render_view> view = std::make_unique<render_view>(id, this, m_renderer);
+    view->init();
     view->set_name(name);
 
     render_view* view_ptr = view.get();
@@ -245,6 +246,7 @@ void render_scene_manager::create_static_mesh(render_object_id id, const char* n
     std::scoped_lock lock(m_mutex);
 
     std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(id, this, m_renderer);
+    obj->init();
     obj->set_name(name);
 
     render_static_mesh* obj_ptr = obj.get();
@@ -397,6 +399,7 @@ void render_scene_manager::create_directional_light(render_object_id id, const c
     std::scoped_lock lock(m_mutex);
 
     std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(id, this, m_renderer);
+    obj->init();
     obj->set_name(name);
 
     render_directional_light* obj_ptr = obj.get();
@@ -489,6 +492,7 @@ void render_scene_manager::create_point_light(render_object_id id, const char* n
     std::scoped_lock lock(m_mutex);
 
     std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(id, this, m_renderer);
+    obj->init();
     obj->set_name(name);
 
     render_point_light* obj_ptr = obj.get();
@@ -539,6 +543,7 @@ void render_scene_manager::create_spot_light(render_object_id id, const char* na
     std::scoped_lock lock(m_mutex);
 
     std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(id, this, m_renderer);
+    obj->init();
     obj->set_name(name);
 
     render_spot_light* obj_ptr = obj.get();

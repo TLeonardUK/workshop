@@ -12,10 +12,6 @@ render_object::render_object(render_object_id id, render_scene_manager* scene_ma
     , m_scene_manager(scene_manager)
     , m_store_in_octtree(stored_in_octtree)
 {
-    if (m_store_in_octtree)
-    {
-        m_scene_manager->render_object_created(this);
-    }
 }
 
 render_object::~render_object()
@@ -23,6 +19,14 @@ render_object::~render_object()
     if (m_store_in_octtree)
     {
         m_scene_manager->render_object_destroyed(this);
+    }
+}
+
+void render_object::init()
+{
+    if (m_store_in_octtree)
+    {
+        m_scene_manager->render_object_created(this);
     }
 }
 

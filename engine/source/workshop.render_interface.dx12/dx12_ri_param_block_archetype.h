@@ -56,6 +56,7 @@ public:
 
     virtual const char* get_name() override;
     virtual const create_params& get_create_params() override;
+    virtual size_t get_size() override;
 
     void get_table(allocation alloc, size_t& index, size_t& offset);
 

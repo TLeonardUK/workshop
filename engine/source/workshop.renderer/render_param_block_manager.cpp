@@ -111,6 +111,20 @@ ri_param_block_archetype* render_param_block_manager::get_param_block_archetype(
     return nullptr;    
 }
 
+ri_param_block_archetype* render_param_block_manager::get_param_block_archetype(const char* name)
+{
+    std::scoped_lock lock(m_resource_mutex);
+
+    if (auto iter = m_param_block_archetype_by_name.find(name); iter != m_param_block_archetype_by_name.end())
+    {
+        param_block_archetype_id id = iter->second;
+        param_block_state& state = m_param_block_archetypes[id];
+        return state.instance.get();
+    }
+
+    return nullptr;
+}
+
 std::unique_ptr<ri_param_block> render_param_block_manager::create_param_block(const char* name)
 {
     std::scoped_lock lock(m_resource_mutex);

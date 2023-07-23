@@ -224,6 +224,11 @@ const dx12_ri_param_block_archetype::create_params& dx12_ri_param_block_archetyp
     return m_create_params;
 }
 
+size_t dx12_ri_param_block_archetype::get_size()
+{
+    return m_layout_factory->get_instance_size();
+}
+
 bool dx12_ri_param_block_archetype::allocation::is_valid() const
 {
     return valid;

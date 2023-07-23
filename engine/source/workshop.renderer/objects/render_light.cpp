@@ -44,6 +44,8 @@ float render_light::get_intensity()
 void render_light::set_range(float value)
 {
     m_range = value;
+
+    bounds_modified();
 }
 
 float render_light::get_range()

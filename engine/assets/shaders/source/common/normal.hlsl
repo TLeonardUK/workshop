@@ -2,6 +2,8 @@
 //  workshop
 //  Copyright (C) 2022 Tim Leonard
 // ================================================================================================
+#ifndef _NORMAL_HLSL_
+#define _NORMAL_HLSL_
 
 float3 calculate_world_normal(
     float3 tangent_normal, 
@@ -41,3 +43,5 @@ float3 pack_normal(float3 input)
 {
     return (input * 0.5f) + 0.5f;
 }
+
+#endif
