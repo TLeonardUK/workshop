@@ -41,7 +41,16 @@ private:
 
     std::vector<render_object_id> m_rotating_objects;
 
-    std::vector<render_object_id> m_moving_lights;
+    struct moving_light
+    {
+        render_object_id id;
+        float distance;
+        float angle;
+        float speed;
+        float range;
+        float height;
+    };
+    std::vector<moving_light> m_moving_lights;
 };
 
 };

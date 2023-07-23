@@ -55,20 +55,19 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-
     
     object_id = cmd_queue.create_static_mesh("Sponza Curtains");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    /*
-    //object_id = cmd_queue.create_static_mesh("Sponza Ivy");
-    //cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
-   // cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+    
+    object_id = cmd_queue.create_static_mesh("Sponza Ivy");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
 
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-    */
+    
     /*
     for (int x = 0; x < 150; x++)
     {
@@ -81,13 +80,13 @@ ws::result<void> rl_game_app::start()
     */
     
     object_id = cmd_queue.create_directional_light("Sun");
-    cmd_queue.set_light_shadow_casting(object_id, true);
+    cmd_queue.set_light_shadow_casting(object_id, false);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
     
     object_id = cmd_queue.create_point_light("Point");
-    cmd_queue.set_light_shadow_casting(object_id, true);
+    cmd_queue.set_light_shadow_casting(object_id, false);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
     cmd_queue.set_light_shadow_max_distance(object_id, 100);
     cmd_queue.set_light_intensity(object_id, 1.0f);
@@ -108,16 +107,28 @@ ws::result<void> rl_game_app::start()
     m_light_id = object_id;
 
 
-    /*
-    for (size_t i = 0; i < 2.0f; i++)
+    for (size_t i = 0; i < 1800; i++)
     {
-        object_id = cmd_queue.create_point_light("Point");
-        cmd_queue.set_light_intensity(object_id, 1.0f);
-        cmd_queue.set_light_range(object_id, 100.0f);
-        cmd_queue.set_light_range(object_id, 10.0f * (i*50.0f));
-        cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-        m_moving_lights.push_back(object_id);
-    }*/
+        moving_light& light = m_moving_lights.emplace_back();
+        light.distance = 200.0f + (rand() / static_cast<float>(RAND_MAX)) * 1000.0f;
+        light.angle = (rand() / static_cast<float>(RAND_MAX)) * math::pi2;
+        light.speed = (1.0f - ((rand() / static_cast<float>(RAND_MAX)) * 2.0f)) * 10.0f;
+        light.range = 50.0f + ((rand() / static_cast<float>(RAND_MAX)) * 200.0f);
+        light.height = 50.0f + ((rand() / static_cast<float>(RAND_MAX)) * 1000.0f);
+
+        color color(
+            rand() / static_cast<float>(RAND_MAX),
+            rand() / static_cast<float>(RAND_MAX),
+            rand() / static_cast<float>(RAND_MAX),
+            1.0f
+        );
+
+        light.id = cmd_queue.create_point_light("Point");
+        cmd_queue.set_light_intensity(light.id, 1.0f);
+        cmd_queue.set_light_range(light.id, light.range);
+        cmd_queue.set_light_color(light.id, color);
+        cmd_queue.set_object_transform(light.id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+    }
 
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
@@ -155,18 +166,16 @@ void rl_game_app::step(const frame_time& time)
 
     for (size_t i = 0; i < m_moving_lights.size(); i++)
     {
-        render_object_id id = m_moving_lights[i];
+        moving_light& light = m_moving_lights[i];
 
-        float distance = 200.0f * i;
-        float sub_angle = angle + (i * 0.1f);
+        vector3 location = vector3(
+            sin((angle + light.angle) * light.speed) * light.distance,
+            light.height,
+            cos((angle + light.angle) * light.speed) * light.distance
+        );
 
-        matrix4 transform = matrix4::translate(vector3(sin(angle * 5.0f) * distance, 100.0f + (sin(angle) * 50.0f), cos(angle * 5.0f) * distance));
-
-        vector3 location = vector3::zero * transform;
-
-        cmd_queue.draw_sphere(sphere(location, 100.0f), color::red);
-
-        cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+       // cmd_queue.draw_sphere(sphere(location, light.range), color::red);
+        cmd_queue.set_object_transform(light.id, location, quat::identity, vector3::one);
     }
 
     vector3 light_pos = vector3(-cos(angle * 3.0f) * 400.0f, 150.0f + (cos(angle*3.0f) * 200.0f), 0.0f);

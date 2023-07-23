@@ -496,6 +496,18 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
 //  Entry points
 // ================================================================================================
 
+uint get_cluster_index(float3 world_position)
+{
+    float4x4 vp_matrix = mul(projection_matrix, view_matrix);
+    float4 view_space_pos = clip_space_to_viewport_space(
+        mul(vp_matrix, float4(world_position, 1.0f)), 
+        view_dimensions
+    );
+
+    float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
+    return get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
+}
+
 lightbuffer_output pshader(fullscreen_pinput input)
 {
     gbuffer_fragment frag = read_gbuffer(input.uv);
@@ -503,12 +515,25 @@ lightbuffer_output pshader(fullscreen_pinput input)
     // Calculate ambient lighting from our light probes.
     float3 ambient_lighting = calculate_ambient_lighting(frag);
     
+    // Calculate the cluser we are contained inside of.
+    uint cluster_index = get_cluster_index(frag.world_position.xyz);
+    light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
+
     // Calculate direct contribution of all lights that effect us.
     float3 direct_lighting = float3(0.0, 0.0, 0.0);
     int max_cascade = 0;
+
+    // Go through all effecting lights.
+#if 1
+    for (int i = 0; i < cluster.visible_light_count; i++)
+    {
+        uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
+#else
     for (int i = 0; i < light_count; i++)
     {
-        light_state light = get_light_state(i);
+        uint light_index = i;
+#endif
+        light_state light = get_light_state(light_index);
         
         direct_lighting_result result = calculate_direct_lighting(frag, light);
         direct_lighting += result.lighting;
@@ -548,11 +573,11 @@ lightbuffer_output pshader(fullscreen_pinput input)
         uint cluster_index = get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
 
         light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
-        final_color = (final_color * 0.5) + lerp(
+        final_color = (final_color * 0.9) + lerp(
             float3(0.0f, 1.0f, 0.0f),
             float3(1.0f, 0.0f, 0.0f),
-            cluster.visible_light_count / 3.0f // value is arbitrary, set to whatever "high light count" you want
-        ) * 0.5;
+            cluster.visible_light_count / 10.0f // value is arbitrary, set to whatever "high light count" you want
+        ) * 0.1;
     }
 
     lightbuffer_output output;

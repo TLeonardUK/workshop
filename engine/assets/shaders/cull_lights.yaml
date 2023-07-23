@@ -34,7 +34,7 @@ techniques:
       DISPATCH_SIZE_X: 16
       DISPATCH_SIZE_Y: 9
       DISPATCH_SIZE_Z: 24
-      MAX_LIGHTS_PER_CLUSTER: 100
+      MAX_LIGHTS_PER_CLUSTER: 300
   cull_lights:
     compute_shader: 
       file: data:shaders/source/cull_lights.hlsl
@@ -50,4 +50,4 @@ techniques:
       DISPATCH_SIZE_X: 1
       DISPATCH_SIZE_Y: 1
       DISPATCH_SIZE_Z: 6
-      MAX_LIGHTS_PER_CLUSTER: 100
+      MAX_LIGHTS_PER_CLUSTER: 300
