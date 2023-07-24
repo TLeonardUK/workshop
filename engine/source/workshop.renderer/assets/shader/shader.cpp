@@ -134,6 +134,12 @@ bool shader::post_load()
             tech->pipeline = make_technique_pipeline(*iter);
             tech->defines = iter->defines;
 
+            // Merge in global defines.
+            for (auto& pair : global_defines)
+            {
+                tech->defines[pair.first] = pair.second;
+            }
+
             effect->techniques.push_back(std::move(tech));
         }
 
@@ -154,6 +160,7 @@ void shader::swap(shader* other)
     std::swap(output_targets, other->output_targets);
     std::swap(effects, other->effects);
     std::swap(techniques, other->techniques);
+    std::swap(global_defines, other->global_defines);
 
     // Throw a warning if the param blocks drastically differ
     // changing these in a hot reload is complicated to support, so its better

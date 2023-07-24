@@ -47,6 +47,8 @@ private:
 
     bool parse_imports(const char* path, YAML::Node& node, shader& asset);
 
+    bool parse_defines(const char* path, YAML::Node& node, shader& asset);
+
     bool parse_param_blocks(const char* path, YAML::Node& node, shader& asset);
     bool parse_param_block(const char* path, const char* name, YAML::Node& node, shader& asset);
 

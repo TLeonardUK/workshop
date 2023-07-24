@@ -103,6 +103,7 @@ param_blocks:
       shadow_map_start_index: int
       shadow_map_count: int
       cascade_blend_factor: float
+      importance_distance: float
   # Format of an instance in a buffer that contains a set of shadow maps
   shadow_map_state:
     scope: instance
@@ -137,3 +138,18 @@ param_blocks:
       shadow_map_sampler: sampler
       visualization_mode: int
       light_grid_size: uint3
+
+defines:
+  # The size of the grid the frustum is split into for light culling.
+  # Be careful modifying this, you will need to change dispatch rates/etc for
+  # the compute shaders as well.
+  LIGHT_GRID_SIZE_X: 32 #16
+  LIGHT_GRID_SIZE_Y: 18 #9
+  LIGHT_GRID_SIZE_Z: 24 #24
+  # How many lights can be in each cell in the light grid. Too large and the culling
+  # shader will have poor occupancy, too low and you will get artifacts if a lot
+  # of lights in the same area.
+  MAX_LIGHTS_PER_CLUSTER: 400
+  # Over how much distance is a lights contribution faded out as it gets 
+  # to its importance distance. Percentage of importance distance.
+  LIGHT_IMPORTANCE_FADE_DISTANCE: 0.2

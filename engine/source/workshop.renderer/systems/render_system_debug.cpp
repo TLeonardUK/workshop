@@ -22,7 +22,7 @@
 
 namespace {
 
-constexpr int k_tesselation = 15;
+constexpr int k_tesselation = 10;
 constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
 
 };
@@ -85,16 +85,16 @@ void render_system_debug::step(const render_world_state& state)
     {
         ri_buffer::create_params params;
         params.element_count = m_vertices.size();
-        params.element_size = sizeof(uint16_t);
+        params.element_size = sizeof(uint32_t);
         params.usage = ri_buffer_usage::index_buffer;
 
         m_index_buffer = ri.create_buffer(params, "Debug Primitive Index Buffer");
 
         // Update index buffer.
-        uint16_t* index_ptr = reinterpret_cast<uint16_t*>(m_index_buffer->map(0, m_vertices.size() * sizeof(uint16_t)));
+        uint32_t* index_ptr = reinterpret_cast<uint32_t*>(m_index_buffer->map(0, m_vertices.size() * sizeof(uint32_t)));
         for (size_t i = 0; i < m_vertices.size(); i++)
         {
-            index_ptr[i] = static_cast<uint16_t>(i);
+            index_ptr[i] = static_cast<uint32_t>(i);
         }
         m_index_buffer->unmap(index_ptr);
     }

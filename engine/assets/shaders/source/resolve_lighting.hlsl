@@ -345,13 +345,29 @@ float2 calculate_shadow_spotlight(gbuffer_fragment frag, light_state light)
 //  Attenuation calculation
 // ================================================================================================
 
+float calculate_attenuation_importance(gbuffer_fragment frag, light_state light)
+{
+    float distance = length(view_world_position - light.position);
+    float importance_fade = 1.0f;
+    float start_fade_distance =  light.importance_distance * LIGHT_IMPORTANCE_FADE_DISTANCE;
+    float end_fade_distance =  light.importance_distance;
+    if (distance > start_fade_distance)
+    {
+        importance_fade = 1.0f - saturate((distance - start_fade_distance) / (end_fade_distance - start_fade_distance));
+    } 
+
+    return importance_fade;
+}
+
 float calculate_attenuation_directional(gbuffer_fragment frag, light_state light)
 {
-    return 1.0f;
+    return calculate_attenuation_importance(frag, light);
 }
 
 float calculate_attenuation_point(gbuffer_fragment frag, light_state light)
 {
+    float importance_fade = calculate_attenuation_importance(frag, light);
+
     float frag_to_light_distance = length(light.position - frag.world_position);
 
 #ifdef USE_INVERSE_SQUARE_LAW
@@ -360,9 +376,9 @@ float calculate_attenuation_point(gbuffer_fragment frag, light_state light)
     float inv_range = 1.0 / max(range_squared, 0.00001f);
     float range_attenuation = square(saturate(1.0 - square(distanced_squared * inv_range)));
     float attenuation = range_attenuation / distanced_squared;
-    return saturate(attenuation);
+    return saturate(attenuation) * importance_fade;
 #else
-    return saturate(1.0f - (frag_to_light_distance / light.range));
+    return saturate(1.0f - (frag_to_light_distance / light.range)) * importance_fade;
 #endif
 }
 

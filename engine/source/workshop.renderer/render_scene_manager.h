@@ -109,6 +109,9 @@ public:
     // Sets how far away the light can effect.
     void set_light_range(render_object_id id, float value);
 
+    // Sets how far away from the light is from the camera before its faded out.
+    void set_light_importance_distance(render_object_id id, float value);
+
     // Sets the color a light produces.
     void set_light_color(render_object_id id, color color);
 

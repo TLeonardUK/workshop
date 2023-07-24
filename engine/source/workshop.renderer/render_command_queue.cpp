@@ -209,6 +209,13 @@ void render_command_queue::set_light_range(render_object_id id, float value)
     });
 }
 
+void render_command_queue::set_light_importance_distance(render_object_id id, float value)
+{
+    queue_command("set_light_importance_distance", [renderer = &m_renderer, id, value]() {
+        renderer->get_scene_manager().set_light_importance_distance(id, value);
+    });
+}
+
 void render_command_queue::set_light_color(render_object_id id, color color)
 {
     queue_command("set_light_color", [renderer = &m_renderer, id, color]() {

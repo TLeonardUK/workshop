@@ -296,7 +296,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::light_heatmap;
+    visualization_mode m_visualization_mode = visualization_mode::normal;
     bool m_draw_octtree_cell_bounds = false;
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;

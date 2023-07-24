@@ -104,6 +104,7 @@ public:
     void swap(shader* other);
 
 public:
+    std::unordered_map<std::string, std::string> global_defines;
     std::vector<param_block> param_blocks;
     std::vector<render_state> render_states;
     std::vector<variation> variations;

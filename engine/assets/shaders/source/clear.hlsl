@@ -13,7 +13,7 @@ gbuffer_output pshader(fullscreen_pinput input)
     f.metallic = 0.0f;
     f.roughness = 0.0f;
     f.world_normal = float3(0.0f, 0.0f, 0.0f);
-    f.world_position = float3(0.0f, 0.0f, 0.0f);
+    f.world_position = float3(9999999.0f, 9999999.0f, 9999999.0f);
 
     return encode_gbuffer(f);
 }

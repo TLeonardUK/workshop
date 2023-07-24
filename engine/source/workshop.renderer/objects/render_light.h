@@ -33,6 +33,10 @@ public:
     void set_range(float value);
     float get_range();
 
+    // Gets/sets the distance from the camera before the light's contribution is faded out.
+    void set_importance_distance(float value);
+    float get_importance_distance();
+
     // Gets/sets if the light will cast a shdow.
     void set_shadow_casting(bool value);
     bool get_shodow_casting();
@@ -61,6 +65,7 @@ protected:
     color m_color = color::white;
     float m_intensity = 0.0f;
     float m_range = 10000.0f;
+    float m_importance_distance = 5000.0f;
 
     bool m_shadow_casting = false;
     size_t m_shadow_map_size = 512;

@@ -53,6 +53,16 @@ float render_light::get_range()
     return m_range;
 }
 
+void render_light::set_importance_distance(float value)
+{
+    m_importance_distance = value;
+}
+
+float render_light::get_importance_distance()
+{
+    return m_importance_distance;
+}
+
 void render_light::set_shadow_casting(bool value)
 {
     m_shadow_casting = value;
@@ -100,6 +110,7 @@ void render_light::update_render_data()
     m_light_state_param_block->set("color", m_color.rgb());
     m_light_state_param_block->set("intensity", m_intensity);
     m_light_state_param_block->set("range", m_range);
+    m_light_state_param_block->set("importance_distance", m_importance_distance);    
 }
 
 ri_param_block* render_light::get_light_state_param_block()

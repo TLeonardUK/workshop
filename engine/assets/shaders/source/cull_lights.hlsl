@@ -18,6 +18,7 @@ struct shared_light_state
     float range;
     float3 position;
     int type;
+    float importance_distance;
 };
 
 groupshared shared_light_state g_group_shared_lights[GROUP_SIZE_X * GROUP_SIZE_Y * GROUP_SIZE_Z];
@@ -60,8 +61,18 @@ bool intersect_light_cluster(uint light, uint cluster)
         return true;
     }
 
-    float  radius = g_group_shared_lights[light].range;
+    // Distance from camera is further than importance distance, it should not
+    // contribute to anything any longer.
     float3 pos = g_group_shared_lights[light].position;
+    float importance_distance = g_group_shared_lights[light].importance_distance;
+    float distance_from_camera = length(view_world_position - pos);
+    if (distance_from_camera >= importance_distance)
+    {
+        return false;
+    }
+
+    // Otherwise just figure out distance from clusters aabb.
+    float  radius = g_group_shared_lights[light].range;
     float3 center = mul(view_matrix, float4(pos, 1.0f)).xyz;
     float  squared_distance = point_to_cluster_squared_distance(center, cluster);
     float radius_squared = (radius * radius);
@@ -97,6 +108,7 @@ void cull_lights_cshader(cull_lights_input input)
         shared_state.position = state.position;
         shared_state.range = state.range;
         shared_state.type = state.type;
+        shared_state.importance_distance = state.importance_distance;
         g_group_shared_lights[input.group_index] = shared_state;
 
         // Wait for all threads to fill up the shared light batch.

@@ -334,6 +334,20 @@ void render_scene_manager::set_light_range(render_object_id id, float value)
     }
 }
 
+void render_scene_manager::set_light_importance_distance(render_object_id id, float value)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_light* object = dynamic_cast<render_light*>(resolve_id(id)))
+    {
+        object->set_importance_distance(value);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_importance_distance called with non-existant id {%zi}.", id);
+    }
+}
+
 void render_scene_manager::set_light_color(render_object_id id, color value)
 {
     std::scoped_lock lock(m_mutex);

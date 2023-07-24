@@ -181,6 +181,13 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
                 break;
             }
 
+            // Skip light if beyond importance range.
+            float distance = (view.get_local_location() - light->get_local_location()).length();
+            if (distance > light->get_importance_distance())
+            {
+                continue;
+            }
+
             // Add light instance to buffer.
             size_t index, offset;
             light_state_block->set("shadow_map_start_index", total_shadow_maps);

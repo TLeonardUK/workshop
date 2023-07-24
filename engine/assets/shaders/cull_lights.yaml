@@ -25,29 +25,21 @@ techniques:
       entry: create_clusters_cshader
     param_blocks: [ view_info, light_state, light_cluster, resolve_lighting_parameters ]
     defines:
-      LIGHT_GRID_SIZE_X: 16
-      LIGHT_GRID_SIZE_Y: 9
-      LIGHT_GRID_SIZE_Z: 24
       GROUP_SIZE_X: 1
       GROUP_SIZE_Y: 1
       GROUP_SIZE_Z: 1
-      DISPATCH_SIZE_X: 16
-      DISPATCH_SIZE_Y: 9
-      DISPATCH_SIZE_Z: 24
-      MAX_LIGHTS_PER_CLUSTER: 100
+      DISPATCH_SIZE_X: 32 #16
+      DISPATCH_SIZE_Y: 18 #9
+      DISPATCH_SIZE_Z: 24 #24
   cull_lights:
     compute_shader: 
       file: data:shaders/source/cull_lights.hlsl
       entry: cull_lights_cshader
     param_blocks: [ view_info, light_state, light_cluster, resolve_lighting_parameters ]
     defines:
-      LIGHT_GRID_SIZE_X: 16
-      LIGHT_GRID_SIZE_Y: 9
-      LIGHT_GRID_SIZE_Z: 24
-      GROUP_SIZE_X: 16
-      GROUP_SIZE_Y: 9
-      GROUP_SIZE_Z: 4
-      DISPATCH_SIZE_X: 1
-      DISPATCH_SIZE_Y: 1
-      DISPATCH_SIZE_Z: 6
-      MAX_LIGHTS_PER_CLUSTER: 100
+      GROUP_SIZE_X: 32 #16
+      GROUP_SIZE_Y: 18 #9
+      GROUP_SIZE_Z: 1 #4
+      DISPATCH_SIZE_X: 1 #1
+      DISPATCH_SIZE_Y: 1 #1
+      DISPATCH_SIZE_Z: 24 #6

@@ -23,7 +23,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 6;
+constexpr size_t k_asset_compiled_version = 7;
 
 };
 
@@ -172,6 +172,7 @@ bool shader_loader::serialize(const char* path, shader& asset, bool isSaving)
     stream_serialize_list(*stream, asset.output_targets);
     stream_serialize_list(*stream, asset.effects);
     stream_serialize_list(*stream, asset.techniques);
+    stream_serialize_map(*stream, asset.global_defines);
 
     return true;
 }
@@ -209,6 +210,39 @@ bool shader_loader::parse_imports(const char* path, YAML::Node& node, shader& as
                 return false;
             }
         }
+    }
+
+    return true;
+}
+
+bool shader_loader::parse_defines(const char* path, YAML::Node& node, shader& asset)
+{
+    YAML::Node defines_node = node["defines"];
+
+    if (!defines_node.IsDefined())
+    {
+        return true;
+    }
+
+    if (defines_node.Type() != YAML::NodeType::Map)
+    {
+        db_error(asset, "[%s] global defines blocks was not a map type.", path);
+        return false;
+    }
+
+    for (auto iter = defines_node.begin(); iter != defines_node.end(); iter++)
+    {
+        std::string key = iter->first.as<std::string>();
+
+        if (!iter->second.IsScalar())
+        {
+            db_error(asset, "[%s] global define '%s' was not scalar type.", path, key.c_str());
+            return false;
+        }
+
+        std::string value = iter->second.as<std::string>();
+
+        asset.global_defines.insert_or_assign(key, value);
     }
 
     return true;
@@ -987,6 +1021,11 @@ bool shader_loader::parse_file(const char* path, shader& asset)
         return false;
     }
 
+    if (!parse_defines(path, node, asset))
+    {
+        return false;
+    }
+
     if (!parse_param_blocks(path, node, asset))
     {
         return false;
@@ -1249,6 +1288,13 @@ bool shader_loader::compile_technique(const char* path, shader::technique& techn
 
         // Add some system defines.
         std::unordered_map<std::string, std::string> defines = technique.defines;
+
+        // Merge in the global defines.
+        for (auto& pair : asset.global_defines)
+        {
+            defines[pair.first] = pair.second;
+        }
+
         if (asset_config == config_type::debug)
         {
             defines["WS_DEBUG"] = "1";

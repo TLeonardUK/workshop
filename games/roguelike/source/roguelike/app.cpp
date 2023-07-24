@@ -106,12 +106,12 @@ ws::result<void> rl_game_app::start()
 
     m_light_id = object_id;
 
-    for (size_t i = 0; i < 1000; i++)
+    for (size_t i = 0; i < 50; i++)
     {
         moving_light& light = m_moving_lights.emplace_back();
         light.distance = (rand() / static_cast<float>(RAND_MAX)) * 800.0f;
         light.angle = (rand() / static_cast<float>(RAND_MAX)) * math::pi2;
-        light.speed = (1.0f - ((rand() / static_cast<float>(RAND_MAX)) * 2.0f)) * 10.0f;
+        light.speed = 10.0f + ((1.0f - ((rand() / static_cast<float>(RAND_MAX)) * 2.0f)) * 10.0f);
         light.range = 100.0f + ((rand() / static_cast<float>(RAND_MAX)) * 200.0f);
         light.height = 50.0f + ((rand() / static_cast<float>(RAND_MAX)) * 1000.0f);
 
@@ -163,23 +163,25 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
-    float light_angle = 0.0f;
-
-    for (size_t i = 0; i < m_moving_lights.size(); i++)
+    //if (time.frame_count < 10)
     {
-        moving_light& light = m_moving_lights[i];
+        float light_angle = angle;//0.0f;
+        for (size_t i = 0; i < m_moving_lights.size(); i++)
+        {
+            moving_light& light = m_moving_lights[i];
 
-        vector3 location = vector3(
-            sin((light_angle + light.angle) * light.speed) * light.distance,
-            light.height,
-            cos((light_angle + light.angle) * light.speed) * light.distance
-        );
+            vector3 location = vector3(
+                sin((light_angle + light.angle) * light.speed) * light.distance,
+                light.height,
+                cos((light_angle + light.angle) * light.speed) * light.distance
+            );
 
-        //cmd_queue.draw_sphere(sphere(location, 10.0f), color::red);
-        cmd_queue.set_object_transform(light.id, location, quat::identity, vector3::one);
+            //cmd_queue.draw_sphere(sphere(location, 5.0f), color::white);
+            cmd_queue.set_object_transform(light.id, location, quat::identity, vector3::one);
+        }
     }
 
-    vector3 light_pos = vector3(-cos(angle * 3.0f) * 400.0f, 150.0f + (cos(angle*3.0f) * 200.0f), 0.0f);
+    vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);// vector3(-cos(angle * 3.0f) * 400.0f, 150.0f + (cos(angle*3.0f) * 200.0f), 0.0f);
     //vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);
     quat light_rot =  quat::identity;//quat::angle_axis(angle * 0.5f, vector3::up);
     //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
