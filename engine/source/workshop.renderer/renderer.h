@@ -100,6 +100,9 @@ static inline const char* visualization_mode_strings[] = {
     "light heatmap"
 };
 
+// If defined this adds an extra plane to the gbuffer for writing debug data to.
+//#define GBUFFER_DEBUG_DATA
+
 // ================================================================================================
 //  Provides an abstracted interface for all rendering behaviour in the engine 
 // ================================================================================================
@@ -352,8 +355,11 @@ private:
     std::array<std::unique_ptr<ri_sampler>, static_cast<int>(default_sampler_type::COUNT)> m_default_samplers;
 
     // gbuffer
-
+#ifdef GBUFFER_DEBUG_DATA
     static inline constexpr size_t k_gbuffer_count = 4;
+#else
+    static inline constexpr size_t k_gbuffer_count = 3;
+#endif
     std::unique_ptr<ri_texture> m_depth_texture;
     std::array<std::unique_ptr<ri_texture>, k_gbuffer_count> m_gbuffer_textures;
     std::unique_ptr<ri_sampler> m_gbuffer_sampler;

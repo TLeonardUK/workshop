@@ -79,7 +79,7 @@ public:
     virtual ri_command_queue& get_copy_queue() override;
     virtual size_t get_pipeline_depth() override;
     virtual void defer_delete(const deferred_delete_function_t& func) override;
-    virtual size_t get_vram_usage() override;
+    virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) override;
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
 
     // Drains all of the defered deletes without regard for which frame they should

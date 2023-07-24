@@ -99,7 +99,7 @@ cascade_info get_shadow_cascade_info(gbuffer_fragment frag, light_state light)
 float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_index, shadow_filter filter, int samples)
 {
     // If outside cascade count, return no shadow.
-    if (cascade_index >= light.shadow_map_count)
+    if (cascade_index < 0 || cascade_index >= light.shadow_map_count)
     {
         return 1.0;
     }
@@ -194,7 +194,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
 float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascade_index, shadow_filter filter, int samples)
 {
     // If outside cascade count, return no shadow.
-    if (cascade_index >= light.shadow_map_count)
+    if (cascade_index < 0 || cascade_index >= light.shadow_map_count)
     {
         return 1.0;
     }
@@ -550,33 +550,14 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }    
     else if (visualization_mode == visualization_mode_t::light_clusters)
     {
-        float4x4 vp_matrix = mul(projection_matrix, view_matrix);
-        float4 view_space_pos = clip_space_to_viewport_space(
-            mul(vp_matrix, float4(frag.world_position.xyz, 1.0f)), 
-            view_dimensions
-        );
-
-        float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
-        uint cluster_index = get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
-
         final_color = (final_color + 0.02) * debug_colors[cluster_index % 7];
     }
     else if (visualization_mode == visualization_mode_t::light_heatmap)
     {
-        float4x4 vp_matrix = mul(projection_matrix, view_matrix);
-        float4 view_space_pos = clip_space_to_viewport_space(
-            mul(vp_matrix, float4(frag.world_position.xyz, 1.0f)), 
-            view_dimensions
-        );
-
-        float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
-        uint cluster_index = get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
-
-        light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
         final_color = (final_color * 0.9) + lerp(
             float3(0.0f, 1.0f, 0.0f),
             float3(1.0f, 0.0f, 0.0f),
-            cluster.visible_light_count / 10.0f // value is arbitrary, set to whatever "high light count" you want
+            saturate(cluster.visible_light_count / float(MAX_LIGHTS_PER_CLUSTER))
         ) * 0.1;
     }
 

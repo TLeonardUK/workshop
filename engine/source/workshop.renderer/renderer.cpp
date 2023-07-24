@@ -227,13 +227,17 @@ result<void> renderer::recreate_resizable_targets()
     m_depth_texture = m_render_interface.create_texture(params, "depth buffer");
 
     // Create each gbuffer.
-    params.format = ri_texture_format::R16G16B16A16;
+    params.format = ri_texture_format::R16G16B16A16_FLOAT;
     m_gbuffer_textures[0] = m_render_interface.create_texture(params, "gbuffer[0] rgb:diffuse a:flags");
 
-    params.format = ri_texture_format::R32G32B32A32_FLOAT;
+    params.format = ri_texture_format::R8G8B8A8_SNORM;
     m_gbuffer_textures[1] = m_render_interface.create_texture(params, "gbuffer[1] rgb:world normal a:roughness");
+
+    params.format = ri_texture_format::R32G32B32A32_FLOAT;
     m_gbuffer_textures[2] = m_render_interface.create_texture(params, "gbuffer[2] rgb:world position a:metallic");
+#ifdef GBUFFER_DEBUG_DATA
     m_gbuffer_textures[3] = m_render_interface.create_texture(params, "gbuffer[3] rgba:debug data");
+#endif
 
     // Create sampler used for reading the gbuffer.
     ri_sampler::create_params sampler_params;
@@ -244,7 +248,9 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_param_block->set("gbuffer0_texture", *m_gbuffer_textures[0]);
     m_gbuffer_param_block->set("gbuffer1_texture", *m_gbuffer_textures[1]);
     m_gbuffer_param_block->set("gbuffer2_texture", *m_gbuffer_textures[2]);
+#ifdef GBUFFER_DEBUG_DATA
     m_gbuffer_param_block->set("gbuffer3_texture", *m_gbuffer_textures[3]);
+#endif
     m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
 
     // Create default resources.
@@ -316,7 +322,9 @@ render_output renderer::get_gbuffer_output()
     output.color_targets.push_back(m_gbuffer_textures[0].get());
     output.color_targets.push_back(m_gbuffer_textures[1].get());
     output.color_targets.push_back(m_gbuffer_textures[2].get());
+#ifdef GBUFFER_DEBUG_DATA
     output.color_targets.push_back(m_gbuffer_textures[3].get());
+#endif
     return output;
 }
 
@@ -890,21 +898,31 @@ void renderer::draw_debug_overlay()
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Virtual Memory Usage");
+        ImGui::Text("Virtual Memory");
         ImGui::TableSetColumnIndex(1);
         ImGui::Text("%.2f mb", get_memory_usage() / (1024.0 * 1024.0f));
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Pagefile Memory Usage");
+        ImGui::Text("Pagefile Memory");
         ImGui::TableSetColumnIndex(1);
         ImGui::Text("%.2f mb", get_pagefile_usage() / (1024.0 * 1024.0f));
 
+        size_t vram_local = 0;
+        size_t vram_non_local = 0;
+        m_render_interface.get_vram_usage(vram_local, vram_non_local);
+
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Text("VRAM Memory Usage");
+        ImGui::Text("VRAM Memory (Device)");
         ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f mb", m_render_interface.get_vram_usage() / (1024.0 * 1024.0f));
+        ImGui::Text("%.2f mb", vram_local / (1024.0 * 1024.0f));
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Text("VRAM Memory (Shared)");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%.2f mb", vram_non_local / (1024.0 * 1024.0f));
 
         ImGui::NewLine();
 

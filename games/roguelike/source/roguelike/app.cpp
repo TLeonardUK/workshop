@@ -59,7 +59,7 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Curtains");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    
+    /*
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
@@ -67,7 +67,7 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-    
+    */
     /*
     for (int x = 0; x < 150; x++)
     {
@@ -80,7 +80,7 @@ ws::result<void> rl_game_app::start()
     */
     
     object_id = cmd_queue.create_directional_light("Sun");
-    cmd_queue.set_light_shadow_casting(object_id, false);
+    cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
@@ -106,14 +106,13 @@ ws::result<void> rl_game_app::start()
 
     m_light_id = object_id;
 
-
-    for (size_t i = 0; i < 1800; i++)
+    for (size_t i = 0; i < 1000; i++)
     {
         moving_light& light = m_moving_lights.emplace_back();
-        light.distance = 200.0f + (rand() / static_cast<float>(RAND_MAX)) * 1000.0f;
+        light.distance = (rand() / static_cast<float>(RAND_MAX)) * 800.0f;
         light.angle = (rand() / static_cast<float>(RAND_MAX)) * math::pi2;
         light.speed = (1.0f - ((rand() / static_cast<float>(RAND_MAX)) * 2.0f)) * 10.0f;
-        light.range = 50.0f + ((rand() / static_cast<float>(RAND_MAX)) * 200.0f);
+        light.range = 100.0f + ((rand() / static_cast<float>(RAND_MAX)) * 200.0f);
         light.height = 50.0f + ((rand() / static_cast<float>(RAND_MAX)) * 1000.0f);
 
         color color(
@@ -164,17 +163,19 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
+    float light_angle = 0.0f;
+
     for (size_t i = 0; i < m_moving_lights.size(); i++)
     {
         moving_light& light = m_moving_lights[i];
 
         vector3 location = vector3(
-            sin((angle + light.angle) * light.speed) * light.distance,
+            sin((light_angle + light.angle) * light.speed) * light.distance,
             light.height,
-            cos((angle + light.angle) * light.speed) * light.distance
+            cos((light_angle + light.angle) * light.speed) * light.distance
         );
 
-       // cmd_queue.draw_sphere(sphere(location, light.range), color::red);
+        //cmd_queue.draw_sphere(sphere(location, 10.0f), color::red);
         cmd_queue.set_object_transform(light.id, location, quat::identity, vector3::one);
     }
 

@@ -148,6 +148,12 @@ void render_batch_instance_buffer::resize(buffer& buf, size_t size)
         create_params.usage = ri_buffer_usage::generic;
 
         buf.buffer = m_renderer.get_render_interface().create_buffer(create_params, "Instance Index Buffer");
+
+        // Redirty all slots.
+        for (size_t i = 0; i < buf.slots.size(); i++)
+        {
+            buf.slots[i].dirty = true;
+        }
     }
 }
 

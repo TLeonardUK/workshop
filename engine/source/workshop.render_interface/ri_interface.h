@@ -111,7 +111,8 @@ public:
     virtual void defer_delete(const deferred_delete_function_t& func) = 0;
 
     // Gets the number of bytes of vram currently in use by the application.
-    virtual size_t get_vram_usage() = 0; 
+    // Local memory is dedicated vram, non-local is system shared memory.
+    virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) = 0;
 
     // Gets the texture slice that represents a given cube map face.
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) = 0;

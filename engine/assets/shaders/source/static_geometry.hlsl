@@ -55,7 +55,9 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
 #endif
     f.world_position = input.world_position;
 
+#ifdef GBUFFER_DEBUG_DATA
     f.debug_data.x = length(f.world_position.xyz - view_world_position);
+#endif
 
     return encode_gbuffer(f);
 }

@@ -27,3 +27,5 @@ techniques:
     vertex_layout: vertex2d_pos_uv
     output_target: light_buffer
     param_blocks: [ view_info, light_state, light_cluster, shadow_map_state, gbuffer, resolve_lighting_parameters ]
+    defines:
+      MAX_LIGHTS_PER_CLUSTER: 100

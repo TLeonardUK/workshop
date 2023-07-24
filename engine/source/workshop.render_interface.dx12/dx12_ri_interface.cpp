@@ -605,12 +605,15 @@ void dx12_render_interface::defer_delete(const deferred_delete_function_t& func)
     m_pending_deletions[queue_index].push_back(func);
 }
 
-size_t dx12_render_interface::get_vram_usage()
+void dx12_render_interface::get_vram_usage(size_t& out_local, size_t& out_non_local)
 {
-    DXGI_QUERY_VIDEO_MEMORY_INFO video_memory_info;
-    m_dxgi_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &video_memory_info);
+    DXGI_QUERY_VIDEO_MEMORY_INFO local_video_memory_info;
+    DXGI_QUERY_VIDEO_MEMORY_INFO non_local_video_memory_info;
+    m_dxgi_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &local_video_memory_info);
+    m_dxgi_adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &non_local_video_memory_info);
 
-    return video_memory_info.CurrentUsage;
+    out_local = local_video_memory_info.CurrentUsage;
+    out_non_local = non_local_video_memory_info.CurrentUsage;
 }
 
 size_t dx12_render_interface::get_cube_map_face_index(ri_cube_map_face face)

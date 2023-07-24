@@ -5,6 +5,10 @@
 #ifndef _GBUFFER_HLSL_
 #define _GBUFFER_HLSL_
 
+// If defined this adds an extra plane to the gbuffer for writing debug data to.
+// This needs to be paired with the one in renderer.h
+//#define GBUFFER_DEBUG_DATA 
+
 // Individual fragment of the gbuffer in decoded format.
 // Use encode_gbuffer / decode_gbuffer to convert to input/output formats.
 struct gbuffer_fragment
@@ -15,7 +19,10 @@ struct gbuffer_fragment
     float3 world_normal;
     float roughness;
     float3 world_position;
+    
+#ifdef GBUFFER_DEBUG_DATA
     float4 debug_data;
+#endif
 };
 
 // Output format when outputting to gbuffer.
@@ -24,7 +31,9 @@ struct gbuffer_output
     float4 buffer0 : SV_Target0;
     float4 buffer1 : SV_Target1;
     float4 buffer2 : SV_Target2;
+#ifdef GBUFFER_DEBUG_DATA
     float4 buffer3 : SV_Target3;
+#endif
 };
 
 // Encodes fragment into gbuffer_output format.
@@ -39,9 +48,11 @@ gbuffer_output encode_gbuffer(gbuffer_fragment fragment)
 
     output.buffer2.xyz = fragment.world_position;
     output.buffer2.w = fragment.metallic;
-    
+
+#ifdef GBUFFER_DEBUG_DATA    
     output.buffer3.xyzw = fragment.debug_data;
-    
+#endif
+
     return output;
 }
 
@@ -51,7 +62,9 @@ gbuffer_fragment read_gbuffer(float2 uv)
     float4 buffer0 = gbuffer0_texture.Sample(gbuffer_sampler, uv);
     float4 buffer1 = gbuffer1_texture.Sample(gbuffer_sampler, uv);
     float4 buffer2 = gbuffer2_texture.Sample(gbuffer_sampler, uv);
+#ifdef GBUFFER_DEBUG_DATA    
     float4 buffer3 = gbuffer3_texture.Sample(gbuffer_sampler, uv);
+#endif
 
     gbuffer_fragment result;
     result.albedo = buffer0.xyz;
@@ -63,7 +76,9 @@ gbuffer_fragment read_gbuffer(float2 uv)
     result.world_position = buffer2.xyz;
     result.metallic = buffer2.w;
 
+#ifdef GBUFFER_DEBUG_DATA
     result.debug_data = buffer3.xyzw;
+#endif
 
     return result;
 }
