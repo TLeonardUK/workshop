@@ -63,57 +63,6 @@ ri_texture& render_system_lighting::get_lighting_buffer()
     return *m_lighting_buffer;
 }
 
-/*
-void render_system_lighting::cluster_lights(render_view& view, const std::vector<render_light*>& lights, cluster_list& clusters)
-{
-    if (!m_renderer.is_rendering_frozen())
-    {
-        m_cluster_prime_frustum = view.get_frustum();        
-        view.get_clip(m_cluster_prime_near_z, m_cluster_prime_far_z);
-    }
-
-    m_renderer.get_system<render_system_debug>()->add_frustum(m_cluster_prime_frustum, color::green);
-
-    // Calculate bounds up front.
-    for (size_t z = 0; z < k_cluster_dimensions; z++)
-    {
-        for (size_t y = 0; y < k_cluster_dimensions; y++)
-        {
-            for (size_t x = 0; x < k_cluster_dimensions; x++)
-            {
-                cluster& cluster = clusters.get(x, y, z);
-
-                float range_z = (m_cluster_prime_far_z - m_cluster_prime_near_z);
-                float step_z = range_z / k_cluster_dimensions;
-                float cluster_near_z = m_cluster_prime_near_z + (step_z * z);
-                float cluster_far_z = m_cluster_prime_near_z + step_z;
-
-                m_cluster_prime_frustum.
-
-                m_renderer.get_system<render_system_debug>()->add_frustum(cluster.bounds, color::purple);
-            }
-        }
-    }
-
-    // Run the clustering in parallel.
-    parallel_for("cluster lights", task_queue::standard, k_total_clusters, [&lights, &clusters](size_t index) mutable {
-    
-        cluster& cluster = clusters.clusters[index];
-
-        // Do bounds checks for each light.
-        for (render_light* light : lights)
-        {
-            obb bounds = light->get_bounds();
-            if (cluster.bounds.intersects(bounds) != frustum::intersection::outside)
-            {
-                cluster.lights.push_back(light);
-            }
-        }
-    
-    }, true);
-}
-*/
-
 void render_system_lighting::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
     if (!view.has_flag(render_view_flags::normal))
@@ -127,9 +76,6 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     render_batch_instance_buffer* light_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     render_batch_instance_buffer* shadow_map_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 1);
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_lighting_parameters");
-
-    //http://www.aortiz.me/2018/12/21/CG.html
-    //todo
 
     // Grab all lights that can directly effect the frustum.
     // TODO: Doing an octtree query should be faster than this, reconsider.
@@ -156,12 +102,6 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         }
     }
     
-    // Cluster all lights into our volume.
-    // TODO: This should all move to a compute shader.
-    //cluster_list clusters;
-    //cluster_lights(view, visible_lights, clusters);
-
-
     // Fill in the indirection buffers.
     int total_lights = 0;
     int total_shadow_maps = 0;

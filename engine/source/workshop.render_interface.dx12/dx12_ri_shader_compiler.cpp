@@ -238,10 +238,16 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
     // Strip unrequired stuff.
     arguments.push_back(L"-HV 2018");
 
-    if (false)//!debug)
+    if (!debug)
     {
-        arguments.push_back(L"-Qstrip_debug");
-        arguments.push_back(L"-Qstrip_reflect");
+        // We need an "rtm" type profile for this.
+#if 0
+        //arguments.push_back(L"-Qstrip_debug");
+        //arguments.push_back(L"-Qstrip_reflect");
+#else
+        arguments.push_back(L"-Qembed_debug");
+#endif
+
         arguments.push_back(L"-Zi");            // Debug
         arguments.push_back(L"-O3");            // Highest optimization.
     }

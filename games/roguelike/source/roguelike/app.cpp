@@ -79,6 +79,8 @@ ws::result<void> rl_game_app::start()
     }
     */
     
+    // Add a grid of light probes.
+
     object_id = cmd_queue.create_directional_light("Sun");
     cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
@@ -93,20 +95,9 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_range(object_id, 100.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
 
-    /*
-    object_id = cmd_queue.create_spot_light("Spot");
-    cmd_queue.set_light_shadow_casting(object_id, true);
-    cmd_queue.set_light_shadow_map_size(object_id, 4096);
-    cmd_queue.set_light_shadow_max_distance(object_id, 3000);
-    cmd_queue.set_light_intensity(object_id, 500000.0f);
-    cmd_queue.set_light_range(object_id, 3000.0f);
-    cmd_queue.set_spot_light_radius(object_id, math::pi * 0.18f, math::pi * 0.2f);
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 200.0f, 0.0f), quat::identity, vector3::one);
-    */
-
     m_light_id = object_id;
 
-    for (size_t i = 0; i < 50; i++)
+    for (size_t i = 0; i < 100; i++)
     {
         moving_light& light = m_moving_lights.emplace_back();
         light.distance = (rand() / static_cast<float>(RAND_MAX)) * 800.0f;
@@ -161,6 +152,18 @@ void rl_game_app::step(const frame_time& time)
         vector3 location = vector3::zero * transform;
 
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+    }
+
+    for (int z = -2; z <= 2; z++)
+    {
+        for (int y = 0; y <= 4; y++)
+        {
+            for (int x = -3; x <= 3; x++)
+            {
+                vector3 location = (vector3(x, y, z) * 250.0f) + vector3(0.0f, 30.0f, 0.0f);
+                cmd_queue.draw_sphere(sphere(location, 5.0f), color::white);
+            }
+        }
     }
 
     //if (time.frame_count < 10)

@@ -540,15 +540,9 @@ lightbuffer_output pshader(fullscreen_pinput input)
     int max_cascade = 0;
 
     // Go through all effecting lights.
-#if 1
     for (int i = 0; i < cluster.visible_light_count; i++)
     {
         uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
-#else
-    for (int i = 0; i < light_count; i++)
-    {
-        uint light_index = i;
-#endif
         light_state light = get_light_state(light_index);
         
         direct_lighting_result result = calculate_direct_lighting(frag, light);
@@ -566,15 +560,15 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }    
     else if (visualization_mode == visualization_mode_t::light_clusters)
     {
-        final_color = (final_color + 0.02) * debug_colors[cluster_index % 7];
+        final_color = (final_color + 0.02) * debug_colors[cluster_index % 8];
     }
     else if (visualization_mode == visualization_mode_t::light_heatmap)
     {
-        final_color = (final_color * 0.9) + lerp(
+        final_color = (final_color * 0.2) + lerp(
             float3(0.0f, 1.0f, 0.0f),
             float3(1.0f, 0.0f, 0.0f),
             saturate(cluster.visible_light_count / float(MAX_LIGHTS_PER_CLUSTER))
-        ) * 0.1;
+        ) * 0.8;
     }
 
     lightbuffer_output output;
