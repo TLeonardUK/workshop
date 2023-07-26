@@ -341,4 +341,34 @@ void render_command_queue::set_spot_light_radius(render_object_id id, float inne
     });
 }
 
+// ===========================================================================================
+//  Light Probe Grid
+// ===========================================================================================
+
+render_object_id render_command_queue::create_light_probe_grid(const char* name)
+{
+    render_object_id id = m_renderer.next_render_object_id();
+    const char* stored_name = allocate_copy(name);
+
+    queue_command("create_light_probe_grid", [renderer = &m_renderer, id, stored_name]() {
+        renderer->get_scene_manager().create_light_probe_grid(id, stored_name);
+    });
+
+    return id;
+}
+
+void render_command_queue::destroy_light_probe_grid(render_object_id id)
+{
+    queue_command("destroy_light_probe_grid", [renderer = &m_renderer, id]() {
+        renderer->get_scene_manager().destroy_light_probe_grid(id);
+    });
+}
+
+void render_command_queue::set_light_probe_grid_density(render_object_id id, float density)
+{
+    queue_command("set_light_probe_grid_density", [renderer = &m_renderer, id, density]() {
+        renderer->get_scene_manager().set_light_probe_grid_density(id, density);
+    });
+}
+
 }; // namespace ws

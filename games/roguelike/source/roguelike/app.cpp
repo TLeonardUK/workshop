@@ -78,8 +78,13 @@ ws::result<void> rl_game_app::start()
         m_rotating_objects.push_back(object_id);
     }
     */
-    
-    // Add a grid of light probes.
+
+    object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
+    cmd_queue.set_light_probe_grid_density(object_id, 100.0f);
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3(1000.f, 100.0f, 1000.0f));
+
+//    object_id = cmd_queue.create_reflection_probe_grid("Reflection Probe Grid");
+//    cmd_queue.set_reflection_probe_grid_density(object_id, true);
 
     object_id = cmd_queue.create_directional_light("Sun");
     cmd_queue.set_light_shadow_casting(object_id, true);

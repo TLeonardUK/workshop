@@ -9,6 +9,7 @@
 #include "workshop.renderer/objects/render_directional_light.h"
 #include "workshop.renderer/objects/render_point_light.h"
 #include "workshop.renderer/objects/render_spot_light.h"
+#include "workshop.renderer/objects/render_light_probe_grid.h"
 
 namespace ws {
     
@@ -611,6 +612,71 @@ std::vector<render_spot_light*> render_scene_manager::get_spot_lights()
     std::scoped_lock lock(m_mutex);
 
     return m_active_spot_lights;
+}
+
+// ===========================================================================================
+//  Light Probe Grid
+// ===========================================================================================
+
+void render_scene_manager::create_light_probe_grid(render_object_id id, const char* name)
+{
+    std::scoped_lock lock(m_mutex);
+
+    std::unique_ptr<render_light_probe_grid> obj = std::make_unique<render_light_probe_grid>(id, this, m_renderer);
+    obj->init();
+    obj->set_name(name);
+
+    render_light_probe_grid* obj_ptr = obj.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(obj));
+    if (success)
+    {
+        m_active_light_probe_grids.push_back(obj_ptr);
+
+        db_verbose(renderer, "Created new light probe grid: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "render_light_probe_grid called with a duplicate id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::destroy_light_probe_grid(render_object_id id)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed light probe grid: {%zi} %s", id, iter->second->get_name().c_str());
+
+        m_active_light_probe_grids.erase(std::find(m_active_light_probe_grids.begin(), m_active_light_probe_grids.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_light_probe_grid called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_light_probe_grid_density(render_object_id id, float density)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_light_probe_grid* object = dynamic_cast<render_light_probe_grid*>(resolve_id(id)))
+    {
+        object->set_density(density);
+    }
+    else
+    {
+        db_warning(renderer, "set_light_probe_grid_density called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_light_probe_grid*> render_scene_manager::get_light_probe_grid()
+{
+    std::scoped_lock lock(m_mutex);
+
+    return m_active_light_probe_grids;
 }
 
 }; // namespace ws

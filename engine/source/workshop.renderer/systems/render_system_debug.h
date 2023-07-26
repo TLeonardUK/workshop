@@ -60,8 +60,32 @@ private:
     };
 #pragma pack(pop)
 
+    // Used to store a precalculated shape to avoid recalculating
+    // positional information each time a debug element is added.
+    enum class shape_type
+    {
+        sphere,
+    };
+
+    struct shape
+    {
+        shape_type type;
+        std::vector<vector3> positions;
+    };
+
+private:
+
+    shape& find_or_create_cached_shape(shape_type type);
+    void add_cached_shape(const shape& shape, const vector3& offset, const vector3& scale, const color& color);
+
+private:
+
+    std::mutex m_cached_shape_mutex;
+    std::vector<std::unique_ptr<shape>> m_cached_shapes;
+
     std::mutex m_vertices_mutex;
     std::vector<debug_primitive_vertex> m_vertices;
+    size_t m_queued_vertex_count = 0;
     size_t m_draw_vertex_count = 0;
 
     std::unique_ptr<ri_buffer> m_vertex_buffer;

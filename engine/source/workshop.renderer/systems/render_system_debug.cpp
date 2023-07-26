@@ -22,7 +22,7 @@
 
 namespace {
 
-constexpr int k_tesselation = 10;
+constexpr int k_tesselation = 7;
 constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
 
 };
@@ -63,17 +63,17 @@ void render_system_debug::step(const render_world_state& state)
 
     ri_interface& ri = m_renderer.get_render_interface();
 
-    if (m_vertices.empty())
+    if (m_queued_vertex_count == 0)
     {
         m_draw_vertex_count = 0;
         return;
     }
 
     // Make sure vertex buffer has enough space.
-    if (m_vertex_buffer == nullptr || m_vertex_buffer->get_element_count() < m_vertices.size())
+    if (m_vertex_buffer == nullptr || m_vertex_buffer->get_element_count() < m_queued_vertex_count)
     {
         ri_buffer::create_params params;
-        params.element_count = m_vertices.size();
+        params.element_count = m_queued_vertex_count;
         params.element_size = sizeof(debug_primitive_vertex);
         params.usage = ri_buffer_usage::vertex_buffer;
 
@@ -81,18 +81,18 @@ void render_system_debug::step(const render_world_state& state)
     }
 
     // Make sure index buffer has enough space.
-    if (m_index_buffer == nullptr || m_index_buffer->get_element_count() < m_vertices.size())
+    if (m_index_buffer == nullptr || m_index_buffer->get_element_count() < m_queued_vertex_count)
     {
         ri_buffer::create_params params;
-        params.element_count = m_vertices.size();
+        params.element_count = m_queued_vertex_count;
         params.element_size = sizeof(uint32_t);
         params.usage = ri_buffer_usage::index_buffer;
 
         m_index_buffer = ri.create_buffer(params, "Debug Primitive Index Buffer");
 
         // Update index buffer.
-        uint32_t* index_ptr = reinterpret_cast<uint32_t*>(m_index_buffer->map(0, m_vertices.size() * sizeof(uint32_t)));
-        for (size_t i = 0; i < m_vertices.size(); i++)
+        uint32_t* index_ptr = reinterpret_cast<uint32_t*>(m_index_buffer->map(0, m_queued_vertex_count * sizeof(uint32_t)));
+        for (size_t i = 0; i < m_queued_vertex_count; i++)
         {
             index_ptr[i] = static_cast<uint32_t>(i);
         }
@@ -100,27 +100,80 @@ void render_system_debug::step(const render_world_state& state)
     }
 
     // Update vertex buffer.
-    debug_primitive_vertex* vertex_ptr = reinterpret_cast<debug_primitive_vertex*>(m_vertex_buffer->map(0, m_vertices.size() * sizeof(debug_primitive_vertex)));
-    for (size_t i = 0; i < m_vertices.size(); i++)
-    {
-        vertex_ptr[i] = m_vertices[i];
-    }
+    debug_primitive_vertex* vertex_ptr = reinterpret_cast<debug_primitive_vertex*>(m_vertex_buffer->map(0, m_queued_vertex_count * sizeof(debug_primitive_vertex)));
+    memcpy(vertex_ptr, m_vertices.data(), m_queued_vertex_count * sizeof(debug_primitive_vertex));
     m_vertex_buffer->unmap(vertex_ptr);    
 
     // Reset vertex buffer so we can start filling it again.
-    m_draw_vertex_count = m_vertices.size();
-    m_vertices.clear();
+    m_draw_vertex_count = m_queued_vertex_count;
+    m_queued_vertex_count = 0;
+}
+
+render_system_debug::shape& render_system_debug::find_or_create_cached_shape(shape_type type)
+{
+    std::scoped_lock mutex(m_cached_shape_mutex);
+
+    for (auto& s : m_cached_shapes)
+    {
+        if (s->type == type)
+        {
+            return *s;
+        }
+    }
+
+    std::unique_ptr<shape> new_shape = std::make_unique<shape>();
+    new_shape->type = type;
+
+    shape* result = new_shape.get();
+    m_cached_shapes.push_back(std::move(new_shape));
+    return *result;
+}
+
+void render_system_debug::add_cached_shape(const shape& shape, const vector3& offset, const vector3& scale, const color& color)
+{
+    std::scoped_lock mutex(m_vertices_mutex);
+
+    size_t start_index = m_queued_vertex_count;
+    m_queued_vertex_count += shape.positions.size();
+    if (m_queued_vertex_count > m_vertices.size())
+    {
+        m_vertices.resize(m_queued_vertex_count);
+    }
+
+    for (size_t i = 0; i < shape.positions.size(); i += 2)
+    {
+        vector3 p1 = shape.positions[i];
+        vector3 p2 = shape.positions[i + 1];
+
+        p1 = offset + (p1 * scale);
+        p2 = offset + (p2 * scale);
+
+        debug_primitive_vertex& v0 = m_vertices[start_index + i + 0];
+        v0.position = p1;
+        v0.color = color.argb();
+
+        debug_primitive_vertex& v1 = m_vertices[start_index + i + 1];
+        v1.position = p2;
+        v1.color = color.argb();
+    }
 }
 
 void render_system_debug::add_line(const vector3& start, const vector3& end, const color& color)
 {
     std::scoped_lock mutex(m_vertices_mutex);
 
-    debug_primitive_vertex& v0 = m_vertices.emplace_back();
+    size_t start_index = m_queued_vertex_count;
+    m_queued_vertex_count += 2;
+    if (m_queued_vertex_count > m_vertices.size())
+    {
+        m_vertices.resize(m_queued_vertex_count);
+    }
+
+    debug_primitive_vertex& v0 = m_vertices[start_index + 0];
     v0.position = start;
     v0.color = color.argb();
 
-    debug_primitive_vertex& v1 = m_vertices.emplace_back();
+    debug_primitive_vertex& v1 = m_vertices[start_index + 1];
     v1.position = end;
     v1.color = color.argb();
 }
@@ -165,62 +218,65 @@ void render_system_debug::add_obb(const obb& bounds, const color& color)
 
 void render_system_debug::add_sphere(const sphere& bounds, const color& color)
 {
-    constexpr int k_tesselation = 15;
-    constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
-
-    float radius = bounds.radius;
-    vector3 origin = bounds.origin;
-
-    // Make horizontal bands going upwards.
-    for (size_t i = 0; i <= k_tesselation; i++)
+    shape& cached_shape = find_or_create_cached_shape(shape_type::sphere);
+    if (cached_shape.positions.empty())
     {
-        float vertical_delta = (i / k_float_tesselation);
-        float plane_radius = sin(vertical_delta * math::pi) * radius;
-        float y = (cos(vertical_delta * math::pi) * radius);
-
-        for (size_t j = 0; j <= k_tesselation; j++)
+        // Make horizontal bands going upwards.
+        for (size_t i = 0; i <= k_tesselation; i++)
         {
-            float radial_delta = (j / k_float_tesselation);
-            float next_radial_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
+            float vertical_delta = (i / k_float_tesselation);
+            float plane_radius = sin(vertical_delta * math::pi);
+            float y = cos(vertical_delta * math::pi);
 
-            float x = sin(radial_delta * math::pi2) * plane_radius;
-            float z = cos(radial_delta * math::pi2) * plane_radius;
-            float next_x = sin(next_radial_delta * math::pi2) * plane_radius;
-            float next_z = cos(next_radial_delta * math::pi2) * plane_radius;
+            for (size_t j = 0; j <= k_tesselation; j++)
+            {
+                float radial_delta = (j / k_float_tesselation);
+                float next_radial_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
 
-            add_line(origin + vector3(x, y, z), origin + vector3(next_x, y, next_z), color);
-        }            
-    }
+                float x = sin(radial_delta * math::pi2) * plane_radius;
+                float z = cos(radial_delta * math::pi2) * plane_radius;
+                float next_x = sin(next_radial_delta * math::pi2) * plane_radius;
+                float next_z = cos(next_radial_delta * math::pi2) * plane_radius;
 
-    // Makes vertical bands going around the sphere.
-    for (size_t i = 0; i <= k_tesselation; i++)
-    {
-        float horizontal_delta = (i / k_float_tesselation);
-        float angle = horizontal_delta * math::pi2;
+                cached_shape.positions.push_back(vector3(x, y, z));
+                cached_shape.positions.push_back(vector3(next_x, y, next_z));
+            }            
+        }
 
-        for (size_t j = 0; j < k_tesselation; j++)
+        // Makes vertical bands going around the sphere.
+        for (size_t i = 0; i <= k_tesselation; i++)
         {
-            float vertical_delta = (j / k_float_tesselation);
-            float next_vertical_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
+            float horizontal_delta = (i / k_float_tesselation);
+            float angle = horizontal_delta * math::pi2;
 
-            float plane_radius = sin(vertical_delta * math::pi) * radius;
-            float next_plane_radius = sin(next_vertical_delta * math::pi) * radius;
+            for (size_t j = 0; j < k_tesselation; j++)
+            {
+                float vertical_delta = (j / k_float_tesselation);
+                float next_vertical_delta = ((j + 1) % (k_tesselation + 1)) / k_float_tesselation;
 
-            float y = (cos(vertical_delta * math::pi) * radius);
-            float next_y = (cos(next_vertical_delta * math::pi) * radius);
+                float plane_radius = sin(vertical_delta * math::pi);
+                float next_plane_radius = sin(next_vertical_delta * math::pi);
 
-            float radial_delta = sin(radial_delta * math::pi2) * plane_radius;
-            float nex_radial_delta = sin(radial_delta * math::pi2) * next_plane_radius;
+                float y = cos(vertical_delta * math::pi);
+                float next_y = cos(next_vertical_delta * math::pi);
 
-            float x = sin(angle) * plane_radius;
-            float next_x = sin(angle) * next_plane_radius;
+                float radial_delta = sin(radial_delta * math::pi2) * plane_radius;
+                float nex_radial_delta = sin(radial_delta * math::pi2) * next_plane_radius;
 
-            float z = cos(angle) * plane_radius;
-            float next_z = cos(angle) * next_plane_radius;
+                float x = sin(angle) * plane_radius;
+                float next_x = sin(angle) * next_plane_radius;
 
-            add_line(origin + vector3(x, y, z), origin + vector3(next_x, next_y, next_z), color);
+                float z = cos(angle) * plane_radius;
+                float next_z = cos(angle) * next_plane_radius;
+
+                cached_shape.positions.push_back(vector3(x, y, z));
+                cached_shape.positions.push_back(vector3(next_x, next_y, next_z));
+            }
         }
     }
+
+    // Transform cached shape and add to screen.
+    add_cached_shape(cached_shape, bounds.origin, vector3(bounds.radius, bounds.radius, bounds.radius), color);
 }
 
 void render_system_debug::add_frustum(const frustum& bounds, const color& color)

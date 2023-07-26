@@ -176,6 +176,19 @@ public:
     // Radiuses are in radians are range from [0, pi]
     void set_spot_light_radius(render_object_id id, float inner_radius, float outer_radius);
 
+    // ===========================================================================================
+    //  Light Probe Grid
+    // ===========================================================================================
+
+    // Creates a new light probe grid in the scene.
+    render_object_id create_light_probe_grid(const char* name);
+
+    // Destroys a light probe grid previously created with create_light_probe_grid
+    void destroy_light_probe_grid(render_object_id id);
+
+    // Sets the density of a light probe grid, as a value that represents the seperation between each probe.
+    void set_light_probe_grid_density(render_object_id id, float density);
+
 private:
     renderer& m_renderer;
 
