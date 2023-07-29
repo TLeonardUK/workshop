@@ -25,13 +25,13 @@ class render_pass_callback
 {
 public:
 
-    using callback_type_t = std::function<void(renderer& renderer, generated_state& output, render_view& view)>;
+    using callback_type_t = std::function<void(renderer& renderer, generated_state& output, render_view* view)>;
 
     callback_type_t callback;
 
 public:
 
-    virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
+    virtual void generate(renderer& renderer, generated_state& output, render_view* view) override;
 
 };
 

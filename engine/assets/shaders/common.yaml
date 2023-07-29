@@ -50,12 +50,19 @@ output_targets:
     #color: [ R16G16B16A16, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT ]
     color: [ R16G16B16A16_FLOAT, R8G8B8A8_SNORM, R32G32B32A32_FLOAT ]
     depth: D24_UNORM_S8_UINT
-  # Swapchain output target.
-  swapchain:
+  # SDR Swapchain output target.
+  sdr_swapchain:
     color: [ R8G8B8A8 ]
-  # Swapchain output target.
-  swapchain_and_depth:
+  # SDR Swapchain output target.
+  sdr_swapchain_and_depth:
     color: [ R8G8B8A8 ]
+    depth: D24_UNORM_S8_UINT
+  # HDR Swapchain output target.
+  hdr_swapchain:
+    color: [ R32G32B32A32_FLOAT ]
+  # HDR Swapchain output target.
+  hdr_swapchain_and_depth:
+    color: [ R32G32B32A32_FLOAT ]
     depth: D24_UNORM_S8_UINT
   # Light accumulation buffer.
   light_buffer:
@@ -138,6 +145,7 @@ param_blocks:
       shadow_map_sampler: sampler
       visualization_mode: int
       light_grid_size: uint3
+      uv_scale: float2
 
 defines:
   # The size of the grid the frustum is split into for light culling.

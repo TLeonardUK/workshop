@@ -45,6 +45,12 @@ public:
     // must be taken with what it accesses. 
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) {};
 
+    // Called once per frame, generates a graph for rendering that occurs before all view rendering.
+    virtual void build_pre_graph(render_graph& graph, const render_world_state& state) {};
+
+    // Called once per frame, generates a graph for rendering that occurs after all view rendering.
+    virtual void build_post_graph(render_graph& graph, const render_world_state& state) {};
+
 protected:
 
     renderer& m_renderer;

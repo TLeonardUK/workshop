@@ -16,7 +16,7 @@
 
 namespace ws {
 
-void render_pass_fullscreen::generate(renderer& renderer, generated_state& state_output, render_view& view)
+void render_pass_fullscreen::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
     // Grab fullscreen buffers for the render pass.
     ri_data_layout layout;
@@ -33,7 +33,7 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
     
     if (technique)
     {
-        vertex_info_param_block = view.get_resource_cache().find_or_create_param_block(get_cache_key(view), "vertex_info");
+        vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info");
         vertex_info_param_block->set("vertex_buffer", *vertex_buffer);
         vertex_info_param_block->set("vertex_buffer_offset", 0u);
         vertex_info_param_block->clear_buffer("instance_buffer");
@@ -71,9 +71,9 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         {
             list.set_pipeline(*technique->pipeline.get());
             list.set_render_targets(output.color_targets, output.depth_target);
-            list.set_param_blocks(bind_param_blocks(view.get_resource_cache()));
-            list.set_viewport(view.get_viewport());
-            list.set_scissor(view.get_viewport());
+            list.set_param_blocks(bind_param_blocks(view->get_resource_cache()));
+            list.set_viewport(view->get_viewport());
+            list.set_scissor(view->get_viewport());
             list.set_primitive_topology(ri_primitive::triangle_list);
             list.set_index_buffer(*index_buffer);
             list.draw(6, 1);

@@ -37,5 +37,5 @@ techniques:
       entry: pshader
     render_state: debug_primitive_render_state
     vertex_layout: debug_primitive_vertex
-    output_target: swapchain_and_depth
+    output_target: sdr_swapchain_and_depth
     param_blocks: [ view_info ]

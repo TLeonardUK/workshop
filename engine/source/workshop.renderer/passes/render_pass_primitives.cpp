@@ -16,9 +16,9 @@
 
 namespace ws {
 
-void render_pass_primitives::generate(renderer& renderer, generated_state& state_output, render_view& view)
+void render_pass_primitives::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
-    ri_param_block* vertex_info_param_block = view.get_resource_cache().find_or_create_param_block(get_cache_key(view), "vertex_info");
+    ri_param_block* vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info");
     vertex_info_param_block->set("vertex_buffer", *vertex_buffer);
     vertex_info_param_block->set("vertex_buffer_offset", 0u);
     vertex_info_param_block->clear_buffer("instance_buffer");
@@ -32,13 +32,13 @@ void render_pass_primitives::generate(renderer& renderer, generated_state& state
         list.barrier(*output.depth_target.texture, ri_resource_state::initial, ri_resource_state::depth_read);
         list.set_pipeline(*technique->pipeline.get());
         list.set_render_targets(output.color_targets, output.depth_target);
-        list.set_viewport(view.get_viewport());
-        list.set_scissor(view.get_viewport());
+        list.set_viewport(view->get_viewport());
+        list.set_scissor(view->get_viewport());
         list.set_primitive_topology(ri_primitive::line_list);
         list.set_index_buffer(*index_buffer);
         list.set_param_blocks({
             vertex_info_param_block,
-            view.get_view_info_param_block()
+            view->get_view_info_param_block()
             });
         list.draw(vertex_count, 1, 0);
 

@@ -51,5 +51,5 @@ techniques:
       entry: pshader
     render_state: imgui_render_state
     vertex_layout: imgui_vertex
-    output_target: swapchain
+    output_target: sdr_swapchain
     param_blocks: [ imgui_params ]

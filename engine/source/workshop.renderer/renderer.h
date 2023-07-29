@@ -249,6 +249,12 @@ private:
     // Renders the give view.
     void render_single_view(render_world_state& state, render_view& view, std::vector<render_pass::generated_state>& output);
 
+    // Renders all pre-view work.
+    void render_pre_views(render_world_state& state, std::vector<render_pass::generated_state>& output);
+
+    // Renders all post-view work.
+    void render_post_views(render_world_state& state, std::vector<render_pass::generated_state>& output);
+
     // Runs all callbacks that have been queued.
     void run_callbacks();
 

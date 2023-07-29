@@ -13,7 +13,10 @@ imports: [ data:shaders/common.yaml ]
 effects:
   resolve_swapchain:
     techniques:
-      resolve_swapchain: {}
+      resolve_swapchain_hdr:
+        hdr_output: [ true ]
+      resolve_swapchain_sdr:
+        hdr_output: [ false ]
 
 param_blocks:
   resolve_parameters:
@@ -22,9 +25,12 @@ param_blocks:
       visualization_mode: int
       light_buffer_texture: texture2d
       light_buffer_sampler: sampler     
+      uv_scale: float2
+      tonemap_enabled: bool
 
 techniques:
-  resolve_swapchain:
+
+  resolve_swapchain_hdr:
     vertex_shader: 
       file: data:shaders/source/fullscreen_pass.hlsl
       entry: fullscreen_vshader
@@ -33,5 +39,18 @@ techniques:
       entry: pshader
     render_state: no_depth_test
     vertex_layout: vertex2d_pos_uv
-    output_target: swapchain
+    output_target: hdr_swapchain
     param_blocks: [ gbuffer, resolve_parameters ]
+
+  resolve_swapchain_sdr:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/resolve_swapchain.hlsl
+      entry: pshader
+    render_state: no_depth_test
+    vertex_layout: vertex2d_pos_uv
+    output_target: sdr_swapchain
+    param_blocks: [ gbuffer, resolve_parameters ]
+

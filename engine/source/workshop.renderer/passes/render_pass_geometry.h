@@ -32,7 +32,7 @@ public:
 
     render_pass_geometry();
 
-    virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
+    virtual void generate(renderer& renderer, generated_state& output, render_view* view) override;
 
 private:
     statistics_channel* m_stats_triangles_rendered;

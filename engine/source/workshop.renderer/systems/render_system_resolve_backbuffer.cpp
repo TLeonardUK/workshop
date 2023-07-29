@@ -28,15 +28,9 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
         return;
     }
 
-    ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_parameters");
-    resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
-    resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
-    resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-
     std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
     pass->name = "resolve swapchain";
     pass->system = this;
-    pass->technique = m_renderer.get_effect_manager().get_technique("resolve_swapchain", {});
 
     if (view.has_render_target())
     {   
@@ -46,6 +40,38 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     {
         pass->output = m_renderer.get_swapchain_output();
     }
+
+    bool is_hdr_output = (pass->output.color_targets[0].texture->get_format() == ri_texture_format::R32G32B32A32_FLOAT);
+
+    if (is_hdr_output)
+    {
+        pass->technique = m_renderer.get_effect_manager().get_technique("resolve_swapchain", { 
+            { "hdr_output", "true" }
+        });
+    }
+    else
+    {
+        pass->technique = m_renderer.get_effect_manager().get_technique("resolve_swapchain", { 
+            { "hdr_output", "false" } 
+        });
+    }
+
+    ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_parameters");
+    if (view.has_flag(render_view_flags::scene_only))
+    {
+        resolve_param_block->set("visualization_mode", (int)visualization_mode::normal);
+    }
+    else
+    {
+        resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
+    }
+    resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
+    resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    resolve_param_block->set("tonemap_enabled", !is_hdr_output);
+    resolve_param_block->set("uv_scale", vector2(
+        (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
+        (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
+    ));
 
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
     pass->param_blocks.push_back(resolve_param_block);

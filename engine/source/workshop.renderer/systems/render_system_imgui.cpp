@@ -32,7 +32,8 @@ void render_system_imgui::register_init(init_list& list)
 
 void render_system_imgui::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
-    if (!view.has_flag(render_view_flags::normal))
+    if (!view.has_flag(render_view_flags::normal) ||
+         view.has_flag(render_view_flags::scene_only))
     {
         return;
     }

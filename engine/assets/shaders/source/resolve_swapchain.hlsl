@@ -16,7 +16,7 @@ struct swapchain_output
  
 swapchain_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment f = read_gbuffer(input.uv);
+    gbuffer_fragment f = read_gbuffer(input.uv * uv_scale);
 
     swapchain_output output;
     bool tonemap = false;
@@ -56,14 +56,14 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::light_clusters:
         case visualization_mode_t::light_heatmap:        
         {
-            output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv);
+            output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv * uv_scale);
             tonemap = true;
             break;
         }
     }
     
     // Gamma correct the output
-    if (tonemap)
+    if (tonemap && tonemap_enabled)
     {
         output.color.rgb = tonemap_reinhard(output.color.rgb);
     }

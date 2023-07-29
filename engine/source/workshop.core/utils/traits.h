@@ -74,4 +74,43 @@ constexpr size_t type_id()
     return const_hash(view.data(), view.size());
 }
 
+// Defines operators for treating an enum as bitwise flags.
+#define DEFINE_ENUM_FLAGS(t)                                                                    \
+    inline t operator|(t a, t b)                                                                \
+    {                                                                                           \
+        using under_type = std::underlying_type<t>::type;                                       \
+        return static_cast<t>(static_cast<under_type>(a) | static_cast<under_type>(b));         \
+    }                                                                                           \
+    inline t operator&(t a, t b)                                                                \
+    {                                                                                           \
+        using under_type = std::underlying_type<t>::type;                                       \
+        return static_cast<t>(static_cast<under_type>(a) & static_cast<under_type>(b));         \
+    }                                                                                           \
+    inline t operator^(t a, t b)                                                                \
+    {                                                                                           \
+        using under_type = std::underlying_type<t>::type;                                       \
+        return static_cast<t>(static_cast<under_type>(a) ^ static_cast<under_type>(b));         \
+    }                                                                                           \
+    inline t operator~(t a)                                                                     \
+    {                                                                                           \
+        using under_type = std::underlying_type<t>::type;                                       \
+        return static_cast<t>(~static_cast<under_type>(a));                                     \
+    }                                                                                           \
+    inline t& operator!=(t& a, t b)                                                             \
+    {                                                                                           \
+        a = a | b;                                                                              \
+        return a;                                                                               \
+    }                                                                                           \
+    inline t& operator&=(t& a, t b)                                                             \
+    {                                                                                           \
+        a = a & b;                                                                              \
+        return a;                                                                               \
+    }                                                                                           \
+    inline t& operator^=(t& a, t b)                                                             \
+    {                                                                                           \
+        a = a ^ b;                                                                              \
+        return a;                                                                               \
+    }                                                                                           
+
+
 }; // namespace workshop

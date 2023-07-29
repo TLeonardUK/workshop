@@ -81,7 +81,7 @@ void render_system_shadows::step(const render_world_state& state)
 
         for (render_view* view : views)
         {
-            if (view->get_flags() != render_view_flags::normal)
+            if ((view->get_flags() & render_view_flags::normal) == (render_view_flags)0)
             {
                 continue;
             }
@@ -188,6 +188,8 @@ void render_system_shadows::step(const render_world_state& state)
 
 render_system_shadows::shadow_info& render_system_shadows::find_or_create_shadow_info(render_object_id light_id, render_object_id view_id)
 {
+    std::scoped_lock lock(m_shadow_info_mutex);
+
     for (shadow_info& info : m_shadow_info)
     {
         if (info.light_id == light_id && (info.view_id == view_id || info.view_id == 0))

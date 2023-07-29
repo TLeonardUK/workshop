@@ -672,7 +672,7 @@ void render_scene_manager::set_light_probe_grid_density(render_object_id id, flo
     }
 }
 
-std::vector<render_light_probe_grid*> render_scene_manager::get_light_probe_grid()
+std::vector<render_light_probe_grid*> render_scene_manager::get_light_probe_grids()
 {
     std::scoped_lock lock(m_mutex);
 

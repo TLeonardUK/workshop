@@ -28,7 +28,7 @@ render_pass_geometry::render_pass_geometry()
     m_stats_culled_instances    = statistics_manager::get().find_or_create_channel("rendering/culled_instances",    1.0f, statistics_commit_point::end_of_render);
 }
 
-void render_pass_geometry::generate(renderer& renderer, generated_state& state_output, render_view& view)
+void render_pass_geometry::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
     std::vector<render_batch*> batches = renderer.get_batch_manager().get_batches(
         domain, 
@@ -67,8 +67,8 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         // Setup initial state.
         list.set_pipeline(*active_technique->pipeline.get());
         list.set_render_targets(output.color_targets, output.depth_target);
-        list.set_viewport(view.get_viewport());
-        list.set_scissor(view.get_viewport());
+        list.set_viewport(view->get_viewport());
+        list.set_scissor(view->get_viewport());
         list.set_primitive_topology(ri_primitive::triangle_list);
 
         // Grab some default values used to contruct param blocks.
@@ -93,7 +93,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             model::vertex_buffer* vertex_buffer = key.model->find_or_create_vertex_buffer(active_technique->pipeline->get_create_params().vertex_layout);
 
             // Generate the geometry_info block for this material.  
-            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(view), "geometry_info",  [&material_info, default_black, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
+            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "geometry_info",  [&material_info, default_black, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
                 param_block.set("albedo_texture", *material_info.material->get_texture("albedo_texture", default_black));
                 param_block.set("opacity_texture", *material_info.material->get_texture("opacity_texture", default_white));
                 param_block.set("metallic_texture", *material_info.material->get_texture("metallic_texture", default_black));
@@ -107,7 +107,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             });
 
             // Generate the instance buffer for this batch.
-            render_batch_instance_buffer* instance_buffer = batch->get_resource_cache().find_or_create_instance_buffer(get_cache_key(view));
+            render_batch_instance_buffer* instance_buffer = batch->get_resource_cache().find_or_create_instance_buffer(get_cache_key(*view));
             size_t visible_instance_count = 0;
 
             for (size_t j = 0; j < instances.size(); j++)
@@ -115,7 +115,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
                 const render_batch_instance& instance = instances[j];
 
                 // Skip instance if its not visibile this frame.
-                if (!view.is_object_visible(instance.object))
+                if (!view->is_object_visible(instance.object))
                 {
                     culled_instances++;
                     continue;
@@ -138,14 +138,14 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             }
 
             // Generate the vertex info buffer for this batch.
-            ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(view), "vertex_info", {});
+            ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info", {});
             vertex_info_param_block->set("vertex_buffer", *vertex_buffer->vertex_buffer.get());
             vertex_info_param_block->set("vertex_buffer_offset", 0u);
             vertex_info_param_block->set("instance_buffer", instance_buffer->get_buffer());        
 
             // Put together param block list to use.
-            std::vector<ri_param_block*> blocks = bind_param_blocks(view.get_resource_cache());
-            blocks.push_back(view.get_view_info_param_block());
+            std::vector<ri_param_block*> blocks = bind_param_blocks(view->get_resource_cache());
+            blocks.push_back(view->get_view_info_param_block());
             blocks.push_back(geometry_info_param_block);
             blocks.push_back(vertex_info_param_block);
             list.set_param_blocks(blocks);

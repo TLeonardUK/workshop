@@ -191,7 +191,7 @@ public:
     void set_light_probe_grid_density(render_object_id id, float density);
 
     // Gets a list of all active light probe grid
-    std::vector<render_light_probe_grid*> get_light_probe_grid();
+    std::vector<render_light_probe_grid*> get_light_probe_grids();
 
 private:
 

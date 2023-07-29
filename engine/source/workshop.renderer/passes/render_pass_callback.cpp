@@ -16,7 +16,7 @@
 
 namespace ws {
 
-void render_pass_callback::generate(renderer& renderer, generated_state& state_output, render_view& view)
+void render_pass_callback::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
     if (callback)
     {

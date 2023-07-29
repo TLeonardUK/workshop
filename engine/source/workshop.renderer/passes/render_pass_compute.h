@@ -24,7 +24,7 @@ public:
     
 public:
 
-    virtual void generate(renderer& renderer, generated_state& output, render_view& view) override;
+    virtual void generate(renderer& renderer, generated_state& output, render_view* view) override;
 
 private:
 

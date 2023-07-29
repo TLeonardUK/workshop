@@ -526,7 +526,7 @@ uint get_cluster_index(float3 world_position)
 
 lightbuffer_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment frag = read_gbuffer(input.uv);
+    gbuffer_fragment frag = read_gbuffer(input.uv * uv_scale);
 
     // Calculate ambient lighting from our light probes.
     float3 ambient_lighting = calculate_ambient_lighting(frag);

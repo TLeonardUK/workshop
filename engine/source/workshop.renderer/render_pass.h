@@ -49,7 +49,7 @@ public:
     // Generates any command lists or other state required to execute this pass.
     // This is run in parallel with all other passes, so care must be taken
     // with what it accesses.
-    virtual void generate(renderer& renderer, generated_state& output, render_view& view) = 0;
+    virtual void generate(renderer& renderer, generated_state& output, render_view* view) = 0;
 
 };
 

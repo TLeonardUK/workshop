@@ -174,6 +174,10 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("light_cluster_buffer", *m_light_cluster_buffer, true);
         resolve_param_block->set("light_cluster_visibility_buffer", *m_light_cluster_visibility_buffer, true);
         resolve_param_block->set("light_cluster_visibility_count_buffer", *m_light_cluster_visibility_count_buffer, true);
+        resolve_param_block->set("uv_scale", vector2(
+            (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
+            (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
+        ));
     }
 
     // Add pass to run compute shader to generate the clusters.

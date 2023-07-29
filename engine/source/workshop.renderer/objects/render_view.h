@@ -7,6 +7,7 @@
 #include "workshop.core/math/rect.h"
 #include "workshop.core/math/frustum.h"
 #include "workshop.core/math/matrix4.h"
+#include "workshop.core/utils/traits.h"
 
 #include "workshop.renderer/render_object.h"
 #include "workshop.render_interface/ri_texture.h"
@@ -46,8 +47,12 @@ enum class render_view_flags
     depth_only              = 2,
 
     // Same as depth_only but depth is stored in a linear format.
-    linear_depth_only       = 4
+    linear_depth_only       = 4,
+
+    // Skips rendering of anything like debug primitives, hud, etc.
+    scene_only              = 8,
 };
+DEFINE_ENUM_FLAGS(render_view_flags);
 
 // ================================================================================================
 //  Order of rendering a view. This is treated as an int, the named values are just rough
@@ -55,7 +60,9 @@ enum class render_view_flags
 // ================================================================================================
 enum class render_view_order
 {
-    shadows = -1000,
+    shadows = -2000,
+
+    light_probe = -1000,
 
     normal = 0,
 };

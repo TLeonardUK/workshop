@@ -80,8 +80,9 @@ ws::result<void> rl_game_app::start()
     */
 
     object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
-    cmd_queue.set_light_probe_grid_density(object_id, 100.0f);
-    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3(1000.f, 100.0f, 1000.0f));
+    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
+    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2100.0f, 2200.0f));
+    m_light_probe_id = object_id;
 
 //    object_id = cmd_queue.create_reflection_probe_grid("Reflection Probe Grid");
 //    cmd_queue.set_reflection_probe_grid_density(object_id, true);
@@ -92,6 +93,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
     
+#if 0
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_shadow_casting(object_id, false);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
@@ -99,9 +101,11 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_light_range(object_id, 100.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+#endif
 
     m_light_id = object_id;
 
+#if 0
     for (size_t i = 0; i < 100; i++)
     {
         moving_light& light = m_moving_lights.emplace_back();
@@ -124,6 +128,7 @@ ws::result<void> rl_game_app::start()
         cmd_queue.set_light_color(light.id, color);
         cmd_queue.set_object_transform(light.id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
     }
+#endif
 
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
@@ -159,6 +164,7 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
+    /*
     for (int z = -2; z <= 2; z++)
     {
         for (int y = 0; y <= 4; y++)
@@ -170,6 +176,7 @@ void rl_game_app::step(const frame_time& time)
             }
         }
     }
+    */
 
     //if (time.frame_count < 10)
     {
@@ -194,7 +201,7 @@ void rl_game_app::step(const frame_time& time)
     quat light_rot =  quat::identity;//quat::angle_axis(angle * 0.5f, vector3::up);
     //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
     //quat light_rot = quat::angle_axis(-math::halfpi*0.85f, vector3::right);
-    cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
+    //cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
     cmd_queue.draw_sphere(sphere(light_pos, 100.0f), color::red);
     cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);
 

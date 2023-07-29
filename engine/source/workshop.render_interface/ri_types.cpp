@@ -11,7 +11,7 @@ namespace ws {
 size_t ri_bytes_for_data_type(ri_data_type value)
 {    
     static std::array<size_t, static_cast<int>(ri_data_type::COUNT)> conversion = {
-        1,  // t_bool,
+        4,  // t_bool,
         4,  // t_int,
         4,  // t_uint,
         2,  // t_half,

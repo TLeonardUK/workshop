@@ -16,7 +16,7 @@
 
 namespace ws {
 
-void render_pass_compute::generate(renderer& renderer, generated_state& state_output, render_view& view)
+void render_pass_compute::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
     size_t group_size_x;
     size_t group_size_y;
@@ -37,7 +37,11 @@ void render_pass_compute::generate(renderer& renderer, generated_state& state_ou
         profile_gpu_marker(list, profile_colors::gpu_compute, "%s", name.c_str());
 
         // Resolve all the param blocks we are going to use.
-        std::vector<ri_param_block*> blocks = bind_param_blocks(view.get_resource_cache());
+        std::vector<ri_param_block*> blocks = param_blocks; 
+        if (view)
+        {
+            blocks = bind_param_blocks(view->get_resource_cache());
+        }
 
         // Put together param block list to use.
         list.set_pipeline(*technique->pipeline);

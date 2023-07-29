@@ -12,6 +12,7 @@
 #include "workshop.renderer/systems/render_system_geometry.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/systems/render_system_shadows.h"
+#include "workshop.renderer/systems/render_system_light_probes.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_effect_manager.h"
@@ -110,6 +111,7 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
+    m_systems.push_back(std::make_unique<render_system_light_probes>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
@@ -528,6 +530,14 @@ void renderer::render_state(render_world_state& state)
         return a.view->get_view_order() < b.view->get_view_order();
     });
 
+    // Do pre generation.
+    std::vector<render_pass::generated_state> pre_generated_states;
+    render_pre_views(state, pre_generated_states);
+
+    // Do post generation.
+    std::vector<render_pass::generated_state> post_generated_states;
+    render_post_views(state, post_generated_states);
+
     // Before dispatching command lists flush any uploads that may have been queued as part of generation.
     m_render_interface.flush_uploads();
 
@@ -552,6 +562,20 @@ void renderer::render_state(render_world_state& state)
     {
         profile_marker(profile_colors::render, "dispatch command lists");
 
+        // Dispatch all pre work.
+        {
+            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "pre views");
+
+            for (render_pass::generated_state& state : pre_generated_states)
+            {
+                for (auto& graphics_list : state.graphics_command_lists)
+                {
+                    graphics_command_queue.execute(*graphics_list);
+                }
+            }
+        }
+
+        // Dispatch all generated states for each view.
         for (size_t i = 0; i < view_generated_states.size(); i++)
         {            
             view_generated_state& generated_state_list = view_generated_states[i];
@@ -559,6 +583,19 @@ void renderer::render_state(render_world_state& state)
             profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "render view: %s", generated_state_list.view->get_name().c_str());
 
             for (render_pass::generated_state& state : generated_state_list.states)
+            {
+                for (auto& graphics_list : state.graphics_command_lists)
+                {
+                    graphics_command_queue.execute(*graphics_list);
+                }
+            }
+        }
+
+        // Dispatch all post work.
+        {
+            profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "post views");
+
+            for (render_pass::generated_state& state : post_generated_states)
             {
                 for (auto& graphics_list : state.graphics_command_lists)
                 {
@@ -633,10 +670,76 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
         profile_marker(profile_colors::render, "generate render pass: %s", node->pass->name.c_str());        
         //get_technique(node->pass->effect_name.c_str(), node->pass->effect_variations);
 
-        node->pass->generate(*this, output[index], view);
+        node->pass->generate(*this, output[index], &view);
     });
 
     view.clear_dirty();
+}
+
+void renderer::render_pre_views(render_world_state& state, std::vector<render_pass::generated_state>& output)
+{
+    profile_marker(profile_colors::render, "render pre view");
+
+    // Generate a render graph for rendering this graph.
+    render_graph graph;
+    {
+        profile_marker(profile_colors::render, "build graph");
+
+        for (auto& system : m_systems)
+        {
+            system->build_pre_graph(graph, state);
+        }
+    }
+
+    std::vector<render_graph::node*> nodes;
+    {
+        profile_marker(profile_colors::render, "get active nodes");
+
+        graph.get_active(nodes);
+        output.resize(nodes.size());
+    }
+ 
+    // Render each pass in parallel.
+    parallel_for("generate render passs", task_queue::standard, nodes.size(), [this, &state, &output, &nodes](size_t index) {
+        render_graph::node* node = nodes[index];
+        
+        profile_marker(profile_colors::render, "generate render pass: %s", node->pass->name.c_str());        
+
+        node->pass->generate(*this, output[index], nullptr);
+    });
+}
+
+void renderer::render_post_views(render_world_state& state, std::vector<render_pass::generated_state>& output)
+{
+    profile_marker(profile_colors::render, "render post view");
+
+    // Generate a render graph for rendering this graph.
+    render_graph graph;
+    {
+        profile_marker(profile_colors::render, "build graph");
+
+        for (auto& system : m_systems)
+        {
+            system->build_post_graph(graph, state);
+        }
+    }
+
+    std::vector<render_graph::node*> nodes;
+    {
+        profile_marker(profile_colors::render, "get active nodes");
+
+        graph.get_active(nodes);
+        output.resize(nodes.size());
+    }
+ 
+    // Render each pass in parallel.
+    parallel_for("generate render passs", task_queue::standard, nodes.size(), [this, &state, &output, &nodes](size_t index) {
+        render_graph::node* node = nodes[index];
+        
+        profile_marker(profile_colors::render, "generate render pass: %s", node->pass->name.c_str());        
+
+        node->pass->generate(*this, output[index], nullptr);
+    });
 }
 
 void renderer::render_job()

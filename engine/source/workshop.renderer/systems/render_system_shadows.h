@@ -90,6 +90,8 @@ private:
     void update_cascade_param_block(cascade_info& cascade);
 
 private:
+    std::mutex m_shadow_info_mutex;
+
     std::vector<shadow_info> m_shadow_info;
 
 };
