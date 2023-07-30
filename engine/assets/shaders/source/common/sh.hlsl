@@ -81,7 +81,14 @@ float3 calculate_sh_irradiance(float3 normal, sh_color_coefficients radiance)
 
 float3 calculate_sh_diffuse(float3 normal, sh_color_coefficients radiance, float3 albedo)
 {
-    return calculate_sh_irradiance(normal, radiance) * albedo / pi;
+    float3 result = calculate_sh_irradiance(normal, radiance) * albedo / pi;
+
+    // TODO: Shouldn't be required.
+    result.r = max(result.r, 0.0f);
+    result.g = max(result.g, 0.0f);
+    result.b = max(result.b, 0.0f);
+
+    return result;
 }
 
 #endif

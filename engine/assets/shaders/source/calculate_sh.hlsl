@@ -11,6 +11,7 @@
 // https://github.com/nicknikolov/cubemap-sh/blob/master/index.js
 // http://www.ppsloan.org/publications/StupidSH36.pdf
 // https://www.gamedev.net/forums/topic/671562-spherical-harmonics-cubemap/
+// https://github.com/microsoft/DirectXMath/blob/22e6d747994600e00834faff5fc2a95ab60f1790/SHMath/DirectXSHD3D12.cpp#L182
 
 struct cshader_input
 {
@@ -27,7 +28,7 @@ float get_texel_area(float x, float y)
 
 float get_texel_weight(int x, int y, int width, int height)
 {
-#if 1
+#if 0
     float2 uv = float2(
         (2.0 * (x + 0.5) / width) - 1.0,
         (2.0 * (y + 0.5) / height) - 1.0
@@ -46,13 +47,14 @@ float get_texel_weight(int x, int y, int width, int height)
     float angle = get_texel_area(x0, y0) - get_texel_area(x0, y1) - get_texel_area(x1, y0) + get_texel_area(x1, y1);
     return angle;
 #else
-    float u = (x + 0.5f) / width;
-    float v = (y + 0.5f) / height;
-    u = u * 2.0f - 1.0f;
-    v = v * 2.0f - 1.0f;
+    float fB = -1.0f + 1.0f / width;
+    float fS = 2.0f*(1.0f - 1.0f / width) / (width - 1.0f);
+
+    float u = float(x) * fS + fB;
+    float v = float(y) * fS + fB;
 
     float temp = 1.0f + u * u + v * v;
-    return 4.0f / (sqrt(temp) * temp);
+    return 4.0f / (temp * sqrt(temp));
 #endif
 }
 
@@ -80,14 +82,16 @@ void cshader(cshader_input input)
         for (int x = 0; x < cube_size; x++)
         {
             float weight = get_texel_weight(x, y, cube_size, cube_size);
-            
+
             float3 texel_normal = get_cubemap_normal(face_index, float2(x, y) * uv_step);
             float3 texel_color = cube_texture.SampleLevel(cube_sampler, texel_normal, 0);
 
             sh_coefficients coeff = calculate_sh_coefficients(texel_normal);
             for (int c = 0; c < 9; c++)
             {
-                coefficients[c] += texel_color * coeff.coefficients[c] * weight; 
+                float3 v = coefficients[c];
+                v += texel_color * coeff.coefficients[c] * float3(weight, weight, weight); 
+                coefficients[c] = v;
             }
 
             weight_accumulation += weight;
@@ -97,7 +101,8 @@ void cshader(cshader_input input)
     // Normalize and correct for mapping onto a sphere.
     for (int i = 0; i < 9; i++)
     {
-        shared_coefficients[face_index][i] = coefficients[i] * (4.0f * pi / weight_accumulation);
+        float3 normalized = coefficients[i] * ((4.0f * pi) / weight_accumulation);
+        shared_coefficients[face_index][i] = normalized;
     }
 
     GroupMemoryBarrierWithGroupSync();

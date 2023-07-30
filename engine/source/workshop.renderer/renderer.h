@@ -322,7 +322,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::normal;
+    visualization_mode m_visualization_mode = visualization_mode::light_probes;
     bool m_draw_octtree_cell_bounds = false;
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;
