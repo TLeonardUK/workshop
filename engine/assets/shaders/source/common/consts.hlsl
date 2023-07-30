@@ -18,7 +18,8 @@ enum visualization_mode_t
     lighting,
     shadow_cascades,
     light_clusters,
-    light_heatmap
+    light_heatmap,
+    light_probes
 };
 
 static const float3 debug_colors[8] = 

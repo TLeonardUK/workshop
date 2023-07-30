@@ -497,6 +497,11 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
 
 float3 calculate_ambient_lighting(gbuffer_fragment frag)
 {
+    if (!apply_ambient)
+    {
+        return float3(0.0f, 0.0f, 0.0f);
+    }
+
     float3 albedo = frag.albedo;
     if (visualization_mode == visualization_mode_t::lighting)
     {
@@ -504,7 +509,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     }
 
     // TODO: Do IBL.
-//    return 0;
+    //return 0;
     return float3(0.03, 0.03, 0.03) * albedo;
 }
 

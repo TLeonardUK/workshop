@@ -1,0 +1,43 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to  render spheres representing light probe contributions.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  light_probe_debug:
+    techniques:
+      light_probe_debug: {}
+
+param_blocks:
+  light_probe_instance_info:
+    scope: instance
+    fields:
+      model_matrix: float4x4
+      sh_table_index: int
+      sh_table_offset: int
+      is_valid: bool
+
+vertex_layouts:
+  light_probe_vertex:
+    position: float3
+    normal: float3
+    color0: float4
+
+techniques:
+  light_probe_debug:
+    vertex_shader: 
+      file: data:shaders/source/light_probe_debug.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/light_probe_debug.hlsl
+      entry: pshader
+    render_state: default
+    vertex_layout: light_probe_vertex
+    output_target: light_buffer_and_depth
+    param_blocks: [ view_info, light_probe_instance_info ]

@@ -51,6 +51,9 @@ enum class render_view_flags
 
     // Skips rendering of anything like debug primitives, hud, etc.
     scene_only              = 8,
+
+    // Does not apply any ambient lighting. This is useful when generating light probes.
+    no_ambient_lighting     = 16,
 };
 DEFINE_ENUM_FLAGS(render_view_flags);
 

@@ -6,6 +6,7 @@
 
 #include "workshop.renderer/render_object.h"
 #include "workshop.render_interface/ri_buffer.h"
+#include "workshop.render_interface/ri_param_block.h"
 
 namespace ws {
 
@@ -22,6 +23,8 @@ public:
         vector3 extents;
         quat orientation;
         bool dirty;
+
+        std::unique_ptr<ri_param_block> debug_param_block;
     };
 
 public:

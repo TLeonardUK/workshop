@@ -7,7 +7,9 @@
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
+#include "workshop.renderer/passes/render_pass_instanced_model.h"
 #include "workshop.renderer/systems/render_system_debug.h"
+#include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.render_interface/ri_interface.h"
@@ -71,7 +73,7 @@ result<void> render_system_light_probes::create_resources()
             view->set_view_order(render_view_order::light_probe);
             view->set_clip(k_probe_near_z, k_probe_far_z);
             view->set_should_render(false);
-            view->set_flags(render_view_flags::normal | render_view_flags::scene_only);
+            view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::no_ambient_lighting);
 
             view_info info;
             info.id = view_id;
@@ -91,11 +93,50 @@ result<void> render_system_light_probes::destroy_resources()
     return true;
 }
 
+void render_system_light_probes::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
+{
+    if (!view.has_flag(render_view_flags::normal) ||
+        view.has_flag(render_view_flags::scene_only))
+    {
+        return;
+    }
+
+    if (m_renderer.get_visualization_mode() != visualization_mode::light_probes)
+    {
+        return;
+    }
+
+    render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+    render_system_lighting* lighting_system = m_renderer.get_system<render_system_lighting>();
+
+    // Draw opaque geometry.
+    std::unique_ptr<render_pass_instanced_model> pass = std::make_unique<render_pass_instanced_model>();
+    pass->name = "light probe debug";
+    pass->system = this;
+    pass->technique = m_renderer.get_effect_manager().get_technique("light_probe_debug", { });
+    pass->render_model = m_renderer.get_debug_model(debug_model::sphere);
+    pass->output.color_targets.push_back(&lighting_system->get_lighting_buffer());
+    pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
+
+    std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
+    for (render_light_probe_grid* grid : probe_grids)
+    {
+        std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
+        for (render_light_probe_grid::probe& probe : probes)
+        {
+            probe.debug_param_block->set("is_valid", !probe.dirty);
+            pass->instances.push_back(probe.debug_param_block.get());
+        }
+    }
+
+    graph.add_node(std::move(pass));
+}
+
 void render_system_light_probes::build_post_graph(render_graph& graph, const render_world_state& state)
 {
     for (size_t i = 0; i < m_probes_regenerating; i++)
     {
-        view_info& info = m_probe_capture_views[i];
+        view_info& info = m_probe_capture_views[i * 6];
 
         info.resolve_params->set("cube_texture", *info.render_target);
         info.resolve_params->set("cube_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
@@ -161,7 +202,6 @@ void render_system_light_probes::regenerate_probe(render_light_probe_grid* grid,
 void render_system_light_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    render_system_debug* debug_system = m_renderer.get_system<render_system_debug>();
 
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
 
@@ -180,23 +220,12 @@ void render_system_light_probes::step(const render_world_state& state)
 
         for (render_light_probe_grid* grid : probe_grids)
         {
-            debug_system->add_obb(grid->get_bounds(), color::pure_green);
-
             std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
             for (render_light_probe_grid::probe& probe : probes)
             {
-                debug_system->add_sphere(sphere(probe.origin, 20.0f), probe.dirty ? color::pure_red : color::pure_green);
-
                 // If dirty, regenerate this probe.
                 if (probe.dirty && m_probes_regenerating < k_probe_regenerations_per_frame)
                 {
-                    debug_system->add_obb(obb(
-                            aabb(probe.origin - probe.extents, probe.origin + probe.extents), 
-                            matrix4::rotation(probe.orientation)
-                        ), 
-                        color::orange
-                    );
-
                     regenerate_probe(grid, &probe, m_probes_regenerating);
                     m_probes_regenerating++;
                 }

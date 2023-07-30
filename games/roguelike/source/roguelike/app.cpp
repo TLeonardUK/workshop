@@ -123,13 +123,20 @@ ws::result<void> rl_game_app::start()
         );
 
         light.id = cmd_queue.create_point_light("Point");
-        cmd_queue.set_light_intensity(light.id, 1.0f);
+        cmd_queue.set_light_intensity(light.id, 50.0f);
         cmd_queue.set_light_range(light.id, light.range);
         cmd_queue.set_light_color(light.id, color);
         cmd_queue.set_object_transform(light.id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
     }
 #endif
 
+#if 0
+    object_id = cmd_queue.create_point_light("Point");
+    cmd_queue.set_light_intensity(object_id, 50.0f);
+    cmd_queue.set_light_range(object_id, 300.0f);
+    cmd_queue.set_light_color(object_id, color::red);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::identity, vector3::one);
+#endif
 
     m_on_step_delegate = get_engine().on_step.add_shared([this](const frame_time& time) {
         step(time);
@@ -178,6 +185,7 @@ void rl_game_app::step(const frame_time& time)
     }
     */
 
+    #if 0
     //if (time.frame_count < 10)
     {
         float light_angle = angle;//0.0f;
@@ -195,6 +203,7 @@ void rl_game_app::step(const frame_time& time)
             cmd_queue.set_object_transform(light.id, location, quat::identity, vector3::one);
         }
     }
+    #endif
 
     vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);// vector3(-cos(angle * 3.0f) * 400.0f, 150.0f + (cos(angle*3.0f) * 200.0f), 0.0f);
     //vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);

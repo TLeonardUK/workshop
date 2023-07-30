@@ -178,6 +178,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
             (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
         ));
+        resolve_param_block->set("apply_ambient", !view.has_flag(render_view_flags::no_ambient_lighting));
     }
 
     // Add pass to run compute shader to generate the clusters.

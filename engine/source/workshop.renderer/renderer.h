@@ -82,6 +82,7 @@ enum class visualization_mode
     shadow_cascades,
     light_clusters,
     light_heatmap,
+    light_probes,
 
     COUNT
 };
@@ -97,7 +98,16 @@ static inline const char* visualization_mode_strings[] = {
     "lighting",
     "shadow cascades",
     "light clusters",
-    "light heatmap"
+    "light heatmap",
+    "light probes"
+};
+
+// Defines a set of preloaded models that are commonly used for debugging.
+enum class debug_model
+{
+    sphere,
+
+    COUNT
 };
 
 // If defined this adds an extra plane to the gbuffer for writing debug data to.
@@ -214,9 +224,15 @@ public:
     // Gets buffers desc
     void get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index);
 
+    // Gets a pointer to the given debug model.
+    asset_ptr<model> get_debug_model(debug_model model);
+
 private:
 
     friend class render_command_queue;
+
+    result<void> load_debug_models();
+    result<void> unload_debug_models();
 
     result<void> create_resources();
     result<void> destroy_resources();
@@ -287,6 +303,10 @@ private:
     std::unique_ptr<render_scene_manager> m_scene_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
+
+    // Debug models.
+
+    std::array<asset_ptr<model>, static_cast<int>(debug_model::COUNT)> m_debug_models;
 
     // Fullscreen buffers.
 

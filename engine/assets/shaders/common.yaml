@@ -10,24 +10,24 @@ version: 1
 render_states:
   # Default geometry rendering state.
   default: 
-    cull_mode: none
+    cull_mode: back
   # Default geometry rendering state that is used for rendering depth only data - shadow maps etc.
   depth_only_render_state: 
-    cull_mode: none
+    cull_mode: back
     depth_clip_enabled: false
   # Default geometry rendering state in wireframe.
   default_wireframe: 
-    cull_mode: none
+    cull_mode: back
     fill_mode: wireframe 
   # Default render state but without depth testing enabled. Useful
   # for things such as fullscreen passes.
   no_depth_test:
     depth_test_enabled: false  
     depth_write_enabled: true
-    cull_mode: none
+    cull_mode: back
   # Transparent geometry rendering state.
   transparent: 
-    cull_mode: none  
+    cull_mode: back  
     depth_write_enabled: false
     blend_enabled: true
     blend_op: add
@@ -67,6 +67,10 @@ output_targets:
   # Light accumulation buffer.
   light_buffer:
     color: [ R16G16B16A16_FLOAT ]
+  # Light accumulation buffer & the gbuffer depth.
+  light_buffer_and_depth:
+    color: [ R16G16B16A16_FLOAT ]
+    depth: D24_UNORM_S8_UINT
   # Depth only output
   depth_only_buffer:
     color: [ ]
@@ -146,6 +150,7 @@ param_blocks:
       visualization_mode: int
       light_grid_size: uint3
       uv_scale: float2
+      apply_ambient: bool
 
 defines:
   # The size of the grid the frustum is split into for light culling.

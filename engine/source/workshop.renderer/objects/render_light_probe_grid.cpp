@@ -76,6 +76,13 @@ void render_light_probe_grid::recalculate_probes()
 
     m_probes.resize(m_width * m_height * m_depth);
 
+    // Create the buffer that will hold our SH values.
+    ri_buffer::create_params buffer_params;
+    buffer_params.element_count = std::max(1llu, m_probes.size());
+    buffer_params.element_size = k_probe_coefficient_size;
+    buffer_params.usage = ri_buffer_usage::generic;
+    m_spherical_harmonic_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "light grid sh coefficients");
+
     matrix4 grid_transform =
         matrix4::rotation(m_local_rotation) *
         matrix4::translate(m_local_location);
@@ -102,16 +109,14 @@ void render_light_probe_grid::recalculate_probes()
                     m_density * 0.5f
                 );
                 probe.orientation = m_local_rotation;
+
+                probe.debug_param_block = m_renderer.get_param_block_manager().create_param_block("light_probe_instance_info");
+                probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(50.0f, 50.0f, 50.0f)) * matrix4::translate(probe.origin));
+                probe.debug_param_block->set("sh_table_index", *m_spherical_harmonic_buffer, true);
+                probe.debug_param_block->set("sh_table_offset", (int)(probe.index * k_probe_coefficient_size));
             }
         }
     }
-
-    // Create the buffer that will hold our SH values.
-    ri_buffer::create_params buffer_params;
-    buffer_params.element_count = std::max(1llu, m_probes.size());
-    buffer_params.element_size = k_probe_coefficient_size;
-    buffer_params.usage = ri_buffer_usage::generic;
-    m_spherical_harmonic_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "light grid sh coefficients");
 }
 
 }; // namespace ws

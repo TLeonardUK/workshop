@@ -54,7 +54,8 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::lighting:
         case visualization_mode_t::shadow_cascades:
         case visualization_mode_t::light_clusters:
-        case visualization_mode_t::light_heatmap:        
+        case visualization_mode_t::light_heatmap:  
+        case visualization_mode_t::light_probes:              
         {
             output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv * uv_scale);
             tonemap = true;

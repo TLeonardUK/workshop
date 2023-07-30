@@ -102,6 +102,11 @@ void renderer::register_init(init_list& list)
         [this, &list]() -> result<void> { return create_debug_menu(); },
         [this, &list]() -> result<void> { return destroy_debug_menu(); }
     );
+    list.add_step(
+        "Renderer Debug Models",
+        [this, &list]() -> result<void> { return load_debug_models(); },
+        [this, &list]() -> result<void> { return unload_debug_models(); }
+    );
 }
 
 result<void> renderer::create_systems(init_list& list)
@@ -111,8 +116,8 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
-    m_systems.push_back(std::make_unique<render_system_light_probes>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
+    m_systems.push_back(std::make_unique<render_system_light_probes>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
@@ -185,7 +190,10 @@ result<void> renderer::create_resources()
 result<void> renderer::destroy_resources()
 {
     // Ensure all render jobs have completed.
-    m_render_job_task.wait();
+    if (m_render_job_task.is_valid())
+    {
+        m_render_job_task.wait();
+    }
 
     // Nuke all resizable targets.
     m_gbuffer_param_block = nullptr;
@@ -198,6 +206,35 @@ result<void> renderer::destroy_resources()
 
     // Nuke swapchain.
     m_swapchain = nullptr;
+
+    return true;
+}
+
+
+result<void> renderer::load_debug_models()
+{
+    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/debug/sphere.yaml", 0);
+
+    for (size_t i = 0; i < m_debug_models.size(); i++)
+    {
+        m_debug_models[i].wait_for_load();
+
+        if (!m_debug_models[i].is_loaded())
+        {
+            db_error(renderer, "Failed to load debug model: %s", m_debug_models[i].get_path().c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+result<void> renderer::unload_debug_models()
+{
+    for (size_t i = 0; i < m_debug_models.size(); i++)
+    {
+        m_debug_models[i] = {};
+    }
 
     return true;
 }
@@ -926,6 +963,11 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ver
     
     out_vertex = buffers.vertex_buffer.get();
     out_index = buffers.index_buffer.get();
+}
+
+asset_ptr<model> renderer::get_debug_model(debug_model model)
+{
+    return m_debug_models[(int)model];
 }
 
 void renderer::drain()

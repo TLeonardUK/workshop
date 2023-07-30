@@ -16,7 +16,7 @@ struct geometry_pinput
     float4 position : SV_POSITION;
     float2 uv0 : TEXCOORD0;
     float4 world_normal : TEXCOORD1;
-    float4 world_tangent : TEXCOORD2;
+    float4 world_tangent : NORMAL1;
     float4 world_position : TEXCOORD3;
 };
 

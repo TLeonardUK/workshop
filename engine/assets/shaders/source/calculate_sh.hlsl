@@ -5,6 +5,7 @@
 
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/math.hlsl"
+#include "data:shaders/source/common/sh.hlsl"
 
 // Some useful reading:
 // https://github.com/nicknikolov/cubemap-sh/blob/master/index.js
@@ -24,8 +25,9 @@ float get_texel_area(float x, float y)
     return atan2(x * y, sqrt(x * x + y * y + 1.0));
 }
 
-float get_texel_solid_angle(int x, int y, int width, int height)
+float get_texel_weight(int x, int y, int width, int height)
 {
+#if 1
     float2 uv = float2(
         (2.0 * (x + 0.5) / width) - 1.0,
         (2.0 * (y + 0.5) / height) - 1.0
@@ -42,8 +44,16 @@ float get_texel_solid_angle(int x, int y, int width, int height)
     float y1 = uv.y + inverse_size.y;
 
     float angle = get_texel_area(x0, y0) - get_texel_area(x0, y1) - get_texel_area(x1, y0) + get_texel_area(x1, y1);
-
     return angle;
+#else
+    float u = (x + 0.5f) / width;
+    float v = (y + 0.5f) / height;
+    u = u * 2.0f - 1.0f;
+    v = v * 2.0f - 1.0f;
+
+    float temp = 1.0f + u * u + v * v;
+    return 4.0f / (sqrt(temp) * temp);
+#endif
 }
 
 groupshared float3 shared_coefficients[6][9];
@@ -69,30 +79,16 @@ void cshader(cshader_input input)
     {
         for (int x = 0; x < cube_size; x++)
         {
-            float weight = get_texel_solid_angle(x, y, cube_size, cube_size);
-            float weight_1 = weight * 4.0f / 17.0f;
-            float weight_2 = weight * 8.0f / 17.0f;
-            float weight_3 = weight * 15.0f / 17.0f;
-            float weight_4 = weight * 5.0f / 68.0f;
-            float weight_5 = weight * 15.0f / 68.0f;
+            float weight = get_texel_weight(x, y, cube_size, cube_size);
             
             float3 texel_normal = get_cubemap_normal(face_index, float2(x, y) * uv_step);
             float3 texel_color = cube_texture.SampleLevel(cube_sampler, texel_normal, 0);
 
-            // order 1
-            coefficients[0] += texel_color * weight_1;
-
-            // order 2
-            coefficients[1] += texel_color * weight_2 * texel_normal.x;
-            coefficients[2] += texel_color * weight_2 * texel_normal.y;
-            coefficients[3] += texel_color * weight_2 * texel_normal.z;
-
-            // order 3
-            coefficients[4] += texel_color * weight_3 * texel_normal.x * texel_normal.z;
-            coefficients[5] += texel_color * weight_3 * texel_normal.z * texel_normal.y;
-            coefficients[6] += texel_color * weight_3 * texel_normal.y * texel_normal.x;
-            coefficients[7] += texel_color * weight_4 * (3.0f * texel_normal.z * texel_normal.z - 1.0f);
-            coefficients[8] += texel_color * weight_5 * (texel_normal.x * texel_normal.x - texel_normal.y * texel_normal.y);
+            sh_coefficients coeff = calculate_sh_coefficients(texel_normal);
+            for (int c = 0; c < 9; c++)
+            {
+                coefficients[c] += texel_color * coeff.coefficients[c] * weight; 
+            }
 
             weight_accumulation += weight;
         }
@@ -101,7 +97,7 @@ void cshader(cshader_input input)
     // Normalize and correct for mapping onto a sphere.
     for (int i = 0; i < 9; i++)
     {
-        shared_coefficients[face_index][i] = coefficients[i] * (4 * pi * weight_accumulation);
+        shared_coefficients[face_index][i] = coefficients[i] * (4.0f * pi / weight_accumulation);
     }
 
     GroupMemoryBarrierWithGroupSync();
@@ -115,10 +111,10 @@ void cshader(cshader_input input)
         {
             for (int i = 0; i < 6; i++)
             {
-                result[j] = result[i][j];
+                result[j] += shared_coefficients[i][j];
             }
 
-            result[j] /= 6.0;
+            result[j] /= 6.0f;
         }
 
         // Store calculated coefficients in output buffer.
