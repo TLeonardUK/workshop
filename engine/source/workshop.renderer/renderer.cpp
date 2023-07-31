@@ -522,7 +522,7 @@ void renderer::render_state(render_world_state& state)
     parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {
         profile_marker(profile_colors::render, "step render system: %s", m_systems[index]->name.c_str());
         m_systems[index]->step(state);
-        });
+    });
 
     // Begin the new frame.
     m_render_interface.begin_frame();

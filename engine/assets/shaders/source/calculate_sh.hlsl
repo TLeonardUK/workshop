@@ -26,17 +26,17 @@ float get_texel_area(float x, float y)
     return atan2(x * y, sqrt(x * x + y * y + 1.0));
 }
 
-float get_texel_weight(int x, int y, int width, int height)
+float get_texel_weight(int x, int y, int size)
 {
 #if 0
     float2 uv = float2(
-        (2.0 * (x + 0.5) / width) - 1.0,
-        (2.0 * (y + 0.5) / height) - 1.0
+        (2.0 * (x + 0.5) / size) - 1.0,
+        (2.0 * (y + 0.5) / size) - 1.0
     );
 
     float2 inverse_size = float2(
-        1.0f / width,
-        1.0f / height
+        1.0f / size,
+        1.0f / size
     );
 
     float x0 = uv.x - inverse_size.x;
@@ -47,8 +47,8 @@ float get_texel_weight(int x, int y, int width, int height)
     float angle = get_texel_area(x0, y0) - get_texel_area(x0, y1) - get_texel_area(x1, y0) + get_texel_area(x1, y1);
     return angle;
 #else
-    float fB = -1.0f + 1.0f / width;
-    float fS = 2.0f*(1.0f - 1.0f / width) / (width - 1.0f);
+    float fB = -1.0f + 1.0f / size;
+    float fS = 2.0f * (1.0f - 1.0f / size) / (size - 1.0f);
 
     float u = float(x) * fS + fB;
     float v = float(y) * fS + fB;
@@ -59,6 +59,7 @@ float get_texel_weight(int x, int y, int width, int height)
 }
 
 groupshared float3 shared_coefficients[6][9];
+groupshared float3 shared_weights[6];
 
 [numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, GROUP_SIZE_Z)]
 void cshader(cshader_input input)
@@ -67,42 +68,38 @@ void cshader(cshader_input input)
     float weight_accumulation = 0.0f;
     float3 coefficients[9];
 
-    // Go over each texel in cubemap and integrate it.
-    float2 uv_step = 1.0f / cube_size;
-
     // Zero out coefficients.
     for (int i = 0; i < 9; i++)
     {
         coefficients[i] = 0.0f;
     }
 
-    // Accumulate the coefficients.
+    // Accumulate the coefficients for each texel.
     for (int y = 0; y < cube_size; y++)
     {
         for (int x = 0; x < cube_size; x++)
         {
-            float weight = get_texel_weight(x, y, cube_size, cube_size);
-
-            float3 texel_normal = get_cubemap_normal(face_index, float2(x, y) * uv_step);
+            float3 texel_normal = get_cubemap_normal(face_index, cube_size, int2(x, y));
             float3 texel_color = cube_texture.SampleLevel(cube_sampler, texel_normal, 0);
+
+            float weight = get_texel_weight(x, y, cube_size);
+            weight_accumulation += weight;
 
             sh_coefficients coeff = calculate_sh_coefficients(texel_normal);
             for (int c = 0; c < 9; c++)
             {
                 float3 v = coefficients[c];
-                v += texel_color * coeff.coefficients[c] * float3(weight, weight, weight); 
+                v += coeff.coefficients[c] * texel_color * weight; 
                 coefficients[c] = v;
             }
-
-            weight_accumulation += weight;
         }
     }
 
-    // Normalize and correct for mapping onto a sphere.
+    // Store in sharec memory for combination.
     for (int i = 0; i < 9; i++)
     {
-        float3 normalized = coefficients[i] * ((4.0f * pi) / weight_accumulation);
-        shared_coefficients[face_index][i] = normalized;
+        shared_coefficients[face_index][i] = coefficients[i];
+        shared_weights[face_index] = weight_accumulation;
     }
 
     GroupMemoryBarrierWithGroupSync();
@@ -110,22 +107,22 @@ void cshader(cshader_input input)
     // Combine coefficients.
     if (input.group_thread_id.z == 0)
     {
-        // Add up shared coefficients.    
-        float3 result[9];
+        // Combine and store coefficients for each face.   
         for (int j = 0; j < 9; j++)
         {
+            weight_accumulation = 0.0f;
+            float3 result = 0.0f;
+
             for (int i = 0; i < 6; i++)
             {
-                result[j] += shared_coefficients[i][j];
+                result += shared_coefficients[i][j];
+                weight_accumulation += shared_weights[i];
             }
 
-            result[j] /= 6.0f;
-        }
-
-        // Store calculated coefficients in output buffer.
-        for (int i = 0; i < 9; i++)
-        {
-            output_buffer.Store(output_start_offset + (i * sizeof(float3)), result[i]);
+            float normal_projection = (4.0f * pi) / weight_accumulation;
+            result = result * normal_projection;  
+            
+            output_buffer.Store(output_start_offset + (j * sizeof(float3)), result);
         }
     }
 }

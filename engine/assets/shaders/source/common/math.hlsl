@@ -103,47 +103,53 @@ float4 clip_space_to_viewport_space(float4 input, float2 screen_dimensions)
 
 // Converts a cubemap face and a uv to the normal you need to sample the correct
 // texel in the cubemap.
-static const float3 cubemap_x_vector[6] = {
-    float3(0, 0, -1),
-    float3(0, 0, 1),
-    float3(1, 0, 0),
-    float3(1, 0, 0),
-    float3(1, 0, 0),
-    float3(-1, 0, 0)
-};
-static const float3 cubemap_y_vector[6] = {
-    float3(0, -1, 0),
-    float3(0, -1, 0),
-    float3(0, 0, 1),
-    float3(0, 0, -1),
-    float3(0, -1, 0),
-    float3(0, -1, 0)
-};
-static const float3 cubemap_z_vector[6] = {
-    float3(1, 0, 0),
-    float3(-1, 0, 0),
-    float3(0, 1, 0),
-    float3(0, -1, 0),
-    float3(0, 0, 1),
-    float3(0, 0, -1)
-};
-
-float3 get_cubemap_normal(int face_index, float2 uv)
+float3 get_cubemap_normal(int face_index, int size, int2 xy)
 {
-    float3 x_vector = cubemap_x_vector[face_index];
-    float3 y_vector = cubemap_y_vector[face_index];
-    float3 z_vector = cubemap_z_vector[face_index];
+    float pixel_size = 1.0f / size;
 
-    uv = uv * 2 - 1;
+    float3 dir = 0.0f;
 
-    float3 vx = (x_vector * uv.x);
-    float3 vy = (y_vector * uv.y);
-    float3 vz = z_vector;
-
-    float3 result = vx + vy;
-    result = result + vz;
-
-    return normalize(result);
+    switch (face_index)
+    {
+    // Positive X
+    case 0: 
+        dir.z = 1.0f - (2.0f * float(xy.x) + 1.0f) * pixel_size;
+        dir.y = 1.0f - (2.0f * float(xy.y) + 1.0f) * pixel_size;
+        dir.x = 1.0f;
+        break;
+    // Negative X
+    case 1: 
+        dir.z = -1.0f + (2.0f * float(xy.x) + 1.0f) * pixel_size;
+        dir.y = 1.0f - (2.0f * float(xy.y) + 1.0f) * pixel_size;
+        dir.x = -1;
+        break;
+    // Positive Y
+    case 2: 
+        dir.z = -1.0f + (2.0f * float(xy.y) + 1.0f) * pixel_size;
+        dir.y = 1.0f;
+        dir.x = -1.0f + (2.0f * float(xy.x) + 1.0f) * pixel_size;
+        break;
+    // Negative Y
+    case 3: 
+        dir.z = 1.0f - (2.0f * float(xy.y) + 1.0f) * pixel_size;
+        dir.y = -1.0f;
+        dir.x = -1.0f + (2.0f * float(xy.x) + 1.0f) * pixel_size;
+        break;
+    // Positive Z
+    case 4: 
+        dir.z = 1.0f;
+        dir.y = 1.0f - (2.0f * float(xy.y) + 1.0f) * pixel_size;
+        dir.x = -1.0f + (2.0f * float(xy.x) + 1.0f) * pixel_size;
+        break;
+    // Negative Z
+    case 5: 
+        dir.z = -1.0f;
+        dir.y = 1.0f - (2.0f * float(xy.y) + 1.0f) * pixel_size;
+        dir.x = 1.0f - (2.0f * float(xy.x) + 1.0f) * pixel_size;
+        break;
+    }
+    
+    return normalize(dir);
 }
 
 #endif // _MATH_HLSL_

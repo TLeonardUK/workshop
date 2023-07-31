@@ -83,7 +83,7 @@ float3 calculate_sh_diffuse(float3 normal, sh_color_coefficients radiance, float
 {
     float3 result = calculate_sh_irradiance(normal, radiance) * albedo / pi;
 
-    // TODO: Shouldn't be required.
+    // Shouldn't be required, but avoid banding issues giving negative values.
     result.r = max(result.r, 0.0f);
     result.g = max(result.g, 0.0f);
     result.b = max(result.b, 0.0f);
