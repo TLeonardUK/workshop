@@ -28,25 +28,6 @@ float get_texel_area(float x, float y)
 
 float get_texel_weight(int x, int y, int size)
 {
-#if 0
-    float2 uv = float2(
-        (2.0 * (x + 0.5) / size) - 1.0,
-        (2.0 * (y + 0.5) / size) - 1.0
-    );
-
-    float2 inverse_size = float2(
-        1.0f / size,
-        1.0f / size
-    );
-
-    float x0 = uv.x - inverse_size.x;
-    float y0 = uv.y - inverse_size.y;
-    float x1 = uv.x + inverse_size.x;
-    float y1 = uv.y + inverse_size.y;
-
-    float angle = get_texel_area(x0, y0) - get_texel_area(x0, y1) - get_texel_area(x1, y0) + get_texel_area(x1, y1);
-    return angle;
-#else
     float fB = -1.0f + 1.0f / size;
     float fS = 2.0f * (1.0f - 1.0f / size) / (size - 1.0f);
 
@@ -55,7 +36,6 @@ float get_texel_weight(int x, int y, int size)
 
     float temp = 1.0f + u * u + v * v;
     return 4.0f / (temp * sqrt(temp));
-#endif
 }
 
 groupshared float3 shared_coefficients[6][9];
