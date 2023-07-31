@@ -107,8 +107,8 @@ ws::result<void> rl_game_app::start()
 
     m_light_id = object_id;
 
-#if 0
-    for (size_t i = 0; i < 100; i++)
+#if 1
+    for (size_t i = 0; i < 50; i++)
     {
         moving_light& light = m_moving_lights.emplace_back();
         light.distance = (rand() / static_cast<float>(RAND_MAX)) * 800.0f;
@@ -123,12 +123,18 @@ ws::result<void> rl_game_app::start()
             rand() / static_cast<float>(RAND_MAX),
             1.0f
         );
+        
+        vector3 location = vector3(
+            sin((0.0f + light.angle) * light.speed) * light.distance,
+            light.height,
+            cos((0.0f + light.angle) * light.speed) * light.distance
+        );
 
         light.id = cmd_queue.create_point_light("Point");
         cmd_queue.set_light_intensity(light.id, 50.0f);
         cmd_queue.set_light_range(light.id, light.range);
         cmd_queue.set_light_color(light.id, color);
-        cmd_queue.set_object_transform(light.id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+        cmd_queue.set_object_transform(light.id, location, quat::identity, vector3::one);
     }
 #endif
 

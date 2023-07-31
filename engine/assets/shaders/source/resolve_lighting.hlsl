@@ -501,6 +501,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     {
     //    return float3(0.0f, 0.0f, 0.0f);
     }
+    //return float3(0.0f, 0.0f, 0.0f);
 
     float3 albedo = frag.albedo;
     if (visualization_mode == visualization_mode_t::lighting)
