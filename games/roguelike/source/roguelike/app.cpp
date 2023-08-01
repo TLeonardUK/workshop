@@ -80,9 +80,9 @@ ws::result<void> rl_game_app::start()
     */
 
     object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
-    cmd_queue.set_light_probe_grid_density(object_id, 300.0f);
-    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
-//    cmd_queue.set_object_transform(object_id, vector3(200.0, 250.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
+    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
+//    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
+    cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
 //    cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
     m_light_probe_id = object_id;
 
@@ -93,7 +93,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);
     cmd_queue.set_light_intensity(object_id, 1.0f);
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 100.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
     
 #if 0
     object_id = cmd_queue.create_point_light("Point");

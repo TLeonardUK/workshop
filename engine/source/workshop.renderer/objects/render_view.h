@@ -130,9 +130,6 @@ public:
 
     render_resource_cache& get_resource_cache();
 
-    // Overrides the normal set transform to update instance data when the transform changes.
-    virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
-
     // The visibility index is used by render objects to refer to which views they are actively visible in
     // at the current point in time. Its assigned by the scene manager on creation and recycled ond destruction.
     inline static constexpr size_t k_always_visible_index = std::numeric_limits<size_t>::max();

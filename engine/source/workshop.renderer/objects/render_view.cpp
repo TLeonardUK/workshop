@@ -19,11 +19,6 @@ render_view::render_view(render_object_id id, render_scene_manager* scene_manage
 void render_view::bounds_modified()
 {
     m_dirty = true;
-}
-
-void render_view::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)
-{
-    render_object::set_local_transform(location, rotation, scale);
 
     update_view_info_param_block();
 }
@@ -91,7 +86,6 @@ void render_view::set_viewport(const recti& viewport)
 
     m_viewport = viewport;
 
-    update_view_info_param_block();
     bounds_modified();
 }
 
@@ -111,7 +105,6 @@ void render_view::set_clip(float near, float far)
     m_near_clip = near;
     m_far_clip = far;
 
-    update_view_info_param_block();
     bounds_modified();
 }
 
@@ -131,7 +124,6 @@ void render_view::set_fov(float fov)
     m_field_of_view = fov;
 
     bounds_modified();
-    update_view_info_param_block();
 }
 
 float render_view::get_fov()
@@ -149,7 +141,6 @@ void render_view::set_aspect_ratio(float ratio)
     m_aspect_ratio = ratio;
 
     bounds_modified();
-    update_view_info_param_block();
 }
 
 float render_view::get_aspect_ratio()

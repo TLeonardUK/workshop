@@ -63,9 +63,7 @@ void cshader(cshader_input input)
             sh_coefficients coeff = calculate_sh_coefficients(texel_normal);
             for (int c = 0; c < 9; c++)
             {
-                float3 v = coefficients[c];
-                v += coeff.coefficients[c] * texel_color * weight; 
-                coefficients[c] = v;
+                coefficients[c] += coeff.coefficients[c] * texel_color * weight; 
             }
         }
     }

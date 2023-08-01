@@ -500,7 +500,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
 {    
     if (!apply_ambient)
     {
-        return float3(0.03f, 0.03f, 0.03f);
+        return float3(0.0f, 0.0f, 0.0f);
     }
 
     float3 normal = normalize(frag.world_normal);
@@ -523,7 +523,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
 
     float3 ambient = (kD * diffuse) * 1.0f;
 
-    return ambient * albedo;
+    return ambient;
 }
 
 // ================================================================================================
