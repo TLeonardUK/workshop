@@ -60,7 +60,7 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Curtains");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    /*
+    
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
@@ -68,7 +68,7 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-    */
+    
     /*
     for (int x = 0; x < 150; x++)
     {
@@ -90,15 +90,15 @@ ws::result<void> rl_game_app::start()
 //    object_id = cmd_queue.create_reflection_probe_grid("Reflection Probe Grid");
 //    cmd_queue.set_reflection_probe_grid_density(object_id, true);
 
-/*
+#if 1
     object_id = cmd_queue.create_directional_light("Sun");
     cmd_queue.set_light_shadow_casting(object_id, true);
-    cmd_queue.set_light_shadow_map_size(object_id, 1024);
+    cmd_queue.set_light_shadow_map_size(object_id, 2048);
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
-*/
+#endif
   
-#if 1
+#if 0
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_shadow_casting(object_id, false);
     cmd_queue.set_light_shadow_map_size(object_id, 1024);

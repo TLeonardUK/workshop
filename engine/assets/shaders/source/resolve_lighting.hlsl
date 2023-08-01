@@ -524,7 +524,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     kD *= 1.0f - metallic;
 
     float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal);
-    float3 diffuse = irradiance * albedo;// / pi;
+    float3 diffuse = irradiance * albedo / pi;
 
     float3 ambient = (kD * diffuse) * 1.0f;
 
