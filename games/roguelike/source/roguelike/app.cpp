@@ -48,7 +48,8 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_view_viewport(m_view_id, recti(0, 0, static_cast<int>(get_engine().get_main_window().get_width()), static_cast<int>(get_engine().get_main_window().get_height())));
     cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 10000.0f);
     cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
-    m_view_position = vector3(0.0f, -250.0f, 0.0f);
+    m_view_position = vector3(150.0f, 270.0f, -100.0f);
+    m_view_rotation = quat::angle_axis(0.0f, vector3::up);
     
     render_object_id object_id;
 
@@ -80,9 +81,9 @@ ws::result<void> rl_game_app::start()
     */
 
     object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
-    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
-//    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
-    cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
+    cmd_queue.set_light_probe_grid_density(object_id, 100.0f);
+    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
+//    cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
 //    cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
     m_light_probe_id = object_id;
 
@@ -107,10 +108,8 @@ ws::result<void> rl_game_app::start()
 
     m_light_id = object_id;
 
-    m_view_position = vector3(0.0f, 200.0f, 0.0f);
-
 #if 1
-    for (size_t i = 0; i < 50; i++)
+    for (size_t i = 0; i < 100; i++)
     {
         moving_light& light = m_moving_lights.emplace_back();
         light.distance = (rand() / static_cast<float>(RAND_MAX)) * 800.0f;
@@ -221,8 +220,8 @@ void rl_game_app::step(const frame_time& time)
     //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
     //quat light_rot = quat::angle_axis(-math::halfpi*0.85f, vector3::right);
     //cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
-    cmd_queue.draw_sphere(sphere(light_pos, 100.0f), color::red);
-    cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);
+//    cmd_queue.draw_sphere(sphere(light_pos, 100.0f), color::red);
+//    cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);
 
     if (input.get_mouse_capture())
     {

@@ -73,7 +73,7 @@ result<void> render_system_light_probes::create_resources()
             view->set_view_order(render_view_order::light_probe);
             view->set_clip(k_probe_near_z, k_probe_far_z);
             view->set_should_render(false);
-            view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::no_ambient_lighting);
+            view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::constant_ambient_lighting);
 
             view_info info;
             info.id = view_id;

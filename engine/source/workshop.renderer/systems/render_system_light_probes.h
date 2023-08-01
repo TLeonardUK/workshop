@@ -38,7 +38,7 @@ private:
 
 private:
 
-    inline static constexpr size_t k_probe_cubemap_size =  512;
+    inline static constexpr size_t k_probe_cubemap_size =  128;
     inline static constexpr size_t k_probe_regenerations_per_frame = 1;
     inline static constexpr float k_probe_near_z = 10.0f;
     inline static constexpr float k_probe_far_z = 10000.0f;

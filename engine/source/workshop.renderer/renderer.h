@@ -229,8 +229,11 @@ public:
     // Gets a pointer to the given debug model.
     asset_ptr<model> get_debug_model(debug_model model);
 
-    // Returns true if we should be drawing realtime lights.
-    bool should_draw_lights();
+    // Returns true if we should be using direct lighting.
+    bool should_draw_direct_lighting();
+
+    // Returns true if we should be using ambient lighting.
+    bool should_draw_ambient_lighting();
 
 private:
 
@@ -332,7 +335,8 @@ private:
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;
     bool m_draw_debug_overlay = true;
-    bool m_draw_lights = true;
+    bool m_draw_direct_lighting = true;
+    bool m_draw_ambient_lighting = true;
     size_t m_frozen_rendering_frame = 0;
 
     std::vector<debug_menu::option_handle> m_debug_menu_options;

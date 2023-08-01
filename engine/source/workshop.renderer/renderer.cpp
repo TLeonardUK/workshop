@@ -908,9 +908,10 @@ result<void> renderer::create_debug_menu()
 
     m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/toggle cell bounds", [this]() { m_draw_octtree_cell_bounds = !m_draw_octtree_cell_bounds; }));
     m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/toggle object bounds", [this]() { m_draw_object_bounds = !m_draw_object_bounds; }));
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggles/toggle direct lighting", [this]() { m_draw_direct_lighting = !m_draw_direct_lighting; }));
+    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggles/toggle ambient lighting", [this]() { m_draw_ambient_lighting = !m_draw_ambient_lighting; }));
     m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle freeze rendering", [this]() { m_rendering_frozen = !m_rendering_frozen; }));
     m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle overlay", [this]() { m_draw_debug_overlay = !m_draw_debug_overlay; }));
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle lights", [this]() { m_draw_lights = !m_draw_lights; }));
 
     return true;
 }
@@ -938,9 +939,14 @@ bool renderer::is_rendering_frozen()
     return m_rendering_frozen;
 }
 
-bool renderer::should_draw_lights()
+bool renderer::should_draw_direct_lighting()
 {
-    return m_draw_lights;
+    return m_draw_direct_lighting;
+}
+
+bool renderer::should_draw_ambient_lighting()
+{
+    return m_draw_ambient_lighting;
 }
 
 void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index)

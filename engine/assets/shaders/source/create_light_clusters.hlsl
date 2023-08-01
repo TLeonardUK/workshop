@@ -15,7 +15,7 @@ struct cull_lights_input
 [numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, GROUP_SIZE_Z)]
 void create_clusters_cshader(cull_lights_input input)
 {
-    float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
+    float2 tile_size = ceil(view_dimensions / light_grid_size);
     uint cluster_index = input.group_id.x +
                          input.group_id.y * DISPATCH_SIZE_X + 
                          input.group_id.z * (DISPATCH_SIZE_X * DISPATCH_SIZE_Y);

@@ -150,7 +150,9 @@ param_blocks:
       visualization_mode: int
       light_grid_size: uint3
       uv_scale: float2
-      apply_ambient: bool
+      use_constant_ambient: bool
+      apply_ambient_lighting: bool
+      apply_direct_lighting: bool
       light_probe_grid_count: int
       light_probe_grid_buffer: byteaddressbuffer
   # Structure describing individual light grids.

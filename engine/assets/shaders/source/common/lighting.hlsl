@@ -78,7 +78,7 @@ uint get_light_cluster_index(float3 location, float2 tile_size_px, uint3 grid_si
 
     uint3 cluster = uint3(
             uint2(location.xy / tile_size_px), 
-            slice 
+            slice
     );
 
     uint index = cluster.x + 

@@ -418,7 +418,7 @@ struct direct_lighting_result
 };
 
 direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light)
-{
+{    
     float3 normal = normalize(frag.world_normal);
     float3 view_direction = normalize(view_world_position - frag.world_position);
     float3 metallic = frag.metallic;
@@ -498,7 +498,7 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
 
 float3 calculate_ambient_lighting(gbuffer_fragment frag)
 {    
-    if (!apply_ambient)
+    if (use_constant_ambient)
     {
         return float3(0.0f, 0.0f, 0.0f);
     }
@@ -538,7 +538,7 @@ uint get_cluster_index(float3 world_position)
         view_dimensions
     );
 
-    float2 tile_size = ceil(view_dimensions.x / light_grid_size.x);
+    float2 tile_size = ceil(view_dimensions / light_grid_size);
     return get_light_cluster_index(view_space_pos.xyz, tile_size, light_grid_size, view_z_near, view_z_far);
 }
 
@@ -569,7 +569,15 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }
 
     // Mix final color.
-    float3 final_color = float4(direct_lighting + ambient_lighting, 1.0f);
+    float3 final_color = 0.0f;
+    if (apply_ambient_lighting)
+    {
+        final_color += ambient_lighting;
+    }
+    if (apply_direct_lighting)
+    {
+        final_color += direct_lighting;
+    }
 
     // If we are in a visualization mode, tint colors as appropriate.
     if (visualization_mode == visualization_mode_t::shadow_cascades)
@@ -578,7 +586,7 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }    
     else if (visualization_mode == visualization_mode_t::light_clusters)
     {
-        final_color = (final_color + 0.02) * debug_colors[cluster_index % 8];
+        final_color = (final_color + 0.02) * debug_colors[cluster_index % 7];
     }
     else if (visualization_mode == visualization_mode_t::light_heatmap)
     {

@@ -84,28 +84,25 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     std::vector<render_light*> visible_lights;
     std::vector<render_light_probe_grid*> visible_probe_grids;
 
-    if (m_renderer.should_draw_lights())
+    for (auto& light : scene_manager.get_directional_lights())
     {
-        for (auto& light : scene_manager.get_directional_lights())
+        if (view.is_object_visible(light))
         {
-            if (view.is_object_visible(light))
-            {
-                visible_lights.push_back(light);
-            }
+            visible_lights.push_back(light);
         }
-        for (auto& light : scene_manager.get_point_lights())
+    }
+    for (auto& light : scene_manager.get_point_lights())
+    {
+        if (view.is_object_visible(light))
         {
-            if (view.is_object_visible(light))
-            {
-                visible_lights.push_back(light);
-            }
+            visible_lights.push_back(light);
         }
-        for (auto& light : scene_manager.get_spot_lights())
+    }
+    for (auto& light : scene_manager.get_spot_lights())
+    {
+        if (view.is_object_visible(light))
         {
-            if (view.is_object_visible(light))
-            {
-                visible_lights.push_back(light);
-            }
+            visible_lights.push_back(light);
         }
     }
     for (auto& grid : scene_manager.get_light_probe_grids())
@@ -216,7 +213,9 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
             (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
         ));
-        resolve_param_block->set("apply_ambient", !view.has_flag(render_view_flags::no_ambient_lighting));
+        resolve_param_block->set("use_constant_ambient", view.has_flag(render_view_flags::constant_ambient_lighting));
+        resolve_param_block->set("apply_ambient_lighting", m_renderer.should_draw_ambient_lighting());
+        resolve_param_block->set("apply_direct_lighting", m_renderer.should_draw_direct_lighting());
         resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
         resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
     }

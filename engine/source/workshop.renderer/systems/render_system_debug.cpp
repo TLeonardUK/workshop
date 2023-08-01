@@ -46,6 +46,11 @@ void render_system_debug::build_graph(render_graph& graph, const render_world_st
         return;
     }
 
+    if (m_vertex_buffer == nullptr)
+    {
+        return;
+    }
+
     std::unique_ptr<render_pass_primitives> pass = std::make_unique<render_pass_primitives>();
     pass->name = "debug primitives";
     pass->system = this;

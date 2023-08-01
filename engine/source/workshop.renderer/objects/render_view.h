@@ -38,22 +38,22 @@ enum class render_view_type
 // ================================================================================================
 enum class render_view_flags
 {
-    none                    = 0,
+    none                            = 0,
 
     // Standard path we use to render the scene.
-    normal                  = 1,
+    normal                          = 1,
 
     // Only renders a depth map of the scene.
-    depth_only              = 2,
+    depth_only                      = 2,
 
     // Same as depth_only but depth is stored in a linear format.
-    linear_depth_only       = 4,
+    linear_depth_only               = 4,
 
     // Skips rendering of anything like debug primitives, hud, etc.
-    scene_only              = 8,
+    scene_only                      = 8,
 
-    // Does not apply any ambient lighting. This is useful when generating light probes.
-    no_ambient_lighting     = 16,
+    // Applies a constant ambient term rather than calculating it from probes. This is useful when generating light probes.
+    constant_ambient_lighting       = 16,
 };
 DEFINE_ENUM_FLAGS(render_view_flags);
 

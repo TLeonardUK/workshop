@@ -169,7 +169,7 @@ render_effect::technique* render_effect_manager::get_technique(const char* name,
             db_warning(renderer, "\t%s = %s", pair.first.c_str(), pair.second.c_str());
         }
 
-        db_warning(renderer, "Provided ambiguous results. Could select any of the following:");
+        db_warning(renderer, "Provided ambiguous results. Could select any of the following (selecting last):");
         for (render_effect::technique* instance : techniques)
         {
             db_warning(renderer, "\t%s", instance->name.c_str());
@@ -179,7 +179,7 @@ render_effect::technique* render_effect_manager::get_technique(const char* name,
             }
         }
         
-        return nullptr;
+        return techniques.back();
     }
 }
 
