@@ -15,6 +15,7 @@ render_light_probe_grid::render_light_probe_grid(render_object_id id, render_sce
     : render_object(id, scene_manager)
     , m_renderer(in_renderer)
 {
+    m_param_block = m_renderer.get_param_block_manager().create_param_block("light_probe_grid_state");
 }
 
 render_light_probe_grid::~render_light_probe_grid()
@@ -66,6 +67,11 @@ ri_buffer& render_light_probe_grid::get_spherical_harmonic_buffer()
     return *m_spherical_harmonic_buffer;
 }
 
+ri_param_block& render_light_probe_grid::get_param_block()
+{
+    return *m_param_block;
+}
+
 void render_light_probe_grid::recalculate_probes()
 {
     vector3 bounds = get_local_scale();
@@ -99,9 +105,9 @@ void render_light_probe_grid::recalculate_probes()
                 probe.dirty = true;
                 probe.index = probe_index;
                 probe.origin = vector3(
-                    (-bounds.x * 0.5f) + ((x * m_density) + (m_density * 0.5f)),
-                    (-bounds.y * 0.5f) + ((y * m_density) + (m_density * 0.5f)),
-                    (-bounds.z * 0.5f) + ((z * m_density) + (m_density * 0.5f))
+                    (-bounds.x * 0.5f) + ((x * m_density)),
+                    (-bounds.y * 0.5f) + ((y * m_density)),
+                    (-bounds.z * 0.5f) + ((z * m_density))
                 ) * grid_transform;
                 probe.extents = vector3(
                     m_density * 0.5f,
@@ -117,6 +123,13 @@ void render_light_probe_grid::recalculate_probes()
             }
         }
     }
+
+    // Update the param block description.
+    m_param_block->set("world_to_grid_matrix", grid_transform.inverse());
+    m_param_block->set("size", vector3i(m_width, m_height, m_depth));
+    m_param_block->set("bounds", bounds);
+    m_param_block->set("density", m_density);
+    m_param_block->set("sh_table", *m_spherical_harmonic_buffer, true);
 }
 
 }; // namespace ws

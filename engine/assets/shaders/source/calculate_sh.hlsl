@@ -21,11 +21,6 @@ struct cshader_input
 	uint group_index : SV_GroupIndex;
 };
 
-float get_texel_area(float x, float y)
-{
-    return atan2(x * y, sqrt(x * x + y * y + 1.0));
-}
-
 float get_texel_weight(int x, int y, int size)
 {
     float fB = -1.0f + 1.0f / size;

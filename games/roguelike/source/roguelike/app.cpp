@@ -80,10 +80,10 @@ ws::result<void> rl_game_app::start()
     */
 
     object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
-    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
-    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2100.0f, 2200.0f));
+    cmd_queue.set_light_probe_grid_density(object_id, 300.0f);
+    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
 //    cmd_queue.set_object_transform(object_id, vector3(200.0, 250.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
-    //cmd_queue.set_object_transform(object_id, vector3(200.0, 250.0f, -100.0f), quat::identity, vector3(1450.f, 500.0f, 600.0f));
+//    cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
     m_light_probe_id = object_id;
 
 //    object_id = cmd_queue.create_reflection_probe_grid("Reflection Probe Grid");
@@ -106,6 +106,8 @@ ws::result<void> rl_game_app::start()
 #endif
 
     m_light_id = object_id;
+
+    m_view_position = vector3(0.0f, 200.0f, 0.0f);
 
 #if 1
     for (size_t i = 0; i < 50; i++)

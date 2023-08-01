@@ -16,6 +16,7 @@
 #include "workshop.renderer/objects/render_point_light.h"
 #include "workshop.renderer/objects/render_spot_light.h"
 #include "workshop.renderer/objects/render_view.h"
+#include "workshop.renderer/objects/render_light_probe_grid.h"
 #include "workshop.renderer/render_resource_cache.h"
 
 namespace ws {
@@ -75,31 +76,61 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     render_batch_instance_buffer* light_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     render_batch_instance_buffer* shadow_map_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 1);
+    render_batch_instance_buffer* light_probe_grid_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 2);
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_lighting_parameters");
 
     // Grab all lights that can directly effect the frustum.
     // TODO: Doing an octtree query should be faster than this, reconsider.
     std::vector<render_light*> visible_lights;
-    for (auto& light : scene_manager.get_directional_lights())
+    std::vector<render_light_probe_grid*> visible_probe_grids;
+
+    if (m_renderer.should_draw_lights())
     {
-        if (view.is_object_visible(light))
+        for (auto& light : scene_manager.get_directional_lights())
         {
-            visible_lights.push_back(light);
+            if (view.is_object_visible(light))
+            {
+                visible_lights.push_back(light);
+            }
+        }
+        for (auto& light : scene_manager.get_point_lights())
+        {
+            if (view.is_object_visible(light))
+            {
+                visible_lights.push_back(light);
+            }
+        }
+        for (auto& light : scene_manager.get_spot_lights())
+        {
+            if (view.is_object_visible(light))
+            {
+                visible_lights.push_back(light);
+            }
         }
     }
-    for (auto& light : scene_manager.get_point_lights())
+    for (auto& grid : scene_manager.get_light_probe_grids())
     {
-        if (view.is_object_visible(light))
+        if (view.is_object_visible(grid))
         {
-            visible_lights.push_back(light);
+            visible_probe_grids.push_back(grid);
         }
     }
-    for (auto& light : scene_manager.get_spot_lights())
+
+    // Fill in the light probe grid indirection buffer.
     {
-        if (view.is_object_visible(light))
+        profile_marker(profile_colors::render, "Build light probe grid buffer");
+
+        for (render_light_probe_grid* grid : visible_probe_grids)
         {
-            visible_lights.push_back(light);
+            ri_param_block& block = grid->get_param_block();
+
+            size_t index, offset;
+            block.get_table(index, offset);
+
+            light_probe_grid_instance_buffer->add(index, offset);
         }
+
+        light_probe_grid_instance_buffer->commit();
     }
     
     // Fill in the indirection buffers.
@@ -169,7 +200,14 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("shadow_map_count", total_shadow_maps);
         resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
         resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
-        resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
+        if (view.has_flag(render_view_flags::scene_only))
+        {
+            resolve_param_block->set("visualization_mode", (int)visualization_mode::normal);
+        }
+        else
+        {
+            resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
+        }
         resolve_param_block->set("light_grid_size", grid_size);
         resolve_param_block->set("light_cluster_buffer", *m_light_cluster_buffer, true);
         resolve_param_block->set("light_cluster_visibility_buffer", *m_light_cluster_visibility_buffer, true);
@@ -179,6 +217,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
         ));
         resolve_param_block->set("apply_ambient", !view.has_flag(render_view_flags::no_ambient_lighting));
+        resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
+        resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
     }
 
     // Add pass to run compute shader to generate the clusters.

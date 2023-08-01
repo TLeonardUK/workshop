@@ -202,6 +202,7 @@ void render_system_light_probes::regenerate_probe(render_light_probe_grid* grid,
 void render_system_light_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+    render_system_debug* debug_system = m_renderer.get_system<render_system_debug>();
 
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
 
@@ -220,6 +221,8 @@ void render_system_light_probes::step(const render_world_state& state)
 
         for (render_light_probe_grid* grid : probe_grids)
         {
+            debug_system->add_obb(grid->get_bounds(), color::green);
+
             std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
             for (render_light_probe_grid::probe& probe : probes)
             {

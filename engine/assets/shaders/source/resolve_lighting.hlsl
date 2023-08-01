@@ -7,6 +7,7 @@
 #include "data:shaders/source/common/normal.hlsl"
 #include "data:shaders/source/common/math.hlsl"
 #include "data:shaders/source/common/lighting.hlsl"
+#include "data:shaders/source/common/light_probe_grid.hlsl"
 #include "data:shaders/source/common/consts.hlsl"
 
 // ================================================================================================
@@ -496,22 +497,33 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
 }
 
 float3 calculate_ambient_lighting(gbuffer_fragment frag)
-{
+{    
     if (!apply_ambient)
     {
-    //    return float3(0.0f, 0.0f, 0.0f);
+        return float3(0.03f, 0.03f, 0.03f);
     }
-    //return float3(0.0f, 0.0f, 0.0f);
 
+    float3 normal = normalize(frag.world_normal);
+    float3 view_direction = normalize(view_world_position - frag.world_position);
+    float3 metallic = frag.metallic;
     float3 albedo = frag.albedo;
+
     if (visualization_mode == visualization_mode_t::lighting)
     {
         albedo = float3(1.0f, 1.0f, 1.0f);
     }
 
-    // TODO: Do IBL.
-    //return 0;
-    return float3(0.03, 0.03, 0.03) * albedo;
+    float3 fresnel_reflectance = lerp(dielectric_fresnel, albedo, metallic);
+    float3 kS = fresnel_schlick(max(dot(normal, view_direction), 0.0), fresnel_reflectance);
+    float3 kD = 1.0f - kS;
+    kD *= 1.0f - metallic;
+
+    float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, -frag.world_normal);
+    float3 diffuse = irradiance * albedo / pi;
+
+    float3 ambient = (kD * diffuse) * 1.0f;
+
+    return ambient * albedo;
 }
 
 // ================================================================================================
@@ -575,6 +587,10 @@ lightbuffer_output pshader(fullscreen_pinput input)
             float3(1.0f, 0.0f, 0.0f),
             saturate(cluster.visible_light_count / float(MAX_LIGHTS_PER_CLUSTER))
         ) * 0.8;
+    }
+    else if (visualization_mode == visualization_mode_t::light_probe_contribution)
+    {
+        final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, -frag.world_normal);
     }
 
     lightbuffer_output output;

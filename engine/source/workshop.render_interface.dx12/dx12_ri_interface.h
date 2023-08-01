@@ -143,6 +143,7 @@ private:
     Microsoft::WRL::ComPtr<IDXGIAdapter4> m_dxgi_adapter = nullptr;
     Microsoft::WRL::ComPtr<ID3D12InfoQueue> m_info_queue = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Debug> m_debug_interface = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedDataSettings> m_dread_interface = nullptr;
 
     D3D12_FEATURE_DATA_D3D12_OPTIONS m_options = {};
     bool m_allow_tearing = false;

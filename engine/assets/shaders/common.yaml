@@ -151,6 +151,17 @@ param_blocks:
       light_grid_size: uint3
       uv_scale: float2
       apply_ambient: bool
+      light_probe_grid_count: int
+      light_probe_grid_buffer: byteaddressbuffer
+  # Structure describing individual light grids.
+  light_probe_grid_state:
+    scope: instance
+    fields:
+      world_to_grid_matrix: float4x4
+      size: int3
+      bounds: float3
+      density: float
+      sh_table: rwbyteaddressbuffer
 
 defines:
   # The size of the grid the frustum is split into for light culling.

@@ -83,6 +83,7 @@ enum class visualization_mode
     light_clusters,
     light_heatmap,
     light_probes,
+    light_probe_contribution,
 
     COUNT
 };
@@ -99,7 +100,8 @@ static inline const char* visualization_mode_strings[] = {
     "shadow cascades",
     "light clusters",
     "light heatmap",
-    "light probes"
+    "light probes",
+    "light probe contribution"
 };
 
 // Defines a set of preloaded models that are commonly used for debugging.
@@ -227,6 +229,9 @@ public:
     // Gets a pointer to the given debug model.
     asset_ptr<model> get_debug_model(debug_model model);
 
+    // Returns true if we should be drawing realtime lights.
+    bool should_draw_lights();
+
 private:
 
     friend class render_command_queue;
@@ -326,9 +331,8 @@ private:
     bool m_draw_octtree_cell_bounds = false;
     bool m_draw_object_bounds = false;
     bool m_rendering_frozen = false;
-#ifndef WS_RELEASE
     bool m_draw_debug_overlay = true;
-#endif
+    bool m_draw_lights = true;
     size_t m_frozen_rendering_frame = 0;
 
     std::vector<debug_menu::option_handle> m_debug_menu_options;

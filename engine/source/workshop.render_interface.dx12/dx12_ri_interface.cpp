@@ -265,6 +265,16 @@ result<void> dx12_render_interface::create_device()
         }
 
         m_debug_interface->EnableDebugLayer();
+
+        hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_dread_interface));
+        if (FAILED(hr))
+        {
+            db_error(render_interface, "D3D12GetDebugInterface failed with error 0x%08x.", hr);
+            return false;
+        }
+
+        m_dread_interface->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+        m_dread_interface->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
     }
 
     UINT createFactoryFlags = 0;
