@@ -503,6 +503,11 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
         return float3(0.0f, 0.0f, 0.0f);
     }
 
+    if (!apply_ambient_lighting)
+    {
+        return float3(0.0f, 0.0f, 0.0f);
+    }
+
     float3 normal = normalize(frag.world_normal);
     float3 view_direction = normalize(view_world_position - frag.world_position);
     float3 metallic = frag.metallic;
@@ -518,8 +523,8 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     float3 kD = 1.0f - kS;
     kD *= 1.0f - metallic;
 
-    float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, -frag.world_normal);
-    float3 diffuse = irradiance * albedo / pi;
+    float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal);
+    float3 diffuse = irradiance * albedo;// / pi;
 
     float3 ambient = (kD * diffuse) * 1.0f;
 
@@ -569,15 +574,7 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }
 
     // Mix final color.
-    float3 final_color = 0.0f;
-    if (apply_ambient_lighting)
-    {
-        final_color += ambient_lighting;
-    }
-    if (apply_direct_lighting)
-    {
-        final_color += direct_lighting;
-    }
+    float3 final_color = ambient_lighting + direct_lighting;
 
     // If we are in a visualization mode, tint colors as appropriate.
     if (visualization_mode == visualization_mode_t::shadow_cascades)
@@ -598,7 +595,7 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }
     else if (visualization_mode == visualization_mode_t::light_probe_contribution)
     {
-        final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, -frag.world_normal);
+        final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal);
     }
 
     lightbuffer_output output;

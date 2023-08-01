@@ -15,7 +15,7 @@ float3 calculate_world_normal(
     float3 b = cross(n, t);
     float3x3 tbn = float3x3(t, b, n);
 
-    return mul(tangent_normal, tbn);
+    return lerp(world_normal, mul(tangent_normal, tbn), 1.0f);
 }
 
 // Converts a normal's range from [0,1] to [-1,1]

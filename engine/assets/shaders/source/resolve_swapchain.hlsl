@@ -67,7 +67,7 @@ swapchain_output pshader(fullscreen_pinput input)
     // Gamma correct the output
     if (tonemap && tonemap_enabled)
     {
-        output.color.rgb = tonemap_reinhard(output.color.rgb);
+        //output.color.rgb = tonemap_reinhard(output.color.rgb);
     }
 
     return output;
