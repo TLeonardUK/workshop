@@ -10,24 +10,24 @@ version: 1
 render_states:
   # Default geometry rendering state.
   default: 
-    cull_mode: back
+    cull_mode: none
   # Default geometry rendering state that is used for rendering depth only data - shadow maps etc.
   depth_only_render_state: 
-    cull_mode: back
+    cull_mode: none
     depth_clip_enabled: false
   # Default geometry rendering state in wireframe.
   default_wireframe: 
-    cull_mode: back
+    cull_mode: none
     fill_mode: wireframe 
   # Default render state but without depth testing enabled. Useful
   # for things such as fullscreen passes.
   no_depth_test:
     depth_test_enabled: false  
     depth_write_enabled: true
-    cull_mode: back
+    cull_mode: none
   # Transparent geometry rendering state.
   transparent: 
-    cull_mode: back  
+    cull_mode: none  
     depth_write_enabled: false
     blend_enabled: true
     blend_op: add
@@ -155,6 +155,10 @@ param_blocks:
       apply_direct_lighting: bool
       light_probe_grid_count: int
       light_probe_grid_buffer: byteaddressbuffer
+      reflection_probe_count: int
+      reflection_probe_buffer: byteaddressbuffer     
+      brdf_lut: texture2d 
+      brdf_lut_sampler: sampler
   # Structure describing individual light grids.
   light_probe_grid_state:
     scope: instance
@@ -164,6 +168,14 @@ param_blocks:
       bounds: float3
       density: float
       sh_table: rwbyteaddressbuffer
+  # Structure describing individual reflection probes.
+  reflection_probe_state:
+    scope: instance
+    fields:
+      world_position: float3
+      radius: float
+      probe_texture: texturecube
+      probe_texture_sampler: sampler
 
 defines:
   # The size of the grid the frustum is split into for light culling.

@@ -76,6 +76,8 @@ SET(SOURCES
     "objects/render_spot_light.cpp"
     "objects/render_light_probe_grid.h"
     "objects/render_light_probe_grid.cpp"
+    "objects/render_reflection_probe.h"
+    "objects/render_reflection_probe.cpp"
     #"objects/render_skinned_mesh.h"
     #"objects/render_dynamic_mesh.h"
 
@@ -91,6 +93,8 @@ SET(SOURCES
     "systems/render_system_imgui.cpp"
     "systems/render_system_light_probes.h"
     "systems/render_system_light_probes.cpp"
+    "systems/render_system_reflection_probes.h"
+    "systems/render_system_reflection_probes.cpp"
     "systems/render_system_geometry.h"
     "systems/render_system_geometry.cpp"
     "systems/render_system_debug.h"

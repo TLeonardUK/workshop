@@ -10,6 +10,7 @@
 #include "workshop.renderer/objects/render_point_light.h"
 #include "workshop.renderer/objects/render_spot_light.h"
 #include "workshop.renderer/objects/render_light_probe_grid.h"
+#include "workshop.renderer/objects/render_reflection_probe.h"
 
 namespace ws {
     
@@ -678,5 +679,57 @@ std::vector<render_light_probe_grid*> render_scene_manager::get_light_probe_grid
 
     return m_active_light_probe_grids;
 }
+
+// ===========================================================================================
+//  Reflection Probes
+// ===========================================================================================
+
+void render_scene_manager::create_reflection_probe(render_object_id id, const char* name)
+{
+    std::scoped_lock lock(m_mutex);
+
+    std::unique_ptr<render_reflection_probe> obj = std::make_unique<render_reflection_probe>(id, this, m_renderer);
+    obj->init();
+    obj->set_name(name);
+
+    render_reflection_probe* obj_ptr = obj.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(obj));
+    if (success)
+    {
+        m_active_reflection_probes.push_back(obj_ptr);
+
+        db_verbose(renderer, "Created new reflection probe: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "create_reflection_probe called with a duplicate id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::destroy_reflection_probe(render_object_id id)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed reflection probe: {%zi} %s", id, iter->second->get_name().c_str());
+
+        m_active_reflection_probes.erase(std::find(m_active_reflection_probes.begin(), m_active_reflection_probes.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_reflection_probe called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_reflection_probe*> render_scene_manager::get_reflection_probes()
+{
+    std::scoped_lock lock(m_mutex);
+
+    return m_active_reflection_probes;
+}
+
 
 }; // namespace ws

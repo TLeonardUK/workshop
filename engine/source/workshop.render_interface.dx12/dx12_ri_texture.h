@@ -48,7 +48,7 @@ public:
 
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
-    dx12_ri_descriptor_table::allocation get_rtv(size_t slice) const;
+    dx12_ri_descriptor_table::allocation get_rtv(size_t slice, size_t mip) const;
     dx12_ri_descriptor_table::allocation get_dsv(size_t slice) const;
 
     ID3D12Resource* get_resource();
@@ -65,14 +65,14 @@ private:
 
     D3D12_SHADER_RESOURCE_VIEW_DESC m_srv_view_desc = {};
     std::vector<D3D12_DEPTH_STENCIL_VIEW_DESC> m_dsv_view_descs = {};
-    std::vector<D3D12_RENDER_TARGET_VIEW_DESC> m_rtv_view_descs = {};
+    std::vector<std::vector<D3D12_RENDER_TARGET_VIEW_DESC>> m_rtv_view_descs = {};
 
     DXGI_FORMAT m_resource_format;
     DXGI_FORMAT m_srv_format;
     DXGI_FORMAT m_dsv_format;
     DXGI_FORMAT m_rtv_format;
 
-    std::vector<dx12_ri_descriptor_table::allocation> m_rtvs;
+    std::vector<std::vector<dx12_ri_descriptor_table::allocation>> m_rtvs;
     std::vector<dx12_ri_descriptor_table::allocation> m_dsvs;
     dx12_ri_descriptor_table::allocation m_srv;
 

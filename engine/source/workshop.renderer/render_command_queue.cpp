@@ -371,4 +371,27 @@ void render_command_queue::set_light_probe_grid_density(render_object_id id, flo
     });
 }
 
+// ===========================================================================================
+//  Reflection Probe
+// ===========================================================================================
+
+render_object_id render_command_queue::create_reflection_probe(const char* name)
+{
+    render_object_id id = m_renderer.next_render_object_id();
+    const char* stored_name = allocate_copy(name);
+
+    queue_command("create_reflection_probe", [renderer = &m_renderer, id, stored_name]() {
+        renderer->get_scene_manager().create_reflection_probe(id, stored_name);
+    });
+
+    return id;
+}
+
+void render_command_queue::destroy_reflection_probe(render_object_id id)
+{
+    queue_command("destroy_reflection_probe", [renderer = &m_renderer, id]() {
+        renderer->get_scene_manager().destroy_reflection_probe(id);
+    });
+}
+
 }; // namespace ws

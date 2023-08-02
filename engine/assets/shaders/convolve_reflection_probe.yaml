@@ -1,0 +1,42 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect convoles a given mip/face of a reflection probe into a format that can be
+# used for generating specular highlights.
+ 
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  convolve_reflection_probe:
+    techniques:
+      convolve_reflection_probe: {}
+
+output_targets:
+  convolve_output_target:
+    color: [ R16G16B16A16_FLOAT ]
+
+param_blocks:
+  convolve_reflection_probe_params:
+    scope: draw
+    fields:
+      source_texture: texturecube
+      source_texture_sampler: sampler
+      source_texture_size: int2
+      source_texture_face: int
+
+techniques:
+  convolve_reflection_probe:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/convolve_reflection_probe.hlsl
+      entry: pshader
+    render_state: no_depth_test
+    vertex_layout: vertex2d_pos_uv
+    output_target: convolve_output_target
+    param_blocks: [ convolve_reflection_probe_params ]

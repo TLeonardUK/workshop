@@ -5,34 +5,29 @@
 type: shader
 version: 1
 
-# This effect takes the tiled lighting and gbuffer and builds a light accumulation buffer.
-# Which is then used to apply lighting to the final image in a later step.
+# This effect generates a BRDF lookup texture that we use for making
+# integrating brdf cheaper in the lighting pass.
 
 imports: [ data:shaders/common.yaml ]
 
 effects:
-  resolve_lighting:
+  calculate_brdf_lut:
     techniques:
-      resolve_lighting: {}
+      calculate_brdf_lut: {}
+
+output_targets:
+  brdf_lut_output:
+    color: [ R16G16B16A16_FLOAT ]
 
 techniques:
-  resolve_lighting:
+  calculate_brdf_lut:
     vertex_shader: 
       file: data:shaders/source/fullscreen_pass.hlsl
       entry: fullscreen_vshader
     pixel_shader: 
-      file: data:shaders/source/resolve_lighting.hlsl
+      file: data:shaders/source/calculate_brdf_lut.hlsl
       entry: pshader
     render_state: no_depth_test
     vertex_layout: vertex2d_pos_uv
-    output_target: light_buffer
-    param_blocks: [ 
-      view_info, 
-      light_state, 
-      light_cluster, 
-      light_probe_grid_state, 
-      reflection_probe_state,
-      shadow_map_state, 
-      gbuffer, 
-      resolve_lighting_parameters 
-    ]
+    output_target: brdf_lut_output
+    param_blocks: [  ]

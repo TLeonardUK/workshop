@@ -14,32 +14,6 @@ namespace ws {
 class ri_texture;
 
 // ================================================================================================
-//  Represents a view to a specific part of a texture.
-// ================================================================================================
-struct ri_texture_view
-{
-public:
-    ri_texture_view() = default;
-
-    ri_texture_view(ri_texture* in_texture)
-        : texture(in_texture)
-    {
-    }
-
-    ri_texture_view(ri_texture* in_texture, size_t in_slice)
-        : texture(in_texture)
-        , slice(in_slice)
-    {
-    }
-
-public:
-
-    ri_texture* texture = nullptr;
-    size_t slice = 0;
-
-};
-
-// ================================================================================================
 //  Represents a block of texture memory, which can optionally be flagged for use
 //  as a render target.
 // ================================================================================================
@@ -93,6 +67,64 @@ public:
     virtual ri_resource_state get_initial_state() = 0;
 
     virtual void swap(ri_texture* other) = 0;
+
+};
+
+// ================================================================================================
+//  Represents a view to a specific part of a texture.
+// ================================================================================================
+struct ri_texture_view
+{
+public:
+    ri_texture_view() = default;
+
+    ri_texture_view(ri_texture* in_texture)
+        : texture(in_texture)
+    {
+    }
+
+    ri_texture_view(ri_texture* in_texture, size_t in_slice)
+        : texture(in_texture)
+        , slice(in_slice)
+    {
+    }
+
+    ri_texture_view(ri_texture* in_texture, size_t in_slice, size_t in_mip)
+        : texture(in_texture)
+        , slice(in_slice)
+        , mip(in_mip)
+    {
+    }
+
+public:
+
+    // Gets width/height taking mip level into account.
+
+    size_t get_width()
+    {
+        size_t full_size = texture->get_width();
+        for (size_t i = mip; i > 0; i--)
+        {
+            full_size /= 2;
+        }
+        return full_size;
+    }
+
+    size_t get_height()
+    {
+        size_t full_size = texture->get_width();
+        for (size_t i = mip; i > 0; i--)
+        {
+            full_size /= 2;
+        }
+        return full_size;
+    }
+
+public:
+
+    ri_texture* texture = nullptr;
+    size_t slice = 0;
+    size_t mip = 0;
 
 };
 

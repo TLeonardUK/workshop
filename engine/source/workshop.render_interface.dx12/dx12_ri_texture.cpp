@@ -38,11 +38,14 @@ dx12_ri_texture::~dx12_ri_texture()
         {
             renderer->get_descriptor_table(srv_table).free(srv);
         }
-        for (auto& rtv : rtvs)
+        for (auto& mip_rtvs : rtvs)
         {
-            if (rtv.is_valid())
+            for (auto& rtv : mip_rtvs)
             {
-                renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
+                if (rtv.is_valid())
+                {
+                    renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
+                }
             }
         }
         for (auto& dsv : dsvs)
@@ -233,10 +236,19 @@ void dx12_ri_texture::calculate_formats()
             rtv_template_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
             rtv_template_desc.Texture1D.MipSlice = 0;
 
+            m_rtv_view_descs.resize(mip_levels);
+            m_rtvs.resize(mip_levels);
+
+            for (size_t mip = 0; mip < mip_levels; mip++)
+            {
+                rtv_template_desc.Texture2D.MipSlice = mip;
+
+                m_rtv_view_descs[mip].push_back(rtv_template_desc);
+                m_rtvs[mip].resize(1);
+            }
+
             m_dsv_view_descs.push_back(dsv_template_desc);
-            m_rtv_view_descs.push_back(rtv_template_desc);
             m_dsvs.resize(1);
-            m_rtvs.resize(1);
 
             break;
         }
@@ -258,10 +270,19 @@ void dx12_ri_texture::calculate_formats()
             rtv_template_desc.Texture2D.MipSlice = 0;
             rtv_template_desc.Texture2D.PlaneSlice = 0;
 
+            m_rtv_view_descs.resize(mip_levels);
+            m_rtvs.resize(mip_levels);
+
+            for (size_t mip = 0; mip < mip_levels; mip++)
+            {
+                rtv_template_desc.Texture2D.MipSlice = mip;
+
+                m_rtv_view_descs[mip].push_back(rtv_template_desc);
+                m_rtvs[mip].resize(1);
+            }
+
             m_dsv_view_descs.push_back(dsv_template_desc);
-            m_rtv_view_descs.push_back(rtv_template_desc);
             m_dsvs.resize(1);
-            m_rtvs.resize(1);
 
             break;
         }
@@ -281,18 +302,28 @@ void dx12_ri_texture::calculate_formats()
             dsv_template_desc.Flags = D3D12_DSV_FLAG_NONE;
 
             rtv_template_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-            rtv_template_desc.Texture2D.MipSlice = 0;
-            rtv_template_desc.Texture2D.PlaneSlice = 0;
+            rtv_template_desc.Texture2DArray.MipSlice = 0;
+            rtv_template_desc.Texture2DArray.PlaneSlice = 0;
 
             m_dsvs.resize(m_create_params.depth);
-            m_rtvs.resize(m_create_params.depth);
             for (size_t i = 0; i < m_create_params.depth; i++)
             {
                 dsv_template_desc.Texture2DArray.FirstArraySlice = i;
-                rtv_template_desc.Texture2D.PlaneSlice = i;
-
                 m_dsv_view_descs.push_back(dsv_template_desc);
-                m_rtv_view_descs.push_back(rtv_template_desc);
+            }
+
+            m_rtv_view_descs.resize(mip_levels);
+            m_rtvs.resize(mip_levels);
+
+            for (size_t mip = 0; mip < mip_levels; mip++)
+            {
+                m_rtvs[mip].resize(m_create_params.depth);
+                for (size_t i = 0; i < m_create_params.depth; i++)
+                {
+                    rtv_template_desc.Texture2DArray.PlaneSlice = i;
+                    rtv_template_desc.Texture2DArray.MipSlice = mip;
+                    m_rtv_view_descs[mip].push_back(rtv_template_desc);
+                }
             }
 
             break;
@@ -319,14 +350,24 @@ void dx12_ri_texture::calculate_formats()
             rtv_template_desc.Texture2DArray.ArraySize = 1;
 
             m_dsvs.resize(m_create_params.depth);
-            m_rtvs.resize(m_create_params.depth);
             for (size_t i = 0; i < m_create_params.depth; i++)
             {
                 dsv_template_desc.Texture2DArray.FirstArraySlice = i;
-                rtv_template_desc.Texture2DArray.FirstArraySlice = i;
-
                 m_dsv_view_descs.push_back(dsv_template_desc);
-                m_rtv_view_descs.push_back(rtv_template_desc);
+            }
+
+            m_rtv_view_descs.resize(mip_levels);
+            m_rtvs.resize(mip_levels);
+
+            for (size_t mip = 0; mip < mip_levels; mip++)
+            {
+                m_rtvs[mip].resize(m_create_params.depth);
+                for (size_t i = 0; i < m_create_params.depth; i++)
+                {
+                    rtv_template_desc.Texture2DArray.FirstArraySlice = i;
+                    rtv_template_desc.Texture2DArray.MipSlice = mip;
+                    m_rtv_view_descs[mip].push_back(rtv_template_desc);
+                }
             }
 
             break;
@@ -352,10 +393,13 @@ void dx12_ri_texture::create_views()
         }
         else
         {
-            for (size_t i = 0; i < m_rtvs.size(); i++)
+            for (size_t mip = 0; mip < get_mip_levels(); mip++)
             {
-                m_rtvs[i] = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
-                m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[i], m_rtvs[i].cpu_handle);
+                for (size_t slice = 0; slice < m_rtvs[mip].size(); slice++)
+                {
+                    m_rtvs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
+                    m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[mip][slice], m_rtvs[mip][slice].cpu_handle);
+                }
             }
         }
     }
@@ -370,9 +414,9 @@ dx12_ri_descriptor_table::allocation dx12_ri_texture::get_srv() const
     return m_srv;
 }
 
-dx12_ri_descriptor_table::allocation dx12_ri_texture::get_rtv(size_t slice) const
+dx12_ri_descriptor_table::allocation dx12_ri_texture::get_rtv(size_t slice, size_t mip) const
 {
-    return m_rtvs[slice];
+    return m_rtvs[mip][slice];
 }
 
 dx12_ri_descriptor_table::allocation dx12_ri_texture::get_dsv(size_t slice) const
@@ -464,14 +508,17 @@ void dx12_ri_texture::swap(ri_texture* other)
 
     // Recreate our views in the same descriptor slots. This keeps all the handles used elsewhere
     // in param blocks etc valid, no need to replace everything.
-    for (size_t i = 0; i < m_rtvs.size(); i++)
+    for (size_t mip = 0; mip < get_mip_levels(); mip++)
     {
-        if (m_rtvs[i].is_valid())
+        for (size_t slice = 0; slice < m_rtvs[mip].size(); slice++)
         {
-            m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[i], m_rtvs[i].cpu_handle);
+            if (m_rtvs[mip][slice].is_valid())
+            {
+                m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[mip][slice], m_rtvs[mip][slice].cpu_handle);
+            }
         }
     }
-    for (size_t i = 0; i < m_rtvs.size(); i++)
+    for (size_t i = 0; i < m_dsvs.size(); i++)
     {
         if (m_dsvs[i].is_valid())
         {

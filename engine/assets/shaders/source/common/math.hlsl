@@ -152,4 +152,54 @@ float3 get_cubemap_normal(int face_index, int size, int2 xy)
     return normalize(dir);
 }
 
+float3 get_cubemap_normal_from_uv(int face_index, float2 uv)
+{
+    float3 dir = 0.0f;
+
+    // [0,1] -> [-1,1]
+    uv = (uv * 2) - 1.0f;
+
+    switch (face_index)
+    {
+    // Positive X
+    case 0: 
+        dir.z = 1.0f - uv.x;
+        dir.y = 1.0f - uv.y;
+        dir.x = 1.0f;
+        break;
+    // Negative X
+    case 1: 
+        dir.z = -1.0f + uv.x;
+        dir.y = 1.0f - uv.y;
+        dir.x = -1;
+        break;
+    // Positive Y
+    case 2: 
+        dir.z = -1.0f + uv.y;
+        dir.y = 1.0f;
+        dir.x = -1.0f + uv.x;
+        break;
+    // Negative Y
+    case 3: 
+        dir.z = 1.0f - uv.y;
+        dir.y = -1.0f;
+        dir.x = -1.0f + uv.x;
+        break;
+    // Positive Z
+    case 4: 
+        dir.z = 1.0f;
+        dir.y = 1.0f - uv.y;
+        dir.x = -1.0f + uv.x;
+        break;
+    // Negative Z
+    case 5: 
+        dir.z = -1.0f;
+        dir.y = 1.0f - uv.y;
+        dir.x = 1.0f - uv.x;
+        break;
+    }
+    
+    return normalize(dir);
+}
+
 #endif // _MATH_HLSL_

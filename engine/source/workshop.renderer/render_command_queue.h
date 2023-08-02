@@ -189,6 +189,16 @@ public:
     // Sets the density of a light probe grid, as a value that represents the seperation between each probe.
     void set_light_probe_grid_density(render_object_id id, float density);
 
+    // ===========================================================================================
+    //  Reflection Probe
+    // ===========================================================================================
+
+    // Creates a new reflection probe in the scene.
+    render_object_id create_reflection_probe(const char* name);
+
+    // Destroys a reflection probe previously created with create_reflection_probe
+    void destroy_reflection_probe(render_object_id id);
+
 private:
     renderer& m_renderer;
 

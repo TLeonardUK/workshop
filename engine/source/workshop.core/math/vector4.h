@@ -40,6 +40,9 @@ public:
 	base_vector4 abs() const;
 	base_vector4 normalize() const;
 
+	element_type max_component() const;
+	element_type min_component() const;
+
 	static float dot(const base_vector4& a, const base_vector4& b);
 	static base_vector4 min(const base_vector4& a, const base_vector4& b);
 	static base_vector4 max(const base_vector4& a, const base_vector4& b);
@@ -166,6 +169,19 @@ template <typename element_type>
 inline element_type base_vector4<element_type>::length_squared() const
 {
 	return dot(*this, *this);
+}
+
+
+template <typename element_type>
+inline element_type base_vector4<element_type>::max_component() const
+{
+	return std::max(w, std::max(x, std::max(y, z)));
+}
+
+template <typename element_type>
+inline element_type base_vector4<element_type>::min_component() const
+{
+	return std::min(w, std::min(x, std::min(y, z)));
 }
 
 template <typename element_type>

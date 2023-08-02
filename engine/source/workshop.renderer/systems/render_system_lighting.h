@@ -33,6 +33,7 @@ public:
     render_system_lighting(renderer& render);
 
     virtual void register_init(init_list& list) override;
+    virtual void build_pre_graph(render_graph& graph, const render_world_state& state) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
 
@@ -81,6 +82,9 @@ private:
     void get_cluster_values(vector3u& out_grid_size, size_t& out_cluster_size, size_t& out_max_lights_per_cluster);
 
 private:
+
+    std::unique_ptr<ri_texture> m_brdf_lut_texture;
+    bool m_calculated_brdf_lut = false;
 
     std::unique_ptr<ri_texture> m_lighting_buffer;
     std::unique_ptr<ri_buffer> m_light_cluster_buffer;

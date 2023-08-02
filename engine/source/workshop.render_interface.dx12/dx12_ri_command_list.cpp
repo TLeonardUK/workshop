@@ -145,11 +145,13 @@ void dx12_ri_command_list::clear(ri_texture_view resource, const color& destinat
     dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(*resource.texture);
 
     FLOAT color[] = { destination.r, destination.g, destination.b, destination.a };
-    m_command_list->ClearRenderTargetView(dx12_resource.get_rtv(resource.slice).cpu_handle, color, 0, nullptr);
+    m_command_list->ClearRenderTargetView(dx12_resource.get_rtv(resource.slice, resource.mip).cpu_handle, color, 0, nullptr);
 }
 
 void dx12_ri_command_list::clear_depth(ri_texture_view resource, float depth, size_t stencil)
 {
+    db_assert(resource.mip == 0);
+
     dx12_ri_texture& dx12_resource = static_cast<dx12_ri_texture&>(*resource.texture);
 
     m_command_list->ClearDepthStencilView(dx12_resource.get_dsv(resource.slice).cpu_handle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, static_cast<UINT8>(stencil), 0, nullptr);
@@ -332,12 +334,14 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture_view>
     for (ri_texture_view value : colors)
     {
         dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(value.texture);
-        color_handles.push_back(dx12_tex->get_rtv(value.slice).cpu_handle);
+        color_handles.push_back(dx12_tex->get_rtv(value.slice, value.mip).cpu_handle);
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE depth_handle = {};
     if (depth.texture != nullptr)
     {
+        db_assert(depth.mip == 0);
+
         dx12_ri_texture* dx12_tex = static_cast<dx12_ri_texture*>(depth.texture);
         depth_handle = dx12_tex->get_dsv(depth.slice).cpu_handle;
     }

@@ -29,11 +29,20 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
     }
 
     // Grab and update the vertex info buffer.
+    std::unique_ptr<ri_param_block> owned_vertex_info_param_block = nullptr;
     ri_param_block* vertex_info_param_block = nullptr;
     
     if (technique)
     {
-        vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info");
+        if (view)
+        {
+            vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info");
+        }
+        else
+        {
+            owned_vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
+            vertex_info_param_block = owned_vertex_info_param_block.get();
+        }
         vertex_info_param_block->set("vertex_buffer", *vertex_buffer);
         vertex_info_param_block->set("vertex_buffer_offset", 0u);
         vertex_info_param_block->clear_buffer("instance_buffer");
@@ -71,9 +80,20 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         {
             list.set_pipeline(*technique->pipeline.get());
             list.set_render_targets(output.color_targets, output.depth_target);
-            list.set_param_blocks(bind_param_blocks(view->get_resource_cache()));
-            list.set_viewport(view->get_viewport());
-            list.set_scissor(view->get_viewport());
+            if (view)
+            {
+                list.set_param_blocks(bind_param_blocks(view->get_resource_cache()));
+                list.set_viewport(view->get_viewport());
+                list.set_scissor(view->get_viewport());
+            }
+            else
+            {
+                recti viewport = { 0, 0, (int)output.color_targets[0].get_width(), (int)output.color_targets[0].get_height() };
+
+                list.set_param_blocks(param_blocks);
+                list.set_viewport(viewport);
+                list.set_scissor(viewport);
+            }
             list.set_primitive_topology(ri_primitive::triangle_list);
             list.set_index_buffer(*index_buffer);
             list.draw(6, 1);

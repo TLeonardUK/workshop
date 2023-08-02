@@ -17,6 +17,7 @@
 #include "workshop.renderer/objects/render_spot_light.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/objects/render_light_probe_grid.h"
+#include "workshop.renderer/objects/render_reflection_probe.h"
 #include "workshop.renderer/render_resource_cache.h"
 
 namespace ws {
@@ -51,6 +52,14 @@ result<void> render_system_lighting::create_resources()
     m_lighting_output.depth_target = nullptr;
     m_lighting_output.color_targets.push_back(m_lighting_buffer.get());
 
+    // LUT we will generate for calculating BRDF factors.
+    texture_params.width = 256;
+    texture_params.height = 256;
+    texture_params.dimensions = ri_texture_dimension::texture_2d;
+    texture_params.format = ri_texture_format::R16G16B16A16_FLOAT;
+    texture_params.is_render_target = true;
+    m_brdf_lut_texture = render_interface.create_texture(texture_params, "BRDF LUT");
+
     return true;
 }
 
@@ -62,6 +71,21 @@ result<void> render_system_lighting::destroy_resources()
 ri_texture& render_system_lighting::get_lighting_buffer()
 {
     return *m_lighting_buffer;
+}
+
+void render_system_lighting::build_pre_graph(render_graph& graph, const render_world_state& state)
+{
+    if (!m_calculated_brdf_lut)
+    {
+        std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
+        pass->name = "calculate brdf";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("calculate_brdf_lut", {});
+        pass->output.color_targets.push_back(m_brdf_lut_texture.get());
+        graph.add_node(std::move(pass));
+
+        m_calculated_brdf_lut = true;
+    }
 }
 
 void render_system_lighting::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
@@ -77,12 +101,14 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
     render_batch_instance_buffer* light_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     render_batch_instance_buffer* shadow_map_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 1);
     render_batch_instance_buffer* light_probe_grid_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 2);
+    render_batch_instance_buffer* reflection_probe_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 3);
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_lighting_parameters");
 
     // Grab all lights that can directly effect the frustum.
     // TODO: Doing an octtree query should be faster than this, reconsider.
     std::vector<render_light*> visible_lights;
     std::vector<render_light_probe_grid*> visible_probe_grids;
+    std::vector<render_reflection_probe*> visible_reflection_probes;
 
     for (auto& light : scene_manager.get_directional_lights())
     {
@@ -112,6 +138,13 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             visible_probe_grids.push_back(grid);
         }
     }
+    for (auto& probe : scene_manager.get_reflection_probes())
+    {
+        if (view.is_object_visible(probe) && probe->is_ready())
+        {
+            visible_reflection_probes.push_back(probe);
+        }
+    }
 
     // Fill in the light probe grid indirection buffer.
     {
@@ -129,7 +162,24 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
 
         light_probe_grid_instance_buffer->commit();
     }
-    
+
+    // Fill in the reflection probe indirection buffer.
+    {
+        profile_marker(profile_colors::render, "Build reflection probe buffer");
+
+        for (render_reflection_probe* probe : visible_reflection_probes)
+        {
+            ri_param_block& block = probe->get_param_block();
+
+            size_t index, offset;
+            block.get_table(index, offset);
+
+            reflection_probe_instance_buffer->add(index, offset);
+        }
+
+        reflection_probe_instance_buffer->commit();
+    }
+
     // Fill in the indirection buffers.
     int total_lights = 0;
     int total_shadow_maps = 0;
@@ -218,6 +268,10 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("apply_direct_lighting", m_renderer.should_draw_direct_lighting());
         resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
         resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
+        resolve_param_block->set("reflection_probe_count", (int)visible_reflection_probes.size());
+        resolve_param_block->set("reflection_probe_buffer", reflection_probe_instance_buffer->get_buffer());
+        resolve_param_block->set("brdf_lut", *m_brdf_lut_texture);
+        resolve_param_block->set("brdf_lut_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));       
     }
 
     // Add pass to run compute shader to generate the clusters.

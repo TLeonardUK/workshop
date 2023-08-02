@@ -60,7 +60,8 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Curtains");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
-    
+   
+    /*
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
@@ -68,7 +69,8 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-    
+    */
+
     /*
     for (int x = 0; x < 150; x++)
     {
@@ -80,12 +82,18 @@ ws::result<void> rl_game_app::start()
     }
     */
 
+
+    object_id = cmd_queue.create_reflection_probe("Reflection Probe");
+    cmd_queue.set_object_transform(object_id, vector3(0.0, 200.0f, 0.0f), quat::identity, vector3(4000.f, 4000.0f, 4000.0f));
+
+#if 0
     object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
     cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
-    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
+//    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
 //    cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
-//    cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
+    cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
     m_light_probe_id = object_id;
+#endif
 
 //    object_id = cmd_queue.create_reflection_probe_grid("Reflection Probe Grid");
 //    cmd_queue.set_reflection_probe_grid_density(object_id, true);
@@ -95,7 +103,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 2048);
     cmd_queue.set_light_intensity(object_id, 1.0f);
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right), vector3::one);
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 #endif
   
 #if 0

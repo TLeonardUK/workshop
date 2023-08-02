@@ -8,6 +8,7 @@
 #include "data:shaders/source/common/math.hlsl"
 #include "data:shaders/source/common/lighting.hlsl"
 #include "data:shaders/source/common/light_probe_grid.hlsl"
+#include "data:shaders/source/common/reflection_probe.hlsl"
 #include "data:shaders/source/common/consts.hlsl"
 
 // ================================================================================================
@@ -124,9 +125,9 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     shadow_map_coord = float2(shadow_map_coord.x, 1.0f - shadow_map_coord.y);
 
     // Sloped bias to filter out acne on slanted surfaces.
-    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.0001f, 0.001f); 
+    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.000001f, 0.00001f); 
     float result = 0.0f;
-
+    
     // Filter if required.
     Texture2D shadow_map =  table_texture_2d[NonUniformResourceIndex(state.depth_map_index)];
     switch (filter)
@@ -510,6 +511,8 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
 
     float3 normal = normalize(frag.world_normal);
     float3 view_direction = normalize(view_world_position - frag.world_position);
+    float3 reflect_direction = reflect(-view_direction, normal);   
+
     float3 metallic = frag.metallic;
     float3 albedo = frag.albedo;
 
@@ -523,10 +526,16 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     float3 kD = 1.0f - kS;
     kD *= 1.0f - metallic;
 
+    // Sample light grids for our diffuse term.
     float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal);
     float3 diffuse = irradiance * albedo / pi;
 
-    float3 ambient = (kD * diffuse) * 1.0f;
+    // Sample our reflection probes + BRDF LUT to calculate our specular term.
+    float3 reflection_probe_color = sample_reflection_probes(frag.world_position, reflect_direction, reflection_probe_count, reflection_probe_buffer, frag.roughness);
+    float2 brdf = brdf_lut.Sample(brdf_lut_sampler, float2(max(dot(normal, view_direction), 0.0), frag.roughness)).rg;
+    float3 specular = reflection_probe_color * (fresnel_reflectance * brdf.x + brdf.y);
+
+    float3 ambient = (kD * diffuse + specular) * 1.0f;
 
     return ambient;
 }
@@ -575,6 +584,12 @@ lightbuffer_output pshader(fullscreen_pinput input)
 
     // Mix final color.
     float3 final_color = ambient_lighting + direct_lighting;
+
+    // DEBUG: Temp hack: Treat unrendered parts of the scene as unlit.
+    /*if (frag.world_normal.x == 0.0f && frag.world_normal.y == 0.0f && frag.world_normal.z == 0.0f)
+    {
+        final_color = frag.albedo;
+    }*/
 
     // If we are in a visualization mode, tint colors as appropriate.
     if (visualization_mode == visualization_mode_t::shadow_cascades)

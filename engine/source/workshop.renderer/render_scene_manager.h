@@ -24,6 +24,7 @@ class render_directional_light;
 class render_point_light;
 class render_spot_light;
 class render_light_probe_grid;
+class render_reflection_probe;
 
 // ================================================================================================
 //  Handles management of the render scene and the objects within it. 
@@ -193,6 +194,19 @@ public:
     // Gets a list of all active light probe grid
     std::vector<render_light_probe_grid*> get_light_probe_grids();
 
+    // ===========================================================================================
+    //  Reflection Probe
+    // ===========================================================================================
+
+    // Creates a new reflection probe in the scene.
+    void create_reflection_probe(render_object_id id, const char* name);
+
+    // Destroys a reflection probe previously created with create_reflection_probe
+    void destroy_reflection_probe(render_object_id id);
+
+    // Gets a list of all active reflection probes.
+    std::vector<render_reflection_probe*> get_reflection_probes();
+
 private:
 
     friend class render_object;
@@ -223,6 +237,7 @@ private:
     std::vector<render_point_light*> m_active_point_lights;
     std::vector<render_spot_light*> m_active_spot_lights;
     std::vector<render_light_probe_grid*> m_active_light_probe_grids;
+    std::vector<render_reflection_probe*> m_active_reflection_probes;
 
 };
 

@@ -38,6 +38,9 @@ public:
 	base_vector2 abs() const;
 	base_vector2 normalize() const;
 
+	element_type max_component() const;
+	element_type min_component() const;
+
 	static float dot(const base_vector2& a, const base_vector2& b);
 	static base_vector2 min(const base_vector2& a, const base_vector2& b);
 	static base_vector2 max(const base_vector2& a, const base_vector2& b);
@@ -134,6 +137,18 @@ template <typename element_type>
 inline element_type base_vector2<element_type>::length_squared() const
 {
 	return dot(*this, *this);
+}
+
+template <typename element_type>
+inline element_type base_vector2<element_type>::max_component() const
+{
+	return std::max(x, y);
+}
+
+template <typename element_type>
+inline element_type base_vector2<element_type>::min_component() const
+{
+	return std::min(x, y);
 }
 
 template <typename element_type>

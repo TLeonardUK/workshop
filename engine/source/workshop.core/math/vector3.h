@@ -43,6 +43,9 @@ public:
 	base_vector3 abs() const;
 	base_vector3 normalize() const;
 
+	element_type max_component() const;
+	element_type min_component() const;
+
 	static base_vector3 determinant(const base_vector3& a, const base_vector3& b);
 	static float dot(const base_vector3& a, const base_vector3& b);
 	static base_vector3 cross(const base_vector3& a, const base_vector3& b);
@@ -167,6 +170,18 @@ template <typename element_type>
 inline element_type base_vector3<element_type>::length_squared() const
 {
 	return dot(*this, *this);
+}
+
+template <typename element_type>
+inline element_type base_vector3<element_type>::max_component() const
+{
+	return std::max(x, std::max(y, z));
+}
+
+template <typename element_type>
+inline element_type base_vector3<element_type>::min_component() const
+{
+	return std::min(x, std::min(y, z));
 }
 
 template <typename element_type>
