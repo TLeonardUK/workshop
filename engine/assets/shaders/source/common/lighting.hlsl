@@ -79,24 +79,29 @@ float geometry_smith_preintegrated(float3 n, float3 v, float3 l, float roughness
 
 float3 importance_sample_ggx(float2 xi, float3 n, float roughness)
 {
-    float a = roughness * roughness;
+    // This function is done at double precision as some of the numbers get teeny
+    // and can give NaN's depending on how the instructions are ordered.
+    // Fun fact, PIX's instrumentation makes the debugger show everything running
+    // perfectly when it implodes outside of pix *flip table*.    
+
+    double a = roughness * roughness;
 	
-    float phi = 2.0 * pi * xi.x;
-    float cos_theta = sqrt((1.0 - xi.y) / (1.0 + (a * a - 1.0) * xi.y));
-    float sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+    double phi = 2.0 * pi * xi.x;
+    double cos_theta = sqrt((1.0 - xi.y) / (1.0 + (a * a - 1.0) * xi.y));
+    double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 	
     // from spherical coordinates to cartesian coordinates
-    float3 h;
+    double3 h;
     h.x = cos(phi) * sin_theta;
     h.y = sin(phi) * sin_theta;
     h.z = cos_theta;
-	
+	 
     // from tangent-space vector to world-space sample vector
-    float3 up        = abs(n.z) < 0.999 ? float3(0.0, 0.0, 1.0) : float3(1.0, 0.0, 0.0);
-    float3 tangent   = normalize(cross(up, n));
-    float3 bitangent = cross(n, tangent);
+    double3 up        = abs(n.z) < 0.999 ? double3(0.0, 0.0, 1.0) : double3(1.0, 0.0, 0.0);
+    double3 tangent   = normalize(cross(up, n));
+    double3 bitangent = cross(n, tangent);
 	
-    float3 sample_vec = tangent * h.x + bitangent * h.y + n * h.z;
+    double3 sample_vec = tangent * h.x + bitangent * h.y + n * h.z;
     return normalize(sample_vec);
 }  
 

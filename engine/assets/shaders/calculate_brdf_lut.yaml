@@ -17,7 +17,7 @@ effects:
 
 output_targets:
   brdf_lut_output:
-    color: [ R16G16B16A16_FLOAT ]
+    color: [ R32G32_FLOAT ]
 
 techniques:
   calculate_brdf_lut:
@@ -27,7 +27,7 @@ techniques:
     pixel_shader: 
       file: data:shaders/source/calculate_brdf_lut.hlsl
       entry: pshader
-    render_state: no_depth_test
+    render_state: passthrough_render_state
     vertex_layout: vertex2d_pos_uv
     output_target: brdf_lut_output
     param_blocks: [  ]

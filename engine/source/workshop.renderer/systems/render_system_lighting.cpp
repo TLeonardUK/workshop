@@ -56,7 +56,7 @@ result<void> render_system_lighting::create_resources()
     texture_params.width = 256;
     texture_params.height = 256;
     texture_params.dimensions = ri_texture_dimension::texture_2d;
-    texture_params.format = ri_texture_format::R16G16B16A16_FLOAT;
+    texture_params.format = ri_texture_format::R32G32_FLOAT;
     texture_params.is_render_target = true;
     m_brdf_lut_texture = render_interface.create_texture(texture_params, "BRDF LUT");
 
@@ -84,7 +84,7 @@ void render_system_lighting::build_pre_graph(render_graph& graph, const render_w
         pass->output.color_targets.push_back(m_brdf_lut_texture.get());
         graph.add_node(std::move(pass));
 
-        m_calculated_brdf_lut = true;
+        //m_calculated_brdf_lut = true;
     }
 }
 

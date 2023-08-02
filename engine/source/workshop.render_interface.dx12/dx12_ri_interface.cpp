@@ -266,6 +266,7 @@ result<void> dx12_render_interface::create_device()
 
         m_debug_interface->EnableDebugLayer();
 
+#if 0
         hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_dread_interface));
         if (FAILED(hr))
         {
@@ -275,6 +276,7 @@ result<void> dx12_render_interface::create_device()
 
         m_dread_interface->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
         m_dread_interface->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+#endif
     }
 
     UINT createFactoryFlags = 0;

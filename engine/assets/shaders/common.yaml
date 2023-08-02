@@ -25,6 +25,14 @@ render_states:
     depth_test_enabled: false  
     depth_write_enabled: true
     cull_mode: none
+  # Default render state but without depth testing enabled. Useful
+  # for things such as fullscreen passes.
+  passthrough_render_state:
+    cull_mode: back
+    depth_test_enabled: false  
+    depth_write_enabled: false
+    depth_clip_enabled: false
+    blend_enabled: false
   # Transparent geometry rendering state.
   transparent: 
     cull_mode: none  
