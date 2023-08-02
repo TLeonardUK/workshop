@@ -21,6 +21,12 @@ float3 fresnel_schlick(float cos_theta, float3 f0)
     return f0 + (1.0 - f0) * pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
 }
 
+float3 fresnel_schlick_roughness(float cos_theta, float3 f0, float roughness)
+{
+    float3 r = 1.0 - roughness;
+    return f0 + (max(r, f0) - f0) * pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
+}
+
 float distribution_ggx(float3 n, float3 h, float roughness)
 {
     float a        = roughness * roughness;
@@ -81,8 +87,8 @@ float3 importance_sample_ggx(float2 xi, float3 n, float roughness)
 {
     // This function is done at double precision as some of the numbers get teeny
     // and can give NaN's depending on how the instructions are ordered.
-    // Fun fact, PIX's instrumentation makes the debugger show everything running
-    // perfectly when it implodes outside of pix *flip table*.    
+    // Fun fact, PIX's instrumentation adjusts the behaviour just enough to make
+    // everything look like its running fine in the debugger. *flip table*
 
     double a = roughness * roughness;
 	

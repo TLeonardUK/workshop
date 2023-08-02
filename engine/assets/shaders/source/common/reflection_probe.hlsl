@@ -19,7 +19,6 @@ float3 sample_reflection_probes(float3 world_position, float3 direction, uint pr
         if (distance < probe_state.radius)
         {
             // TODO: Pre-integrate all mips off the capture.
-            // TODO: Fix brdf texture black strip at top
             // TODO: Add fade-off
             // TODO: Based on roughness.
             uint mip_index = 0;

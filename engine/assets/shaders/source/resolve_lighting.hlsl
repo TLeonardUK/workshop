@@ -522,7 +522,8 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     }
 
     float3 fresnel_reflectance = lerp(dielectric_fresnel, albedo, metallic);
-    float3 kS = fresnel_schlick(max(dot(normal, view_direction), 0.0), fresnel_reflectance);
+    float3 F = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), fresnel_reflectance, frag.roughness);;
+    float3 kS = F;
     float3 kD = 1.0f - kS;
     kD *= 1.0f - metallic;
 
@@ -533,7 +534,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     // Sample our reflection probes + BRDF LUT to calculate our specular term.
     float3 reflection_probe_color = sample_reflection_probes(frag.world_position, reflect_direction, reflection_probe_count, reflection_probe_buffer, frag.roughness);
     float2 brdf = brdf_lut.Sample(brdf_lut_sampler, float2(max(dot(normal, view_direction), 0.0), frag.roughness)).rg;
-    float3 specular = reflection_probe_color * (fresnel_reflectance * brdf.x + brdf.y);
+    float3 specular = reflection_probe_color * (F * brdf.x + brdf.y);
 
     float3 ambient = (kD * diffuse + specular) * 1.0f;
 

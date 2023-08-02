@@ -202,7 +202,7 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
     }
     
     // Mark probe as not dirty anymore.
-    //probe->mark_regenerated();
+    probe->mark_regenerated();
 }
 
 void render_system_reflection_probes::step(const render_world_state& state)
