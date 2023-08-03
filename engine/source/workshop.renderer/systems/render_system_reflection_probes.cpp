@@ -8,6 +8,7 @@
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
+#include "workshop.renderer/passes/render_pass_calculate_mips.h"
 #include "workshop.renderer/passes/render_pass_instanced_model.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
@@ -45,6 +46,8 @@ result<void> render_system_reflection_probes::create_resources()
     params.dimensions = ri_texture_dimension::texture_cube;
     params.is_render_target = true;
     params.format = ri_texture_format::R32G32B32A32_FLOAT;
+    params.allow_unordered_access = true;
+    params.allow_individual_image_access = true;
 
     for (size_t i = 0; i < k_probe_regenerations_per_frame; i++)
     {
@@ -114,16 +117,12 @@ void render_system_reflection_probes::build_post_graph(render_graph& graph, cons
     size_t param_block_index = 0;
     for (size_t i = 0; i < m_probes_regenerating; i++)
     {
-        // First we generate a mip chain for each face of the temporary target.
-        /*for (size_t face = 0; face < 6; face++)
-        {
-            view_info& info = m_probe_capture_views[(i * 6) + face];
-            
-            for (size_t mip = 1; mip < k_probe_cubemap_mips; mip++)
-            {
-            }
-
-        }*/
+        // Calculate the mip chain of the probe.
+        std::unique_ptr<render_pass_calculate_mips> pass = std::make_unique<render_pass_calculate_mips>();
+        pass->name = "calculate reflection probe mips";
+        pass->system = this;
+        pass->texture = m_probe_capture_targets[i].get();
+        graph.add_node(std::move(pass));
 
         // Convolute each mip of the probe.
         for (size_t face = 0; face < 6; face++)
@@ -143,6 +142,7 @@ void render_system_reflection_probes::build_post_graph(render_graph& graph, cons
                 block->set("source_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
                 block->set("source_texture_face", (int)face);
                 block->set("source_texture_size", vector2i(info.render_target->get_width(), info.render_target->get_height()));
+                block->set("roughness", float(mip) / float(texture.get_mip_levels() - 1));
 
                 std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
                 pass->name = string_format("convolve reflection probe [face:%zi mip:%zi]", face, mip);
@@ -223,6 +223,14 @@ void render_system_reflection_probes::step(const render_world_state& state)
     }
 
     // Do not try and regenerate reflection probes if diffuse probes are being built.
+    static float a = 0.0f;
+    a += state.time.delta_seconds;
+    if (a < 30.0f)
+    {
+        return;
+    }
+
+
     if (light_probe_system->is_regenerating())
     {
         return;

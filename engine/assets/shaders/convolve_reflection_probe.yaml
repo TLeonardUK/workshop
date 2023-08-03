@@ -27,6 +27,7 @@ param_blocks:
       source_texture_sampler: sampler
       source_texture_size: int2
       source_texture_face: int
+      roughness: float
 
 techniques:
   convolve_reflection_probe:

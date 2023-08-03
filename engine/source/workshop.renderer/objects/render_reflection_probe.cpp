@@ -51,6 +51,7 @@ void render_reflection_probe::bounds_modified()
     m_param_block->set("probe_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));    
     m_param_block->set("world_position", get_local_location());
     m_param_block->set("radius", get_local_scale().max_component() * 0.5f);
+    m_param_block->set("mip_levels", (int)m_texture->get_mip_levels());
 }
 
 ri_texture& render_reflection_probe::get_texture()

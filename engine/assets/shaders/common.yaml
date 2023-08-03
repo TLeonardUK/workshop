@@ -184,6 +184,7 @@ param_blocks:
       radius: float
       probe_texture: texturecube
       probe_texture_sampler: sampler
+      mip_levels: int
 
 defines:
   # The size of the grid the frustum is split into for light culling.

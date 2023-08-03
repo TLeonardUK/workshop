@@ -68,6 +68,7 @@ bool dx12_ri_pipeline::create_root_signature()
                 break;
             }
         case ri_descriptor_table::rwbuffer:
+        case ri_descriptor_table::rwtexture_2d:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
                 range.NumDescriptors = dx12_render_interface::k_uav_descriptor_table_size;

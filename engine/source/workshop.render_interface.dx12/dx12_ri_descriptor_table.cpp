@@ -25,6 +25,7 @@ dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& render
             m_size = dx12_render_interface::k_srv_descriptor_table_size;
             break;
         }
+        case ri_descriptor_table::rwtexture_2d:
         case ri_descriptor_table::rwbuffer:
         {
             m_heap = &m_renderer.get_srv_descriptor_heap();

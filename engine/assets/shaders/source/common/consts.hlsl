@@ -20,7 +20,10 @@ enum visualization_mode_t
     light_clusters,
     light_heatmap,
     light_probes,
-    light_probe_contribution
+    light_probe_contribution,             
+    indirect_specular,
+    indirect_diffuse,   
+    direct_light
 };
 
 static const float3 debug_colors[8] = 

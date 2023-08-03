@@ -61,6 +61,8 @@ SET(SOURCES
     "passes/render_pass_imgui.cpp"
     "passes/render_pass_compute.h"
     "passes/render_pass_compute.cpp"
+    "passes/render_pass_calculate_mips.h"
+    "passes/render_pass_calculate_mips.cpp"
 
     "objects/render_view.h"
     "objects/render_view.cpp"

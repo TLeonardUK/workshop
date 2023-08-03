@@ -1,0 +1,38 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect generates a mip chain for a given texture.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  calculate_mips:
+    techniques:
+      calculate_mips: {}
+
+param_blocks:
+  calculate_mips_params:
+    scope: global
+    fields:
+      source_texture: texture2d
+      source_sampler: sampler
+      dest_texture: rwtexture2d
+      texel_size: float2
+
+techniques:
+  calculate_mips:
+    compute_shader: 
+      file: data:shaders/source/calculate_mips.hlsl
+      entry: cshader
+    param_blocks: [ calculate_mips_params ]
+    defines:
+      GROUP_SIZE_X: 8
+      GROUP_SIZE_Y: 8
+      GROUP_SIZE_Z: 1
+      DISPATCH_SIZE_X: 1
+      DISPATCH_SIZE_Y: 1
+      DISPATCH_SIZE_Z: 1

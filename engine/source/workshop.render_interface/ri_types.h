@@ -126,6 +126,7 @@ enum class ri_data_type
     t_sampler,
     t_byteaddressbuffer,
     t_rwbyteaddressbuffer,
+    t_rwtexture2d,
 
     COUNT
 };
@@ -174,6 +175,7 @@ inline static const char* ri_data_type_strings[static_cast<int>(ri_data_type::CO
     "sampler",
     "byteaddressbuffer",
     "rwbyteaddressbuffer",
+    "rwtexture2d",
 };
 
 inline static const char* ri_data_type_hlsl_type[static_cast<int>(ri_data_type::COUNT)] = {
@@ -219,7 +221,8 @@ inline static const char* ri_data_type_hlsl_type[static_cast<int>(ri_data_type::
 
     "sampler",
     "ByteAddressBuffer",
-    "RWByteAddressBuffer"
+    "RWByteAddressBuffer",
+    "RWTexture2D"
 };
 
 DEFINE_ENUM_TO_STRING(ri_data_type, ri_data_type_strings)
@@ -264,6 +267,7 @@ enum class ri_descriptor_table
     sampler,
     buffer,
     rwbuffer,
+    rwtexture_2d,
 
     render_target,
     depth_stencil,
@@ -280,6 +284,7 @@ inline static const char* ri_descriptor_table_strings[static_cast<int>(ri_descri
     "sampler",
     "buffer",
     "rwbuffer",
+    "rwtexture_2d",
 
     "render_target",
     "depth_stencil"

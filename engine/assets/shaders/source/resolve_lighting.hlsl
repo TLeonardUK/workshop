@@ -538,6 +538,15 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
 
     float3 ambient = (kD * diffuse + specular) * 1.0f;
 
+    if (visualization_mode == visualization_mode_t::indirect_specular)
+    {
+        ambient = specular;
+    }
+    else if (visualization_mode == visualization_mode_t::indirect_diffuse)
+    {
+        ambient = kD * diffuse;
+    }
+
     return ambient;
 }
 
@@ -593,7 +602,20 @@ lightbuffer_output pshader(fullscreen_pinput input)
     }*/
 
     // If we are in a visualization mode, tint colors as appropriate.
-    if (visualization_mode == visualization_mode_t::shadow_cascades)
+
+    if (visualization_mode == visualization_mode_t::indirect_specular)
+    {
+        final_color = ambient_lighting;
+    }
+    else if (visualization_mode == visualization_mode_t::indirect_diffuse)
+    {
+        final_color = ambient_lighting;
+    }
+    else if (visualization_mode == visualization_mode_t::direct_light)
+    {
+        final_color = direct_lighting;
+    }
+    else if (visualization_mode == visualization_mode_t::shadow_cascades)
     {
         final_color = (final_color + 0.02) * debug_colors[max_cascade % 8];
     }    

@@ -84,6 +84,9 @@ enum class visualization_mode
     light_heatmap,
     light_probes,
     light_probe_contribution,
+    indirect_specular,
+    indirect_diffuse,
+    direct_light,
 
     COUNT
 };
@@ -101,7 +104,10 @@ static inline const char* visualization_mode_strings[] = {
     "light clusters",
     "light heatmap",
     "light probes",
-    "light probe contribution"
+    "light probe contribution",
+    "indirect specular",
+    "indirect diffuse",
+    "direct light"
 };
 
 // Defines a set of preloaded models that are commonly used for debugging.

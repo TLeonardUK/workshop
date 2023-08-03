@@ -164,7 +164,7 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
 void dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
 {    
     const dx12_ri_texture& dx12_resource = static_cast<const dx12_ri_texture&>(resource);
-    uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_srv().get_table_index());
+    uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_main_srv().get_table_index());
 
     ri_data_type expected_data_type = ri_data_type::t_texture1d;
     switch (dx12_resource.get_dimensions())
@@ -187,6 +187,85 @@ void dx12_ri_param_block::set(const char* field_name, const ri_texture& resource
     case ri_texture_dimension::texture_cube:
         {
             expected_data_type = ri_data_type::t_texturecube;
+            break;
+        }
+    default:
+        {
+            db_assert(false);
+            break;
+        }
+    }
+
+    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
+}
+
+void dx12_ri_param_block::set(const char* field_name, const ri_texture_view& resource, bool writable)
+{
+    const dx12_ri_texture& dx12_resource = static_cast<const dx12_ri_texture&>(*resource.texture);
+    uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_main_srv().get_table_index());
+
+    size_t mip = resource.mip;
+    size_t slice = resource.slice;
+
+    if (mip == ri_texture_view::k_unset)
+    {
+        mip = 0;
+    }
+    if (slice == ri_texture_view::k_unset)
+    {
+        slice = 0;
+    }
+
+    ri_data_type expected_data_type = ri_data_type::t_texture1d;
+    switch (dx12_resource.get_dimensions())
+    {
+    case ri_texture_dimension::texture_1d:
+        {
+            db_assert(!writable);
+            expected_data_type = ri_data_type::t_texture1d;
+            break;
+        }
+    case ri_texture_dimension::texture_2d:
+        {
+            if (writable)
+            {
+                expected_data_type = ri_data_type::t_rwtexture2d;
+                table_index = static_cast<uint32_t>(dx12_resource.get_uav(slice, mip).get_table_index());
+            }
+            else
+            {
+                expected_data_type = ri_data_type::t_texture2d;
+            }
+            break;
+        }
+    case ri_texture_dimension::texture_cube:
+        {
+            if (writable)
+            {
+                // Cubes write to a specific face so are treated as 2d textures.
+                expected_data_type = ri_data_type::t_rwtexture2d;
+                table_index = static_cast<uint32_t>(dx12_resource.get_uav(slice, mip).get_table_index());
+            }
+            else
+            {
+                // If requesting a specific slice/mip we are treated as a texture2d.
+                if (resource.slice != ri_texture_view::k_unset || 
+                    resource.mip != ri_texture_view::k_unset)
+                {
+                    expected_data_type = ri_data_type::t_texture2d;
+                    table_index = static_cast<uint32_t>(dx12_resource.get_srv(slice, mip).get_table_index());
+                }
+                else
+                {
+                    expected_data_type = ri_data_type::t_texturecube;
+                }
+            }
+            break;
+        }
+    case ri_texture_dimension::texture_3d:
+        {
+            db_assert(!writable);
+            expected_data_type = ri_data_type::t_texture3d;
             break;
         }
     default:

@@ -18,14 +18,11 @@ float3 sample_reflection_probes(float3 world_position, float3 direction, uint pr
         float distance = length(probe_state.world_position - world_position);
         if (distance < probe_state.radius)
         {
-            // TODO: Pre-integrate all mips off the capture.
             // TODO: Add fade-off
-            // TODO: Based on roughness.
-            uint mip_index = 0;
+            uint mip_index = roughness * probe_state.mip_levels;
 
             TextureCube cube = table_texture_cube[probe_state.probe_texture_index];
             result += cube.SampleLevel(table_samplers[probe_state.probe_texture_sampler_index], direction, mip_index).rgb;
-            result = float3(1.0f, 1.0f, 1.0f);
             samples += 1.0f;
         }
     }

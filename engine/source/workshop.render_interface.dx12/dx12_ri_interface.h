@@ -31,19 +31,19 @@ public:
     constexpr static size_t k_srv_heap_size = 1'000'000;
 
     // Size of the sampler heap.
-    constexpr static size_t k_sampler_heap_size = 2048;
+    constexpr static size_t k_sampler_heap_size = 2'048;
 
     // Size of the render target heap.
-    constexpr static size_t k_rtv_heap_size = 1000;
+    constexpr static size_t k_rtv_heap_size = 1'000;
 
     // Size of the depth stencil target heap.
-    constexpr static size_t k_dsv_heap_size = 1000;
+    constexpr static size_t k_dsv_heap_size = 1'000;
 
     // Maximum amount of descriptors each srv table can use.
     constexpr static size_t k_srv_descriptor_table_size = 160'000;
 
     // Maximum amount of descriptors each uav table can use.
-    constexpr static size_t k_uav_descriptor_table_size = 160'000;
+    constexpr static size_t k_uav_descriptor_table_size = 10'000;
 
     // Maximum amount of descriptors each sampler table can use.
     constexpr static size_t k_sampler_descriptor_table_size = k_sampler_heap_size;
@@ -55,7 +55,7 @@ public:
     constexpr static size_t k_dsv_descriptor_table_size = k_dsv_heap_size;
 
     // Maximum amount of queries that can be allocated.
-    constexpr static size_t k_maximum_queries = 10000;
+    constexpr static size_t k_maximum_queries = 10'000;
  
     dx12_render_interface();
     virtual ~dx12_render_interface();

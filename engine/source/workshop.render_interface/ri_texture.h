@@ -31,6 +31,13 @@ public:
         ri_texture_format format = ri_texture_format::R8G8B8A8;
         bool is_render_target = false;
 
+        // If set then this texture can have unordered access.
+        bool allow_unordered_access = false;
+
+        // If set then you can use ri_texture_views to reference individual faces/mips
+        // of the texture in-shaders.
+        bool allow_individual_image_access = false;
+
         // Set to 0 to disable msaa.
         size_t multisample_count = 0;
 
@@ -103,28 +110,46 @@ public:
     size_t get_width()
     {
         size_t full_size = texture->get_width();
-        for (size_t i = mip; i > 0; i--)
+
+        size_t mip_index = mip;
+        if (mip_index == k_unset)
+        {
+            mip_index = 0;
+        }
+
+        for (size_t i = mip_index; i > 0; i--)
         {
             full_size /= 2;
         }
+
         return full_size;
     }
 
     size_t get_height()
     {
-        size_t full_size = texture->get_width();
-        for (size_t i = mip; i > 0; i--)
+        size_t full_size = texture->get_height();
+        
+        size_t mip_index = mip;
+        if (mip_index == k_unset)
+        {
+            mip_index = 0;
+        }
+        
+        for (size_t i = mip_index; i > 0; i--)
         {
             full_size /= 2;
         }
+
         return full_size;
     }
 
 public:
 
+    inline static constexpr size_t k_unset = std::numeric_limits<size_t>::max();
+
     ri_texture* texture = nullptr;
-    size_t slice = 0;
-    size_t mip = 0;
+    size_t slice = k_unset;
+    size_t mip = k_unset;
 
 };
 
