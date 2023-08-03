@@ -1,0 +1,13 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: texture
+version: 1
+
+group: world
+
+usage: normal
+
+faces:
+ - data:models/test_scenes/bistro/textures/Plaster_Normal.dds
