@@ -106,6 +106,8 @@ SET(SOURCES
     "drawing/pixmap.cpp"
     "drawing/pixmap_png_loader.h"
     "drawing/pixmap_png_loader.cpp"
+    "drawing/pixmap_dds_loader.h"
+    "drawing/pixmap_dds_loader.cpp"
     
     "geometry/geometry.h"
     "geometry/geometry.cpp"
@@ -135,5 +137,6 @@ target_link_libraries(${PROJECT_NAME}
     bc7enc
     assimp
     zlib
+    dds-ktx
     ${PLATFORM_LIB}
 )

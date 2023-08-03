@@ -197,6 +197,54 @@ bool texture_loader::parse_properties(const char* path, YAML::Node& node, textur
         return false;
     }
 
+    std::string swizzle = "rgba";
+    if (!parse_property(path, "swizzle", node["swizzle"], swizzle, false))
+    {
+        return false;
+    }
+
+    swizzle = string_lower(swizzle);
+    
+    // Convert swizzle to element indices.
+    bool swizzle_valid = true;
+    if (swizzle.length() == 4)
+    {    
+        for (size_t i = 0; i < 4; i++)
+        {
+            char c = swizzle[i];
+            if (c == 'r')
+            {
+                asset.swizzle[i] = 0;
+            }
+            else if (c == 'g')
+            {
+                asset.swizzle[i] = 1;
+            }
+            else if (c == 'b')
+            {
+                asset.swizzle[i] = 2;
+            }
+            else if (c == 'a')
+            {
+                asset.swizzle[i] = 3;
+            }
+            else
+            {
+                swizzle_valid = false;
+            }
+        }
+    }
+    else
+    {
+        swizzle_valid = false;
+    }
+
+    if (!swizzle_valid)
+    {
+        db_error(asset, "[%s] swizzle of '%s' is invalid. Swizzle should be 4 characters made up of rgba only.", path, swizzle.c_str());
+        return false;
+    }
+
     return true;
 }
 
@@ -229,14 +277,7 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
     {
         if (asset.faces.size() == 1)
         {
-            if (asset.faces[0].mips[0]->get_height() == 1)
-            {
-                asset.dimensions = ri_texture_dimension::texture_1d;
-            }
-            else
-            {
-                asset.dimensions = ri_texture_dimension::texture_2d;
-            }
+            asset.dimensions = ri_texture_dimension::texture_2d;
         }
         else if (asset.faces.size() == 6)
         {
@@ -284,49 +325,51 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
         }
         else
         {
-            if (asset.usage == texture_usage::color)
-            {
-                bool r_constant = face.is_channel_constant(0, { 0, 0, 0, 255 });
-                bool g_constant = face.is_channel_constant(1, { 0, 0, 0, 255 });
-                bool b_constant = face.is_channel_constant(2, { 0, 0, 0, 255 });
-                bool a_constant = face.is_channel_constant(3, { 0, 0, 0, 255 });
+            // Fallback to the pixmaps format if we cannot infer anything useful.
+            asset.format = face.get_format();
 
-                // If all channels but R are zero, BC4
-                if (g_constant && b_constant && a_constant)
+            // Don't convert to compressed format is smaller than standard block size.
+            if (asset.width >= 4 && asset.height >= 4)
+            {
+                if (asset.usage == texture_usage::color)
                 {
-                    asset.format = pixmap_format::BC4;
+                    bool r_constant = face.is_channel_constant(0, { 0, 0, 0, 255 });
+                    bool g_constant = face.is_channel_constant(1, { 0, 0, 0, 255 });
+                    bool b_constant = face.is_channel_constant(2, { 0, 0, 0, 255 });
+                    bool a_constant = face.is_channel_constant(3, { 0, 0, 0, 255 });
+
+                    // If all channels but R are zero, BC4
+                    if (g_constant && b_constant && a_constant)
+                    {
+                        asset.format = pixmap_format::BC4;
+                    }
+                    // If all channels but RG are zero, BC5
+                    else if (b_constant && a_constant)
+                    {
+                        asset.format = pixmap_format::BC5;
+                    }
+                    // If one bit alpha BC1. 
+                    // Not sure this is really any better than BC7.
+                    //else if (face.is_channel_one_bit(3))
+                    //{
+                    //    asset.format = pixmap_format::BC1;
+                    //}
+                    // Otherwise BC7.
+                    else
+                    {
+                        asset.format = pixmap_format::BC7;
+                    }
                 }
-                // If all channels but RG are zero, BC5
-                else if (b_constant && a_constant)
+                else if (asset.usage == texture_usage::normal)
                 {
                     asset.format = pixmap_format::BC5;
                 }
-                // If one bit alpha BC1. 
-                // Not sure this is really any better than BC7.
-                //else if (face.is_channel_one_bit(3))
-                //{
-                //    asset.format = pixmap_format::BC1;
-                //}
-                // Otherwise BC7.
-                else
+                else if (asset.usage == texture_usage::roughness ||
+                         asset.usage == texture_usage::metallic ||
+                         asset.usage == texture_usage::mask)
                 {
-                    asset.format = pixmap_format::BC7;
+                    asset.format = pixmap_format::BC4;
                 }
-            }
-            else if (asset.usage == texture_usage::normal)
-            {
-                asset.format = pixmap_format::BC5;
-            }
-            else if (asset.usage == texture_usage::roughness ||
-                     asset.usage == texture_usage::metallic ||
-                     asset.usage == texture_usage::mask)
-            {
-                asset.format = pixmap_format::BC4;
-            }
-            else
-            {
-                // Fallback to the pixmaps format if we cannot infer anything useful.
-                asset.format = face.get_format();
             }
         }
     }
@@ -345,6 +388,24 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
             db_error(asset, "[%s] only a depth of 1 is permitted for non-3d, non-cube textures.", path);
             return false;
         }
+    }
+
+    return true;
+}
+
+bool texture_loader::perform_swizzle(const char* path, texture& asset)
+{
+    if (asset.swizzle[0] == 0 &&
+        asset.swizzle[1] == 1 &&
+        asset.swizzle[2] == 2 &&
+        asset.swizzle[3] == 3)
+    {
+        return true;
+    }
+
+    for (texture::face& face : asset.faces)
+    {
+        face.mips[0] = face.mips[0]->swizzle(asset.swizzle);
     }
 
     return true;
@@ -382,7 +443,7 @@ bool texture_loader::generate_mipchain(const char* path, texture& asset)
         while (true)
         {
             pixmap& last_mip = *face.mips.back();
-            if (last_mip.get_width() == block_size && last_mip.get_height() == block_size)
+            if (last_mip.get_width() <= block_size && last_mip.get_height() <= block_size)
             {
                 break;
             }
@@ -501,6 +562,12 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
 
     // Infer various properties from the faces that have been defined.
     if (!infer_properties(input_path, asset))
+    {
+        return false;
+    }
+
+    // Swizzle the data if required.
+    if (!perform_swizzle(input_path, asset))
     {
         return false;
     }

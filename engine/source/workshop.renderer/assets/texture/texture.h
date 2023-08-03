@@ -79,6 +79,9 @@ public:
     size_t mip_levels = 0;
     std::vector<uint8_t> data;
 
+    // Only used at compile time.
+    std::array<size_t, 4> swizzle = { 0, 1, 2, 3 };
+
     std::unique_ptr<ri_texture> ri_instance;
 
 protected:

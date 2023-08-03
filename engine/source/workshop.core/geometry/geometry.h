@@ -154,7 +154,7 @@ public:
 
     // Attempts to load the geometry data from the given file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
-    static std::unique_ptr<geometry> load(const char* path);
+    static std::unique_ptr<geometry> load(const char* path, const vector3& scale = vector3::one);
 
 public:
 

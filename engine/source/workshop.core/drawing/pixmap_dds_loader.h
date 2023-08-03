@@ -4,30 +4,25 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.core/math/vector3.h"
-
 #include <memory>
 #include <vector>
 
-struct aiScene;
-struct aiNode;
-
 namespace ws {
 
-class geometry;
+class pixmap;
 
 // ================================================================================================
-//  Responsible for loading data formats via assimp.
+//  Responsible for loading DDS format data.
 // ================================================================================================
-class geometry_assimp_loader
+class pixmap_dds_loader
 {
 public:
 
-    // Attempts to load geometry in OBJ format from an in-memory buffer.
-    static std::unique_ptr<geometry> load(const std::vector<char>& buffer, const char* path_hint, const vector3& scale);
+    // Attempts to load a pixmap in DDS format from an in-memory buffer.
+    static std::unique_ptr<pixmap> load(const std::vector<char>& buffer);
 
-    // Returns true if the extension is one that this loader supports.
-    static bool supports_extension(const char* extension);
+    // Attempts to save a pixmap in DDS format to an in-memory buffer.
+    static bool save(pixmap& input, std::vector<char>& buffer);
 
 };
 

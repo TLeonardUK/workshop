@@ -74,6 +74,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         // Grab some default values used to contruct param blocks.
         ri_texture* default_black = renderer.get_default_texture(default_texture_type::black);
         ri_texture* default_white = renderer.get_default_texture(default_texture_type::white);
+        ri_texture* default_grey = renderer.get_default_texture(default_texture_type::grey);
         ri_texture* default_normal = renderer.get_default_texture(default_texture_type::normal);
         ri_sampler* default_sampler_color = renderer.get_default_sampler(default_sampler_type::color);
         ri_sampler* default_sampler_normal = renderer.get_default_sampler(default_sampler_type::normal);
@@ -93,11 +94,11 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             model::vertex_buffer* vertex_buffer = key.model->find_or_create_vertex_buffer(active_technique->pipeline->get_create_params().vertex_layout);
 
             // Generate the geometry_info block for this material.  
-            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "geometry_info",  [&material_info, default_black, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
+            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "geometry_info",  [&material_info, default_black, default_grey, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
                 param_block.set("albedo_texture", *material_info.material->get_texture("albedo_texture", default_black));
                 param_block.set("opacity_texture", *material_info.material->get_texture("opacity_texture", default_white));
                 param_block.set("metallic_texture", *material_info.material->get_texture("metallic_texture", default_black));
-                param_block.set("roughness_texture", *material_info.material->get_texture("roughness_texture", default_black));
+                param_block.set("roughness_texture", *material_info.material->get_texture("roughness_texture", default_grey));
                 param_block.set("normal_texture", *material_info.material->get_texture("normal_texture", default_normal));
                 param_block.set("albedo_sampler", *material_info.material->get_sampler("albedo_sampler", default_sampler_color));
                 param_block.set("opacity_sampler", *material_info.material->get_sampler("opacity_sampler", default_sampler_color));

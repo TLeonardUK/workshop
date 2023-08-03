@@ -130,7 +130,26 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
         return false;
     }
 
-    asset.geometry = geometry::load(source.c_str());
+    vector3 scale;
+    YAML::Node scale_node = node["scale"];
+    if (scale_node.IsDefined())
+    {
+        if (scale_node.Type() != YAML::NodeType::Sequence || 
+            scale_node.size() != 3 ||
+            scale_node[0].Type() != YAML::NodeType::Scalar ||
+            scale_node[1].Type() != YAML::NodeType::Scalar ||
+            scale_node[2].Type() != YAML::NodeType::Scalar)
+        {
+            db_error(asset, "[%s] scale node is invalid data type.", path);
+            return false;
+        }
+
+        scale.x = scale_node[0].as<float>();
+        scale.y = scale_node[1].as<float>();
+        scale.z = scale_node[2].as<float>();
+    }
+
+    asset.geometry = geometry::load(source.c_str(), scale);
     asset.header.add_dependency(source.c_str());
 
     if (!asset.geometry)

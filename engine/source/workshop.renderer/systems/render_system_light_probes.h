@@ -54,6 +54,16 @@ private:
         std::unique_ptr<ri_param_block> resolve_params;
     };
 
+    struct dirty_probe
+    {
+        render_light_probe_grid::probe* probe;
+        render_light_probe_grid* grid;
+        float distance;
+    };
+
+    std::vector<dirty_probe> m_dirty_probes;
+    vector3 m_last_dirty_view_position;
+
     std::vector<std::unique_ptr<ri_texture>> m_probe_capture_targets;
     std::vector<view_info> m_probe_capture_views;
 

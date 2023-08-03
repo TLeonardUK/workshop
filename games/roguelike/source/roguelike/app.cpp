@@ -46,12 +46,14 @@ ws::result<void> rl_game_app::start()
 
     m_view_id = cmd_queue.create_view("Main View");
     cmd_queue.set_view_viewport(m_view_id, recti(0, 0, static_cast<int>(get_engine().get_main_window().get_width()), static_cast<int>(get_engine().get_main_window().get_height())));
-    cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 10000.0f);
+    cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 20000.0f);
     cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
-    m_view_position = vector3(150.0f, 270.0f, -100.0f);
-    m_view_rotation = quat::angle_axis(0.0f, vector3::up);
     
     render_object_id object_id;
+
+#if 0
+    m_view_position = vector3(150.0f, 270.0f, -100.0f);
+    m_view_rotation = quat::angle_axis(0.0f, vector3::up);
 
     object_id = cmd_queue.create_static_mesh("Sponza");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
@@ -64,7 +66,7 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_static_mesh("Cerberus");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(-400.0f, 200.0f, 150.0f), quat::identity, vector3::one);
-   
+
     /*
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
@@ -75,6 +77,33 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
     */
 
+    object_id = cmd_queue.create_reflection_probe("Reflection Probe");
+    cmd_queue.set_object_transform(object_id, vector3(0.0, 200.0f, 0.0f), quat::identity, vector3(4000.f, 4000.0f, 4000.0f));
+
+    object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
+    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
+    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
+    //cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
+    //cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
+#else
+    m_view_position = vector3(-900.0f, 400.0f, 0.0f);
+    m_view_rotation = quat::angle_axis(0.0f, vector3::up);
+
+    object_id = cmd_queue.create_static_mesh("Bistro Exterior");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/bistro/bistro_exterior.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+
+    object_id = cmd_queue.create_static_mesh("Bistro Interior");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/bistro/bistro_interior.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+
+    object_id = cmd_queue.create_reflection_probe("Reflection Probe");
+    cmd_queue.set_object_transform(object_id, vector3(-900.0f, 400.0f, 0.0f), quat::identity, vector3(10000.f, 10000.0f, 10000.0f));
+
+    object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
+    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
+    cmd_queue.set_object_transform(object_id, vector3(3000.0f, 2000.0f, 0.0f), quat::identity, vector3(20000.f, 4000.0f, 20000.0f));
+#endif
     /*
     for (int x = 0; x < 150; x++)
     {
@@ -86,17 +115,6 @@ ws::result<void> rl_game_app::start()
     }
     */
 
-
-    object_id = cmd_queue.create_reflection_probe("Reflection Probe");
-    cmd_queue.set_object_transform(object_id, vector3(0.0, 200.0f, 0.0f), quat::identity, vector3(4000.f, 4000.0f, 4000.0f));
-
-    object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
-    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
-    cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
-//    cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
-    //cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
-    m_light_probe_id = object_id;
-
 //    object_id = cmd_queue.create_reflection_probe_grid("Reflection Probe Grid");
 //    cmd_queue.set_reflection_probe_grid_density(object_id, true);
 
@@ -104,6 +122,7 @@ ws::result<void> rl_game_app::start()
     object_id = cmd_queue.create_directional_light("Sun");
     cmd_queue.set_light_shadow_casting(object_id, true);
     cmd_queue.set_light_shadow_map_size(object_id, 2048);
+    cmd_queue.set_light_shadow_max_distance(object_id, 10000.0f);
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 #endif
@@ -245,7 +264,7 @@ void rl_game_app::step(const frame_time& time)
         }
 
         constexpr float k_sensitivity = 0.001f;
-        constexpr float k_speed = 300.0f;
+        constexpr float k_speed = 1500.0f;
 
         m_mouse_control_frames++;
         if (m_mouse_control_frames > 2)

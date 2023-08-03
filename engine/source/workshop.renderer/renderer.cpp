@@ -320,6 +320,12 @@ result<void> renderer::recreate_resizable_targets()
     default_data[3] = 255;
     m_default_textures[static_cast<int>(default_texture_type::normal)] = m_render_interface.create_texture(params, "default normal texture");
 
+    default_data[0] = 128;
+    default_data[1] = 128;
+    default_data[2] = 128;
+    default_data[3] = 128;
+    m_default_textures[static_cast<int>(default_texture_type::grey)] = m_render_interface.create_texture(params, "default grey texture");
+
     m_default_samplers[static_cast<int>(default_sampler_type::color)] = m_render_interface.create_sampler(sampler_params,  "default color sampler");
     m_default_samplers[static_cast<int>(default_sampler_type::normal)] = m_render_interface.create_sampler(sampler_params,  "default normal sampler");
 

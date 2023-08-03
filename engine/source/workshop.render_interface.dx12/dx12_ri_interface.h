@@ -40,10 +40,10 @@ public:
     constexpr static size_t k_dsv_heap_size = 1'000;
 
     // Maximum amount of descriptors each srv table can use.
-    constexpr static size_t k_srv_descriptor_table_size = 160'000;
+    constexpr static size_t k_srv_descriptor_table_size = 150'000;
 
     // Maximum amount of descriptors each uav table can use.
-    constexpr static size_t k_uav_descriptor_table_size = 10'000;
+    constexpr static size_t k_uav_descriptor_table_size = 100'000;
 
     // Maximum amount of descriptors each sampler table can use.
     constexpr static size_t k_sampler_descriptor_table_size = k_sampler_heap_size;

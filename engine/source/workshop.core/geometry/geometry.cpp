@@ -189,7 +189,7 @@ geometry_material* geometry::get_material(const char* name)
     return nullptr;
 }
 
-std::unique_ptr<geometry> geometry::load(const char* path)
+std::unique_ptr<geometry> geometry::load(const char* path, const vector3& scale)
 {
     std::unique_ptr<stream> stream = virtual_file_system::get().open(path, false);
     if (!stream)
@@ -211,7 +211,7 @@ std::unique_ptr<geometry> geometry::load(const char* path)
     std::string extension = virtual_file_system::get_extension(path);
     if (geometry_assimp_loader::supports_extension(extension.c_str()))
     {
-        result = geometry_assimp_loader::load(buffer, path);
+        result = geometry_assimp_loader::load(buffer, path, scale);
     }
     else
     {

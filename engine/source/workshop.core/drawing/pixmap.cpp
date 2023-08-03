@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.core/drawing/pixmap.h"
 #include "workshop.core/drawing/pixmap_png_loader.h"
+#include "workshop.core/drawing/pixmap_dds_loader.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/math/math.h"
@@ -84,7 +85,7 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
     }
 }
 
-pixmap::pixmap(std::span<uint8_t> data, size_t width, size_t height, pixmap_format format)
+pixmap::pixmap(std::span<const uint8_t> data, size_t width, size_t height, pixmap_format format)
     : m_width(width)
     , m_height(height)
     , m_format(format)
@@ -401,11 +402,11 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
     const size_t output_block_size = metrics.encoded_block_size;
 
     db_assert_message(m_format_metrics.is_mutable, "Attempting to encode a non-mutable format, this is not supported.");
-    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
-    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
+//    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
+//    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
 
-    size_t blocks_x = m_width / block_size;
-    size_t blocks_y = m_height / block_size;
+    size_t blocks_x = std::max(1llu, m_width / block_size);
+    size_t blocks_y = std::max(1llu, m_height / block_size);
 
     std::vector<uint8_t> pixels_rgba;
     pixels_rgba.resize((block_size * block_size) * 4, 0);
@@ -446,11 +447,11 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
     const size_t block_size = metrics.block_size;
     const size_t output_block_size = metrics.encoded_block_size;
 
-    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
-    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
+//    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
+//    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
 
-    size_t blocks_x = m_width / block_size;
-    size_t blocks_y = m_height / block_size;
+    size_t blocks_x = std::max(1llu, m_width / block_size);
+    size_t blocks_y = std::max(1llu, m_height / block_size);
 
     std::vector<uint8_t> pixels_rgba;
     pixels_rgba.resize((block_size * block_size) * 4, 0);
@@ -488,7 +489,12 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
                         pixels_rgba[pixel_offset + 2], 
                         pixels_rgba[pixel_offset + 3]
                     );
-                    rgba_pixmap->set(abs_pixel_x, abs_pixel_y, result_color);
+
+                    // If we have a pixmap below a single block size we will have dead pixels we don't need to use.
+                    if (abs_pixel_x < m_width && abs_pixel_y < m_height)
+                    {
+                        rgba_pixmap->set(abs_pixel_x, abs_pixel_y, result_color);
+                    }
                 }
             }
         }
@@ -695,6 +701,29 @@ std::unique_ptr<pixmap> pixmap::resize(size_t width, size_t height, pixmap_filte
     return new_pixmap;
 }
 
+std::unique_ptr<pixmap> pixmap::swizzle(const std::array<size_t, 4>& pattern)
+{
+    std::unique_ptr<pixmap> new_pixmap = std::make_unique<pixmap>(m_width, m_height, m_format);
+
+    for (size_t y = 0; y < m_height; y++)
+    {
+        for (size_t x = 0; x < m_width; x++)
+        {
+            color src = get(x, y);
+            color dst;
+
+            for (size_t c = 0; c < 4; c++)
+            {
+                dst[c] = src[pattern[c]];
+            }
+
+            new_pixmap->set(x, y, dst);
+        }
+    }
+
+    return new_pixmap;
+}
+
 size_t pixmap::get_width() const
 {
     return m_width;
@@ -777,6 +806,10 @@ std::unique_ptr<pixmap> pixmap::load(const char* path)
     if (_stricmp(extension.c_str(), ".png") == 0)
     {
         result = pixmap_png_loader::load(buffer);
+    }
+    else if (_stricmp(extension.c_str(), ".dds") == 0)
+    {
+        result = pixmap_dds_loader::load(buffer);
     }
     else
     {

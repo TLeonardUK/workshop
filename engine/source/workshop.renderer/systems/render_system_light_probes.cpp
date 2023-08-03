@@ -218,6 +218,7 @@ void render_system_light_probes::step(const render_world_state& state)
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     render_system_debug* debug_system = m_renderer.get_system<render_system_debug>();
 
+    std::vector<render_view*> views = scene_manager.get_views();
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
 
     m_probes_regenerating = 0;
@@ -233,20 +234,60 @@ void render_system_light_probes::step(const render_world_state& state)
     {
         profile_marker(profile_colors::render, "Light Probe Grids");
 
-        for (render_light_probe_grid* grid : probe_grids)
+        // Build list of dirty probes.
+        if (m_dirty_probes.empty())
         {
-            debug_system->add_obb(grid->get_bounds(), color::green);
-
-            std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
-            for (render_light_probe_grid::probe& probe : probes)
+            for (render_light_probe_grid* grid : probe_grids)
             {
-                // If dirty, regenerate this probe.
-                if (probe.dirty && m_probes_regenerating < k_probe_regenerations_per_frame)
+                debug_system->add_obb(grid->get_bounds(), color::green);
+
+                std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
+                for (render_light_probe_grid::probe& probe : probes)
                 {
-                    regenerate_probe(grid, &probe, m_probes_regenerating);
-                    m_probes_regenerating++;
+                    if (probe.dirty)
+                    {
+                        dirty_probe& dirty = m_dirty_probes.emplace_back();
+                        dirty.probe = &probe;
+                        dirty.grid = grid;
+                        dirty.distance = 0.0f;
+                    }
                 }
             }
+        }
+
+        // Sort by distance from camera.
+        vector3 view_location = vector3::zero;
+        for (render_view* view : views)
+        {
+            if (view->get_flags() == render_view_flags::normal)
+            {
+                view_location = view->get_local_location();
+                break;
+            }
+        }
+
+        if ((view_location - m_last_dirty_view_position).length() > 1000)
+        {
+            for (dirty_probe& probe : m_dirty_probes)
+            {
+                probe.distance = (probe.probe->origin - view_location).length_squared();
+            }
+
+            std::sort(m_dirty_probes.begin(), m_dirty_probes.end(), [](const dirty_probe& a, const dirty_probe& b) {
+                return b.distance < a.distance;
+            });
+
+            m_last_dirty_view_position = view_location;
+        }
+
+        // If dirty, regenerate this probe.
+        while (!m_dirty_probes.empty() && m_probes_regenerating < k_probe_regenerations_per_frame)
+        {
+            dirty_probe probe = m_dirty_probes.back();
+            m_dirty_probes.pop_back();
+
+            regenerate_probe(probe.grid, probe.probe, m_probes_regenerating);
+            m_probes_regenerating++;
         }
     }
 

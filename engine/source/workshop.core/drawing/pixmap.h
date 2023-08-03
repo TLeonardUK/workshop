@@ -171,7 +171,7 @@ public:
 
     // Creates a pixmap from the given data buffer assuming linear layout of row major 
     // with the given format.
-    pixmap(std::span<uint8_t> data, size_t width, size_t height, pixmap_format format);
+    pixmap(std::span<const uint8_t> data, size_t width, size_t height, pixmap_format format);
 
     // Creates a pixmap of the given specs and zeros it.
     pixmap(size_t width, size_t height, pixmap_format format);
@@ -209,6 +209,9 @@ public:
 
     // Creates a new pixmap that is resized to the given size.
     std::unique_ptr<pixmap> resize(size_t width, size_t height, pixmap_filter filter);
+
+    // Creates a new pixmap that contains the swizzle version of this pixmap
+    std::unique_ptr<pixmap> swizzle(const std::array<size_t, 4>& pattern);
 
     // Returns true if the pixmap can be modified or read from. The pixmap can only be modified if its in
     // one of the modifiable formats. For things such as compressed formats, the pixmap class

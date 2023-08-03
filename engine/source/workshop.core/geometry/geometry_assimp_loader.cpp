@@ -11,6 +11,11 @@
 #include "thirdparty/assimp/include/assimp/mesh.h"
 #include "thirdparty/assimp/include/assimp/postprocess.h"
 
+#if 1
+#include "workshop.core/filesystem/virtual_file_system.h"
+#include <sstream>
+#endif
+
 namespace ws {
 
 namespace {
@@ -192,7 +197,7 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output)
 
 };
 
-std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& buffer, const char* path_hint)
+std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& buffer, const char* path_hint, const vector3& scale)
 {
     Assimp::Importer importer;
 
@@ -248,6 +253,12 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         result->add_material(mat.name.c_str(), mat.indices);
     }
 
+    // Scale all positions.
+    for (vector3& pos : context.positions)
+    {
+        pos *= scale;
+    }
+
     // Calculate geometry bounds.
     if (context.positions.empty())
     {
@@ -280,6 +291,102 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         result->add_vertex_stream(string_format("color%zi", i).c_str(), context.colors[i]);
     }
 
+#if 0
+    // DEBUG DEBUG DEBUG DEBUG
+    for (import_context::material& mat : context.materials)
+    {
+        if (mat.indices.empty())
+        {
+            continue;
+        }
+
+        std::string path = string_format("data:models/test_scenes/bistro/materials/%s.yaml", mat.name.c_str());
+        std::string albedo_path = string_format("data:models/test_scenes/bistro/textures/%s_BaseColor.yaml", mat.name.c_str());
+        std::string normal_path = string_format("data:models/test_scenes/bistro/textures/%s_Normal.yaml", mat.name.c_str());
+        std::string roughness_path = string_format("data:models/test_scenes/bistro/textures/%s_Roughness.yaml", mat.name.c_str());
+        std::string metal_path = string_format("data:models/test_scenes/bistro/textures/%s_Metallic.yaml", mat.name.c_str());
+
+        std::string roughness_png = string_format("data:models/test_scenes/bistro/textures/%s_Specular.png", mat.name.c_str());
+        std::string metal_png = string_format("data:models/test_scenes/bistro/textures/%s_Specular.png", mat.name.c_str());
+
+        bool roughness_exists = virtual_file_system::get().exists(roughness_png.c_str());
+        bool metal_exists = virtual_file_system::get().exists(metal_png.c_str());
+
+        db_log(renderer, "\t\"%s\": \"\"", mat.name.c_str(), path.c_str());
+
+        std::stringstream ss;
+        ss << "# ================================================================================================" << std::endl;
+        ss << "#  workshop" << std::endl;
+        ss << "#  Copyright (C) 2022 Tim Leonard" << std::endl;
+        ss << "# ================================================================================================" << std::endl;
+        ss << "type: material" << std::endl;
+        ss << "version: 1" << std::endl;
+        ss << "" << std::endl;
+        ss << "domain: opaque" << std::endl;
+        ss << "" << std::endl;
+        ss << "textures:" << std::endl;
+        ss << " albedo_texture:     " << albedo_path << std::endl;
+        ss << " normal_texture:     " << normal_path << std::endl;
+        if (metal_exists)
+        {
+            ss << " metallic_texture:   " << metal_path << std::endl;
+        }
+        if (roughness_exists)
+        {
+            ss << " roughness_texture:  " << roughness_path << std::endl;
+        }
+
+        std::string str = ss.str();
+        std::unique_ptr<stream> s = virtual_file_system::get().open(path.c_str(), true);
+        s->write(str.c_str(), str.size());
+
+        auto emit_texture = [](const char* name, const char* path, const char* type) {
+
+            std::stringstream ss;
+            ss << "# ================================================================================================" << std::endl;
+            ss << "#  workshop" << std::endl;
+            ss << "#  Copyright (C) 2022 Tim Leonard" << std::endl;
+            ss << "# ================================================================================================" << std::endl;
+            ss << "type: texture" << std::endl;
+            ss << "version: 1" << std::endl;
+            ss << "" << std::endl;
+            ss << "group: world" << std::endl;
+            ss << "" << std::endl;
+            ss << "usage: " << type << std::endl;
+            ss << "" << std::endl;
+            if (strcmp(type, "roughness") == 0)
+            {
+                ss << "swizzle: gggg" << std::endl;
+                ss << "" << std::endl;
+            }
+            else if (strcmp(type, "metallic") == 0)
+            {
+                ss << "swizzle: bbbb" << std::endl;
+                ss << "" << std::endl;
+            }
+            ss << "faces:" << std::endl;
+            ss << " - data:models/test_scenes/bistro/textures/" << name << ".dds" << std::endl;
+
+            std::string str = ss.str();
+            std::unique_ptr<stream> s = virtual_file_system::get().open(path, true);
+            s->write(str.c_str(), str.size());
+
+        };
+
+        emit_texture(string_format("%s_BaseColor", mat.name.c_str()).c_str(), albedo_path.c_str(), "color");
+        emit_texture(string_format("%s_Normal", mat.name.c_str()).c_str(), normal_path.c_str(), "normal");
+        if (roughness_exists)
+        {
+            emit_texture(string_format("%s_Specular", mat.name.c_str()).c_str(), roughness_path.c_str(), "roughness");
+        }
+        if (metal_exists)
+        {
+            emit_texture(string_format("%s_Specular", mat.name.c_str()).c_str(), metal_path.c_str(), "metallic");
+        }
+    }
+    // DEBUG DEBUG DEBUG DEBUG
+#endif
+
     return result;
 }
 
@@ -305,3 +412,5 @@ bool geometry_assimp_loader::supports_extension(const char* extension)
 }
 
 }; // namespace workshop
+
+

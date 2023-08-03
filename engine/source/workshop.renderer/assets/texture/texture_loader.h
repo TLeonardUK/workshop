@@ -45,6 +45,7 @@ private:
     bool parse_file(const char* path, texture& asset);
 
     bool infer_properties(const char* path, texture& asset);
+    bool perform_swizzle(const char* path, texture& asset);
     bool perform_resize(const char* path, texture& asset);
     bool generate_mipchain(const char* path, texture& asset);
     bool perform_encoding(const char* path, texture& asset, asset_flags flags);

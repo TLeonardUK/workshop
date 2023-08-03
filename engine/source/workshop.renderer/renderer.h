@@ -52,6 +52,7 @@ enum class default_texture_type
     black,      // RGBA 0,0,0,0
     white,      // RGBA 1,1,1,1
     normal,     // RGBA 0,0,1,1
+    grey,       // RGBA 0.5,0.5,0.5,0.5
 
     COUNT
 };
