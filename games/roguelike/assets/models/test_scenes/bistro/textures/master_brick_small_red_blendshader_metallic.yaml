@@ -1,0 +1,15 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: texture
+version: 1
+
+group: world
+
+usage: metallic
+
+swizzle: bbbb
+
+faces:
+ - data:models/test_scenes/bistro/textures/MASTER_Brick_Small_Red_BLENDSHADER_Specular.dds

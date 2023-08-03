@@ -8,7 +8,7 @@ version: 1
 source: data:models/test_scenes/bistro/bistro_interior.fbx
 
 scale: [ 100.0, 100.0, 100.0 ]
-
+ 
 materials:
     "Paris_Cashregister" : "data:models/test_scenes/bistro/materials/Paris_Cashregister.yaml"
     "Paris_Cashregister_Buttons" : "data:models/test_scenes/bistro/materials/Paris_Cashregister_Buttons.yaml"

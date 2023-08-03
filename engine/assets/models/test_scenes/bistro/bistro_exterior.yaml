@@ -8,7 +8,7 @@ version: 1
 source: data:models/test_scenes/bistro/bistro_exterior.fbx
 
 scale: [ 100.0, 100.0, 100.0 ]
-
+   
 materials:
     "Stringlights" : "data:models/test_scenes/bistro/materials/Stringlights.yaml"
     "Paris_StringLights_01_Orange_Color_Emissive" : "data:models/test_scenes/bistro/materials/Paris_StringLights_01_Orange_Color_Emissive.yaml"

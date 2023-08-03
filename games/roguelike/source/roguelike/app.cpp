@@ -97,6 +97,10 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/bistro/bistro_interior.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
 
+    //object_id = cmd_queue.create_static_mesh("Bistro Wine");
+    //cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/bistro/bistro_wine.yaml", 0));
+    //cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+
     object_id = cmd_queue.create_reflection_probe("Reflection Probe");
     cmd_queue.set_object_transform(object_id, vector3(-900.0f, 400.0f, 0.0f), quat::identity, vector3(10000.f, 10000.0f, 10000.0f));
 
@@ -126,18 +130,16 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_intensity(object_id, 1.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 #endif
-  
-#if 0
-    object_id = cmd_queue.create_point_light("Point");
-    cmd_queue.set_light_shadow_casting(object_id, false);
-    cmd_queue.set_light_shadow_map_size(object_id, 1024);
-    cmd_queue.set_light_shadow_max_distance(object_id, 100);
-    cmd_queue.set_light_intensity(object_id, 50.0f);
-    cmd_queue.set_light_range(object_id, 400.0f);
-    cmd_queue.set_object_transform(object_id, vector3(0.0f, 150.0f, 400.0f), quat::identity, vector3::one);
-#endif
 
     m_light_id = object_id;
+
+#if 1
+    object_id = cmd_queue.create_point_light("Point");
+    cmd_queue.set_light_shadow_casting(object_id, false);
+    cmd_queue.set_light_intensity(object_id, 1.0f);
+    cmd_queue.set_light_range(object_id, 200.0f);
+    cmd_queue.set_object_transform(object_id, vector3(500.0f, 150.0f, 500.0f), quat::identity, vector3::one);
+#endif
 
 #if 0
     for (size_t i = 0; i < 100; i++)

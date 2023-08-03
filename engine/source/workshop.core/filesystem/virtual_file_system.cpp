@@ -202,7 +202,7 @@ virtual_file_system_path_type virtual_file_system::type(const char* path)
     
     iterate_handlers(path, [&result](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
         result = handler->type(filename.c_str());
-        return (result == virtual_file_system_path_type::non_existant);
+        return (result != virtual_file_system_path_type::non_existant);
     });
 
     return result;

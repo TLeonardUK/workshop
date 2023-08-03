@@ -291,7 +291,7 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         result->add_vertex_stream(string_format("color%zi", i).c_str(), context.colors[i]);
     }
 
-#if 0
+#if 1
     // DEBUG DEBUG DEBUG DEBUG
     for (import_context::material& mat : context.materials)
     {
@@ -306,8 +306,8 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         std::string roughness_path = string_format("data:models/test_scenes/bistro/textures/%s_Roughness.yaml", mat.name.c_str());
         std::string metal_path = string_format("data:models/test_scenes/bistro/textures/%s_Metallic.yaml", mat.name.c_str());
 
-        std::string roughness_png = string_format("data:models/test_scenes/bistro/textures/%s_Specular.png", mat.name.c_str());
-        std::string metal_png = string_format("data:models/test_scenes/bistro/textures/%s_Specular.png", mat.name.c_str());
+        std::string roughness_png = string_format("data:models/test_scenes/bistro/textures/%s_Specular.dds", mat.name.c_str());
+        std::string metal_png = string_format("data:models/test_scenes/bistro/textures/%s_Specular.dds", mat.name.c_str());
 
         bool roughness_exists = virtual_file_system::get().exists(roughness_png.c_str());
         bool metal_exists = virtual_file_system::get().exists(metal_png.c_str());
@@ -373,8 +373,8 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
 
         };
 
-        emit_texture(string_format("%s_BaseColor", mat.name.c_str()).c_str(), albedo_path.c_str(), "color");
-        emit_texture(string_format("%s_Normal", mat.name.c_str()).c_str(), normal_path.c_str(), "normal");
+        //emit_texture(string_format("%s_BaseColor", mat.name.c_str()).c_str(), albedo_path.c_str(), "color");
+        //emit_texture(string_format("%s_Normal", mat.name.c_str()).c_str(), normal_path.c_str(), "normal");
         if (roughness_exists)
         {
             emit_texture(string_format("%s_Specular", mat.name.c_str()).c_str(), roughness_path.c_str(), "roughness");

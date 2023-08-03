@@ -230,7 +230,6 @@ void render_system_reflection_probes::step(const render_world_state& state)
         return;
     }
 
-
     if (light_probe_system->is_regenerating())
     {
         return;
