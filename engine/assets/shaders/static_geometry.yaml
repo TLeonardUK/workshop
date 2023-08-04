@@ -55,32 +55,6 @@ effects:
         depth_only: [ true ]
         depth_linear: [ true ]
 
-vertex_layouts:
-  geometry_vertex:
-    position: float3
-    normal: float3
-    tangent: float3
-    uv0: float2
-
-param_blocks:
-  geometry_instance_info:
-    scope: instance
-    fields:
-      model_matrix: float4x4
-  geometry_info:
-    scope: draw
-    fields:
-      albedo_texture: texture2d
-      albedo_sampler: sampler
-      opacity_texture: texture2d
-      opacity_sampler: sampler
-      metallic_texture: texture2d
-      metallic_sampler: sampler
-      roughness_texture: texture2d
-      roughness_sampler: sampler
-      normal_texture: texture2d
-      normal_sampler: sampler      
-
 techniques:
   # Technique to use when rendering wireframe geometry.
   static_geometry_wireframe:

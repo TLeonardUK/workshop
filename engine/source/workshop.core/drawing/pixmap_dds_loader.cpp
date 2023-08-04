@@ -10,14 +10,16 @@
 
 namespace ws {
 
-std::unique_ptr<pixmap> pixmap_dds_loader::load(const std::vector<char>& buffer)
+std::vector<std::unique_ptr<pixmap>> pixmap_dds_loader::load(const std::vector<char>& buffer)
 {
+    std::vector<std::unique_ptr<pixmap>> result_array;
+
     ddsktx_texture_info info = {0};
     ddsktx_error error;
     if (!ddsktx_parse(&info, buffer.data(), (int)buffer.size(), &error)) 
     {
         db_log(core, "Failed to load dds file, error: %s", error.msg);
-        return nullptr;
+        return {};
     }
 
     ddsktx_sub_data sub_data;
@@ -45,7 +47,9 @@ std::unique_ptr<pixmap> pixmap_dds_loader::load(const std::vector<char>& buffer)
     if (direct_format != pixmap_format::COUNT)
     {
         std::unique_ptr<pixmap> result = std::make_unique<pixmap>(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(sub_data.buff), sub_data.size_bytes), sub_data.width, sub_data.height, direct_format);
-        return result->convert(pixmap_format::R8G8B8A8);
+
+        result_array.push_back(result->convert(pixmap_format::R8G8B8A8));
+        return result_array;
     }
 
     // Otherwise we need to do some conversions.
@@ -87,7 +91,7 @@ std::unique_ptr<pixmap> pixmap_dds_loader::load(const std::vector<char>& buffer)
             default:
                 {
                     db_log(core, "Failed to load dds file, format is not supported.");
-                    return nullptr;
+                    return {};
                 }
             }
 
@@ -95,7 +99,8 @@ std::unique_ptr<pixmap> pixmap_dds_loader::load(const std::vector<char>& buffer)
         }
     }
 
-    return result;
+    result_array.push_back(result->convert(pixmap_format::R8G8B8A8));
+    return result_array;
 }
 
 bool pixmap_dds_loader::save(pixmap& input, std::vector<char>& buffer)

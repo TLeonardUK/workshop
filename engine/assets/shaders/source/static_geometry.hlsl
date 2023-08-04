@@ -41,7 +41,7 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
 {
     gbuffer_fragment f;
     f.albedo = albedo.rgb;
-    f.opacity = albedo.a;
+    f.flags = gbuffer_flag::none;
     f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
     f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
 #if 0

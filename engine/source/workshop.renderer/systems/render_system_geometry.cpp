@@ -77,6 +77,17 @@ void render_system_geometry::build_graph(render_graph& graph, const render_world
         pass->output = m_renderer.get_gbuffer_output();
         pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
         graph.add_node(std::move(pass));
+
+        // Draw sky geometry.
+        pass = std::make_unique<render_pass_geometry>();
+        pass->name = "sky geometry";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("sky_box", {});
+        pass->info_param_block_type = "geometry_skybox_info";
+        pass->domain = material_domain::sky;
+        pass->output = m_renderer.get_gbuffer_output();
+        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+        graph.add_node(std::move(pass));
     }
     // Depth-only pass
     else if (view.has_flag(render_view_flags::depth_only) || 

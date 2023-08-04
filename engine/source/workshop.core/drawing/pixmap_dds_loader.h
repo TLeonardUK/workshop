@@ -19,7 +19,7 @@ class pixmap_dds_loader
 public:
 
     // Attempts to load a pixmap in DDS format from an in-memory buffer.
-    static std::unique_ptr<pixmap> load(const std::vector<char>& buffer);
+    static std::vector<std::unique_ptr<pixmap>> load(const std::vector<char>& buffer);
 
     // Attempts to save a pixmap in DDS format to an in-memory buffer.
     static bool save(pixmap& input, std::vector<char>& buffer);

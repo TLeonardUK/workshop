@@ -122,7 +122,7 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
     dx12_ri_layout_factory::field field_info;
     if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
     {
-        db_error(renderer, "Attempting to set unknown field '%s' on param block.", field_name);
+        //db_error(renderer, "Attempting to set unknown field '%s' on param block.", field_name);
         return;
     }
 

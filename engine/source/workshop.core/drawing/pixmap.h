@@ -224,7 +224,10 @@ public:
 
     // Attempts to load the pixmap data from the given image file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
-    static std::unique_ptr<pixmap> load(const char* path);
+    //
+    // The result is returned as a vector as some file formats (eg hdr) can actually
+    // contain multiple pixmaps for each face.
+    static std::vector<std::unique_ptr<pixmap>> load(const char* path);
 
 private:
 

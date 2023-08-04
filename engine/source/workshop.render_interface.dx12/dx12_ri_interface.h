@@ -7,6 +7,7 @@
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_heap.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
+#include "workshop.render_interface/ri_types.h"
 #include <array>
 
 namespace ws {
@@ -27,32 +28,19 @@ public:
     // The number of swap chain targets is one lower than this.
     constexpr static size_t k_max_pipeline_depth = 3;
 
-    // Size of the SRV/UAV/CBV heap.
-    constexpr static size_t k_srv_heap_size = 1'000'000;
-
-    // Size of the sampler heap.
-    constexpr static size_t k_sampler_heap_size = 2'048;
-
-    // Size of the render target heap.
-    constexpr static size_t k_rtv_heap_size = 1'000;
-
-    // Size of the depth stencil target heap.
-    constexpr static size_t k_dsv_heap_size = 1'000;
-
-    // Maximum amount of descriptors each srv table can use.
-    constexpr static size_t k_srv_descriptor_table_size = 150'000;
-
-    // Maximum amount of descriptors each uav table can use.
-    constexpr static size_t k_uav_descriptor_table_size = 100'000;
-
-    // Maximum amount of descriptors each sampler table can use.
-    constexpr static size_t k_sampler_descriptor_table_size = k_sampler_heap_size;
-
-    // Maximum amount of descriptors each rtv table can use.
-    constexpr static size_t k_rtv_descriptor_table_size = k_rtv_heap_size;
-
-    // Maximum amount of descriptors each dsv table can use.
-    constexpr static size_t k_dsv_descriptor_table_size = k_dsv_heap_size;
+    // Maximum amount of descriptors in each table.
+    constexpr static std::array<size_t, static_cast<int>(ri_descriptor_table::COUNT)> k_descriptor_table_sizes = {
+        100,    // texture_1d
+        10000,  // texture_2d
+        1000,   // texture_3d
+        100,    // texture_cube
+        100,    // sampler
+        50000,  // buffer
+        50000,  // rwbuffer
+        500,    // rwtexture_2d
+        500,    // render_target
+        100,    // depth_stencil
+    };
 
     // Maximum amount of queries that can be allocated.
     constexpr static size_t k_maximum_queries = 10'000;

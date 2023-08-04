@@ -44,34 +44,28 @@ bool dx12_ri_pipeline::create_root_signature()
         range.RegisterSpace = static_cast<UINT>(i + 1); // space0 is reserved for non-bindless stuff.
         range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+        range.NumDescriptors = dx12_render_interface::k_descriptor_table_sizes[(int)type];
+
         switch (type)
         {
         case ri_descriptor_table::texture_1d:
         case ri_descriptor_table::texture_2d:
         case ri_descriptor_table::texture_3d:
         case ri_descriptor_table::texture_cube:
+        case ri_descriptor_table::buffer:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-                range.NumDescriptors = dx12_render_interface::k_srv_descriptor_table_size;
                 break;
             }
         case ri_descriptor_table::sampler:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-                range.NumDescriptors = dx12_render_interface::k_sampler_descriptor_table_size;
-                break;
-            }
-        case ri_descriptor_table::buffer:
-            {
-                range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-                range.NumDescriptors = dx12_render_interface::k_srv_descriptor_table_size;
                 break;
             }
         case ri_descriptor_table::rwbuffer:
         case ri_descriptor_table::rwtexture_2d:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-                range.NumDescriptors = dx12_render_interface::k_uav_descriptor_table_size;
                 break;
             }
         default:

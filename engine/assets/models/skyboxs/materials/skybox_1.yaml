@@ -1,0 +1,11 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: sky 
+
+textures:
+  skybox_texture: data:models/skyboxs/textures/skybox_1.yaml

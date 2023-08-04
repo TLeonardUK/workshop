@@ -3,11 +3,16 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/debug/log_handler.h"
+#include "workshop.core/utils/string_formatter.h"
+#include "workshop.core/platform/platform.h"
 
 #include <array>
 #include <algorithm>
 #include <ctime>
 #include <stdarg.h>
+
+// If set the memory usage will be placed in all log messages.
+#define SHOW_MEMORY_IN_LOGS 1
 
 namespace ws {
 
@@ -54,9 +59,6 @@ log_handler::~log_handler()
 
 void log_handler::static_write_formatted(log_level level, log_source source, const char* log)
 {
-    char buffer[k_stack_space];
-    char* buffer_to_use = buffer;
-
     time_t current_time = time(0);
     struct tm current_time_tstruct;
     localtime_s(&current_time_tstruct, &current_time);
@@ -64,25 +66,22 @@ void log_handler::static_write_formatted(log_level level, log_source source, con
     char time_buffer[32];
     strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %X", &current_time_tstruct);
 
-    int ret = snprintf(buffer_to_use, 256, "%s \xB3 %-7s \xB3 %-18s \xB3 %s\n", time_buffer, log_level_strings[(int)level], log_source_strings[(int)source], log);
-    if (ret >= 256)
-    {
-        buffer_to_use = new char[ret + 1];
-        snprintf(buffer_to_use, ret + 1, "%s \xB3 %-7s \xB3 %-18s \xB3 %s\n", time_buffer, log_level_strings[(int)level], log_source_strings[(int)source], log);
-    }
+    string_formatter formatter;
+
+#if SHOW_MEMORY_IN_LOGS
+    size_t memory_bytes = get_memory_usage();
+    formatter.format("%s \xB3 %-5zi MB \xB3 %-7s \xB3 %-18s \xB3 %s\n", time_buffer, memory_bytes / (1024 * 1024), log_level_strings[(int)level], log_source_strings[(int)source], log);
+#else
+    formatter.format("%s \xB3 %-7s \xB3 %-18s \xB3 %s\n", time_buffer, log_level_strings[(int)level], log_source_strings[(int)source], log);
+#endif
 
     {
         std::scoped_lock lock(m_handlers_mutex);
 
         for (log_handler* handler : m_handlers)
         {
-            handler->write(level, buffer_to_use);
+            handler->write(level, formatter.c_str());
         }
-    }
-
-    if (buffer_to_use != buffer)
-    {
-        delete[] buffer_to_use;
     }
 }
 

@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 5;
+constexpr size_t k_asset_compiled_version = 10;
 
 };
 
@@ -108,15 +108,18 @@ bool texture_loader::serialize(const char* path, texture& asset, bool isSaving)
 
 bool texture_loader::load_face(const char* path, const char* face_path, texture& asset)
 {
-    // Load the face from.
-    texture::face& face = asset.faces.emplace_back();
-    face.file = face_path;
-    face.mips.emplace_back(pixmap::load(face_path));
-
-    if (!face.mips[0])
+    std::vector<std::unique_ptr<pixmap>> pixmaps = pixmap::load(face_path);
+    if (pixmaps.empty())
     {
         db_error(asset, "[%s] Failed to load pixmap from referenced file: %s", path, face_path);
         return false;
+    }
+
+    for (auto& pix : pixmaps)
+    {
+        texture::face& face = asset.faces.emplace_back();
+        face.file = face_path;
+        face.mips.emplace_back(std::move(pix));
     }
 
     return true;
@@ -268,6 +271,16 @@ bool texture_loader::parse_file(const char* path, texture& asset)
         return false;
     }
 
+    // DEBUG DEBUG DEBUG
+    if (asset.width == 0)
+    {
+        asset.width = asset.faces[0].mips[0]->get_width();
+        asset.height = asset.faces[0].mips[0]->get_height();
+    }
+    asset.width = std::max(asset.width / 4llu, 4llu);
+    asset.height = std::max(asset.height / 4llu, 4llu);
+    // DEBUG DEBUG DEBUG
+
     return true;
 }
 
@@ -307,6 +320,10 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
         if (asset.dimensions == ri_texture_dimension::texture_3d)
         {
             asset.depth = asset.faces.size();
+        }
+        else if (asset.dimensions == ri_texture_dimension::texture_cube)
+        {
+            asset.depth = 6;
         }
         else
         {
@@ -376,14 +393,19 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
 
     if (asset.depth != 1)
     {
-        if (asset.dimensions == ri_texture_dimension::texture_1d || 
-            asset.dimensions == ri_texture_dimension::texture_2d ||
-            asset.dimensions == ri_texture_dimension::texture_cube)
+        if (asset.dimensions == ri_texture_dimension::texture_cube && asset.depth != 6)
+        {
+            db_error(asset, "[%s] only a depth of 6 is permitted for cube texture.", path);
+            return false;
+        }
+        else if (asset.dimensions == ri_texture_dimension::texture_1d || 
+                 asset.dimensions == ri_texture_dimension::texture_2d)
         {
             db_error(asset, "[%s] only a depth of 1 is permitted for 1d/2d/cube texture.", path);
             return false;
         }
-        else if (asset.dimensions != ri_texture_dimension::texture_3d)
+        else if (asset.dimensions != ri_texture_dimension::texture_3d && 
+                 asset.dimensions != ri_texture_dimension::texture_cube)
         {
             db_error(asset, "[%s] only a depth of 1 is permitted for non-3d, non-cube textures.", path);
             return false;

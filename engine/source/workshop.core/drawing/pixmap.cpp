@@ -5,6 +5,7 @@
 #include "workshop.core/drawing/pixmap.h"
 #include "workshop.core/drawing/pixmap_png_loader.h"
 #include "workshop.core/drawing/pixmap_dds_loader.h"
+#include "workshop.core/drawing/pixmap_stb_loader.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/math/math.h"
@@ -768,6 +769,28 @@ bool pixmap::save(const char* path)
             return false;
         }
     }
+    else if (_stricmp(extension.c_str(), ".dds") == 0)
+    {
+        if (!pixmap_dds_loader::save(*this, buffer))
+        {
+            return false;
+        }
+    }
+    else if (_stricmp(extension.c_str(), ".tga") == 0 ||
+             _stricmp(extension.c_str(), ".jpeg") == 0 ||
+             _stricmp(extension.c_str(), ".jpg") == 0 || 
+             _stricmp(extension.c_str(), ".bmp") == 0 || 
+             _stricmp(extension.c_str(), ".psd") == 0 || 
+             _stricmp(extension.c_str(), ".gif") == 0 || 
+             _stricmp(extension.c_str(), ".hdr") == 0 || 
+             _stricmp(extension.c_str(), ".pic") == 0 || 
+             _stricmp(extension.c_str(), ".pnm") == 0)
+    {
+        if (!pixmap_stb_loader::save(*this, buffer))
+        {
+            return false;
+        }
+    }
     else
     {
         db_error(asset, "Failed to determine file format when saving pixmap: %s", path);
@@ -783,13 +806,13 @@ bool pixmap::save(const char* path)
     return true;
 }
 
-std::unique_ptr<pixmap> pixmap::load(const char* path)
+std::vector<std::unique_ptr<pixmap>> pixmap::load(const char* path)
 {
     std::unique_ptr<stream> stream = virtual_file_system::get().open(path, false);
     if (!stream)
     {
         db_error(asset, "Failed to open stream when loading pixmap: %s", path);
-        return nullptr;
+        return {};
     }
 
     std::vector<char> buffer;
@@ -797,10 +820,10 @@ std::unique_ptr<pixmap> pixmap::load(const char* path)
     if (stream->read(buffer.data(), buffer.size()) != buffer.size())
     {
         db_error(asset, "Failed to read full file when loading pixmap: %s", path);
-        return nullptr;
+        return {};
     }
 
-    std::unique_ptr<pixmap> result;
+    std::vector<std::unique_ptr<pixmap>> result;
 
     std::string extension = virtual_file_system::get_extension(path);
     if (_stricmp(extension.c_str(), ".png") == 0)
@@ -811,10 +834,22 @@ std::unique_ptr<pixmap> pixmap::load(const char* path)
     {
         result = pixmap_dds_loader::load(buffer);
     }
+    else if (_stricmp(extension.c_str(), ".tga") == 0 ||
+             _stricmp(extension.c_str(), ".jpeg") == 0 ||
+             _stricmp(extension.c_str(), ".jpg") == 0 || 
+             _stricmp(extension.c_str(), ".bmp") == 0 || 
+             _stricmp(extension.c_str(), ".psd") == 0 || 
+             _stricmp(extension.c_str(), ".gif") == 0 || 
+             _stricmp(extension.c_str(), ".hdr") == 0 || 
+             _stricmp(extension.c_str(), ".pic") == 0 || 
+             _stricmp(extension.c_str(), ".pnm") == 0)
+    {
+        result = pixmap_stb_loader::load(buffer);
+    }
     else
     {
         db_error(asset, "Failed to determine file format when loading pixmap: %s", path);
-        return nullptr;
+        return {};
     }
 
     return result;

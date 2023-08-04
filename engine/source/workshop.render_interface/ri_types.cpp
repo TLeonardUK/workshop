@@ -133,9 +133,9 @@ size_t ri_bytes_per_texel(ri_texture_format value)
     static std::array<size_t, static_cast<int>(ri_texture_format::COUNT)> conversion = {
         0, // Undefined,
 
-        32, // R32G32B32A32_FLOAT,
-        32, // R32G32B32A32,
-        32, // R32G32B32A32_SINT,
+        16, // R32G32B32A32_FLOAT,
+        16, // R32G32B32A32,
+        16, // R32G32B32A32_SINT,
 
         12, // R32G32B32_FLOAT,
         12, // R32G32B32,

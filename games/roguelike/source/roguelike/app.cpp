@@ -18,6 +18,8 @@
 
 #include "workshop.renderer/render_imgui_manager.h"
 
+#include <chrono>
+
 std::shared_ptr<ws::app> make_app()
 {
     return std::make_shared<ws::rl_game_app>();
@@ -40,7 +42,7 @@ void rl_game_app::configure_engine(engine& engine)
 }
 
 ws::result<void> rl_game_app::start()
-{    
+{   
     auto& cmd_queue = get_engine().get_renderer().get_command_queue();
     auto& ass_manager = get_engine().get_asset_manager();
 
@@ -50,6 +52,10 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
     
     render_object_id object_id;
+
+    object_id = cmd_queue.create_static_mesh("Skybox");
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_1.yaml", 0));
+    cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
 
 #if 0
     m_view_position = vector3(150.0f, 270.0f, -100.0f);
@@ -76,7 +82,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
     */
-
+    
     object_id = cmd_queue.create_reflection_probe("Reflection Probe");
     cmd_queue.set_object_transform(object_id, vector3(0.0, 200.0f, 0.0f), quat::identity, vector3(4000.f, 4000.0f, 4000.0f));
 
@@ -85,6 +91,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
     //cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
     //cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
+    
 #else
     m_view_position = vector3(-900.0f, 400.0f, 0.0f);
     m_view_rotation = quat::angle_axis(0.0f, vector3::up);

@@ -37,13 +37,17 @@ enum class material_domain
     // Transparent geometry with an alpha channel in the albedo.
     transparent,
 
+    // Sky geometry that is rendered unlit behind everything else.
+    sky,
+
     COUNT
 };
 
 inline static const char* material_domain_strings[static_cast<int>(material_domain::COUNT)] = {
     "opaque",
     "masked",
-    "transparent"
+    "transparent",
+    "sky"
 };
 
 DEFINE_ENUM_TO_STRING(material_domain, material_domain_strings)

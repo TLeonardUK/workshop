@@ -1,0 +1,20 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: texture
+version: 1
+
+group: world
+
+usage: color
+
+mipmapped: false 
+
+faces:
+    - data:models/skyboxs/textures/skybox_1_px.hdr
+    - data:models/skyboxs/textures/skybox_1_nx.hdr
+    - data:models/skyboxs/textures/skybox_1_py.hdr
+    - data:models/skyboxs/textures/skybox_1_ny.hdr
+    - data:models/skyboxs/textures/skybox_1_pz.hdr
+    - data:models/skyboxs/textures/skybox_1_nz.hdr

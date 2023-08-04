@@ -22,7 +22,7 @@ render_batch_instance_buffer::render_batch_instance_buffer(renderer& render)
     for (size_t i = 0; i < pipeline_depth; i++)
     {
         std::unique_ptr<buffer> buf = std::make_unique<buffer>();
-        resize(*buf, 0);
+        resize(*buf, 0, false);
         m_buffers.push_back(std::move(buf));
     }
 }
@@ -31,7 +31,7 @@ void render_batch_instance_buffer::add(uint32_t table_index, uint32_t table_offs
 {
     buffer& buf = get_internal_buffer();
     
-    resize(buf, buf.slots_in_use + 1);
+    resize(buf, buf.slots_in_use + 1, false);
 
     slot& slot_instance = buf.slots[buf.slots_in_use];
 
@@ -49,6 +49,9 @@ void render_batch_instance_buffer::add(uint32_t table_index, uint32_t table_offs
 void render_batch_instance_buffer::commit()
 {
     buffer& buf = get_internal_buffer();
+
+    // Make sure to create backing storage if needed.
+    resize(buf, buf.slots_in_use, true);
 
     auto upload_range = [&buf](size_t start, size_t count) {
 
@@ -116,7 +119,7 @@ render_batch_instance_buffer::buffer& render_batch_instance_buffer::get_internal
     return *m_buffers[frame_index % pipeline_depth];
 }
 
-void render_batch_instance_buffer::resize(buffer& buf, size_t size)
+void render_batch_instance_buffer::resize(buffer& buf, size_t size, bool create_backing_storage)
 {
     size_t old_size = buf.slots.size();
 
@@ -132,27 +135,30 @@ void render_batch_instance_buffer::resize(buffer& buf, size_t size)
         }
     }
 
-    if (buf.buffer == nullptr || buf.buffer->get_element_count() < size)
+    if (create_backing_storage)
     {
-        size_t capacity = std::max(k_min_slot_count, size);
-        if (buf.buffer != nullptr)
+        if (buf.buffer == nullptr || buf.buffer->get_element_count() < size)
         {
-            size_t growth = buf.buffer->get_element_count() * k_slot_growth_factor;
-            capacity = std::max(growth, capacity);
-        }
+            size_t capacity = std::max(k_min_slot_count, size);
+            if (buf.buffer != nullptr)
+            {
+                size_t growth = buf.buffer->get_element_count() * k_slot_growth_factor;
+                capacity = std::max(growth, capacity);
+            }
 
-        ri_buffer::create_params create_params;
-        create_params.element_count = capacity;
-        create_params.element_size = sizeof(instance_offset_info);
-        create_params.linear_data = {};
-        create_params.usage = ri_buffer_usage::generic;
+            ri_buffer::create_params create_params;
+            create_params.element_count = capacity;
+            create_params.element_size = sizeof(instance_offset_info);
+            create_params.linear_data = {};
+            create_params.usage = ri_buffer_usage::generic;
 
-        buf.buffer = m_renderer.get_render_interface().create_buffer(create_params, "Instance Index Buffer");
+            buf.buffer = m_renderer.get_render_interface().create_buffer(create_params, "Instance Index Buffer");
 
-        // Redirty all slots.
-        for (size_t i = 0; i < buf.slots.size(); i++)
-        {
-            buf.slots[i].dirty = true;
+            // Redirty all slots.
+            for (size_t i = 0; i < buf.slots.size(); i++)
+            {
+                buf.slots[i].dirty = true;
+            }
         }
     }
 }

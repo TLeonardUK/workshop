@@ -56,6 +56,9 @@ public:
 
     allocation get_base_allocation();
 
+    size_t get_used_count();
+    size_t get_total_count();
+
 private:
     std::mutex m_mutex;
 
@@ -66,6 +69,8 @@ private:
     size_t m_size;
 
     dx12_ri_descriptor_heap::allocation m_allocation;
+
+    std::atomic_size_t m_allocated;
 
     std::vector<size_t> m_free_list;
 

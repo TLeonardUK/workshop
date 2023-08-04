@@ -570,39 +570,47 @@ lightbuffer_output pshader(fullscreen_pinput input)
 {
     gbuffer_fragment frag = read_gbuffer(input.uv * uv_scale);
 
-    // Calculate ambient lighting from our light probes.
-    float3 ambient_lighting = calculate_ambient_lighting(frag);
-    
-    // Calculate the cluser we are contained inside of.
-    uint cluster_index = get_cluster_index(frag.world_position.xyz);
-    light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
-
-    // Calculate direct contribution of all lights that effect us.
-    float3 direct_lighting = float3(0.0, 0.0, 0.0);
+    float3 final_color = 0.0f;
+    float3 ambient_lighting = 0.0f;
+    float3 direct_lighting = 0.0f;
     int max_cascade = 0;
+    uint cluster_index = 0;
+    uint visible_light_count = 0;
 
-    // Go through all effecting lights.
-    for (int i = 0; i < cluster.visible_light_count; i++)
+    if ((frag.flags & gbuffer_flag::unlit) == 0)
     {
-        uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
-        light_state light = get_light_state(light_index);
+        // Calculate ambient lighting from our light probes.
+        ambient_lighting = calculate_ambient_lighting(frag);
         
-        direct_lighting_result result = calculate_direct_lighting(frag, light);
-        direct_lighting += result.lighting;
-        max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
+        // Calculate the cluser we are contained inside of.
+        cluster_index = get_cluster_index(frag.world_position.xyz);
+        light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
+
+        // Calculate direct contribution of all lights that effect us.
+        direct_lighting = float3(0.0, 0.0, 0.0);
+        max_cascade = 0;
+        visible_light_count = cluster.visible_light_count;
+
+        // Go through all effecting lights.
+        for (int i = 0; i < cluster.visible_light_count; i++)
+        {
+            uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
+            light_state light = get_light_state(light_index);
+            
+            direct_lighting_result result = calculate_direct_lighting(frag, light);
+            direct_lighting += result.lighting;
+            max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
+        }
+
+        // Mix final color.
+        final_color = ambient_lighting + direct_lighting;
     }
-
-    // Mix final color.
-    float3 final_color = ambient_lighting + direct_lighting;
-
-    // DEBUG: Temp hack: Treat unrendered parts of the scene as unlit.
-    /*if (frag.world_normal.x == 0.0f && frag.world_normal.y == 0.0f && frag.world_normal.z == 0.0f)
+    else
     {
         final_color = frag.albedo;
-    }*/
+    }
 
     // If we are in a visualization mode, tint colors as appropriate.
-
     if (visualization_mode == visualization_mode_t::indirect_specular)
     {
         final_color = ambient_lighting;
@@ -628,7 +636,7 @@ lightbuffer_output pshader(fullscreen_pinput input)
         final_color = (final_color * 0.2) + lerp(
             float3(0.0f, 1.0f, 0.0f),
             float3(1.0f, 0.0f, 0.0f),
-            saturate(cluster.visible_light_count / float(MAX_LIGHTS_PER_CLUSTER))
+            saturate(visible_light_count / float(MAX_LIGHTS_PER_CLUSTER))
         ) * 0.8;
     }
     else if (visualization_mode == visualization_mode_t::light_probe_contribution)

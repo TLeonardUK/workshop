@@ -480,25 +480,44 @@ result<void> dx12_render_interface::destroy_command_queues()
 
 result<void> dx12_render_interface::create_heaps()
 {
-    m_srv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, k_srv_heap_size);
+    size_t srv_heap_size = 0;
+    size_t sampler_heap_size = 0;
+    size_t rtv_heap_size = 0;
+    size_t dsv_heap_size = 0;
+
+    dsv_heap_size += k_descriptor_table_sizes[(int)ri_descriptor_table::depth_stencil];
+    rtv_heap_size += k_descriptor_table_sizes[(int)ri_descriptor_table::render_target];
+    sampler_heap_size += k_descriptor_table_sizes[(int)ri_descriptor_table::sampler];
+
+    for (size_t i = 0; i < k_descriptor_table_sizes.size(); i++)
+    {
+        if (i != (int)ri_descriptor_table::depth_stencil &&
+            i != (int)ri_descriptor_table::render_target &&
+            i != (int)ri_descriptor_table::sampler)
+        {
+            srv_heap_size += k_descriptor_table_sizes[i];
+        }
+    }
+
+    m_srv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, srv_heap_size);
     if (!m_srv_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_sampler_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, k_sampler_heap_size);
+    m_sampler_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, sampler_heap_size);
     if (!m_sampler_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_rtv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, k_rtv_heap_size);
+    m_rtv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtv_heap_size);
     if (!m_rtv_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_dsv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, k_dsv_heap_size);
+    m_dsv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, dsv_heap_size);
     if (!m_dsv_descriptor_heap->create_resources())
     {
         return false;

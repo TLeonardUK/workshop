@@ -29,7 +29,8 @@ result<void> dx12_ri_descriptor_heap::create_resources()
     desc.Type = m_heap_type;
 
     // Sampler and SRV heaps are visible as they are used for bindless descriptor tables.
-    if (m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER || m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+    if (m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER || 
+        m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
     {
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     }

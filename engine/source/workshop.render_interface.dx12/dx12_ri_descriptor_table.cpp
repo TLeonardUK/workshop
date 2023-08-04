@@ -13,6 +13,9 @@ dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& render
     : m_renderer(renderer)
     , m_table_type(table_type)
 {
+
+    m_size = dx12_render_interface::k_descriptor_table_sizes[(int)m_table_type];
+
     switch (m_table_type)
     {
         case ri_descriptor_table::texture_1d:
@@ -20,34 +23,25 @@ dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& render
         case ri_descriptor_table::texture_3d:
         case ri_descriptor_table::texture_cube:
         case ri_descriptor_table::buffer:
-        {
-            m_heap = &m_renderer.get_srv_descriptor_heap();
-            m_size = dx12_render_interface::k_srv_descriptor_table_size;
-            break;
-        }
         case ri_descriptor_table::rwtexture_2d:
         case ri_descriptor_table::rwbuffer:
         {
             m_heap = &m_renderer.get_srv_descriptor_heap();
-            m_size = dx12_render_interface::k_uav_descriptor_table_size;
             break;
         }
         case ri_descriptor_table::sampler:
         {
             m_heap = &m_renderer.get_sampler_descriptor_heap();
-            m_size = dx12_render_interface::k_sampler_descriptor_table_size;
             break;
         }
         case ri_descriptor_table::render_target:
         {
             m_heap = &m_renderer.get_rtv_descriptor_heap();
-            m_size = dx12_render_interface::k_rtv_descriptor_table_size;
             break;
         }
         case ri_descriptor_table::depth_stencil:
         {
             m_heap = &m_renderer.get_dsv_descriptor_heap();
-            m_size = dx12_render_interface::k_dsv_descriptor_table_size;
             break;
         }
         default:
@@ -61,6 +55,18 @@ dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& render
 dx12_ri_descriptor_table::~dx12_ri_descriptor_table()
 {
     m_heap->free(m_allocation);    
+}
+
+size_t dx12_ri_descriptor_table::get_used_count()
+{
+    std::scoped_lock lock(m_mutex);
+
+    return m_size - m_free_list.size();
+}
+
+size_t dx12_ri_descriptor_table::get_total_count()
+{
+    return m_size;
 }
 
 result<void> dx12_ri_descriptor_table::create_resources()

@@ -130,7 +130,7 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
         return false;
     }
 
-    vector3 scale;
+    vector3 scale = vector3::one;
     YAML::Node scale_node = node["scale"];
     if (scale_node.IsDefined())
     {

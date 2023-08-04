@@ -26,7 +26,7 @@ dx12_ri_upload_manager::~dx12_ri_upload_manager()
     {
         D3D12_RANGE range;
         range.Begin = 0;
-        range.End = k_heap_size;
+        range.End = state->size;
         state->handle->Unmap(0, &range);
         state->handle = nullptr;
 
@@ -38,9 +38,10 @@ dx12_ri_upload_manager::~dx12_ri_upload_manager()
     m_copy_queue_fence = nullptr;
 }
 
-void dx12_ri_upload_manager::allocate_new_heap()
+void dx12_ri_upload_manager::allocate_new_heap(size_t minimum_size)
 {
     std::unique_ptr<heap_state> state = std::make_unique<heap_state>();
+    state->size = math::round_up_multiple(minimum_size, k_heap_granularity);
 
     D3D12_HEAP_PROPERTIES heap_properties;
     heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -53,7 +54,7 @@ void dx12_ri_upload_manager::allocate_new_heap()
     desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
     desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     desc.DepthOrArraySize = 1;
-    desc.Width = k_heap_size;
+    desc.Width = state->size;
     desc.Height = 1;
     desc.MipLevels = 1;
     desc.Format = DXGI_FORMAT_UNKNOWN;
@@ -77,7 +78,7 @@ void dx12_ri_upload_manager::allocate_new_heap()
 
     D3D12_RANGE range;
     range.Begin = 0;
-    range.End = k_heap_size;
+    range.End = state->size;
 
     hr = state->handle->Map(0, &range, (void**)&state->start_ptr);
     if (FAILED(hr))
@@ -85,7 +86,7 @@ void dx12_ri_upload_manager::allocate_new_heap()
         db_fatal(render_interface, "Mapping upload heap failed with error 0x%08x.", hr);
     }
 
-    state->memory_heap = std::make_unique<memory_heap>(k_heap_size);
+    state->memory_heap = std::make_unique<memory_heap>(state->size);
 
     m_heaps.push_back(std::move(state));
 }
@@ -99,7 +100,7 @@ result<void> dx12_ri_upload_manager::create_resources()
         return false;
     }
 
-    allocate_new_heap();
+    allocate_new_heap(k_heap_granularity);
 
     return true;
 }
@@ -298,8 +299,6 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
 
 dx12_ri_upload_manager::upload_state dx12_ri_upload_manager::allocate_upload(size_t size, size_t alignment)
 {
-    db_assert_message(size < k_heap_size, "Upload is larger than entire heap size. Increase the heap size if you need to upload this much data.");
-
     std::scoped_lock lock(m_pending_upload_mutex);
 
     upload_state state;
@@ -320,7 +319,7 @@ dx12_ri_upload_manager::upload_state dx12_ri_upload_manager::allocate_upload(siz
 
         if (!state.heap)
         {
-            allocate_new_heap();
+            allocate_new_heap(size);
         }
         else
         {
@@ -393,7 +392,7 @@ void dx12_ri_upload_manager::free_uploads()
 
                 D3D12_RANGE range;
                 range.Begin = 0;
-                range.End = k_heap_size;
+                range.End = heap->size;
                 heap->handle->Unmap(0, &range);
 
                 //CheckedRelease(heap->handle);

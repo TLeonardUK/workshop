@@ -9,8 +9,6 @@
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* debug_name, const ri_texture::create_params& params)
@@ -177,6 +175,9 @@ result<void> dx12_ri_texture::create_resources()
         m_create_params.is_render_target ? &clear_color : nullptr,
         IID_PPV_ARGS(&m_handle)
     );
+
+    //db_log(renderer, "%zi MB : [TEXTURE] %s", m_create_params.data.size() / (1024 * 1024), m_debug_name.c_str());
+
     if (FAILED(hr))
     {
         db_error(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);

@@ -1,0 +1,28 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to render a skybox behind all other geometry.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  sky_box:
+    techniques:
+      sky_box: {}
+
+techniques:
+  sky_box:
+    vertex_shader: 
+      file: data:shaders/source/sky_box.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/sky_box.hlsl
+      entry: pshader
+    render_state: default
+    vertex_layout: geometry_vertex
+    output_target: gbuffer
+    param_blocks: [ gbuffer, view_info, geometry_skybox_info, geometry_instance_info ]

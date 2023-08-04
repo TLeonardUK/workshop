@@ -52,6 +52,7 @@ private:
         uint8_t* start_ptr = nullptr;
 
         std::unique_ptr<memory_heap> memory_heap;
+        size_t size = 0;
 
         size_t last_allocation_frame = 0;
     };
@@ -71,12 +72,11 @@ private:
         build_command_list_callback_t build_command_list = nullptr;
     };
 
-    // Size of the heap, this should be able to store the maximum
-    // size of any resource we try to upload.
-    static constexpr size_t k_heap_size = 256 * 1024 * 1024;
+    // Granularity of heap size. The actual heap size is based on the size of the data to be uploaded.
+    static constexpr size_t k_heap_granularity = 32 * 1024 * 1024;
 
 private:
-    void allocate_new_heap();
+    void allocate_new_heap(size_t minimum_size);
     
     upload_state allocate_upload(size_t size, size_t alignment);
     void queue_upload(upload_state state);

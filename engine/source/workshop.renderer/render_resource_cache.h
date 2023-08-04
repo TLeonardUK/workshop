@@ -50,7 +50,7 @@ private:
     };
 
     buffer& get_internal_buffer();
-    void resize(buffer& buf, size_t size);
+    void resize(buffer& buf, size_t size, bool create_backing_storage);
 
 private:
     renderer& m_renderer;
@@ -58,7 +58,7 @@ private:
     std::vector<std::unique_ptr<buffer>> m_buffers;
 
     // Minimum number of slots the buffer starts with.
-    static inline constexpr size_t k_min_slot_count = 128;
+    static inline constexpr size_t k_min_slot_count = 1;
 
     // Factor the buffer grows by.
     static inline constexpr size_t k_slot_growth_factor = 2;

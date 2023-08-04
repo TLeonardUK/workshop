@@ -8,8 +8,6 @@
 #include "workshop.core/math/obb.h"
 #include "workshop.core/math/plane.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 class frustum

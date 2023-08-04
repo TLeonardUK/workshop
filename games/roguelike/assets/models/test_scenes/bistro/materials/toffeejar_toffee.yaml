@@ -10,3 +10,5 @@ domain: opaque
 textures:
  albedo_texture:     data:models/test_scenes/bistro/textures/ToffeeJar_Toffee_BaseColor.yaml
  normal_texture:     data:models/test_scenes/bistro/textures/ToffeeJar_Toffee_Normal.yaml
+ metallic_texture:   data:models/test_scenes/bistro/textures/ToffeeJar_Toffee_Metallic.yaml
+ roughness_texture:  data:models/test_scenes/bistro/textures/ToffeeJar_Toffee_Roughness.yaml

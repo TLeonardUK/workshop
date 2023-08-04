@@ -10,7 +10,7 @@
 
 namespace ws {
 
-std::unique_ptr<pixmap> pixmap_png_loader::load(const std::vector<char>& buffer)
+std::vector<std::unique_ptr<pixmap>> pixmap_png_loader::load(const std::vector<char>& buffer)
 {
     unsigned char* image = nullptr;
     uint32_t width;
@@ -27,14 +27,17 @@ std::unique_ptr<pixmap> pixmap_png_loader::load(const std::vector<char>& buffer)
     {
         db_warning(core, "lodepng_decode32 failed with error %u: %s", error, lodepng_error_text(error));
         free(image);
-        return nullptr;
+        return {};
     }
 
     std::unique_ptr<pixmap> result = std::make_unique<pixmap>(std::span((uint8_t*)image, width * height * 4), width, height, pixmap_format::R8G8B8A8);
 
     free(image);
 
-    return result;
+    std::vector<std::unique_ptr<pixmap>> result_array;
+    result_array.push_back(std::move(result));
+
+    return result_array;
 }
 
 bool pixmap_png_loader::save(pixmap& input, std::vector<char>& buffer)

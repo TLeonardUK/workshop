@@ -10,3 +10,5 @@ domain: opaque
 textures:
  albedo_texture:     data:models/test_scenes/bistro/textures/Paris_Paintings_Glass_BaseColor.yaml
  normal_texture:     data:models/test_scenes/bistro/textures/Paris_Paintings_Glass_Normal.yaml
+ metallic_texture:   data:models/test_scenes/bistro/textures/Paris_Paintings_Glass_Metallic.yaml
+ roughness_texture:  data:models/test_scenes/bistro/textures/Paris_Paintings_Glass_Roughness.yaml

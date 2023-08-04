@@ -82,6 +82,7 @@ SET(SOURCES
     "utils/frame_time.h" 
     "utils/time.cpp"
     "utils/time.h"
+    "utils/string_formatter.h"
     
     "math/math.h"
     "math/math.cpp"
@@ -108,6 +109,8 @@ SET(SOURCES
     "drawing/pixmap_png_loader.cpp"
     "drawing/pixmap_dds_loader.h"
     "drawing/pixmap_dds_loader.cpp"
+    "drawing/pixmap_stb_loader.h"
+    "drawing/pixmap_stb_loader.cpp"
     
     "geometry/geometry.h"
     "geometry/geometry.cpp"
@@ -138,5 +141,6 @@ target_link_libraries(${PROJECT_NAME}
     assimp
     zlib
     dds-ktx
+    stb
     ${PLATFORM_LIB}
 )

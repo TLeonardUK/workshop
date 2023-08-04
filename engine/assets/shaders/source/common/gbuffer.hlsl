@@ -9,16 +9,27 @@
 // This needs to be paired with the one in renderer.h
 //#define GBUFFER_DEBUG_DATA 
 
+// Flags describing the state of individual fragments in the gbuffer.
+enum gbuffer_flag
+{
+    none        = 0,
+
+    // No lighting calculations will be performed on fragment, it will 
+    // be rendered full bright.
+    unlit       = 1,
+};
+
+
 // Individual fragment of the gbuffer in decoded format.
 // Use encode_gbuffer / decode_gbuffer to convert to input/output formats.
 struct gbuffer_fragment
 {
     float3 albedo;
-    float opacity;
     float metallic;
     float3 world_normal;
     float roughness;
     float3 world_position;
+    uint flags;
     
 #ifdef GBUFFER_DEBUG_DATA
     float4 debug_data;
@@ -36,12 +47,21 @@ struct gbuffer_output
 #endif
 };
 
+// Gbuffer output with depth
+struct gbuffer_output_with_depth
+{
+    float4 buffer0 : SV_Target0;
+    float4 buffer1 : SV_Target1;
+    float4 buffer2 : SV_Target2;
+    float depth : SV_Depth;
+};
+
 // Encodes fragment into gbuffer_output format.
 gbuffer_output encode_gbuffer(gbuffer_fragment fragment)
 {
     gbuffer_output output;
     output.buffer0.xyz = fragment.albedo;
-    output.buffer0.w = fragment.opacity;
+    output.buffer0.w = (fragment.flags / 255.0f);
 
     output.buffer1.xyz = fragment.world_normal;
     output.buffer1.w = fragment.roughness;
@@ -68,7 +88,7 @@ gbuffer_fragment read_gbuffer(float2 uv)
 
     gbuffer_fragment result;
     result.albedo = buffer0.xyz;
-    result.opacity = buffer0.w;
+    result.flags = (uint)round(buffer0.w * 255.0f);
 
     result.world_normal = buffer1.xyz;
     result.roughness = buffer1.w;

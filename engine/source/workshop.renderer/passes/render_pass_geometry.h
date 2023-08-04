@@ -28,6 +28,9 @@ public:
     // What material domain to render.
     material_domain domain = material_domain::opaque;
 
+    // Param block type that should be filled for each batch.
+    std::string info_param_block_type = "geometry_info";
+
 public:
 
     render_pass_geometry();
