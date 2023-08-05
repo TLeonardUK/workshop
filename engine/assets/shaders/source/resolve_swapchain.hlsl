@@ -25,32 +25,10 @@ swapchain_output pshader(fullscreen_pinput input)
     {
         default:
         case visualization_mode_t::albedo:
-        {
-            output.color = float4(f.albedo, 1.0f);
-            break;
-        }
         case visualization_mode_t::metallic:
-        {
-            output.color = float4(f.metallic, 0.0f, 0.0f, 1.0f);
-            break;
-        }
         case visualization_mode_t::roughness:
-        {
-            output.color = float4(f.roughness, 0.0f, 0.0f, 1.0f);
-            break;
-        }
         case visualization_mode_t::world_normal:
-        {
-            output.color = float4(pack_normal(f.world_normal), 1.0f);
-            break;
-        }
         case visualization_mode_t::world_position:
-        {
-            output.color = float4(f.world_position, 1.0f);
-            break;
-        }
-        case visualization_mode_t::wireframe:
-        case visualization_mode_t::normal:
         case visualization_mode_t::lighting:
         case visualization_mode_t::shadow_cascades:
         case visualization_mode_t::light_clusters:
@@ -60,13 +38,21 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::indirect_specular:
         case visualization_mode_t::indirect_diffuse:    
         case visualization_mode_t::direct_light:
+        case visualization_mode_t::wireframe:
         {
-            output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv * uv_scale);
+            tonemap = false;
+            break;
+        }
+        case visualization_mode_t::normal:
+        {
             tonemap = true;
             break;
         }
     }
-    
+
+    // Grab fragment color from lit buffer.
+    output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv * uv_scale);
+
     // Gamma correct the output
     if (tonemap && tonemap_enabled)
     {

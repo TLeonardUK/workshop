@@ -37,7 +37,7 @@ void render_system_transparent_geometry::build_graph(render_graph& graph, const 
     std::unique_ptr<render_pass_geometry> pass = std::make_unique<render_pass_geometry>();
     pass->name = "transparent static geometry";
     pass->system = this;
-    pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { 
+    pass->technique = m_renderer.get_effect_manager().get_technique("transparent_static_geometry", { 
         { "domain","transparent"}, 
         {"wireframe","false"}, 
         {"depth_only","false"} 
@@ -48,6 +48,9 @@ void render_system_transparent_geometry::build_graph(render_graph& graph, const 
     });
     pass->domain = material_domain::transparent;
     pass->output = output;
+    pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+    pass->param_blocks.push_back(view.get_view_info_param_block());
+    pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(view));
     graph.add_node(std::move(pass));
 }
 

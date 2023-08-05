@@ -21,9 +21,7 @@
 #include <chrono>
 
 // TODO:
-//      Improve Culling
 //      Try and reduce light leakage for probes
-//      Proper transparency pass
 //      Decals
 //      Auto_Exposure
 //      Skinned Meshes
@@ -65,7 +63,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_1.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
 
-#if 0
+#if 1
     m_view_position = vector3(150.0f, 270.0f, -100.0f);
     m_view_rotation = quat::angle_axis(0.0f, vector3::up);
 

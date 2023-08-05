@@ -73,6 +73,11 @@ ri_texture& render_system_lighting::get_lighting_buffer()
     return *m_lighting_buffer;
 }
 
+ri_param_block& render_system_lighting::get_resolve_param_block(render_view& view)
+{
+    return *view.get_resource_cache().find_or_create_param_block(this, "resolve_lighting_parameters");;
+}
+
 void render_system_lighting::build_pre_graph(render_graph& graph, const render_world_state& state)
 {
     if (!m_calculated_brdf_lut)

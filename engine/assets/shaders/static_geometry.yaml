@@ -25,12 +25,7 @@ effects:
         domain: [ opaque ]
         wireframe: [ false ]
         depth_only: [ false ]
-
-      static_geometry_transparent: 
-        domain: [ transparent ]
-        wireframe: [ false ]
-        depth_only: [ false ]
-
+        
       static_geometry_masked_depth_only: 
         domain: [ masked ]
         wireframe: [ false ]
@@ -91,19 +86,6 @@ techniques:
       file: data:shaders/source/static_geometry.hlsl
       entry: pshader_masked
     render_state: default
-    vertex_layout: geometry_vertex
-    output_target: gbuffer
-    param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]
-
-  # Technique to use when rendering transparent geometry - input is sorted and no depth writes are enabled.
-  static_geometry_transparent:
-    vertex_shader: 
-      file: data:shaders/source/static_geometry.hlsl
-      entry: vshader
-    pixel_shader: 
-      file: data:shaders/source/static_geometry.hlsl
-      entry: pshader_transparent
-    render_state: transparent
     vertex_layout: geometry_vertex
     output_target: gbuffer
     param_blocks: [ gbuffer, view_info, geometry_info, geometry_instance_info ]

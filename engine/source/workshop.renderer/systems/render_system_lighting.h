@@ -39,6 +39,8 @@ public:
 
     ri_texture& get_lighting_buffer();
 
+    ri_param_block& get_resolve_param_block(render_view& view);
+
 public:
 
     // Maximum number of lights we can handle on screen at once.

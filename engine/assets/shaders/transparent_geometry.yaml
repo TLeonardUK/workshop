@@ -1,0 +1,43 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to render static unskinned transparent geometry.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  transparent_static_geometry:
+    techniques:      
+      transparent_static_geometry: 
+        domain: [ transparent ]
+        wireframe: [ false ]
+        depth_only: [ false ]
+        
+techniques:
+  # Technique to use when rendering transparent geometry - input is sorted and no depth writes are enabled.
+  transparent_static_geometry:
+    vertex_shader: 
+      file: data:shaders/source/transparent_geometry.hlsl
+      entry: vshader
+    pixel_shader: 
+      file: data:shaders/source/transparent_geometry.hlsl
+      entry: pshader
+    render_state: transparent
+    vertex_layout: geometry_vertex
+    output_target: light_buffer_and_depth
+    param_blocks: [ 
+      view_info, 
+      gbuffer,
+      geometry_info, 
+      geometry_instance_info,   
+      light_state, 
+      light_cluster, 
+      light_probe_grid_state, 
+      reflection_probe_state,
+      shadow_map_state, 
+      resolve_lighting_parameters 
+    ]
