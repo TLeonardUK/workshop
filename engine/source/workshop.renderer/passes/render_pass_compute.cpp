@@ -18,16 +18,29 @@ namespace ws {
 
 void render_pass_compute::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
+    size_t dispatch_size_x;
+    size_t dispatch_size_y;
+    size_t dispatch_size_z;
     size_t group_size_x;
     size_t group_size_y;
     size_t group_size_z;
 
-    if (!technique->get_define<size_t>("DISPATCH_SIZE_X", group_size_x) ||
-        !technique->get_define<size_t>("DISPATCH_SIZE_Y", group_size_y) ||
-        !technique->get_define<size_t>("DISPATCH_SIZE_Z", group_size_z))
+    if (!technique->get_define<size_t>("DISPATCH_SIZE_X", dispatch_size_x) ||
+        !technique->get_define<size_t>("DISPATCH_SIZE_Y", dispatch_size_y) ||
+        !technique->get_define<size_t>("DISPATCH_SIZE_Z", dispatch_size_z) ||
+        !technique->get_define<size_t>("GROUP_SIZE_X", group_size_x) ||
+        !technique->get_define<size_t>("GROUP_SIZE_Y", group_size_y) ||
+        !technique->get_define<size_t>("GROUP_SIZE_Z", group_size_z))
     {
-        db_warning(renderer, "Failed to run '%s', shader is missing group size defines - DISPATCH_SIZE_X, DISPATCH_SIZE_Y, DISPATCH_SIZE_Z.", technique->name.c_str());
+        db_warning(renderer, "Failed to run '%s', shader is missing dispatch size defines - DISPATCH_SIZE_X, DISPATCH_SIZE_Y, DISPATCH_SIZE_Z.", technique->name.c_str());
         return;
+    }
+
+    if (dispatch_size_coverage != vector3i::zero)
+    {
+        dispatch_size_x = (dispatch_size_coverage.x + (group_size_x - 1)) / group_size_x;
+        dispatch_size_y = (dispatch_size_coverage.y + (group_size_y - 1)) / group_size_y;
+        dispatch_size_z = (dispatch_size_coverage.z + (group_size_z - 1)) / group_size_z;
     }
 
     // Create the command list.
@@ -46,7 +59,7 @@ void render_pass_compute::generate(renderer& renderer, generated_state& state_ou
         // Put together param block list to use.
         list.set_pipeline(*technique->pipeline);
         list.set_param_blocks(blocks);
-        list.dispatch(group_size_x, group_size_y, group_size_z);
+        list.dispatch(dispatch_size_x, dispatch_size_y, dispatch_size_z);
     }
     list.close();
 

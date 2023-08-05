@@ -27,6 +27,8 @@ param_blocks:
       light_buffer_sampler: sampler     
       uv_scale: float2
       tonemap_enabled: bool
+      average_luminance_buffer: rwbyteaddressbuffer
+      white_point_squared: float
 
 techniques:
 

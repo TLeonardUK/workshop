@@ -27,7 +27,7 @@ public:
     render_effect::technique* technique;
 
     // The effect technique to use for rendering this pass in wireframe.
-    render_effect::technique* wireframe_technique;
+    render_effect::technique* wireframe_technique = nullptr;
 
     // The output targets to render to.
     render_output output;

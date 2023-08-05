@@ -25,6 +25,12 @@ public:
     virtual void step(const render_world_state& state) override;
 
 private:
+    result<void> create_resources();
+    result<void> destroy_resources();
+
+private:
+    std::unique_ptr<ri_buffer> m_luminance_histogram_buffer;
+    std::unique_ptr<ri_buffer> m_luminance_average_buffer;
 
 };
 

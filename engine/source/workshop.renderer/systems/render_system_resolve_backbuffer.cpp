@@ -7,8 +7,10 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
+#include "workshop.renderer/passes/render_pass_compute.h"
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
+#include "workshop.render_interface/ri_interface.h"
 
 namespace ws {
 
@@ -18,7 +20,44 @@ render_system_resolve_backbuffer::render_system_resolve_backbuffer(renderer& ren
 }
 
 void render_system_resolve_backbuffer::register_init(init_list& list)
-{   
+{
+    list.add_step(
+        "Resolve Resources",
+        [this, &list]() -> result<void> { return create_resources(); },
+        [this, &list]() -> result<void> { return destroy_resources(); }
+    );
+}
+
+result<void> render_system_resolve_backbuffer::create_resources()
+{
+    size_t histogram_size = 256;
+
+    render_effect::technique* technique = m_renderer.get_effect_manager().get_technique("calculate_luminance_histogram", {});
+    technique->get_define("HISTOGRAM_SIZE", histogram_size);
+
+    std::vector<uint8_t> data;
+    data.resize(4 * histogram_size);
+
+    ri_buffer::create_params buffer_params;
+    buffer_params.element_count = histogram_size;
+    buffer_params.element_size = 4;
+    buffer_params.usage = ri_buffer_usage::generic;
+    m_luminance_histogram_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "luminance histogram");
+
+    data.resize(4);
+
+    buffer_params.element_count = 1;
+    buffer_params.element_size = 4;
+    buffer_params.usage = ri_buffer_usage::generic;
+    buffer_params.linear_data = data;
+    m_luminance_average_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "luminance average");
+
+    return true;
+}
+
+result<void> render_system_resolve_backbuffer::destroy_resources()
+{
+    return true;
 }
 
 void render_system_resolve_backbuffer::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
@@ -28,6 +67,46 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
         return;
     }
 
+    // Calculate luminance calculation parameters.
+    const float min_luminance = -8.0f; 
+    const float max_luminance = 3.5f;
+    const float exposure_tau = 1.1f;
+    const float white_point = 3.0f;
+    float time_coeff = std::clamp(1.0f - std::exp(-state.time.delta_seconds * exposure_tau), 0.0f, 1.0f);
+
+    ri_param_block* resolve_luminance_params = view.get_resource_cache().find_or_create_param_block(this, "calculate_luminance_params");
+    ri_texture_view texture = &m_renderer.get_system<render_system_lighting>()->get_lighting_buffer();
+    resolve_luminance_params->set("min_log2_luminance", min_luminance);
+    resolve_luminance_params->set("log2_luminance_range", (max_luminance - min_luminance));
+    resolve_luminance_params->set("inverse_log2_luminance_range", 1.0f / (max_luminance - min_luminance));
+    resolve_luminance_params->set("input_target", texture);
+    resolve_luminance_params->set("input_dimensions", vector2i((int)texture.get_width(), (int)texture.get_height()));
+    resolve_luminance_params->set("histogram_buffer", *m_luminance_histogram_buffer, true);
+    resolve_luminance_params->set("average_buffer", *m_luminance_average_buffer, true);
+    resolve_luminance_params->set("time_coeff", time_coeff);
+
+    // Calculate the luminance histogram
+    std::unique_ptr<render_pass_compute> histogram_pass = std::make_unique<render_pass_compute>();
+    histogram_pass->name = "calculate luminance histogram";
+    histogram_pass->system = this;
+    histogram_pass->technique = m_renderer.get_effect_manager().get_technique("calculate_luminance_histogram", {});
+    histogram_pass->param_blocks.push_back(resolve_luminance_params);
+    histogram_pass->dispatch_size_coverage = vector3i(
+        texture.get_width(),
+        texture.get_height(),
+        1
+    );
+    graph.add_node(std::move(histogram_pass));
+
+    // Calculate the luminance average
+    std::unique_ptr<render_pass_compute> average_pass = std::make_unique<render_pass_compute>();
+    average_pass->name = "calculate luminance average";
+    average_pass->system = this;
+    average_pass->technique = m_renderer.get_effect_manager().get_technique("calculate_luminance_average", {});
+    average_pass->param_blocks.push_back(resolve_luminance_params);
+    graph.add_node(std::move(average_pass));
+
+    // Resolve to final target.
     std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
     pass->name = "resolve swapchain";
     pass->system = this;
@@ -68,6 +147,8 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
     resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
     resolve_param_block->set("tonemap_enabled", !is_hdr_output);
+    resolve_param_block->set("white_point_squared", math::square(white_point));    
+    resolve_param_block->set("average_luminance_buffer", *m_luminance_average_buffer, true);
     resolve_param_block->set("uv_scale", vector2(
         (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
         (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()

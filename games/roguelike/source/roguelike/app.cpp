@@ -60,7 +60,7 @@ ws::result<void> rl_game_app::start()
     render_object_id object_id;
 
     object_id = cmd_queue.create_static_mesh("Skybox");
-    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_1.yaml", 0));
+    cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_3.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
 
 #if 1
@@ -140,7 +140,8 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_shadow_casting(object_id, true); // true
     cmd_queue.set_light_shadow_map_size(object_id, 2048);
     cmd_queue.set_light_shadow_max_distance(object_id, 10000.0f);
-    cmd_queue.set_light_intensity(object_id, 1.0f);
+    cmd_queue.set_directional_light_shadow_cascade_exponent(object_id, 0.9f);
+    cmd_queue.set_light_intensity(object_id, 10.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 #endif
 

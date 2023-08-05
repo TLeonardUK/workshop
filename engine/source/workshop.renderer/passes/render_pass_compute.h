@@ -21,6 +21,13 @@ class render_pass_compute
 {
 public:
 
+    // Overrides the dispatch size with a value calculated as:
+    //  ceil(dispatch_size_coverage / group_size)
+    // 
+    // This is useful if you want to have a group size of say 16x16x1 and want
+    // to dispatch enough blocks that it would have enough threads to cover say a 1080x1920 image.
+    // Handy for post-processing style functionality.
+    vector3i dispatch_size_coverage = vector3i::zero;
     
 public:
 

@@ -43,6 +43,10 @@ result<void> dx12_ri_swapchain::create_resources()
 {
     HRESULT hr;
 
+    m_window_width = m_window.get_width();
+    m_window_height = m_window.get_height();
+    m_window_mode = m_window.get_mode();
+
     HWND hwnd = reinterpret_cast<HWND>(m_window.get_platform_handle());
 
     dx12_ri_command_queue& graphics_command_queue = static_cast<dx12_ri_command_queue&>(
@@ -105,9 +109,6 @@ result<void> dx12_ri_swapchain::create_resources()
         return false;
     }
 
-    m_window_width = m_window.get_width();
-    m_window_height = m_window.get_height();
-    m_window_mode = m_window.get_mode();
 
     return true;
 }

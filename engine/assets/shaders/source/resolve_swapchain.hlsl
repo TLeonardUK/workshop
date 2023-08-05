@@ -56,7 +56,16 @@ swapchain_output pshader(fullscreen_pinput input)
     // Gamma correct the output
     if (tonemap && tonemap_enabled)
     {
-        output.color.rgb = tonemap_reinhard(output.color.rgb);
+        // Load the average luminance.
+        float average_luminance = average_luminance_buffer.Load<float>(0);
+        float3 color = output.color.rgb;
+
+        // https://bruop.github.io/exposure/
+        float3 yxy = convert_rgb_to_yxy(color);
+        yxy.x /= (9.6f * average_luminance + 0.0001);
+        color = convert_yxy_to_rgb(yxy);
+
+        output.color.rgb = tonemap_reinhard2(color, white_point_squared);
     }
 
     return output;

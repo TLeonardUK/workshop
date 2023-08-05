@@ -1,0 +1,61 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect takes the output buffer and calculates the average luminance for later tonemapping.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  calculate_luminance_histogram:
+    techniques:
+      calculate_luminance_histogram: {}
+  calculate_luminance_average:
+    techniques:
+      calculate_luminance_average: {}
+
+param_blocks:
+  calculate_luminance_params:
+    scope: global
+    fields:
+      min_log2_luminance: float
+      log2_luminance_range: float
+      inverse_log2_luminance_range: float
+      histogram_buffer: rwbyteaddressbuffer
+      average_buffer: rwbyteaddressbuffer
+      input_target: texture2d
+      input_dimensions: int2
+      time_coeff: float
+
+defines:
+  HISTOGRAM_SIZE: 256
+
+techniques:
+  calculate_luminance_histogram:
+    compute_shader: 
+      file: data:shaders/source/calculate_luminance_histogram.hlsl
+      entry: cshader
+    param_blocks: [ calculate_luminance_params ]
+    defines:
+      GROUP_SIZE_X: 16
+      GROUP_SIZE_Y: 16
+      GROUP_SIZE_Z: 1
+      DISPATCH_SIZE_X: 1    # We override the dispatch size in code to cover the full screen.
+      DISPATCH_SIZE_Y: 1
+      DISPATCH_SIZE_Z: 1
+      
+  calculate_luminance_average:
+    compute_shader: 
+      file: data:shaders/source/calculate_luminance_average.hlsl
+      entry: cshader
+    param_blocks: [ calculate_luminance_params ]
+    defines:
+      GROUP_SIZE_X: 16
+      GROUP_SIZE_Y: 16
+      GROUP_SIZE_Z: 1
+      DISPATCH_SIZE_X: 1
+      DISPATCH_SIZE_Y: 1
+      DISPATCH_SIZE_Z: 1

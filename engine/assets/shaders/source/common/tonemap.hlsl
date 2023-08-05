@@ -7,6 +7,16 @@
 
 static const float3 tonemap_gamma = 2.2;
 
+float tonemap_reinhard2(float input, float whitepoint)
+{
+	return (input * (1.0 + input / whitepoint)) / (1.0 + input);
+}
+
+float3 tonemap_reinhard2(float3 input, float whitepoint)
+{
+	return (input * (1.0 + input / whitepoint)) / (1.0 + input);
+}
+
 float3 tonemap_reinhard(float3 input)
 {
     float exposure = 1.5;
