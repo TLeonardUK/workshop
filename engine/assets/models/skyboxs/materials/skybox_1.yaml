@@ -8,4 +8,4 @@ version: 1
 domain: sky 
 
 textures:
-  skybox_texture: data:models/skyboxs/textures/skybox_1.yaml
+  skybox_texture: data:models/skyboxs/textures/skybox_1/skybox_1.yaml

@@ -14,6 +14,7 @@
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
 #include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/render_command_queue.h"
@@ -182,6 +183,9 @@ public:
     // Gets the manager that handles the objects contained in the render scene.
     render_scene_manager& get_scene_manager();
 
+    // Gets the manager that handles the visibility of objects
+    render_visibility_manager& get_visibility_manager();
+
     // Gets the manager that handles creating batches for instance rendering.
     render_batch_manager& get_batch_manager();    
 
@@ -200,9 +204,6 @@ public:
 
     // Gets the current frame index being constructed.
     size_t get_frame_index();
-
-    // Similar to get_frame_index except its used for culling and can be paused when rendering is frozen. 
-    size_t get_visibility_frame_index();
 
     // Queues a callback that runs on the render thread.
     void queue_callback(void* source, std::function<void()> callback);
@@ -316,6 +317,7 @@ private:
     std::unique_ptr<render_param_block_manager> m_param_block_manager;
     std::unique_ptr<render_effect_manager> m_effect_manager;
     std::unique_ptr<render_scene_manager> m_scene_manager;
+    std::unique_ptr<render_visibility_manager> m_visibility_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
 

@@ -9,16 +9,24 @@
 
 namespace ws {
 
-render_view::render_view(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
-    : render_object(id, scene_manager, false)
-    , m_renderer(renderer)
+render_view::render_view(render_object_id id, renderer& renderer)
+    : render_object(id, &renderer, render_visibility_flags::none)
 {
     m_resource_cache = std::make_unique<render_resource_cache>(renderer);
+
+    m_visibility_view_id = m_renderer->get_visibility_manager().register_view(get_frustum(), this);
+}
+
+render_view::~render_view()
+{
+    m_renderer->get_visibility_manager().unregister_view(m_visibility_view_id);
 }
 
 void render_view::bounds_modified()
 {
-    m_dirty = true;
+    render_object::bounds_modified();
+
+    m_renderer->get_visibility_manager().update_object_frustum(m_visibility_view_id, get_frustum());
 
     update_view_info_param_block();
 }
@@ -220,7 +228,7 @@ void render_view::update_view_info_param_block()
 {
     if (!m_view_info_param_block)
     {
-        m_view_info_param_block = m_renderer.get_param_block_manager().create_param_block("view_info");
+        m_view_info_param_block = m_renderer->get_param_block_manager().create_param_block("view_info");
     }
     m_view_info_param_block->set("view_z_near", m_near_clip);
     m_view_info_param_block->set("view_z_far", m_far_clip);
@@ -249,32 +257,12 @@ render_resource_cache& render_view::get_resource_cache()
 
 bool render_view::is_object_visible(render_object* object)
 {
-    if (visibility_index == render_view::k_always_visible_index)
-    {
-        return true;
-    }
-    return object->last_visible_frame[visibility_index] >= m_renderer.get_visibility_frame_index();
+    return m_renderer->get_visibility_manager().is_object_visibile(m_visibility_view_id, object->get_visibility_id());
 }
 
-size_t render_view::get_last_change()
+bool render_view::has_view_changed()
 {
-    return m_last_change;
-}
-
-void render_view::mark_dirty(size_t last_change)
-{
-    m_dirty = true;
-    m_last_change = last_change;
-}
-
-bool render_view::is_dirty()
-{
-    return m_dirty;
-}
-
-void render_view::clear_dirty()
-{
-    m_dirty = false;
+    return m_renderer->get_visibility_manager().has_view_changed(m_visibility_view_id);
 }
 
 void render_view::set_should_render(bool value)
@@ -285,6 +273,23 @@ void render_view::set_should_render(bool value)
 bool render_view::should_render()
 {
     return m_should_render;
+}
+
+void render_view::set_active(bool value)
+{
+    m_active = value;
+
+    m_renderer->get_visibility_manager().set_view_active(m_visibility_view_id, value);
+}
+
+bool render_view::get_active()
+{
+    return m_active;
+}
+
+render_visibility_manager::view_id render_view::get_visibility_view_id()
+{
+    return m_visibility_view_id;
 }
 
 }; // namespace ws

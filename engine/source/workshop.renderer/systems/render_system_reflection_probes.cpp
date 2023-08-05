@@ -19,8 +19,9 @@
 
 namespace ws {
 
-render_system_reflection_probes::render_system_reflection_probes(renderer& render)
+render_system_reflection_probes::render_system_reflection_probes(renderer& render, debug_menu& menu)
     : render_system(render, "reflection probes")
+    , m_debug_menu(menu)
 {
 }
 
@@ -88,6 +89,7 @@ result<void> render_system_reflection_probes::create_resources()
             view->set_view_matrix(matrix4::identity);
             view->set_clip(k_probe_near_z, k_probe_far_z);
             view->set_should_render(false);
+            view->set_active(false);
             view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::constant_ambient_lighting);
 
             view_info info;
@@ -97,14 +99,23 @@ result<void> render_system_reflection_probes::create_resources()
         }
     }
 
+    // Add an option to regenerate.
+    m_debug_menu_options.push_back(m_debug_menu.add_option("build/rebuild reflection probes", [this]() { regenerate(); }));
+
     return true;
 }
 
 result<void> render_system_reflection_probes::destroy_resources()
 {
     m_probe_capture_targets.clear();
+    m_debug_menu_options.clear();
 
     return true;
+}
+
+void render_system_reflection_probes::regenerate()
+{
+    m_should_regenerate = true;
 }
 
 void render_system_reflection_probes::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
@@ -196,6 +207,7 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
         view->set_projection_matrix(projection_matrix);
         view->set_view_matrix(light_view_matrix);
         view->set_should_render(true);
+        view->set_active(true);
         view->set_local_transform(origin, quat::identity, vector3::one);
         view->set_render_target(rt_view);
         view->set_viewport({ 0, 0, (int)info.render_target->get_width(), (int)info.render_target->get_height() });
@@ -208,7 +220,6 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
 void render_system_reflection_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    render_system_debug* debug_system = m_renderer.get_system<render_system_debug>();
     render_system_light_probes* light_probe_system = m_renderer.get_system<render_system_light_probes>();
 
     std::vector<render_reflection_probe*> reflection_probes = scene_manager.get_reflection_probes();
@@ -220,29 +231,16 @@ void render_system_reflection_probes::step(const render_world_state& state)
     {
         render_view* view = scene_manager.resolve_id_typed<render_view>(m_probe_capture_views[i].id);
         view->set_should_render(false);
-    }
-
-    // Do not try and regenerate reflection probes if diffuse probes are being built.
-    static float a = 0.0f;
-    a += state.time.delta_seconds;
-    if (a < 30.0f)
-    {
-        return;
-    }
-
-    if (light_probe_system->is_regenerating())
-    {
-        return;
+        view->set_active(false);
     }
 
     // Look for reflection probes that need to be updated.
+    if (m_should_regenerate)
     {
         profile_marker(profile_colors::render, "Reflection Probes");
 
         for (render_reflection_probe* probe : reflection_probes)
         {
-            debug_system->add_obb(probe->get_bounds(), color::blue);
-
             // If dirty, regenerate this probe.
             if (probe->is_dirty() && m_probes_regenerating < k_probe_regenerations_per_frame)
             {
@@ -250,6 +248,12 @@ void render_system_reflection_probes::step(const render_world_state& state)
                 m_probes_regenerating++;
             }
         }
+    }
+
+    // If not regenerating any probes this frame we are done.
+    if (m_probes_regenerating == 0)
+    {
+        m_should_regenerate = false;
     }
 }
 

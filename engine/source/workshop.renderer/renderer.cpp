@@ -10,6 +10,7 @@
 #include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/systems/render_system_imgui.h"
 #include "workshop.renderer/systems/render_system_geometry.h"
+#include "workshop.renderer/systems/render_system_transparent_geometry.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/systems/render_system_shadows.h"
 #include "workshop.renderer/systems/render_system_light_probes.h"
@@ -118,8 +119,9 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
-    m_systems.push_back(std::make_unique<render_system_light_probes>(*this));
-    m_systems.push_back(std::make_unique<render_system_reflection_probes>(*this));
+    m_systems.push_back(std::make_unique<render_system_transparent_geometry>(*this));
+    m_systems.push_back(std::make_unique<render_system_light_probes>(*this, m_debug_menu));
+    m_systems.push_back(std::make_unique<render_system_reflection_probes>(*this, m_debug_menu));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
@@ -144,12 +146,14 @@ result<void> renderer::create_managers(init_list& list)
     m_effect_manager = std::make_unique<render_effect_manager>(*this, m_asset_manager);
     m_param_block_manager = std::make_unique<render_param_block_manager>(*this);
     m_scene_manager = std::make_unique<render_scene_manager>(*this);
+    m_visibility_manager = std::make_unique<render_visibility_manager>(*this);
     m_batch_manager = std::make_unique<render_batch_manager>(*this);
     m_imgui_manager = std::make_unique<render_imgui_manager>(*this, m_input_interface);
 
     m_param_block_manager->register_init(list);
     m_effect_manager->register_init(list);
     m_scene_manager->register_init(list);
+    m_visibility_manager->register_init(list);
     m_batch_manager->register_init(list);
     m_imgui_manager->register_init(list);
 
@@ -161,6 +165,7 @@ result<void> renderer::destroy_managers()
     m_effect_manager = nullptr;
     m_param_block_manager = nullptr;
     m_scene_manager = nullptr;
+    m_visibility_manager = nullptr;
     m_batch_manager = nullptr;
     m_imgui_manager = nullptr;
 
@@ -271,7 +276,7 @@ result<void> renderer::recreate_resizable_targets()
     params.format = ri_texture_format::R16G16B16A16_FLOAT;
     m_gbuffer_textures[0] = m_render_interface.create_texture(params, "gbuffer[0] rgb:diffuse a:flags");
 
-    params.format = ri_texture_format::R8G8B8A8_SNORM;
+    params.format = ri_texture_format::R16G16B16A16_FLOAT;
     m_gbuffer_textures[1] = m_render_interface.create_texture(params, "gbuffer[1] rgb:world normal a:roughness");
 
     params.format = ri_texture_format::R32G32B32A32_FLOAT;
@@ -395,6 +400,11 @@ render_scene_manager& renderer::get_scene_manager()
     return *m_scene_manager;
 }
 
+render_visibility_manager& renderer::get_visibility_manager()
+{
+    return *m_visibility_manager;
+}
+
 render_batch_manager& renderer::get_batch_manager()
 {
     return *m_batch_manager;
@@ -423,11 +433,6 @@ ri_sampler* renderer::get_default_sampler(default_sampler_type type)
 size_t renderer::get_frame_index()
 {
     return m_frame_index;
-}
-
-size_t renderer::get_visibility_frame_index()
-{
-    return m_visibility_frame_index;
 }
 
 render_object_id renderer::next_render_object_id()
@@ -498,7 +503,7 @@ void renderer::render_state(render_world_state& state)
 
         if (m_draw_octtree_cell_bounds || m_draw_object_bounds)
         {
-            m_scene_manager->draw_cell_bounds(m_draw_octtree_cell_bounds, m_draw_object_bounds);
+            m_visibility_manager->draw_cell_bounds(m_draw_octtree_cell_bounds, m_draw_object_bounds);
         }
 
         if (m_draw_debug_overlay)
@@ -539,8 +544,7 @@ void renderer::render_state(render_world_state& state)
     // Perform frustum culling for all views.
     if (!m_rendering_frozen)
     {
-        m_visibility_frame_index = m_frame_index;
-        m_scene_manager->update_visibility();
+        m_visibility_manager->update_visibility();
     }
 
     // Render each view.
@@ -717,8 +721,6 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
 
         node->pass->generate(*this, output[index], &view);
     });
-
-    view.clear_dirty();
 }
 
 void renderer::render_pre_views(render_world_state& state, std::vector<render_pass::generated_state>& output)

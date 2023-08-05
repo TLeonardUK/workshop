@@ -82,8 +82,24 @@ struct geometry_material
 	// Name of this material.
 	std::string name;
 
-	// Indices this material draws.
-	std::vector<size_t> indices;
+    // Index of this material for easy lookup.
+    size_t index;
+};
+
+// Represents an individual mesh held in a geometry instance.
+struct geometry_mesh
+{
+    // Name of this mesh if one is available.
+    std::string name;
+
+    // The indice of the material to draw this mesh with.
+    size_t material_index;
+
+    // Indices to draw for this mesh.
+    std::vector<size_t> indices;
+
+    // Bounds of the vertices that contribute to this mesh.
+    aabb bounds;
 };
 
 // ================================================================================================
@@ -138,13 +154,21 @@ public:
 	void add_vertex_stream(const char* field_name, const std::vector<matrix4d>& values);
 
     // Adds a new material that will be used to render the given set of vertices.
-    void add_material(const char* name, const std::vector<size_t>& indices);
+    // Returns the index of the material for use with add_mesh.
+    size_t add_material(const char* name);
+
+    // Adds a new mesh that will render the given set of vertices.
+    // Returns the index of this mesh.
+    size_t add_mesh(const char* name, size_t material_index, const std::vector<size_t>& indices, const aabb& bounds);
 
     // How many vertices exist in the geometry.
     size_t get_vertex_count();
 
 	// Gets all the vertex streams in this geometry.
 	std::vector<geometry_vertex_stream>& get_vertex_streams();
+
+    // Gets all the meshes in this geometry.
+    std::vector<geometry_mesh>& get_meshes();
 
 	// Gets all the materials in this geometry.
 	std::vector<geometry_material>& get_materials();
@@ -167,6 +191,7 @@ private:
 private:
 	std::vector<geometry_vertex_stream> m_streams;
 	std::vector<geometry_material> m_materials;
+    std::vector<geometry_mesh> m_meshes;
 
 };
 

@@ -11,6 +11,7 @@
 #include "workshop.core/containers/oct_tree.h"
 #include "workshop.renderer/common_types.h"
 #include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/render_visibility_manager.h"
 
 #include <string>
 #include <bitset>
@@ -25,7 +26,7 @@ class render_scene_manager;
 class render_object
 {
 public:
-    render_object(render_object_id id, render_scene_manager* scene_manager, bool stored_in_octtree = true);
+    render_object(render_object_id id, renderer* renderer, render_visibility_flags visibility_flags);
     virtual ~render_object();
 
 public:
@@ -56,14 +57,8 @@ public:
     // Called when the bounds of an object is modified.
     virtual void bounds_modified();
 
-public:
-
-    // Token representing the cell of the global oct tree this object is contained in.
-    oct_tree<render_object*>::token object_tree_token;
-
-    // Gets the last frame this object was visible for the given view
-    // TODO: This is chonkier than it should be. We should be able to slim this down reasonably easy.
-    std::array<size_t, k_max_render_views> last_visible_frame = {};
+    // Gets the id of this object in the visibility system.
+    render_visibility_manager::object_id get_visibility_id();
 
 protected:
 
@@ -71,8 +66,12 @@ protected:
 
     render_object_id m_id;
 
-    // Scene manager that owns us.
-    render_scene_manager* m_scene_manager;
+    // Visibility manager state.
+    render_visibility_manager::object_id m_visibility_id;
+    render_visibility_flags m_visibility_flags;
+
+    // Renderer thats using us.
+    renderer* m_renderer;
 
     // Name of the effect, use for debugging.
     std::string m_name;

@@ -187,8 +187,8 @@ void render_imgui_manager::leave_scope()
 
 render_imgui_manager::context* render_imgui_manager::create_context(const char* name)
 {
-    auto iter = std::find_if(m_contexts.begin(), m_contexts.end(), [](auto& context) {
-        return context->free;
+    auto iter = std::find_if(m_contexts.begin(), m_contexts.end(), [&name](auto& context) {
+        return context->free && context->name == name;
     });
 
     if (iter != m_contexts.end())
@@ -213,6 +213,7 @@ render_imgui_manager::context* render_imgui_manager::create_context(const char* 
     std::unique_ptr<context> new_context = std::make_unique<context>();
     new_context->free = false;
     new_context->context = ImGui::CreateContext(atlas);
+    new_context->name = name;
 
     ImGui::SetCurrentContext(new_context->context);
 

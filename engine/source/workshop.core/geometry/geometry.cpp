@@ -149,11 +149,24 @@ void geometry::add_vertex_stream(const char* field_name, std::span<uint8_t> data
     stream.element_size = element_size;
 }
 
-void geometry::add_material(const char* name, const std::vector<size_t>& indices)
+size_t geometry::add_material(const char* name)
 {
     geometry_material& mat = m_materials.emplace_back();
     mat.name = name;
+    mat.index = m_materials.size() - 1;
+
+    return m_materials.size() - 1;
+}
+
+size_t geometry::add_mesh(const char* name, size_t material_index, const std::vector<size_t>& indices, const aabb& bounds)
+{
+    geometry_mesh& mat = m_meshes.emplace_back();
+    mat.name = name;
     mat.indices = indices;
+    mat.bounds = bounds;
+    mat.material_index = material_index;
+
+    return m_meshes.size() - 1;
 }
 
 size_t geometry::get_vertex_count()
@@ -175,6 +188,11 @@ std::vector<geometry_vertex_stream>& geometry::get_vertex_streams()
 std::vector<geometry_material>& geometry::get_materials()
 {
     return m_materials;
+}
+
+std::vector<geometry_mesh>& geometry::get_meshes()
+{
+    return m_meshes;
 }
 
 geometry_material* geometry::get_material(const char* name)

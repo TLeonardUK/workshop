@@ -11,8 +11,8 @@
 
 namespace ws {
 
-render_directional_light::render_directional_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
-    : render_light(id, scene_manager, renderer)
+render_directional_light::render_directional_light(render_object_id id, renderer& renderer)
+    : render_light(id, renderer, render_visibility_flags::physical)
 {
     // Default to a really high importance distance for directional lights as we typically do not
     // want them fading out.

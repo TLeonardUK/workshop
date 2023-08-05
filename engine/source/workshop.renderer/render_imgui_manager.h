@@ -50,6 +50,7 @@ private:
     {
         bool free;
         ImGuiContext* context;
+        std::string name;
     };
 
     static const char* get_clipboard_text_callback(void* userdata);

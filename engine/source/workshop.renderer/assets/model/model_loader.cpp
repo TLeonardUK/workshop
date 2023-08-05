@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 13;
+constexpr size_t k_asset_compiled_version = 15;
 
 };
 
@@ -33,6 +33,14 @@ inline void stream_serialize(stream& out, model::material_info& mat)
 {
     stream_serialize(out, mat.name);
     stream_serialize(out, mat.file);
+}
+
+template<>
+inline void stream_serialize(stream& out, model::mesh_info& mat)
+{
+    stream_serialize(out, mat.name);
+    stream_serialize(out, mat.bounds);
+    stream_serialize(out, mat.material_index);
     stream_serialize_list(out, mat.indices);
 }
 
@@ -116,6 +124,7 @@ bool model_loader::serialize(const char* path, model& asset, bool isSaving)
     }
 
     stream_serialize_list(*stream, asset.materials);
+    stream_serialize_list(*stream, asset.meshes);
     stream_serialize(*stream, *asset.geometry);
 
     return true;
@@ -199,7 +208,19 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
                 model::material_info& mat = asset.materials.emplace_back();
                 mat.name = name;
                 mat.file = value;    
-                mat.indices = geo_mat->indices;
+
+                // Add all the meshes that use this material.
+                for (geometry_mesh& mesh : asset.geometry->get_meshes())
+                {
+                    if (mesh.material_index == geo_mat->index)
+                    {
+                        model::mesh_info& info = asset.meshes.emplace_back();
+                        info.name = mesh.name;
+                        info.material_index = asset.materials.size() - 1;
+                        info.indices = mesh.indices;
+                        info.bounds = mesh.bounds;
+                    }
+                }
             }
         }
     }

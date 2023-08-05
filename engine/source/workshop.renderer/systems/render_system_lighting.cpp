@@ -84,7 +84,7 @@ void render_system_lighting::build_pre_graph(render_graph& graph, const render_w
         pass->output.color_targets.push_back(m_brdf_lut_texture.get());
         graph.add_node(std::move(pass));
 
-        //m_calculated_brdf_lut = true;
+        m_calculated_brdf_lut = true;
     }
 }
 

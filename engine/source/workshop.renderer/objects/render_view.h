@@ -10,6 +10,7 @@
 #include "workshop.core/utils/traits.h"
 
 #include "workshop.renderer/render_object.h"
+#include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.render_interface/ri_texture.h"
 
 #include <memory>
@@ -77,7 +78,8 @@ enum class render_view_order
 class render_view : public render_object
 {
 public:
-    render_view(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
+    render_view(render_object_id id, renderer& renderer);
+    virtual ~render_view();
 
     // Sets the mode used to generate our perspective and view matrices.
     void set_view_type(render_view_type type);
@@ -115,6 +117,11 @@ public:
     void set_should_render(bool value);
     bool should_render();
 
+    // Gets or sets if this view is active and visibility calculations/etc should be calculated.
+    // This is independent of if it should render or not.
+    void set_active(bool value);
+    bool get_active();
+
     // Gets and sets all the perspective matrice parameters.
     void set_clip(float near, float far);
     void get_clip(float& near, float& far);
@@ -130,27 +137,14 @@ public:
 
     render_resource_cache& get_resource_cache();
 
-    // The visibility index is used by render objects to refer to which views they are actively visible in
-    // at the current point in time. Its assigned by the scene manager on creation and recycled ond destruction.
-    inline static constexpr size_t k_always_visible_index = std::numeric_limits<size_t>::max();
-
-    size_t visibility_index = k_always_visible_index;
-
     // Returns true if the given object is visible within this view.
     bool is_object_visible(render_object* object);
 
-    // Gets an opaque numeric value determining when this view changed last.
-    size_t get_last_change();
+    // Returns true if the view or something inside the view has changed.
+    bool has_view_changed();
 
-    // Marks this view as dirty (eg. something inside it has changed) and uses the
-    // passed numeric value as its new last_change value.
-    void mark_dirty(size_t last_change);
-
-    // Returns true if view is currently dirty.
-    bool is_dirty();
-
-    // Clears dirty flag of the view.
-    void clear_dirty();
+    // Gets the id of this view in the visibility system.
+    render_visibility_manager::view_id get_visibility_view_id();
 
     virtual void bounds_modified() override;
 
@@ -158,8 +152,6 @@ private:
     void update_view_info_param_block();
 
 private:
-    renderer& m_renderer;
-
     recti m_viewport = recti::empty;
 
     float m_near_clip = 0.01f;
@@ -167,6 +159,8 @@ private:
 
     float m_field_of_view = 45.0f;
     float m_aspect_ratio = 1.33f;
+
+    render_visibility_manager::view_id m_visibility_view_id;
 
     ri_texture_view m_render_target;
 
@@ -182,10 +176,8 @@ private:
 
     std::unique_ptr<render_resource_cache> m_resource_cache;
 
-    bool m_dirty = true;
-    size_t m_last_change = 0;
-
     bool m_should_render = true;
+    bool m_active = true;
 
 };
 

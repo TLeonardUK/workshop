@@ -18,7 +18,7 @@ namespace ws {
 class render_light : public render_object
 {
 public:
-    render_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
+    render_light(render_object_id id, renderer& renderer, render_visibility_flags visibility_flags);
     virtual ~render_light();
 
     // Gets/sets the color of the light.
@@ -60,8 +60,6 @@ protected:
     virtual void update_render_data();
 
 protected:
-    renderer& m_renderer;
-
     color m_color = color::white;
     float m_intensity = 0.0f;
     float m_range = 10000.0f;

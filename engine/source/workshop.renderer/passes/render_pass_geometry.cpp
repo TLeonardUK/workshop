@@ -34,7 +34,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         domain, 
         render_batch_usage::static_mesh);
 
-    size_t visibility_frame_index = renderer.get_visibility_frame_index();
+    render_visibility_manager& visibility_manager = renderer.get_visibility_manager();
 
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
@@ -86,6 +86,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             render_batch_key key = batch->get_key();
             const std::vector<render_batch_instance>& instances = batch->get_instances();
 
+            model::mesh_info& mesh_info = key.model->meshes[key.mesh_index];
             model::material_info& material_info = key.model->materials[key.material_index];
 
             profile_gpu_marker(list, profile_colors::gpu_pass, "batch %zi / %zi", i, batches.size());
@@ -123,7 +124,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
                 const render_batch_instance& instance = instances[j];
 
                 // Skip instance if its not visibile this frame.
-                if (!view->is_object_visible(instance.object))
+                if (!visibility_manager.is_object_visibile(view->get_visibility_view_id(), instance.visibility_id))
                 {
                     culled_instances++;
                     continue;
@@ -159,10 +160,10 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             list.set_param_blocks(blocks);
 
             // Draw everything!
-            list.set_index_buffer(*material_info.index_buffer);        
-            list.draw(material_info.indices.size(), visible_instance_count);
+            list.set_index_buffer(*mesh_info.index_buffer);        
+            list.draw(mesh_info.indices.size(), visible_instance_count);
 
-            triangles_rendered += material_info.indices.size() / 3;
+            triangles_rendered += mesh_info.indices.size() / 3;
             draw_calls++;
         }
 

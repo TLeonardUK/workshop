@@ -28,7 +28,7 @@ public:
     };
 
 public:
-    render_light_probe_grid(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
+    render_light_probe_grid(render_object_id id, renderer& renderer);
     virtual ~render_light_probe_grid();
 
     // Gets/sets the density of the grid as a value that represents the distance between each probe.
@@ -67,8 +67,6 @@ private:
     size_t m_depth;
 
     std::vector<probe> m_probes;
-
-    renderer& m_renderer;
 
     std::unique_ptr<ri_buffer> m_spherical_harmonic_buffer;
     std::unique_ptr<ri_param_block> m_param_block;

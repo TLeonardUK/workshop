@@ -10,6 +10,7 @@
 #include "workshop.assets/asset_manager.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_resource_cache.h"
+#include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.render_interface/ri_param_block.h"
 
 #include <unordered_map>
@@ -42,12 +43,14 @@ struct render_batch_key
 {
     asset_ptr<model> model;
     size_t material_index;
+    size_t mesh_index;
     material_domain domain;
     render_batch_usage usage;
 
     bool operator==(const render_batch_key& other) const
     {
         return model == other.model && 
+               mesh_index == other.mesh_index &&
                material_index == other.material_index && 
                domain == other.domain &&
                usage == other.usage;
@@ -72,6 +75,9 @@ struct render_batch_instance
 
     // Param block containing instance specific fields.
     ri_param_block* param_block;
+
+    // Key to use for checking instance visibility for a given view.
+    render_visibility_manager::object_id visibility_id;
 };
 
 }; // namespace ws
@@ -86,6 +92,7 @@ struct std::hash<ws::render_batch_key>
     {
         size_t hash = 0;
         ws::hash_combine(hash, k.material_index);
+        ws::hash_combine(hash, k.mesh_index);
         ws::hash_combine(hash, k.model);
         ws::hash_combine(hash, k.domain);
         ws::hash_combine(hash, k.usage);

@@ -125,7 +125,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     shadow_map_coord = float2(shadow_map_coord.x, 1.0f - shadow_map_coord.y);
 
     // Sloped bias to filter out acne on slanted surfaces.
-    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.001f, 0.01f); 
+    float bias = clamp(0.005f * tan(acos(saturate(n_dot_l))), 0.001f, 0.001f); 
     float result = 0.0f;
     
     // Filter if required.

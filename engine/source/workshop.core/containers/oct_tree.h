@@ -239,6 +239,8 @@ void oct_tree<element_type>::remove(token token)
     {
         auto parent = iter->parent;
 
+        iter->child_elements--;
+
         if (iter->parent != nullptr && iter->child_elements == 0)
         {
             // If the lower cell was modified more recently than the parent then

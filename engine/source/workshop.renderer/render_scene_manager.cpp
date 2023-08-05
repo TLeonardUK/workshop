@@ -16,102 +16,12 @@ namespace ws {
     
 render_scene_manager::render_scene_manager(renderer& render)
     : m_renderer(render)
-    , m_object_oct_tree(k_octtree_extents, k_octtree_max_depth)
 {
-    for (size_t i = 0; i < k_max_render_views; i++)
-    {
-        m_free_view_visibility_indices.push_back(i);
-    }
 }
 
 void render_scene_manager::register_init(init_list& list)
 {
 }
-
-void render_scene_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds)
-{
-    std::scoped_lock lock(m_mutex);
-
-    auto cells = m_object_oct_tree.get_cells();
-    for (auto& cell : cells)
-    {
-        if (draw_cell_bounds)
-        {
-            m_renderer.get_command_queue().draw_aabb(cell->bounds, color::green);
-        }
-
-        for (auto& entry : cell->elements)
-        {
-            if (draw_object_bounds)
-            {
-                m_renderer.get_command_queue().draw_aabb(entry.bounds, color::blue);
-            }
-        }
-    }
-}
-
-void render_scene_manager::render_object_created(render_object* obj)
-{
-    std::scoped_lock lock(m_mutex);
-
-    obj->object_tree_token = m_object_oct_tree.insert(obj->get_bounds().get_aligned_bounds(), obj);
-}
-
-void render_scene_manager::render_object_destroyed(render_object* obj)
-{
-    std::scoped_lock lock(m_mutex);
-
-    if (obj->object_tree_token.is_valid())
-    {
-        m_object_oct_tree.remove(obj->object_tree_token);
-        obj->object_tree_token.reset();
-    }
-}
-
-void render_scene_manager::render_object_bounds_modified(render_object* obj)
-{
-    std::scoped_lock lock(m_mutex);
-
-    // Remove and readd to octtree with the new bounds.
-    obj->object_tree_token = m_object_oct_tree.modify(obj->object_tree_token, obj->get_bounds().get_aligned_bounds(), obj);
-}
-
-void render_scene_manager::update_visibility()
-{
-    std::scoped_lock lock(m_mutex);
-
-    profile_marker(profile_colors::render, "update visibility");
-
-    size_t frame_index = m_renderer.get_visibility_frame_index();
-
-    parallel_for("update views", task_queue::standard, m_active_views.size(), [this, frame_index](size_t index) {
-
-        profile_marker(profile_colors::render, "update view visibility");
-
-        render_view* view = m_active_views[index];
-
-        if (view->visibility_index == render_view::k_always_visible_index)
-        {
-            return;
-        }
-
-        frustum frustum = view->get_frustum();
-
-        decltype(m_object_oct_tree)::intersect_result visible_objects = m_object_oct_tree.intersect(frustum, false, false);
-        for (render_object* object : visible_objects.elements)
-        {
-            object->last_visible_frame[view->visibility_index] = frame_index;
-        }
-
-        // Mark view as dirty if something in the view has changed.
-        if (view->get_last_change() != visible_objects.last_changed)
-        {
-            view->mark_dirty(visible_objects.last_changed);
-        }
-
-    });
-}
-
 
 render_object* render_scene_manager::resolve_id(render_object_id id)
 {
@@ -151,7 +61,7 @@ void render_scene_manager::create_view(render_object_id id, const char* name)
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_view> view = std::make_unique<render_view>(id, this, m_renderer);
+    std::unique_ptr<render_view> view = std::make_unique<render_view>(id, m_renderer);
     view->init();
     view->set_name(name);
 
@@ -161,17 +71,6 @@ void render_scene_manager::create_view(render_object_id id, const char* name)
     if (success)
     {
         m_active_views.push_back(view_ptr);
-
-        if (m_free_view_visibility_indices.empty())
-        {
-            db_error(renderer, "Ran out of visibility indices for new render view, consider reducing the number of active views or increase k_max_render_views: {%zi} %s", id, name);
-            view_ptr->visibility_index = render_view::k_always_visible_index;
-        }
-        else
-        {
-            view_ptr->visibility_index = m_free_view_visibility_indices.back();
-            m_free_view_visibility_indices.pop_back();
-        }
 
         db_verbose(renderer, "Created new render view: {%zi} %s", id, name);
     }
@@ -188,12 +87,6 @@ void render_scene_manager::destroy_view(render_object_id id)
     if (auto iter = m_objects.find(id); iter != m_objects.end())
     {
         db_verbose(renderer, "Removed render view: {%zi} %s", id, iter->second->get_name().c_str());
-
-        size_t visibility_index = static_cast<render_view*>(iter->second.get())->visibility_index;
-        if (visibility_index != render_view::k_always_visible_index)
-        {
-            m_free_view_visibility_indices.push_back(visibility_index);
-        }
 
         m_active_views.erase(std::find(m_active_views.begin(), m_active_views.end(), iter->second.get()));
         m_objects.erase(iter);
@@ -247,7 +140,7 @@ void render_scene_manager::create_static_mesh(render_object_id id, const char* n
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(id, this, m_renderer);
+    std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(id, m_renderer);
     obj->init();
     obj->set_name(name);
 
@@ -414,7 +307,7 @@ void render_scene_manager::create_directional_light(render_object_id id, const c
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(id, this, m_renderer);
+    std::unique_ptr<render_directional_light> obj = std::make_unique<render_directional_light>(id, m_renderer);
     obj->init();
     obj->set_name(name);
 
@@ -507,7 +400,7 @@ void render_scene_manager::create_point_light(render_object_id id, const char* n
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(id, this, m_renderer);
+    std::unique_ptr<render_point_light> obj = std::make_unique<render_point_light>(id, m_renderer);
     obj->init();
     obj->set_name(name);
 
@@ -558,7 +451,7 @@ void render_scene_manager::create_spot_light(render_object_id id, const char* na
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(id, this, m_renderer);
+    std::unique_ptr<render_spot_light> obj = std::make_unique<render_spot_light>(id, m_renderer);
     obj->init();
     obj->set_name(name);
 
@@ -623,7 +516,7 @@ void render_scene_manager::create_light_probe_grid(render_object_id id, const ch
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_light_probe_grid> obj = std::make_unique<render_light_probe_grid>(id, this, m_renderer);
+    std::unique_ptr<render_light_probe_grid> obj = std::make_unique<render_light_probe_grid>(id, m_renderer);
     obj->init();
     obj->set_name(name);
 
@@ -688,7 +581,7 @@ void render_scene_manager::create_reflection_probe(render_object_id id, const ch
 {
     std::scoped_lock lock(m_mutex);
 
-    std::unique_ptr<render_reflection_probe> obj = std::make_unique<render_reflection_probe>(id, this, m_renderer);
+    std::unique_ptr<render_reflection_probe> obj = std::make_unique<render_reflection_probe>(id, m_renderer);
     obj->init();
     obj->set_name(name);
 

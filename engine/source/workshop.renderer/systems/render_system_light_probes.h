@@ -23,7 +23,7 @@ class render_system_light_probes
     : public render_system
 {
 public:
-    render_system_light_probes(renderer& render);
+    render_system_light_probes(renderer& render, debug_menu& menu);
 
     virtual void register_init(init_list& list) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
@@ -31,6 +31,8 @@ public:
     virtual void step(const render_world_state& state) override;
 
     bool is_regenerating();
+
+    void regenerate();
 
 private:
     void regenerate_probe(render_light_probe_grid* grid, render_light_probe_grid::probe* probe, size_t regeneration_index);
@@ -68,7 +70,10 @@ private:
     std::vector<view_info> m_probe_capture_views;
 
     size_t m_probes_regenerating;
-    size_t m_frames_since_last_regeneration = 0;
+    bool m_should_regenerate = false;
+
+    debug_menu& m_debug_menu;
+    std::vector<debug_menu::option_handle> m_debug_menu_options;
 
 };
 

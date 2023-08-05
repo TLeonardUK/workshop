@@ -17,8 +17,9 @@
 
 namespace ws {
 
-render_system_light_probes::render_system_light_probes(renderer& render)
+render_system_light_probes::render_system_light_probes(renderer& render, debug_menu& menu)
     : render_system(render, "light probes")
+    , m_debug_menu(menu)
 {
 }
 
@@ -82,6 +83,7 @@ result<void> render_system_light_probes::create_resources()
             view->set_view_matrix(matrix4::identity);
             view->set_clip(k_probe_near_z, k_probe_far_z);
             view->set_should_render(false);
+            view->set_active(false);
             view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::constant_ambient_lighting);
 
             view_info info;
@@ -92,11 +94,15 @@ result<void> render_system_light_probes::create_resources()
         }
     }
 
+    // Add an option to regenerate.
+    m_debug_menu_options.push_back(m_debug_menu.add_option("build/rebuild light probes", [this]() { regenerate(); }));
+
     return true;
 }
 
 result<void> render_system_light_probes::destroy_resources()
 {
+    m_debug_menu_options.clear();
     m_probe_capture_targets.clear();
 
     return true;
@@ -104,7 +110,12 @@ result<void> render_system_light_probes::destroy_resources()
 
 bool render_system_light_probes::is_regenerating()
 {
-    return m_frames_since_last_regeneration < 2;
+    return !m_dirty_probes.empty();
+}
+
+void render_system_light_probes::regenerate()
+{
+    m_should_regenerate = true;
 }
 
 void render_system_light_probes::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
@@ -174,7 +185,6 @@ void render_system_light_probes::regenerate_probe(render_light_probe_grid* grid,
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
  
     vector3 origin = probe->origin;
-    //origin = vector3(0.0f, 200.0f, 0.0f);
 
     // Which direction each face of our cubemap faces.
     std::array<matrix4, 6> cascade_directions;
@@ -206,6 +216,7 @@ void render_system_light_probes::regenerate_probe(render_light_probe_grid* grid,
         view->set_projection_matrix(projection_matrix);
         view->set_view_matrix(light_view_matrix);
         view->set_should_render(true);
+        view->set_active(true);
         view->set_local_transform(origin, quat::identity, vector3::one);
     }
     
@@ -216,7 +227,6 @@ void render_system_light_probes::regenerate_probe(render_light_probe_grid* grid,
 void render_system_light_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    render_system_debug* debug_system = m_renderer.get_system<render_system_debug>();
 
     std::vector<render_view*> views = scene_manager.get_views();
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
@@ -228,6 +238,7 @@ void render_system_light_probes::step(const render_world_state& state)
     {
         render_view* view = scene_manager.resolve_id_typed<render_view>(m_probe_capture_views[i].id);
         view->set_should_render(false);
+        view->set_active(false);
     }
 
     // Look for light probes that need to be updated.
@@ -235,12 +246,12 @@ void render_system_light_probes::step(const render_world_state& state)
         profile_marker(profile_colors::render, "Light Probe Grids");
 
         // Build list of dirty probes.
-        if (m_dirty_probes.empty())
+        if (m_dirty_probes.empty() && m_should_regenerate)
         {
+            m_should_regenerate = false;
+
             for (render_light_probe_grid* grid : probe_grids)
             {
-                debug_system->add_obb(grid->get_bounds(), color::green);
-
                 std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
                 for (render_light_probe_grid::probe& probe : probes)
                 {
@@ -289,15 +300,6 @@ void render_system_light_probes::step(const render_world_state& state)
             regenerate_probe(probe.grid, probe.probe, m_probes_regenerating);
             m_probes_regenerating++;
         }
-    }
-
-    if (m_probes_regenerating > 0)
-    {
-        m_frames_since_last_regeneration = 0;
-    }
-    else
-    {
-        m_frames_since_last_regeneration++;
     }
 }
 

@@ -7,11 +7,12 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
-render_static_mesh::render_static_mesh(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
-    : render_object(id, scene_manager)
-    , m_renderer(renderer)
+render_static_mesh::render_static_mesh(render_object_id id, renderer& renderer)
+    : render_object(id, &renderer, render_visibility_flags::physical)
 {
     create_render_data();
 }
@@ -20,7 +21,7 @@ render_static_mesh::~render_static_mesh()
 {
     unregister_asset_change_callbacks();
 
-    m_renderer.unqueue_callbacks(this);
+    m_renderer->unqueue_callbacks(this);
 
     destroy_render_data();
 }
@@ -56,7 +57,7 @@ void render_static_mesh::register_asset_change_callbacks()
     }
 
     auto callback = [this]() {
-        m_renderer.queue_callback(this, [this]() {
+        m_renderer->queue_callback(this, [this]() {
             recreate_render_data();
         });
     };
@@ -112,7 +113,7 @@ void render_static_mesh::create_render_data()
         destroy_render_data();
     }
  
-    m_geometry_instance_info = m_renderer.get_param_block_manager().create_param_block("geometry_instance_info");
+    m_geometry_instance_info = m_renderer->get_param_block_manager().create_param_block("geometry_instance_info");
     update_render_data();
 
     if (!m_model.is_loaded())
@@ -120,17 +121,27 @@ void render_static_mesh::create_render_data()
         return;
     }
 
-    // Register batch instance for each material.
-    for (size_t i = 0; i < m_model->materials.size(); i++)
+    // Register batch instance for each mesh.
+    for (size_t i = 0; i < m_model->meshes.size(); i++)
     {
-        model::material_info& mat_info = m_model->materials[i];
+        model::mesh_info& mesh_info = m_model->meshes[i];
+
+        model::material_info& mat_info = m_model->materials[mesh_info.material_index];
         if (!mat_info.material.is_loaded())
         {
             continue;
         }
 
+        // Add visibility object to cull this mesh.
+        obb bounds = obb(mesh_info.bounds, get_transform());
+
+        mesh_visibility& visibility = m_mesh_visibility.emplace_back();
+        visibility.mesh_index = i;
+        visibility.id = m_renderer->get_visibility_manager().register_object(bounds, render_visibility_flags::physical);
+
         render_batch_key key;
-        key.material_index = i;
+        key.mesh_index = i;
+        key.material_index = mesh_info.material_index;
         key.model = m_model;
         key.domain = mat_info.material->domain;
         key.usage = render_batch_usage::static_mesh;
@@ -138,9 +149,10 @@ void render_static_mesh::create_render_data()
         render_batch_instance info;
         info.key = key;
         info.object = this;
+        info.visibility_id = visibility.id;
         info.param_block = m_geometry_instance_info.get();
 
-        m_renderer.get_batch_manager().register_instance(info);
+        m_renderer->get_batch_manager().register_instance(info);
 
         m_registered_batches.push_back(info);
     }
@@ -148,9 +160,15 @@ void render_static_mesh::create_render_data()
 
 void render_static_mesh::destroy_render_data()
 {
+    for (mesh_visibility& id : m_mesh_visibility)
+    {
+        m_renderer->get_visibility_manager().unregister_object(id.id);
+    }
+    m_mesh_visibility.clear();
+
     for (auto& batch_instance : m_registered_batches)
     {
-        m_renderer.get_batch_manager().unregister_instance(batch_instance);
+        m_renderer->get_batch_manager().unregister_instance(batch_instance);
     }
     m_registered_batches.clear();
 
@@ -172,6 +190,17 @@ obb render_static_mesh::get_bounds()
     {
 
         return obb(m_model->geometry->bounds, get_transform());
+    }
+}
+
+void render_static_mesh::bounds_modified()
+{
+    render_object::bounds_modified();
+
+    for (mesh_visibility& id : m_mesh_visibility)
+    {
+        obb bounds = obb(m_model->meshes[id.mesh_index].bounds, get_transform());
+        m_renderer->get_visibility_manager().update_object_bounds(id.id, bounds);
     }
 }
 

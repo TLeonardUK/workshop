@@ -63,14 +63,15 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
         list.set_scissor(view->get_viewport());
         list.set_primitive_topology(ri_primitive::triangle_list);
 
-        // Draw each material for the model.
+        // Draw each mesh for the model.
         model* model_instance = render_model.get();
 
-        for (size_t i = 0; i < model_instance->materials.size(); i++)
+        for (size_t i = 0; i < model_instance->meshes.size(); i++)
         {
-            profile_gpu_marker(list, profile_colors::gpu_pass, "material %zi / %zi", i, model_instance->materials.size());
+            profile_gpu_marker(list, profile_colors::gpu_pass, "mesh %zi / %zi", i, model_instance->meshes.size());
 
-            model::material_info& material_info = model_instance->materials[i];
+            model::mesh_info& mesh_info = model_instance->meshes[i];
+            model::material_info& material_info = model_instance->materials[mesh_info.material_index];
 
             // Generate the vertex buffer for this batch.
             model::vertex_buffer* vertex_buffer = model_instance->find_or_create_vertex_buffer(technique->pipeline->get_create_params().vertex_layout);
@@ -102,10 +103,10 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
             list.set_param_blocks(blocks);
 
             // Draw everything!
-            list.set_index_buffer(*material_info.index_buffer);        
-            list.draw(material_info.indices.size(), instances.size());
+            list.set_index_buffer(*mesh_info.index_buffer);        
+            list.draw(mesh_info.indices.size(), instances.size());
 
-            triangles_rendered += material_info.indices.size() / 3;
+            triangles_rendered += mesh_info.indices.size() / 3;
             draw_calls++;
         }
 

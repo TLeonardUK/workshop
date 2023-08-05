@@ -37,10 +37,18 @@ public:
     {
         std::string name;
         std::string file;
-        std::vector<size_t> indices;
 
         asset_ptr<material> material;
+    };
+
+    struct mesh_info
+    {
+        std::string name;
+        std::vector<size_t> indices;
         std::unique_ptr<ri_buffer> index_buffer;
+
+        size_t material_index;
+        aabb bounds;
     };
 
     struct vertex_buffer
@@ -71,6 +79,7 @@ public:
 
 public:
     std::vector<material_info> materials;
+    std::vector<mesh_info> meshes;
     std::unique_ptr<geometry> geometry;
 
 protected:

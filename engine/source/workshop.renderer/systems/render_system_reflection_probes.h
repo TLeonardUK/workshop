@@ -29,12 +29,14 @@ public:
     inline static constexpr float k_probe_far_z = 10000.0f;
 
 public:
-    render_system_reflection_probes(renderer& render);
+    render_system_reflection_probes(renderer& render, debug_menu& menu);
 
     virtual void register_init(init_list& list) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void build_post_graph(render_graph& graph, const render_world_state& state) override;
     virtual void step(const render_world_state& state) override;
+
+    void regenerate();
 
 private:
     void regenerate_probe(render_reflection_probe* probe, size_t regeneration_index);
@@ -56,6 +58,10 @@ private:
     std::vector<view_info> m_probe_capture_views;
 
     size_t m_probes_regenerating;
+    bool m_should_regenerate = false;
+
+    debug_menu& m_debug_menu;
+    std::vector<debug_menu::option_handle> m_debug_menu_options;
 
 };
 

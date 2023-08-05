@@ -64,6 +64,8 @@ void render_system_imgui::step(const render_world_state& state)
         return;
     }
 
+    db_log(renderer, "==== IMGUI: %zi ====", m_draw_vertices.size());
+
     // TODO: Should we be using a layout factory for all this?
 
     // Make sure vertex buffer has enough space.

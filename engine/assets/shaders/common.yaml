@@ -62,7 +62,7 @@ output_targets:
   # Main gbuffer target with all MRT targets.
   gbuffer:
     #color: [ R16G16B16A16, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT, R32G32B32A32_FLOAT ]
-    color: [ R16G16B16A16_FLOAT, R8G8B8A8_SNORM, R32G32B32A32_FLOAT ]
+    color: [ R16G16B16A16_FLOAT, R16G16B16A16_FLOAT, R32G32B32A32_FLOAT ]
     depth: D24_UNORM_S8_UINT
   # SDR Swapchain output target.
   sdr_swapchain:

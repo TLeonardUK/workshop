@@ -41,12 +41,6 @@ public:
     // Registers all the steps required to initialize the system.
     void register_init(init_list& list);
 
-    // Updates the visibility of all objects in the scene with respect to all render views.
-    void update_visibility();
-
-    // Draw debug bounds of octtree cells.
-    void draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds);
-
     // Gets a pointer to a render object from its id, returns nullptr on failure.
     render_object* resolve_id(render_object_id id);
 
@@ -211,24 +205,10 @@ private:
 
     friend class render_object;
 
-    // Called when various states of an object change, responsible
-    // for updated the object within various containers.
-    void render_object_created(render_object* obj);
-    void render_object_destroyed(render_object* obj);
-    void render_object_bounds_modified(render_object* obj);
-
 private:
-
-    inline static const vector3 k_octtree_extents = vector3(100000.0f, 100000.0f, 100000.0f);
-    inline static const size_t k_octtree_max_depth = 10;
-
     renderer& m_renderer;
 
     std::recursive_mutex m_mutex;
-
-    std::vector<size_t> m_free_view_visibility_indices;
-
-    oct_tree<render_object*> m_object_oct_tree;
 
     std::unordered_map<render_object_id, std::unique_ptr<render_object>> m_objects;
     std::vector<render_view*> m_active_views;

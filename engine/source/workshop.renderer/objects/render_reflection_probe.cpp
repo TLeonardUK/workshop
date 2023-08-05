@@ -12,11 +12,10 @@
 
 namespace ws {
 
-render_reflection_probe::render_reflection_probe(render_object_id id, render_scene_manager* scene_manager, renderer& in_renderer)
-    : render_object(id, scene_manager)
-    , m_renderer(in_renderer)
+render_reflection_probe::render_reflection_probe(render_object_id id, renderer& in_renderer)
+    : render_object(id, &in_renderer, render_visibility_flags::physical)
 {
-    m_param_block = m_renderer.get_param_block_manager().create_param_block("reflection_probe_state");
+    m_param_block = m_renderer->get_param_block_manager().create_param_block("reflection_probe_state");
 
     ri_texture::create_params params;
     params.width = render_system_reflection_probes::k_probe_cubemap_size;
@@ -26,7 +25,7 @@ render_reflection_probe::render_reflection_probe(render_object_id id, render_sce
     params.dimensions = ri_texture_dimension::texture_cube;
     params.is_render_target = true;
     params.format = ri_texture_format::R16G16B16A16_FLOAT;
-    m_texture = m_renderer.get_render_interface().create_texture(params, "reflection probe");
+    m_texture = m_renderer->get_render_interface().create_texture(params, "reflection probe");
 }
 
 render_reflection_probe::~render_reflection_probe()
@@ -48,7 +47,7 @@ void render_reflection_probe::bounds_modified()
     m_dirty = true;
 
     m_param_block->set("probe_texture", *m_texture);
-    m_param_block->set("probe_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));    
+    m_param_block->set("probe_texture_sampler", *m_renderer->get_default_sampler(default_sampler_type::color));    
     m_param_block->set("world_position", get_local_location());
     m_param_block->set("radius", get_local_scale().max_component() * 0.5f);
     m_param_block->set("mip_levels", (int)m_texture->get_mip_levels());

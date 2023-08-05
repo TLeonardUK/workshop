@@ -36,6 +36,8 @@ SET(SOURCES
     "render_param_block_manager.cpp"
     "render_scene_manager.h"
     "render_scene_manager.cpp"
+    "render_visibility_manager.h"
+    "render_visibility_manager.cpp"
     "render_imgui_manager.h"
     "render_imgui_manager.cpp"
     

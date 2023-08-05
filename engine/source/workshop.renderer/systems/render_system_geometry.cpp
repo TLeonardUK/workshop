@@ -60,6 +60,7 @@ void render_system_geometry::build_graph(render_graph& graph, const render_world
         pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
         graph.add_node(std::move(pass));
 
+#if 0
         // Draw transparent geometry.
         pass = std::make_unique<render_pass_geometry>();
         pass->name = "transparent static geometry";
@@ -77,6 +78,7 @@ void render_system_geometry::build_graph(render_graph& graph, const render_world
         pass->output = m_renderer.get_gbuffer_output();
         pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
         graph.add_node(std::move(pass));
+#endif
 
         // Draw sky geometry.
         pass = std::make_unique<render_pass_geometry>();

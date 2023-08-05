@@ -129,8 +129,25 @@ void render_system_shadows::step(const render_world_state& state)
 
         for (shadow_info& info : m_shadow_info)
         {
+            render_view* base_view = scene_manager.resolve_id_typed<render_view>(info.view_id);
+            bool base_view_is_active = (base_view == nullptr || base_view->get_active());
+
             for (cascade_info& cascade : info.cascades)
             {
+                render_view* cascade_view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
+                if (cascade_view)
+                {
+                    cascade_view->set_active(base_view_is_active);
+                }
+
+                // We can skip all of this if the parent view is currently inactive.
+                if (!base_view_is_active && cascade.view_id)
+                {
+                    cascade_view->set_should_render(false);
+                    cascade_view->set_active(false);
+                    continue;
+                }
+
                 step_cascade(info, cascade);
 
                 if (cascade.needs_render)
@@ -139,8 +156,8 @@ void render_system_shadows::step(const render_world_state& state)
                 }
                 else if (cascade.view_id)
                 {
-                    render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
-                    view->set_should_render(false);
+                    cascade_view->set_should_render(false);
+                    cascade_view->set_active(false);
                 }
             }
         }
@@ -322,16 +339,6 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
 
         cascade.projection_matrix[0][3] = cascade.projection_matrix[0][3] + rounded_offset.x;
         cascade.projection_matrix[1][3] = cascade.projection_matrix[1][3] + rounded_offset.y;
-
-//        cascade.projection_matrix = matrix4::translate(-offset_shadow_space) * cascade.projection_matrix;
-
-        // Calculate the frustum from the projection matrix.
-        cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
-
-        // Some useful debugging draws that render the view frustum, the cascade centroid bounds and the shadow frustum.
-        //m_renderer.get_system<render_system_debug>()->add_sphere(sphere(cascade.view_frustum.get_center(), cascade.world_radius), color::green);
-        //m_renderer.get_system<render_system_debug>()->add_frustum(cascade.view_frustum, color::purple);
-        //m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
     }
 }
 
@@ -410,8 +417,6 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
 
         // Calculate the frustum from the projection matrix.
         cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
-        
-        m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
     }
 }
 
@@ -467,8 +472,6 @@ void render_system_shadows::step_spot_shadow(render_view* view, render_spot_ligh
 
     // Calculate the frustum from the projection matrix.
     cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
-
-    //m_renderer.get_system<render_system_debug>()->add_frustum(cascade.frustum, color::red);
 }
 
 void render_system_shadows::destroy_cascade(cascade_info& info)
@@ -494,6 +497,8 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
         update_cascade_param_block(cascade);
     }
 
+    render_view* parent_view = scene_manager.resolve_id_typed<render_view>(info.view_id);
+
     render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
     view->set_projection_matrix(cascade.projection_matrix);
     view->set_view_matrix(cascade.view_matrix);
@@ -512,7 +517,7 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     view->set_clip(cascade.z_near, cascade.z_far);
     view->set_local_transform(info.light_location, quat::identity, vector3::one);
 
-    if (view->is_dirty())
+    if (view->has_view_changed() || (parent_view && parent_view->has_view_changed()))
     {
         cascade.needs_render = true;
     }    

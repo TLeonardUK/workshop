@@ -10,7 +10,7 @@
 struct geometry_pinput
 {
     float4 position : SV_POSITION;
-    float4 world_normal : TEXCOORD1;
+    float4 world_position : TEXCOORD1;
 };
 
 geometry_pinput vshader(vertex_input input)
@@ -24,14 +24,15 @@ geometry_pinput vshader(vertex_input input)
 
     geometry_pinput result;
     result.position = mul(mvp_matrix, float4(world_position, 1.0f));
-    result.world_normal = mul(vi.model_matrix, float4(v.normal, 0.0f));
+    result.world_position = float4(world_position, 1.0f);
 
     return result;
 }
 
 gbuffer_output_with_depth pshader(geometry_pinput input)
 {
-    float4 albedo = skybox_texture.Sample(skybox_sampler, -input.world_normal);
+    float3 direction = normalize(input.world_position - view_world_position);
+    float4 albedo = skybox_texture.Sample(skybox_sampler, direction);
 
     gbuffer_fragment f;
     f.albedo = albedo.rgb;

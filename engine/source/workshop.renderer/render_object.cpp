@@ -3,31 +3,26 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.renderer/render_object.h"
-#include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_visibility_manager.h"
+#include "workshop.renderer/renderer.h"
 
 namespace ws {
 
-render_object::render_object(render_object_id id, render_scene_manager* scene_manager, bool stored_in_octtree)
+render_object::render_object(render_object_id id, renderer* renderer, render_visibility_flags visibility_flags)
     : m_id(id)
-    , m_scene_manager(scene_manager)
-    , m_store_in_octtree(stored_in_octtree)
+    , m_renderer(renderer)
+    , m_visibility_flags(visibility_flags)
 {
+    m_visibility_id = m_renderer->get_visibility_manager().register_object(get_bounds(), m_visibility_flags);
 }
 
 render_object::~render_object()
 {
-    if (m_store_in_octtree)
-    {
-        m_scene_manager->render_object_destroyed(this);
-    }
+    m_renderer->get_visibility_manager().unregister_object(m_visibility_id);
 }
 
 void render_object::init()
 {
-    if (m_store_in_octtree)
-    {
-        m_scene_manager->render_object_created(this);
-    }
 }
 
 void render_object::set_name(const std::string& name)
@@ -83,6 +78,11 @@ matrix4 render_object::get_transform()
            matrix4::translate(m_local_location);
 }
 
+render_visibility_manager::object_id render_object::get_visibility_id()
+{
+    return m_visibility_id;
+}
+
 obb render_object::get_bounds()
 {
     return obb(aabb::zero, get_transform());
@@ -90,10 +90,7 @@ obb render_object::get_bounds()
 
 void render_object::bounds_modified()
 {
-    if (m_store_in_octtree)
-    {
-        m_scene_manager->render_object_bounds_modified(this);
-    }
+    m_renderer->get_visibility_manager().update_object_bounds(m_visibility_id, get_bounds());
 }
 
 }; // namespace ws

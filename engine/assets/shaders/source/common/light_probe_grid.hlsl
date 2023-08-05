@@ -62,6 +62,8 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
         float3 half_bounds = grid_state.bounds * 0.5f;
 
         float3 local_position = mul(grid_state.world_to_grid_matrix, float4(world_position, 1.0f));
+        float3 local_normal = mul(grid_state.world_to_grid_matrix, float4(world_normal, 0.0f));
+
         if (local_position.x >= -half_bounds.x && local_position.x < half_bounds.x &&
             local_position.y >= -half_bounds.y && local_position.y < half_bounds.y &&
             local_position.z >= -half_bounds.z && local_position.z < half_bounds.z)
@@ -89,6 +91,42 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             // Sample the 8 probes surrounding the position.
             RWByteAddressBuffer sh_buffer = table_rw_byte_buffers[NonUniformResourceIndex(grid_state.sh_table_index)];
 
+#if 0
+            // TODO: maybe build cube of samples, go through them and if they are on the wrong side then replace them with a different sample
+            //       then interpolate normally?
+
+            float3 sample_locations[] = {
+                int3(min_coords.x, min_coords.y, min_coords.z),
+                int3(max_coords.x, min_coords.y, min_coords.z),
+                int3(max_coords.x, min_coords.y, max_coords.z),
+                int3(min_coords.x, min_coords.y, max_coords.z),
+                int3(min_coords.x, max_coords.y, min_coords.z),
+                int3(max_coords.x, max_coords.y, min_coords.z),
+                int3(max_coords.x, max_coords.y, max_coords.z),
+                int3(min_coords.x, max_coords.y, max_coords.z)
+            };
+
+            float3 accumulated_color = 0.0f;
+            float accumulated_weight = 0.0f;
+
+            for (int i = 0; i < 8; i++)
+            {
+                int3 grid_coord = sample_locations[i];
+                float3 probe_position = (grid_coord * grid_state.density);
+                float3 probe_to_frag = normalize(probe_position - local_position);                
+                float distance = length(probe_position - local_position);
+
+                // Make sure probe is on the correct side of fragment to try and reduce light leakage.
+                //if (dot(probe_to_frag, local_normal) < 0.0f)
+                {
+                    float weight = saturate(1.0f - (distance / grid_state.density));
+                    accumulated_color += sample_light_probe(sh_buffer, grid_state.size, grid_coord, world_normal) * weight * 2.0f;
+                    accumulated_weight += weight;
+                }
+            }
+
+            float3 result = abs(accumulated_weight) < 0.0001f ? 0.0f : (accumulated_color / accumulated_weight);
+#else
             float3 min_x_min_y_min_z = sample_light_probe(sh_buffer, grid_state.size, int3(min_coords.x, min_coords.y, min_coords.z), world_normal);
             float3 max_x_min_y_min_z = sample_light_probe(sh_buffer, grid_state.size, int3(max_coords.x, min_coords.y, min_coords.z), world_normal);
             float3 max_x_min_y_max_z = sample_light_probe(sh_buffer, grid_state.size, int3(max_coords.x, min_coords.y, max_coords.z), world_normal);
@@ -108,9 +146,10 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             float3 x_y_min_z = lerp(x_min_y_min_z, x_max_y_min_z, delta.y);
             float3 x_y_max_z = lerp(x_min_y_max_z, x_max_y_max_z, delta.y);
             
-            float3 x_y_z = lerp(x_y_min_z, x_y_max_z, delta.z);
+            float3 result = lerp(x_y_min_z, x_y_max_z, delta.z);
+#endif
 
-            return x_y_z;
+            return result;
         }
     }
 

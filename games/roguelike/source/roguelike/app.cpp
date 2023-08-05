@@ -20,6 +20,14 @@
 
 #include <chrono>
 
+// TODO:
+//      Improve Culling
+//      Try and reduce light leakage for probes
+//      Proper transparency pass
+//      Decals
+//      Auto_Exposure
+//      Skinned Meshes
+
 std::shared_ptr<ws::app> make_app()
 {
     return std::make_shared<ws::rl_game_app>();
@@ -73,16 +81,16 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(-400.0f, 200.0f, 150.0f), quat::identity, vector3::one);
 
-    /*
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
 
+    /*
     object_id = cmd_queue.create_static_mesh("Sponza Trees");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3::one);
     */
-    
+
     object_id = cmd_queue.create_reflection_probe("Reflection Probe");
     cmd_queue.set_object_transform(object_id, vector3(0.0, 200.0f, 0.0f), quat::identity, vector3(4000.f, 4000.0f, 4000.0f));
 
@@ -91,7 +99,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_object_transform(object_id, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
     //cmd_queue.set_object_transform(object_id, vector3(200.0, 320.0f, -100.0f), quat::identity, vector3(2900.f, 500.0f, 1200.0f));
     //cmd_queue.set_object_transform(object_id, vector3(200.0, 200.0f, -100.0f), quat::identity, vector3(1450.f, 700.0f, 800.0f));
-    
+
 #else
     m_view_position = vector3(-900.0f, 400.0f, 0.0f);
     m_view_rotation = quat::angle_axis(0.0f, vector3::up);
@@ -131,7 +139,7 @@ ws::result<void> rl_game_app::start()
 
 #if 1
     object_id = cmd_queue.create_directional_light("Sun");
-    cmd_queue.set_light_shadow_casting(object_id, true);
+    cmd_queue.set_light_shadow_casting(object_id, true); // true
     cmd_queue.set_light_shadow_map_size(object_id, 2048);
     cmd_queue.set_light_shadow_max_distance(object_id, 10000.0f);
     cmd_queue.set_light_intensity(object_id, 1.0f);
@@ -140,7 +148,7 @@ ws::result<void> rl_game_app::start()
 
     m_light_id = object_id;
 
-#if 1
+#if 0
     object_id = cmd_queue.create_point_light("Point");
     cmd_queue.set_light_shadow_casting(object_id, false);
     cmd_queue.set_light_intensity(object_id, 1.0f);
@@ -256,8 +264,8 @@ void rl_game_app::step(const frame_time& time)
 
     vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);// vector3(-cos(angle * 3.0f) * 400.0f, 150.0f + (cos(angle*3.0f) * 200.0f), 0.0f);
     //vector3 light_pos = vector3(0.0f, 50.0f, 0.0f);
-    quat light_rot =  quat::identity;//quat::angle_axis(angle * 0.5f, vector3::up);
-    //quat light_rot = quat::angle_axis(angle * 3.0f, vector3::up) * quat::angle_axis(angle * 0.5f, vector3::right);
+    //quat light_rot =  quat::identity;//quat::angle_axis(angle * 0.5f, vector3::up);
+    //quat light_rot = quat::angle_axis(angle * 1.0f, vector3::up) * quat::angle_axis(angle * 0.1f, vector3::right);
     //quat light_rot = quat::angle_axis(-math::halfpi*0.85f, vector3::right);
     //cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
 //    cmd_queue.draw_sphere(sphere(light_pos, 100.0f), color::red);

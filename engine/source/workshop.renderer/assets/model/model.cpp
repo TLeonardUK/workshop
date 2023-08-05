@@ -34,26 +34,31 @@ bool model::post_load()
 
         // Load the appropriate material.    
         mat.material = m_asset_manager.request_asset<material>(mat.file.c_str(), 0);
+    }
 
-        // Create index buffer for rendering each material.
+    for (size_t i = 0; i < meshes.size(); i++)
+    {
+        mesh_info& info = meshes[i];
+
+        // Create index buffer for rendering each mesh.
         // TODO: Use uint16 where possible.
         std::vector<uint32_t> indices;
-        indices.reserve(mat.indices.size());
-        for (size_t index : mat.indices)
+        indices.reserve(info.indices.size());
+        for (size_t index : info.indices)
         {
             indices.push_back(static_cast<uint32_t>(index));
         }
 
         ri_buffer::create_params params;
-        params.element_count = mat.indices.size();
+        params.element_count = info.indices.size();
         params.element_size = sizeof(uint32_t);
         params.usage = ri_buffer_usage::index_buffer;
         params.linear_data = std::span{ (uint8_t*)indices.data(), indices.size() * sizeof(uint32_t) };
 
         std::string index_buffer_name = string_format("Model Index Buffer[%zi]: %s", i, name.c_str());
-        mat.index_buffer = m_renderer.get_render_interface().create_buffer(params, index_buffer_name.c_str());
+        info.index_buffer = m_renderer.get_render_interface().create_buffer(params, index_buffer_name.c_str());
     }
-
+    
     return true;
 }
 
@@ -123,6 +128,7 @@ void model::swap(model* other)
     std::scoped_lock lock(m_mutex);
 
     std::swap(materials, other->materials);
+    std::swap(meshes, other->meshes);
     std::swap(geometry, other->geometry);
 
     // Cleared cached data as these point to old data.

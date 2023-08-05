@@ -16,6 +16,8 @@
 #include <sstream>
 #endif
 
+#pragma optimize("", off)
+
 namespace ws {
 
 namespace {
@@ -25,6 +27,12 @@ struct import_context
     struct material
     {
         std::string name;
+    };
+
+    struct mesh
+    {
+        std::string name;
+        size_t material_index;
         std::vector<size_t> indices;
     };
 
@@ -35,6 +43,7 @@ struct import_context
     std::vector<std::vector<vector2>> uvs;
     std::vector<std::vector<vector4>> colors;
     std::vector<material> materials;
+    std::vector<mesh> meshes;
 };
  
 // Imports a mesh node in the assimp scene.
@@ -150,14 +159,17 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
         }
     }
 
-    import_context::material& mat = output.materials[node->mMaterialIndex];
-    mat.indices.reserve(mat.indices.size() + (node->mNumFaces * 3));
+    // Build a mesh for this node.    
+    import_context::mesh& mesh = output.meshes.emplace_back();
+    mesh.name = node->mName.C_Str();
+    mesh.material_index = node->mMaterialIndex;
+    mesh.indices.reserve(mesh.indices.size() + (node->mNumFaces * 3));
     for (size_t i = 0; i < node->mNumFaces; i++)
     {
         const aiFace& face = node->mFaces[i];
-        mat.indices.push_back(start_vertex_index + face.mIndices[0]);
-        mat.indices.push_back(start_vertex_index + face.mIndices[1]);
-        mat.indices.push_back(start_vertex_index + face.mIndices[2]);
+        mesh.indices.push_back(start_vertex_index + face.mIndices[0]);
+        mesh.indices.push_back(start_vertex_index + face.mIndices[1]);
+        mesh.indices.push_back(start_vertex_index + face.mIndices[2]);
     }
 
     return true;
@@ -243,16 +255,6 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     // Create resulting geometry.
     std::unique_ptr<geometry> result = std::make_unique<geometry>();
 
-    // Insert all the materials into the geometry.
-    for (import_context::material& mat : context.materials)
-    {
-        if (mat.indices.empty())
-        {
-            continue;
-        }
-        result->add_material(mat.name.c_str(), mat.indices);
-    }
-
     // Scale all positions.
     for (vector3& pos : context.positions)
     {
@@ -277,6 +279,29 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         }
     }
 
+    // Insert all the materials into the geometry.
+    for (import_context::material& mat : context.materials)
+    {
+        result->add_material(mat.name.c_str());
+    }
+
+    // Insert meshes into the geometry.
+    for (import_context::mesh& mesh : context.meshes)
+    {
+        vector3 mesh_bounds_min = vector3::zero;
+        vector3 mesh_bounds_max = vector3::zero;
+
+        for (size_t index : mesh.indices)
+        {
+            vector3& pos = context.positions[index];
+
+            mesh_bounds_min = vector3::min(mesh_bounds_min, pos);
+            mesh_bounds_max = vector3::max(mesh_bounds_max, pos);
+        }
+
+        result->add_mesh(mesh.name.c_str(), mesh.material_index, mesh.indices, aabb(mesh_bounds_min, mesh_bounds_max));
+    }
+
     // Insert all the vertex streams.
     result->add_vertex_stream("position", context.positions);
     result->add_vertex_stream("normal", context.normals);
@@ -291,7 +316,7 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         result->add_vertex_stream(string_format("color%zi", i).c_str(), context.colors[i]);
     }
 
-#if 1
+#if 0
     // DEBUG DEBUG DEBUG DEBUG
     for (import_context::material& mat : context.materials)
     {

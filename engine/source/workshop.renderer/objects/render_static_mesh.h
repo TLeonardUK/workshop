@@ -18,7 +18,7 @@ namespace ws {
 class render_static_mesh : public render_object
 {
 public:
-    render_static_mesh(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
+    render_static_mesh(render_object_id id, renderer& renderer);
     virtual ~render_static_mesh();
 
     // Gets/sets the model this static mesh renders with.
@@ -30,6 +30,9 @@ public:
 
     // Overrides the default bounds to return the obb of the model bounds.
     virtual obb get_bounds() override;
+
+    // Called when the bounds of an object is modified.
+    virtual void bounds_modified() override;
 
 protected:
 
@@ -47,13 +50,19 @@ protected:
     void unregister_asset_change_callbacks();
 
 private:
-    renderer& m_renderer;
-
     asset_ptr<model> m_model;
 
     std::unique_ptr<ri_param_block> m_geometry_instance_info;
 
     std::vector<render_batch_instance> m_registered_batches;
+
+    struct mesh_visibility
+    {
+        render_visibility_manager::object_id id;
+        size_t mesh_index;
+    };
+
+    std::vector<mesh_visibility> m_mesh_visibility;
 
     struct material_callback
     {

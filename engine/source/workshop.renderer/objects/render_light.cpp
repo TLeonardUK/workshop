@@ -10,11 +10,10 @@
 
 namespace ws {
 
-render_light::render_light(render_object_id id, render_scene_manager* scene_manager, renderer& renderer)
-    : render_object(id, scene_manager)
-    , m_renderer(renderer)
+render_light::render_light(render_object_id id, renderer& renderer, render_visibility_flags visibility_flags)
+    : render_object(id, &renderer, visibility_flags)
 {
-    m_light_state_param_block = m_renderer.get_param_block_manager().create_param_block("light_state");
+    m_light_state_param_block = m_renderer->get_param_block_manager().create_param_block("light_state");
 }
 
 render_light::~render_light()

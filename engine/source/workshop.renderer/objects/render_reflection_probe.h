@@ -17,7 +17,7 @@ namespace ws {
 class render_reflection_probe : public render_object
 {
 public:
-    render_reflection_probe(render_object_id id, render_scene_manager* scene_manager, renderer& renderer);
+    render_reflection_probe(render_object_id id, renderer& renderer);
     virtual ~render_reflection_probe();
 
     // Overrides the default bounds to return the obb of the model bounds.
@@ -42,8 +42,6 @@ public:
     void mark_regenerated();
 
 private:    
-    renderer& m_renderer;
-
     std::unique_ptr<ri_texture> m_texture;
     std::unique_ptr<ri_param_block> m_param_block;
 
