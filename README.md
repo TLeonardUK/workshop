@@ -1,6 +1,7 @@
 
 ![Workshop](./docs/banner.png?raw=true)
 ![GitHub license](https://img.shields.io/github/license/TLeonardUK/workshop)
+![Build Status](https://github.com/TLeonardUK/workshop/actions/workflows/ci.yml/badge.svg)
 
 # What is this project?
 This is toy game engine that aims to have a modern, parallel-first design. It's main purpose is to be a sandbox to experiment and learn within.

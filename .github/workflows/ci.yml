@@ -2,6 +2,7 @@ name: CI
 
 on:
   workflow_dispatch:
+  push:
   pull_request:
     types: [opened, reopened, edited, synchronize, ready_for_review, review_requested ]
     branches:
