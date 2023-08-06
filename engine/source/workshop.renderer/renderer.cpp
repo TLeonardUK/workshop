@@ -13,6 +13,7 @@
 #include "workshop.renderer/systems/render_system_transparent_geometry.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/systems/render_system_shadows.h"
+#include "workshop.renderer/systems/render_system_ssao.h"
 #include "workshop.renderer/systems/render_system_light_probes.h"
 #include "workshop.renderer/systems/render_system_reflection_probes.h"
 #include "workshop.renderer/render_graph.h"
@@ -118,6 +119,7 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_clear>(*this));
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
+    m_systems.push_back(std::make_unique<render_system_ssao>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_transparent_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_light_probes>(*this, m_debug_menu));

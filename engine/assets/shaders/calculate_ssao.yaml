@@ -1,0 +1,36 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect is used to generate an ssao mask used when resolving lighting.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  calculate_ssao:
+    techniques:
+      calculate_ssao: {}
+
+param_blocks:
+  ssao_parameters:
+    scope: draw
+    fields:
+      uv_scale: float2
+
+techniques:
+  calculate_ssao:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/calculate_ssao.hlsl
+      entry: pshader
+    render_state: no_depth_test
+    vertex_layout: vertex2d_pos_uv
+    output_target: ssao_buffer
+    param_blocks: [ gbuffer, view_info, ssao_parameters ]
+
+

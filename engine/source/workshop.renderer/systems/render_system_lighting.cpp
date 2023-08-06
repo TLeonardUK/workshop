@@ -5,6 +5,7 @@
 #include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/systems/render_system_shadows.h"
 #include "workshop.renderer/systems/render_system_debug.h"
+#include "workshop.renderer/systems/render_system_ssao.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
@@ -277,6 +278,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("reflection_probe_buffer", reflection_probe_instance_buffer->get_buffer());
         resolve_param_block->set("brdf_lut", *m_brdf_lut_texture);
         resolve_param_block->set("brdf_lut_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));       
+        resolve_param_block->set("ao_texture", *m_renderer.get_system<render_system_ssao>()->get_ssao_mask());
+        resolve_param_block->set("ao_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
     }
 
     // Add pass to run compute shader to generate the clusters.

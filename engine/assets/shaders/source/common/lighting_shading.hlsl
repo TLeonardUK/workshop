@@ -533,7 +533,10 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     float2 brdf = brdf_lut.Sample(brdf_lut_sampler, float2(max(dot(normal, view_direction), 0.0), frag.roughness)).rg;
     float3 specular = reflection_probe_color * (F * brdf.x + brdf.y);
 
-    float3 ambient = (kD * diffuse + specular) * 1.0f;
+    // Grab the AO output to tint our ambient term.
+    float ao = ao_texture.Sample(ao_sampler, frag.uv).r;
+
+    float3 ambient = (kD * diffuse + specular) * ao;
 
     if (visualization_mode == visualization_mode_t::indirect_specular)
     {

@@ -31,6 +31,8 @@ struct gbuffer_fragment
     float3 world_position;
     uint flags;
     
+    float2 uv;
+
 #ifdef GBUFFER_DEBUG_DATA
     float4 debug_data;
 #endif
@@ -99,6 +101,8 @@ gbuffer_fragment read_gbuffer(float2 uv)
 #ifdef GBUFFER_DEBUG_DATA
     result.debug_data = buffer3.xyzw;
 #endif
+
+    result.uv = uv;
 
     return result;
 }
