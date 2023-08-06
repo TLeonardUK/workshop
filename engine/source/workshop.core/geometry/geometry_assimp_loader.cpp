@@ -16,8 +16,6 @@
 #include <sstream>
 #endif
 
-#pragma optimize("", off)
-
 namespace ws {
 
 namespace {

@@ -30,7 +30,7 @@ render_system_lighting::render_system_lighting(renderer& render)
 void render_system_lighting::register_init(init_list& list)
 {
     list.add_step(
-        "Renderer Resources",
+        "Lighting Resources",
         [this, &list]() -> result<void> { return create_resources(); },
         [this, &list]() -> result<void> { return destroy_resources(); }
     );

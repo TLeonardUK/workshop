@@ -5,7 +5,7 @@
 type: material
 version: 1
 
-domain: opaque
+domain: masked
 
 textures:
  albedo_texture:     data:models/test_scenes/bistro/textures/MASTER_Glass_Dirty_MASKED_BaseColor.yaml

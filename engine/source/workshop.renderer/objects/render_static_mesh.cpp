@@ -7,8 +7,6 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 render_static_mesh::render_static_mesh(render_object_id id, renderer& renderer)

@@ -32,18 +32,18 @@ render_states:
     depth_test_enabled: false  
     depth_write_enabled: false
     depth_clip_enabled: false
-    blend_enabled: false
+    blend0_enabled: false
   # Transparent geometry rendering state.
   transparent: 
     cull_mode: none  
     depth_write_enabled: false
-    blend_enabled: true
-    blend_op: add
-    blend_source_op: source_alpha
-    blend_destination_op: inverse_source_alpha
-    blend_alpha_op: add
-    blend_alpha_source_op: zero
-    blend_alpha_destination_op: one
+    blend0_enabled: true
+    blend0_op: add
+    blend0_source_op: source_alpha
+    blend0_destination_op: inverse_source_alpha
+    blend0_alpha_op: add
+    blend0_alpha_source_op: zero
+    blend0_alpha_destination_op: one
 
 vertex_layouts:
   # Simple layout that contains only vert position and uv. Useful

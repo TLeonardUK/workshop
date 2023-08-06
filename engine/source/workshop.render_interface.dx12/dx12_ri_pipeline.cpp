@@ -171,17 +171,21 @@ result<void> dx12_ri_pipeline::create_graphics_pso()
     // Blend state
 
     desc.BlendState.AlphaToCoverageEnable = m_create_params.render_state.alpha_to_coverage;
-    desc.BlendState.IndependentBlendEnable = false;
-    desc.BlendState.RenderTarget->BlendEnable = m_create_params.render_state.blend_enabled;
-    desc.BlendState.RenderTarget->BlendOp = ri_to_dx12(m_create_params.render_state.blend_op);
-    desc.BlendState.RenderTarget->BlendOpAlpha = ri_to_dx12(m_create_params.render_state.blend_alpha_op);
-    desc.BlendState.RenderTarget->DestBlend = ri_to_dx12(m_create_params.render_state.blend_destination_op);
-    desc.BlendState.RenderTarget->DestBlendAlpha = ri_to_dx12(m_create_params.render_state.blend_alpha_destination_op);
-    desc.BlendState.RenderTarget->LogicOp = D3D12_LOGIC_OP_COPY;
-    desc.BlendState.RenderTarget->LogicOpEnable = false;
-    desc.BlendState.RenderTarget->RenderTargetWriteMask = 15;
-    desc.BlendState.RenderTarget->SrcBlend = ri_to_dx12(m_create_params.render_state.blend_source_op);
-    desc.BlendState.RenderTarget->SrcBlendAlpha = ri_to_dx12(m_create_params.render_state.blend_alpha_source_op);
+    desc.BlendState.IndependentBlendEnable = m_create_params.render_state.independent_blend_enabled;
+
+    for (size_t i = 0; i < ri_pipeline_render_state::k_max_output_targets; i++)
+    {
+        desc.BlendState.RenderTarget[i].BlendEnable = m_create_params.render_state.blend_enabled[i];
+        desc.BlendState.RenderTarget[i].BlendOp = ri_to_dx12(m_create_params.render_state.blend_op[i]);
+        desc.BlendState.RenderTarget[i].BlendOpAlpha = ri_to_dx12(m_create_params.render_state.blend_alpha_op[i]);
+        desc.BlendState.RenderTarget[i].DestBlend = ri_to_dx12(m_create_params.render_state.blend_destination_op[i]);
+        desc.BlendState.RenderTarget[i].DestBlendAlpha = ri_to_dx12(m_create_params.render_state.blend_alpha_destination_op[i]);
+        desc.BlendState.RenderTarget[i].LogicOp = D3D12_LOGIC_OP_COPY;
+        desc.BlendState.RenderTarget[i].LogicOpEnable = false;
+        desc.BlendState.RenderTarget[i].RenderTargetWriteMask = 15;
+        desc.BlendState.RenderTarget[i].SrcBlend = ri_to_dx12(m_create_params.render_state.blend_source_op[i]);
+        desc.BlendState.RenderTarget[i].SrcBlendAlpha = ri_to_dx12(m_create_params.render_state.blend_alpha_source_op[i]);
+    }
 
     // Render state
 

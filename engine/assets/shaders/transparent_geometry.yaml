@@ -16,9 +16,62 @@ effects:
         domain: [ transparent ]
         wireframe: [ false ]
         depth_only: [ false ]
+  transparent_resolve:
+    techniques:
+      transparent_resolve: {}
         
+render_states:
+  # Transparent geometry rendering state.
+  transparent_accumulation: 
+    cull_mode: none  
+    depth_write_enabled: false
+    independent_blend_enabled: true
+
+    blend0_enabled: true
+    blend0_op: add
+    blend0_source_op: one
+    blend0_destination_op: one
+    blend0_alpha_op: add
+    blend0_alpha_source_op: one
+    blend0_alpha_destination_op: one
+
+    blend1_enabled: true    
+    blend1_op: add
+    blend1_source_op: zero
+    blend1_destination_op: inverse_source_color
+    blend1_alpha_op: add
+    blend1_alpha_source_op: zero
+    blend1_alpha_destination_op: inverse_source_alpha
+
+  # Transparency resolve state
+  transparent_resolve: 
+    depth_write_enabled: false
+    depth_test_enabled: false
+    cull_mode: none
+    blend0_enabled: true
+    blend0_op: add
+    blend0_source_op: source_alpha
+    blend0_destination_op: inverse_source_alpha
+    blend0_alpha_op: add
+    blend0_alpha_source_op: zero
+    blend0_alpha_destination_op: one
+
+output_targets:
+  transparent_buffer:
+    color: [ R16G16B16A16_FLOAT, R16_FLOAT ]
+    depth: D24_UNORM_S8_UINT
+
+param_blocks:
+  # Contains all the parameters needed to read/write from the gbuffer.
+  resolve_transparent_parameters:
+    scope: global
+    fields:
+      accumulation_texture: texture2d
+      revealance_texture: texture2d
+      texture_sampler: sampler
+
 techniques:
-  # Technique to use when rendering transparent geometry - input is sorted and no depth writes are enabled.
+  # Accumulates the transparent to the output buffers.
   transparent_static_geometry:
     vertex_shader: 
       file: data:shaders/source/transparent_geometry.hlsl
@@ -26,9 +79,9 @@ techniques:
     pixel_shader: 
       file: data:shaders/source/transparent_geometry.hlsl
       entry: pshader
-    render_state: transparent
+    render_state: transparent_accumulation
     vertex_layout: geometry_vertex
-    output_target: light_buffer_and_depth
+    output_target: transparent_buffer
     param_blocks: [ 
       view_info, 
       gbuffer,
@@ -40,4 +93,19 @@ techniques:
       reflection_probe_state,
       shadow_map_state, 
       resolve_lighting_parameters 
+    ]
+
+  # Resolves the transparency to the output buffer.
+  transparent_resolve:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/resolve_transparency.hlsl
+      entry: pshader
+    render_state: transparent_resolve
+    vertex_layout: vertex2d_pos_uv
+    output_target: light_buffer
+    param_blocks: [ 
+      resolve_transparent_parameters 
     ]

@@ -23,7 +23,8 @@ struct geometry_pinput
 
 struct geometry_poutput
 {
-    float4 color : SV_Target0;
+    float4 accumulation : SV_Target0;
+    float4 revealance : SV_Target1;
 };
 
 geometry_pinput vshader(vertex_input input)
@@ -41,6 +42,12 @@ geometry_pinput vshader(vertex_input input)
     result.world_position = mul(vi.model_matrix, float4(v.position, 1.0f));
 
     return result;
+}
+
+float calculate_weight(float z, float a)
+{
+    return clamp(pow(min(1.0, a * 10.0) + 0.01, 3.0) * 1e8 * 
+                     pow(1.0f - z * 0.9, 3.0), 1e-2, 3e3);
 }
 
 geometry_poutput pshader(geometry_pinput input)
@@ -63,7 +70,11 @@ geometry_poutput pshader(geometry_pinput input)
 #endif
     f.world_position = input.world_position;
 
+    float4 shaded_color = float4(shade_fragment(f).rgb, albedo.a * 0.25f);
+    float weight = calculate_weight(input.position.z, shaded_color.a); 
+
     geometry_poutput output;
-    output.color = float4(shade_fragment(f).rgb, albedo.a);
+    output.accumulation = float4(shaded_color.rgb * shaded_color.a, shaded_color.a) * weight;
+    output.revealance = shaded_color.a;
     return output;
 }

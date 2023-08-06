@@ -23,7 +23,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 9;
+constexpr size_t k_asset_compiled_version = 11;
 
 };
 
@@ -389,7 +389,7 @@ bool shader_loader::parse_render_state(const char* path, const char* name, YAML:
 {
     bool variables_valid = true;
 
-    auto ReadVariable = [&path, &node, &variables_valid](const char* name, auto& source, auto default_value)
+    auto ReadVariable = [&path, &node, &variables_valid](const std::string& name, auto& source, auto default_value)
     {
         YAML::Node child_node = node[name];
         if (!child_node.IsDefined())
@@ -425,13 +425,18 @@ bool shader_loader::parse_render_state(const char* path, const char* name, YAML:
     ReadVariable("conservative_raster_enabled",     block.state.conservative_raster_enabled,        false);
 
     ReadVariable("alpha_to_coverage",               block.state.alpha_to_coverage,                  false);
-    ReadVariable("blend_enabled",                   block.state.blend_enabled,                      false);
-    ReadVariable("blend_op",                        block.state.blend_op,                           ri_blend_op::add);
-    ReadVariable("blend_source_op",                 block.state.blend_source_op,                    ri_blend_operand::one);
-    ReadVariable("blend_destination_op",            block.state.blend_destination_op,               ri_blend_operand::zero);
-    ReadVariable("blend_alpha_op",                  block.state.blend_alpha_op,                     ri_blend_op::add);
-    ReadVariable("blend_alpha_source_op",           block.state.blend_alpha_source_op,              ri_blend_operand::one);
-    ReadVariable("blend_alpha_destination_op",      block.state.blend_alpha_destination_op,         ri_blend_operand::zero);
+    ReadVariable("independent_blend_enabled",       block.state.independent_blend_enabled,          false);    
+
+    for (size_t i = 0; i < ri_pipeline_render_state::k_max_output_targets; i++)
+    {
+        ReadVariable("blend"+std::to_string(i)+"_enabled",                   block.state.blend_enabled[i],                      false);
+        ReadVariable("blend"+std::to_string(i)+"_op",                        block.state.blend_op[i],                           ri_blend_op::add);
+        ReadVariable("blend"+std::to_string(i)+"_source_op",                 block.state.blend_source_op[i],                    ri_blend_operand::one);
+        ReadVariable("blend"+std::to_string(i)+"_destination_op",            block.state.blend_destination_op[i],               ri_blend_operand::zero);
+        ReadVariable("blend"+std::to_string(i)+"_alpha_op",                  block.state.blend_alpha_op[i],                     ri_blend_op::add);
+        ReadVariable("blend"+std::to_string(i)+"_alpha_source_op",           block.state.blend_alpha_source_op[i],              ri_blend_operand::one);
+        ReadVariable("blend"+std::to_string(i)+"_alpha_destination_op",      block.state.blend_alpha_destination_op[i],         ri_blend_operand::zero);
+    }
 
     ReadVariable("depth_test_enabled",              block.state.depth_test_enabled,                 true);
     ReadVariable("depth_write_enabled",             block.state.depth_write_enabled,                true);

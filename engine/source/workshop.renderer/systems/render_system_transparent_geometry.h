@@ -5,6 +5,8 @@
 #pragma once
 
 #include "workshop.renderer/render_system.h"
+#include "workshop.render_interface/ri_texture.h"
+#include "workshop.render_interface/ri_param_block.h"
 
 namespace ws {
 
@@ -24,6 +26,13 @@ public:
     virtual void step(const render_world_state& state) override;
 
 private:
+    result<void> create_resources();
+    result<void> destroy_resources();
+
+private:
+    std::unique_ptr<ri_texture> m_accumulation_buffer;
+    std::unique_ptr<ri_texture> m_revealance_buffer;
+    std::unique_ptr<ri_param_block> m_resolve_param_block;
 
 };
 

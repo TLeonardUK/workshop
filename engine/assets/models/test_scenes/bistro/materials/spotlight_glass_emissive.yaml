@@ -5,7 +5,7 @@
 type: material
 version: 1
 
-domain: opaque
+domain: transparent
 
 textures:
  albedo_texture:     data:models/test_scenes/bistro/textures/Spotlight_Glass_Emissive_BaseColor.yaml

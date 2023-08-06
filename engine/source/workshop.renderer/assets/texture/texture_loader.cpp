@@ -271,16 +271,6 @@ bool texture_loader::parse_file(const char* path, texture& asset)
         return false;
     }
 
-    // DEBUG DEBUG DEBUG
-    if (asset.width == 0)
-    {
-        asset.width = asset.faces[0].mips[0]->get_width();
-        asset.height = asset.faces[0].mips[0]->get_height();
-    }
-    asset.width = std::max(asset.width / 4llu, 4llu);
-    asset.height = std::max(asset.height / 4llu, 4llu);
-    // DEBUG DEBUG DEBUG
-
     return true;
 }
 

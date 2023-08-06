@@ -62,7 +62,7 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
 
             if (clear_color_outputs)
             {
-                list.clear(texture, color::black);
+                list.clear(texture, texture.texture->get_optimal_clear_color());
             }
         }
         if (output.depth_target.texture != nullptr)
@@ -71,7 +71,9 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
 
             if (clear_depth_outputs)
             {
-                list.clear_depth(output.depth_target, 1.0f, 0);
+                list.clear_depth(output.depth_target,
+                    output.depth_target.texture->get_optimal_clear_depth(),
+                    output.depth_target.texture->get_optimal_clear_stencil());
             }
         }
 

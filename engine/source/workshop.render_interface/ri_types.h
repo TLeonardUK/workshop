@@ -491,6 +491,8 @@ DEFINE_ENUM_TO_STRING(ri_stencil_op, ri_stencil_op_strings)
 // ================================================================================================
 struct ri_pipeline_render_state
 {
+    static inline constexpr size_t k_max_output_targets = 8;
+
     // Raster state
     ri_topology         topology;
     ri_fill_mode        fill_mode;
@@ -506,13 +508,14 @@ struct ri_pipeline_render_state
 
     // Blend state
     bool                alpha_to_coverage;
-    bool                blend_enabled;
-    ri_blend_op         blend_op;
-    ri_blend_operand    blend_source_op;
-    ri_blend_operand    blend_destination_op;
-    ri_blend_op         blend_alpha_op;
-    ri_blend_operand    blend_alpha_source_op;
-    ri_blend_operand    blend_alpha_destination_op;
+    bool                independent_blend_enabled;
+    bool                blend_enabled[k_max_output_targets];
+    ri_blend_op         blend_op[k_max_output_targets];
+    ri_blend_operand    blend_source_op[k_max_output_targets];
+    ri_blend_operand    blend_destination_op[k_max_output_targets];
+    ri_blend_op         blend_alpha_op[k_max_output_targets];
+    ri_blend_operand    blend_alpha_source_op[k_max_output_targets];
+    ri_blend_operand    blend_alpha_destination_op[k_max_output_targets];
 
     // Depth state
     bool                depth_test_enabled;
@@ -550,13 +553,18 @@ inline void stream_serialize(stream& out, ri_pipeline_render_state& state)
     stream_serialize(out, state.conservative_raster_enabled);
 
     stream_serialize(out, state.alpha_to_coverage);
-    stream_serialize(out, state.blend_enabled);
-    stream_serialize_enum(out, state.blend_op);
-    stream_serialize_enum(out, state.blend_source_op);
-    stream_serialize_enum(out, state.blend_destination_op);
-    stream_serialize_enum(out, state.blend_alpha_op);
-    stream_serialize_enum(out, state.blend_alpha_source_op);
-    stream_serialize_enum(out, state.blend_alpha_destination_op);
+    stream_serialize(out, state.independent_blend_enabled);
+
+    for (size_t i = 0; i < ri_pipeline_render_state::k_max_output_targets; i++)
+    {
+        stream_serialize(out, state.blend_enabled[i]);
+        stream_serialize_enum(out, state.blend_op[i]);
+        stream_serialize_enum(out, state.blend_source_op[i]);
+        stream_serialize_enum(out, state.blend_destination_op[i]);
+        stream_serialize_enum(out, state.blend_alpha_op[i]);
+        stream_serialize_enum(out, state.blend_alpha_source_op[i]);
+        stream_serialize_enum(out, state.blend_alpha_destination_op[i]);
+    }
 
     stream_serialize(out, state.depth_test_enabled);
     stream_serialize(out, state.depth_write_enabled);

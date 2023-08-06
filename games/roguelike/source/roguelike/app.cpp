@@ -21,9 +21,11 @@
 #include <chrono>
 
 // TODO:
+//      render_options to configure pipeline
+//      Anti-Alising
+//      SSAO
 //      Try and reduce light leakage for probes
 //      Decals
-//      Auto_Exposure
 //      Skinned Meshes
 
 std::shared_ptr<ws::app> make_app()
@@ -63,7 +65,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_3.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
 
-#if 1
+#if 0
     m_view_position = vector3(150.0f, 270.0f, -100.0f);
     m_view_rotation = quat::angle_axis(0.0f, vector3::up);
 
@@ -118,7 +120,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_object_transform(object_id, vector3(-900.0f, 400.0f, 0.0f), quat::identity, vector3(10000.f, 10000.0f, 10000.0f));
 
     object_id = cmd_queue.create_light_probe_grid("Light Probe Grid");
-    cmd_queue.set_light_probe_grid_density(object_id, 200.0f);
+    cmd_queue.set_light_probe_grid_density(object_id, 350.0f);
     cmd_queue.set_object_transform(object_id, vector3(3000.0f, 2000.0f, 0.0f), quat::identity, vector3(20000.f, 4000.0f, 20000.0f));
 #endif
     /*

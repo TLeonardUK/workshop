@@ -153,12 +153,18 @@ result<void> dx12_ri_texture::create_resources()
 
     D3D12_CLEAR_VALUE clear_color;
     clear_color.Format = clear_format;
-    clear_color.Color[0] = m_create_params.optimal_clear_color.r;
-    clear_color.Color[1] = m_create_params.optimal_clear_color.g;
-    clear_color.Color[2] = m_create_params.optimal_clear_color.b;
-    clear_color.Color[3] = m_create_params.optimal_clear_color.a;
-    clear_color.DepthStencil.Depth = m_create_params.optimal_clear_depth;
-    clear_color.DepthStencil.Stencil = m_create_params.optimal_clear_stencil;
+    if (is_depth_stencil())
+    {
+        clear_color.DepthStencil.Depth = m_create_params.optimal_clear_depth;
+        clear_color.DepthStencil.Stencil = m_create_params.optimal_clear_stencil;
+    }
+    else
+    {
+        clear_color.Color[0] = m_create_params.optimal_clear_color.r;
+        clear_color.Color[1] = m_create_params.optimal_clear_color.g;
+        clear_color.Color[2] = m_create_params.optimal_clear_color.b;
+        clear_color.Color[3] = m_create_params.optimal_clear_color.a;
+    }
 
     D3D12_HEAP_PROPERTIES heap_properties;
     heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;

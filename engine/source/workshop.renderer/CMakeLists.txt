@@ -65,6 +65,8 @@ SET(SOURCES
     "passes/render_pass_compute.cpp"
     "passes/render_pass_calculate_mips.h"
     "passes/render_pass_calculate_mips.cpp"
+    "passes/render_pass_clear.h"
+    "passes/render_pass_clear.cpp"
 
     "objects/render_view.h"
     "objects/render_view.cpp"
@@ -101,6 +103,8 @@ SET(SOURCES
     "systems/render_system_reflection_probes.cpp"
     "systems/render_system_geometry.h"
     "systems/render_system_geometry.cpp"
+    "systems/render_system_transparent_geometry.h"
+    "systems/render_system_transparent_geometry.cpp"
     "systems/render_system_debug.h"
     "systems/render_system_debug.cpp"
     
