@@ -1,14 +1,28 @@
-![Build Status](https://github.com/TLeonardUK/workshop/actions/workflows/ci.yml/badge.svg)
+
+![Workshop](./docs/title.png?raw=true)
+![GitHub license](https://img.shields.io/github/license/TLeonardUK/workshop)
 
 # What is this project?
-This is very in-progress game engine with the aim to have a modern C++20, parallel-first design, and be very quick to hack together and prototype things.
+This is toy game engine that aims to have a modern, parallel-first design. It's main purpose is to be a sandbox to experiment and learn within.
 
-The renderer uses a modern DX12/Vulkan deferred bindless architecture and will (hopefully soon ...) support a lot of modern rendering features.
+The renderer uses a modern DX12/Vulkan deferred bindless architecture and will, over time,  support a lot of modern rendering features.
 
-Its main purpose is mostly to build my own knowledge of render programming and to try out some engine architecture ideas I've been toying with.
+# Current Rendering Features
+- Bindless architecture
+- Full pbr pipeline
+- Clustered deferred pipeline
+- Compute-based light culling
+- Diffuse light probe volumes
+- Specular reflection probes
+- Automatic exposure
+- Blended weighted order independent transparency
+- Standard shadow mapping features
+- Standard light features
 
-# Where can I download it?
-Downloads are available on the github releases page - https://github.com/TLeonardUK/workshop/releases
+# Screenshots
+![Screenshot 1](./docs/screenshots/1.png?raw=true)
+![Screenshot 2](./docs/screenshots/2.png?raw=true)
+![Screenshot 3](./docs/screenshots/3.png?raw=true)
 
 # How do I build it?
 Currently the project uses visual studio 2022 and C++20 for compilation.
@@ -44,6 +58,3 @@ Projects in a tier can depend on other projects in the same tier or in tiers low
 - tier 3 : Contains game-specific code goes. The code for all this is held in the games directory rather than the engine directory.
 
 Third party libraries do not have any of this control and can be used by any tier.
-
-# Roadmap
-- [x] TODO

@@ -65,7 +65,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_3.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
 
-#if 0
+#if 1
     m_view_position = vector3(150.0f, 270.0f, -100.0f);
     m_view_rotation = quat::angle_axis(0.0f, vector3::up);
 
@@ -77,9 +77,10 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
 
-    object_id = cmd_queue.create_static_mesh("Cerberus");
+    /*object_id = cmd_queue.create_static_mesh("Cerberus");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(-400.0f, 200.0f, 150.0f), quat::identity, vector3::one);
+    */
 
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
@@ -142,8 +143,8 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_light_shadow_casting(object_id, true); // true
     cmd_queue.set_light_shadow_map_size(object_id, 2048);
     cmd_queue.set_light_shadow_max_distance(object_id, 10000.0f);
-    cmd_queue.set_directional_light_shadow_cascade_exponent(object_id, 0.9f);
-    cmd_queue.set_light_intensity(object_id, 10.0f);
+    cmd_queue.set_directional_light_shadow_cascade_exponent(object_id, 0.6f);
+    cmd_queue.set_light_intensity(object_id, 5.0f);
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 #endif
 
