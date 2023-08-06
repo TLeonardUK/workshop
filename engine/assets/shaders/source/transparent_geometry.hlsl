@@ -70,7 +70,7 @@ geometry_poutput pshader(geometry_pinput input)
 #endif
     f.world_position = input.world_position;
 
-    float4 shaded_color = float4(shade_fragment(f).rgb, albedo.a * 0.25f);
+    float4 shaded_color = float4(shade_fragment(f).rgb, albedo.a);
     float weight = calculate_weight(input.position.z, shaded_color.a); 
 
     geometry_poutput output;
