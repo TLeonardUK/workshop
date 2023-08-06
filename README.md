@@ -1,5 +1,5 @@
 
-![Workshop](./docs/title.png?raw=true)
+![Workshop](./docs/banner.png?raw=true)
 ![GitHub license](https://img.shields.io/github/license/TLeonardUK/workshop)
 
 # What is this project?
