@@ -23,7 +23,8 @@ enum visualization_mode_t
     light_probe_contribution,             
     indirect_specular,
     indirect_diffuse,   
-    direct_light
+    direct_light,
+    ao
 };
 
 static const float3 debug_colors[8] = 

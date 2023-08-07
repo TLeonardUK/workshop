@@ -80,11 +80,11 @@ ws::result<void> rl_game_app::start()
     /*object_id = cmd_queue.create_static_mesh("Cerberus");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(-400.0f, 200.0f, 150.0f), quat::identity, vector3::one);
-    */
 
     object_id = cmd_queue.create_static_mesh("Sponza Ivy");
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3::zero, quat::identity, vector3::one);
+    */
 
     /*
     object_id = cmd_queue.create_static_mesh("Sponza Trees");

@@ -91,7 +91,7 @@ output_targets:
     depth: D32_FLOAT
   # SSAO buffer.
   ssao_buffer:
-    color: [ R32_FLOAT ]
+    color: [ R32G32B32A32_FLOAT ] # Only needs 1 channel, 4 for debugging.
 
 param_blocks:
   # Contains all the parameters needed to read/write from the gbuffer.
@@ -103,6 +103,7 @@ param_blocks:
       gbuffer2_texture: texture2d
       #gbuffer3_texture: texture2d
       gbuffer_sampler: sampler
+      gbuffer_dimensions: int2
   # Describes the projection information for the view being rendered.
   view_info:
     scope: global

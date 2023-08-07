@@ -300,6 +300,7 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_param_block->set("gbuffer3_texture", *m_gbuffer_textures[3]);
 #endif
     m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
+    m_gbuffer_param_block->set("gbuffer_dimensions", vector2i(params.width,  params.height));
 
     // Create default resources.
     std::vector<uint8_t> default_data = { 0, 0, 0, 0 };

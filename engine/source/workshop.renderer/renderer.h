@@ -90,6 +90,7 @@ enum class visualization_mode
     indirect_specular,
     indirect_diffuse,
     direct_light,
+    ao,
 
     COUNT
 };
@@ -110,7 +111,8 @@ static inline const char* visualization_mode_strings[] = {
     "light probe contribution",
     "indirect specular",
     "indirect diffuse",
-    "direct light"
+    "direct light",
+    "ao"
 };
 
 // Defines a set of preloaded models that are commonly used for debugging.

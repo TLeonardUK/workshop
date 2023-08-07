@@ -32,7 +32,9 @@ private:
 
 private:
     std::unique_ptr<ri_texture> m_ssao_texture;
-
+    std::unique_ptr<ri_texture> m_noise_texture;
+    std::unique_ptr<ri_sampler> m_noise_texture_sampler;
+    
 };
 
 }; // namespace ws

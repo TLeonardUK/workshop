@@ -19,6 +19,9 @@ param_blocks:
     scope: draw
     fields:
       uv_scale: float2
+      noise_texture: texture2d
+      noise_texture_sampler: sampler
+      ssao_radius: float
 
 techniques:
   calculate_ssao:

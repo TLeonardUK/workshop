@@ -114,6 +114,7 @@ inline base_vector3<element_type>& base_vector3<element_type>::operator-=(elemen
 	x -= scalar;
 	y -= scalar;
 	z -= scalar;
+	return *this;
 }
 
 template <typename element_type>
@@ -131,6 +132,7 @@ inline base_vector3<element_type>& base_vector3<element_type>::operator*=(elemen
 	x *= scalar;
 	y *= scalar;
 	z *= scalar;
+	return *this;
 }
 
 template <typename element_type>

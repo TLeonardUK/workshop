@@ -534,9 +534,9 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     float3 specular = reflection_probe_color * (F * brdf.x + brdf.y);
 
     // Grab the AO output to tint our ambient term.
-    float ao = ao_texture.Sample(ao_sampler, frag.uv).r;
+    float3 ao = ao_texture.Sample(ao_sampler, frag.uv);
 
-    float3 ambient = (kD * diffuse + specular) * ao;
+    float3 ambient = (kD * diffuse + specular) * ao.r;
 
     if (visualization_mode == visualization_mode_t::indirect_specular)
     {
@@ -545,6 +545,10 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     else if (visualization_mode == visualization_mode_t::indirect_diffuse)
     {
         ambient = kD * diffuse;
+    }
+    else if (visualization_mode == visualization_mode_t::ao)
+    {
+        ambient = ao;
     }
 
     return ambient;
@@ -674,6 +678,11 @@ float4 shade_fragment(gbuffer_fragment frag)
             break;
         }
         case visualization_mode_t::indirect_diffuse:    
+        {
+            final_color = ambient_lighting;
+            break;
+        }
+        case visualization_mode_t::ao:    
         {
             final_color = ambient_lighting;
             break;

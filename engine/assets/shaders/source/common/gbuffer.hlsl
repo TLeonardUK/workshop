@@ -107,4 +107,35 @@ gbuffer_fragment read_gbuffer(float2 uv)
     return result;
 }
 
+// Reads fragment from gbuffer at given uv but without interpolation
+gbuffer_fragment load_gbuffer(float2 uv)
+{
+    uint3 coords = uint3(uv * gbuffer_dimensions, 0);
+
+    float4 buffer0 = gbuffer0_texture.Load(coords);
+    float4 buffer1 = gbuffer1_texture.Load(coords);
+    float4 buffer2 = gbuffer2_texture.Load(coords);
+#ifdef GBUFFER_DEBUG_DATA    
+    float4 buffer3 = gbuffer3_texture.Load(coords);
+#endif
+
+    gbuffer_fragment result;
+    result.albedo = buffer0.xyz;
+    result.flags = (uint)round(buffer0.w * 255.0f);
+
+    result.world_normal = buffer1.xyz;
+    result.roughness = buffer1.w;
+
+    result.world_position = buffer2.xyz;
+    result.metallic = buffer2.w;
+
+#ifdef GBUFFER_DEBUG_DATA
+    result.debug_data = buffer3.xyzw;
+#endif
+
+    result.uv = uv;
+
+    return result;
+}
+
 #endif

@@ -39,6 +39,7 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::indirect_diffuse:    
         case visualization_mode_t::direct_light:
         case visualization_mode_t::wireframe:
+        case visualization_mode_t::ao:
         {
             tonemap = false;
             break;

@@ -98,6 +98,12 @@ public:
 	// Controls how fast the eye adaption adjusts to the current frames luminance.
 	float eye_adapation_exposure_tau = 1.1f;
 
+	// ================================================================================================
+	//  SSAO
+	// ================================================================================================
+
+	// Determines over how large and area we sample texels to determine occlusion.
+	float ssao_sample_radius = 0.5f;
 
 };
 
