@@ -23,6 +23,7 @@ namespace ws {
 class renderer;
 class model;
 enum class visualization_mode;
+class render_options;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
 using render_object_id = size_t;
@@ -52,6 +53,9 @@ public:
 
     // Sets the debug mode we should use for rendering the output.
     void set_visualization_mode(visualization_mode mode);
+
+    // Sets the rendering configuration for the pipeline.
+    void set_options(const render_options& options);
 
     // ===========================================================================================
     //  Debug rendering.

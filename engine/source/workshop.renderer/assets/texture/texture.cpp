@@ -32,6 +32,7 @@ bool texture::post_load()
     params.is_render_target = false;
     params.mip_levels = mip_levels;
     params.data = data;
+    params.drop_mips = m_renderer.get_options().textures_dropped_mips;
 
     ri_instance = m_ri_interface.create_texture(params, name.c_str());
     if (!ri_instance)
@@ -43,6 +44,7 @@ bool texture::post_load()
     // No need to keep the local data around any more, the RI interface will have copied 
     // it to the gpu now.
     data.clear();
+    data.shrink_to_fit();
 
     return true;
 }

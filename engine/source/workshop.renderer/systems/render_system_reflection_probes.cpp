@@ -37,36 +37,44 @@ void render_system_reflection_probes::register_init(init_list& list)
 result<void> render_system_reflection_probes::create_resources()
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+    const render_options& options = m_renderer.get_options();
+
+    // Grab configuration from renderer.
+    m_probe_cubemap_size = options.reflection_probe_cubemap_size;
+    m_probe_cubemap_mips = options.reflection_probe_cubemap_mip_count;
+    m_probe_regenerations_per_frame = options.reflection_probe_max_regenerations_per_frame;
+    m_probe_near_z = options.reflection_probe_near_z;
+    m_probe_far_z = options.reflection_probe_far_z;
 
     // Create cubemap we will render the scene into.
     ri_texture::create_params params;
-    params.width = k_probe_cubemap_size;
-    params.height = k_probe_cubemap_size;
+    params.width = m_probe_cubemap_size;
+    params.height = m_probe_cubemap_size;
     params.depth = 6;
-    params.mip_levels = k_probe_cubemap_mips;
+    params.mip_levels = m_probe_cubemap_mips;
     params.dimensions = ri_texture_dimension::texture_cube;
     params.is_render_target = true;
     params.format = ri_texture_format::R32G32B32A32_FLOAT;
     params.allow_unordered_access = true;
     params.allow_individual_image_access = true;
 
-    for (size_t i = 0; i < k_probe_regenerations_per_frame; i++)
+    for (size_t i = 0; i < m_probe_regenerations_per_frame; i++)
     {
         m_probe_capture_targets.push_back(m_renderer.get_render_interface().create_texture(params, "light probe capture target"));
     }
 
     // Create some param blocks for convolving each level of the cubemap.
-    size_t param_blocks_required = k_probe_regenerations_per_frame * 6 * k_probe_cubemap_mips;
+    size_t param_blocks_required = m_probe_regenerations_per_frame * 6 * m_probe_cubemap_mips;
     for (size_t i = 0; i < param_blocks_required; i++)
     {
         m_convolve_param_blocks.push_back(m_renderer.get_param_block_manager().create_param_block("convolve_reflection_probe_params"));
     }
 
     // Create render views we will use for capturing cubemaps.
-    size_t render_views_required = 6 * k_probe_regenerations_per_frame;
+    size_t render_views_required = 6 * m_probe_regenerations_per_frame;
     m_probe_capture_views.resize(render_views_required);
 
-    for (size_t probe = 0; probe < k_probe_regenerations_per_frame; probe++)
+    for (size_t probe = 0; probe < m_probe_regenerations_per_frame; probe++)
     {
         for (size_t face = 0; face < 6; face++)
         {
@@ -78,8 +86,8 @@ result<void> render_system_reflection_probes::create_resources()
             matrix4 projection_matrix = matrix4::perspective(
                 math::halfpi,
                 1.0f,
-                k_probe_near_z,
-                k_probe_far_z
+                m_probe_near_z,
+                m_probe_far_z
             );
 
             render_view* view = scene_manager.resolve_id_typed<render_view>(view_id);
@@ -87,7 +95,7 @@ result<void> render_system_reflection_probes::create_resources()
             view->set_view_order(render_view_order::light_probe);
             view->set_projection_matrix(projection_matrix);
             view->set_view_matrix(matrix4::identity);
-            view->set_clip(k_probe_near_z, k_probe_far_z);
+            view->set_clip(m_probe_near_z, m_probe_far_z);
             view->set_should_render(false);
             view->set_active(false);
             view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::constant_ambient_lighting);
@@ -107,8 +115,20 @@ result<void> render_system_reflection_probes::create_resources()
 
 result<void> render_system_reflection_probes::destroy_resources()
 {
+    render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+
+    for (view_info& info : m_probe_capture_views)
+    {
+        if (info.id)
+        {
+            scene_manager.destroy_view(info.id);
+        }
+    }
+
+    m_probe_capture_views.clear();
     m_probe_capture_targets.clear();
     m_debug_menu_options.clear();
+    m_convolve_param_blocks.clear();
 
     return true;
 }
@@ -171,6 +191,7 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
 {
     ri_interface& ri_interface = m_renderer.get_render_interface();
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
+    const render_options& options = m_renderer.get_options();
  
     vector3 origin = probe->get_local_location();
 
@@ -190,8 +211,8 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
         matrix4 projection_matrix = matrix4::perspective(
             math::halfpi,
             1.0f,
-            k_probe_near_z,
-            k_probe_far_z
+            options.reflection_probe_near_z,
+            options.reflection_probe_far_z
         );
 
         size_t view_index = (regeneration_index * 6) + i;
@@ -221,10 +242,24 @@ void render_system_reflection_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     render_system_light_probes* light_probe_system = m_renderer.get_system<render_system_light_probes>();
+    const render_options& options = m_renderer.get_options();
 
     std::vector<render_reflection_probe*> reflection_probes = scene_manager.get_reflection_probes();
 
     m_probes_regenerating = 0;
+
+    // Regenerate views if our configuration has changed.
+    if (options.reflection_probe_cubemap_size != m_probe_cubemap_size ||
+        options.reflection_probe_cubemap_mip_count != m_probe_cubemap_mips ||
+        options.reflection_probe_max_regenerations_per_frame != m_probe_regenerations_per_frame ||
+        options.reflection_probe_near_z != m_probe_near_z ||
+        options.reflection_probe_far_z != m_probe_far_z)
+    {
+        if (!destroy_resources() || !create_resources())
+        {
+            db_error(renderer, "Failed to recreate reflection probe resources.");
+        }
+    }
 
     // Disable all our views from rendering.
     for (size_t i = 0; i < m_probe_capture_views.size(); i++)
@@ -242,7 +277,7 @@ void render_system_reflection_probes::step(const render_world_state& state)
         for (render_reflection_probe* probe : reflection_probes)
         {
             // If dirty, regenerate this probe.
-            if (probe->is_dirty() && m_probes_regenerating < k_probe_regenerations_per_frame)
+            if (probe->is_dirty() && m_probes_regenerating < m_probe_regenerations_per_frame)
             {
                 regenerate_probe(probe, m_probes_regenerating);
                 m_probes_regenerating++;

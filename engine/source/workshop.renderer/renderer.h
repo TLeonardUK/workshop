@@ -18,6 +18,7 @@
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/render_options.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
 
@@ -243,6 +244,12 @@ public:
     // Returns true if we should be using ambient lighting.
     bool should_draw_ambient_lighting();
 
+    // Gets the configuration of the rendering pipeline.
+    const render_options& get_options();
+
+    // Sets the configuration of the rendering pipeline.
+    void set_options(const render_options& options);
+
 private:
 
     friend class render_command_queue;
@@ -311,6 +318,8 @@ private:
     window& m_window;
     asset_manager& m_asset_manager;
     debug_menu& m_debug_menu;
+
+    render_options m_options;
 
     std::vector<std::unique_ptr<render_system>> m_systems;
 

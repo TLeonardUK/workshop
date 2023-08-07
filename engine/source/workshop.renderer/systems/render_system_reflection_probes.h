@@ -22,13 +22,6 @@ class render_system_reflection_probes
     : public render_system
 {
 public:
-    inline static constexpr size_t k_probe_cubemap_size = 512;
-    inline static constexpr size_t k_probe_cubemap_mips = 10;
-    inline static constexpr size_t k_probe_regenerations_per_frame = 1;
-    inline static constexpr float k_probe_near_z = 10.0f;
-    inline static constexpr float k_probe_far_z = 10000.0f;
-
-public:
     render_system_reflection_probes(renderer& render, debug_menu& menu);
 
     virtual void register_init(init_list& list) override;
@@ -59,6 +52,12 @@ private:
 
     size_t m_probes_regenerating;
     bool m_should_regenerate = false;
+
+    size_t m_probe_cubemap_size = 512;
+    size_t m_probe_cubemap_mips = 10;
+    size_t m_probe_regenerations_per_frame = 1;
+    float m_probe_near_z = 10.0f;
+    float m_probe_far_z = 10000.0f;
 
     debug_menu& m_debug_menu;
     std::vector<debug_menu::option_handle> m_debug_menu_options;

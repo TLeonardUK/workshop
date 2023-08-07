@@ -43,6 +43,8 @@ void render_system_shadows::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
 
+    const render_options& options = m_renderer.get_options();
+
     std::vector<render_view*> views = scene_manager.get_views();
     std::vector<render_directional_light*> directional_lights = scene_manager.get_directional_lights();
     std::vector<render_point_light*> point_lights = scene_manager.get_point_lights();
@@ -184,7 +186,7 @@ void render_system_shadows::step(const render_world_state& state)
         for (size_t i = 0; i < cascades_needing_render.size(); i++)
         {
             cascade_info* cascade = cascades_needing_render[i];
-            bool should_render = (i < k_max_cascades_updates_per_frame);
+            bool should_render = (i < options.shadows_max_cascade_updates_per_frame);
 
             if (cascade->view_id)
             {

@@ -67,11 +67,13 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
         return;
     }
 
+    const render_options& options = m_renderer.get_options();
+
     // Calculate luminance calculation parameters.
-    const float min_luminance = -8.0f; 
-    const float max_luminance = 3.5f;
-    const float exposure_tau = 1.1f;
-    const float white_point = 3.0f;
+    const float min_luminance = options.eye_adapation_min_luminance; 
+    const float max_luminance = options.eye_adapation_max_luminance;
+    const float exposure_tau = options.eye_adapation_exposure_tau;
+    const float white_point = options.eye_adapation_white_point;
     float time_coeff = std::clamp(1.0f - std::exp(-state.time.delta_seconds * exposure_tau), 0.0f, 1.0f);
 
     ri_param_block* resolve_luminance_params = view.get_resource_cache().find_or_create_param_block(this, "calculate_luminance_params");

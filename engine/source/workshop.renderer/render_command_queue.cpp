@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/render_options.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 
@@ -22,6 +23,13 @@ void render_command_queue::set_visualization_mode(visualization_mode mode)
 {
     queue_command("set_visualization_mode", [renderer = &m_renderer, mode]() {
         renderer->set_visualization_mode(mode);
+    });
+}
+
+void render_command_queue::set_options(const render_options& options)
+{
+    queue_command("set_render_options", [renderer = &m_renderer, options]() {
+        renderer->set_options(options);
     });
 }
 

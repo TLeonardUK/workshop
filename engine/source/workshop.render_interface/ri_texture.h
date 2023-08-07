@@ -26,12 +26,14 @@ public:
         size_t width = 1;
         size_t height = 1;
         size_t depth = 1;
-        size_t mip_levels = 1;
         ri_texture_dimension dimensions = ri_texture_dimension::texture_2d;
         ri_texture_format format = ri_texture_format::R8G8B8A8;
         bool is_render_target = false;
 
-        // If set then this texture can have unordered access.
+        // Number of mips in the texture (this should be the mips in the texture BEFORE drop_mips is taken into account).
+        size_t mip_levels = 1;
+
+        // If set then this texture can have rw unordered access.
         bool allow_unordered_access = false;
 
         // If set then you can use ri_texture_views to reference individual faces/mips
@@ -46,6 +48,9 @@ public:
         float optimal_clear_depth = 1.0f;
         uint8_t optimal_clear_stencil = 0;
 
+        // Number of mips to drop. This is only relevant if initial data has been provided.
+        size_t drop_mips = 0;
+
         // Data that we will upload into the texture on construction.
         // This must be in the format returned by ri_texture_compiler.
         std::span<uint8_t> data;
@@ -58,7 +63,8 @@ public:
     virtual size_t get_height() = 0;
     virtual size_t get_depth() = 0;
     virtual size_t get_mip_levels() = 0;
-    
+    virtual size_t get_dropped_mips() = 0;
+
     virtual ri_texture_dimension get_dimensions() const = 0;
     virtual ri_texture_format get_format() = 0;
 

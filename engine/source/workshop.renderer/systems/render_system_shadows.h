@@ -65,8 +65,6 @@ public:
         std::vector<cascade_info> cascades;
     };
 
-    static inline constexpr size_t k_max_cascades_updates_per_frame = 9;
-
     shadow_info& find_or_create_shadow_info(render_object_id light_id, render_object_id view_id);
 
 public:

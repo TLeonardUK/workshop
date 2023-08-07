@@ -103,6 +103,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
 
     render_system_shadows* shadow_system = m_renderer.get_system<render_system_shadows>();
 
+    const render_options& options = m_renderer.get_options();
+
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     render_batch_instance_buffer* light_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     render_batch_instance_buffer* shadow_map_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 1);
@@ -199,8 +201,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             render_system_shadows::shadow_info& shadows = shadow_system->find_or_create_shadow_info(light->get_id(), view.get_id());
 
             // Make sure we have space left in the lists.
-            if (total_lights + 1 >= k_max_lights ||
-                total_shadow_maps + shadows.cascades.size() >= k_max_shadow_maps)
+            if (total_lights + 1 >= options.lighting_max_lights ||
+                total_shadow_maps + shadows.cascades.size() >= options.lighting_max_shadow_maps)
             {
                 break;
             }

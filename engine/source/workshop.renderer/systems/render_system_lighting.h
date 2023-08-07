@@ -49,32 +49,6 @@ public:
     // Maximum number of shadow maps we can handle on screen at once.
     static inline constexpr size_t k_max_shadow_maps = 10000;
 
-    // Number of clusters in each dimension.
-    static inline constexpr size_t k_cluster_dimensions = 32;
-
-    // Total number of clusters in all dimensions.
-    static inline constexpr size_t k_total_clusters = k_cluster_dimensions * k_cluster_dimensions * k_cluster_dimensions;
-
-    /*
-    struct cluster
-    {
-        frustum bounds;
-        std::vector<render_light*> lights;
-    };
-
-    struct cluster_list
-    {
-        std::array<cluster, k_total_clusters> clusters;
-
-        inline cluster& get(size_t x, size_t y, size_t z)
-        {
-            size_t cluster_per_depth = (k_cluster_dimensions * k_cluster_dimensions);
-            size_t cluster_index = (cluster_per_depth * z) + (k_cluster_dimensions * y) + x;
-            return clusters[cluster_index];
-        }
-    };
-    */
-
 private:
     result<void> create_resources();
     result<void> destroy_resources();

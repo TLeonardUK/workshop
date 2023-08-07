@@ -36,7 +36,7 @@ result<void> render_system_ssao::create_resources()
     texture_params.width = m_renderer.get_display_width();
     texture_params.height = m_renderer.get_display_height();
     texture_params.dimensions = ri_texture_dimension::texture_2d;
-    texture_params.format = ri_texture_format::R16_FLOAT;
+    texture_params.format = ri_texture_format::R32_FLOAT;
     texture_params.is_render_target = true;
     texture_params.optimal_clear_color = color(1.0f, 0.0f, 0.0f, 0.0f);
     m_ssao_texture = render_interface.create_texture(texture_params, "ssao buffer");

@@ -33,6 +33,7 @@ public:
     virtual size_t get_height() override;
     virtual size_t get_depth() override;
     virtual size_t get_mip_levels() override;
+    virtual size_t get_dropped_mips() override;
     virtual ri_texture_dimension get_dimensions() const override;
     virtual ri_texture_format get_format() override;
     virtual size_t get_multisample_count() override;

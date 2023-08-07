@@ -961,6 +961,16 @@ bool renderer::should_draw_ambient_lighting()
     return m_draw_ambient_lighting;
 }
 
+const render_options& renderer::get_options()
+{
+    return m_options;
+}
+
+void renderer::set_options(const render_options& options)
+{
+    m_options = options;
+}
+
 void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index)
 {
     std::scoped_lock lock(m_fullscreen_buffers_mutex);

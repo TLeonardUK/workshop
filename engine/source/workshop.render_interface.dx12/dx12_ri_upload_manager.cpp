@@ -114,12 +114,21 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     size_t face_count = source.get_depth();
     size_t slice_count = source.get_depth();
     size_t mip_count = source.get_mip_levels();
+    size_t dropped_mip_count = source.get_dropped_mips();
     size_t array_count = 1;
     if (source.get_dimensions() == ri_texture_dimension::texture_cube)
     {
         face_count = 6;
         array_count = 6;
         slice_count = 1;
+    }
+
+    size_t undropped_width = source.get_width();
+    size_t undropped_height = source.get_height();
+    for (size_t i = 0; i < dropped_mip_count; i++)
+    {
+        undropped_width *= 2;
+        undropped_height *= 2;
     }
 
     size_t sub_resource_count = mip_count * array_count;
@@ -166,14 +175,19 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     size_t data_offset = 0;
     for (size_t face = 0; face < face_count; face++)
     {   
-        size_t mip_width  = source.get_width();
-        size_t mip_height = source.get_height();
+        size_t mip_width  = undropped_width;
+        size_t mip_height = undropped_height;
 
-        for (size_t mip = 0; mip < source.get_mip_levels(); mip++)
+        for (size_t mip = 0; mip < mip_count + dropped_mip_count; mip++)
         {
-            const size_t mip_index = mip + (face * mip_count);
             const size_t mip_size = (ri_bytes_per_texel(source.get_format()) * mip_width * mip_height) / block_size;
-            face_mip_data[mip_index] = source_data + data_offset;
+
+            // Skip over the dropped mips in the source data until we get to the ones we care about.
+            if (mip >= dropped_mip_count)
+            {
+                const size_t mip_index = (mip - dropped_mip_count) + (face * mip_count);
+                face_mip_data[mip_index] = source_data + data_offset;
+            }
 
             data_offset += mip_size;
 

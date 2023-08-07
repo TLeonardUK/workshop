@@ -207,6 +207,30 @@ result<void> dx12_ri_texture::create_resources()
 
 void dx12_ri_texture::calculate_formats()
 {
+    // If we've been provided raw data then calculate how many mips to drop if requested.
+    if (!m_create_params.data.empty() && m_create_params.drop_mips > 0)
+    {
+        // Try and drop as many mips as requested.
+        size_t to_drop = m_create_params.drop_mips;
+        m_create_params.drop_mips = 0;
+
+        while (m_create_params.width >= 4 &&
+            m_create_params.height >= 4 &&
+            m_create_params.mip_levels >= 2 &&
+            to_drop > 0)
+        {
+            m_create_params.width /= 2;
+            m_create_params.height /= 2;
+            m_create_params.drop_mips++;
+            m_create_params.mip_levels--;
+            to_drop--;
+        }
+    }
+    else
+    {
+        m_create_params.drop_mips = 0;
+    }
+
     size_t mip_levels = m_create_params.mip_levels;
 
     // Calculate formats appropate for this texture.
@@ -634,6 +658,11 @@ size_t dx12_ri_texture::get_depth()
 size_t dx12_ri_texture::get_mip_levels()
 {
     return m_create_params.mip_levels;
+}
+
+size_t dx12_ri_texture::get_dropped_mips()
+{
+    return m_create_params.drop_mips;
 }
 
 ri_texture_dimension dx12_ri_texture::get_dimensions() const

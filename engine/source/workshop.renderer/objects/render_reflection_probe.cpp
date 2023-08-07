@@ -15,13 +15,15 @@ namespace ws {
 render_reflection_probe::render_reflection_probe(render_object_id id, renderer& in_renderer)
     : render_object(id, &in_renderer, render_visibility_flags::physical)
 {
+    const render_options& options = in_renderer.get_options();
+
     m_param_block = m_renderer->get_param_block_manager().create_param_block("reflection_probe_state");
 
     ri_texture::create_params params;
-    params.width = render_system_reflection_probes::k_probe_cubemap_size;
-    params.height = render_system_reflection_probes::k_probe_cubemap_size;
+    params.width = options.reflection_probe_cubemap_size;
+    params.height = options.reflection_probe_cubemap_size;
     params.depth = 6;
-    params.mip_levels = render_system_reflection_probes::k_probe_cubemap_mips;
+    params.mip_levels = options.reflection_probe_cubemap_mip_count;
     params.dimensions = ri_texture_dimension::texture_cube;
     params.is_render_target = true;
     params.format = ri_texture_format::R16G16B16A16_FLOAT;
