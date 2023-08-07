@@ -38,7 +38,7 @@ result<void> render_system_ssao::create_resources()
     texture_params.width = m_renderer.get_display_width();
     texture_params.height = m_renderer.get_display_height();
     texture_params.dimensions = ri_texture_dimension::texture_2d;
-    texture_params.format = ri_texture_format::R32G32B32A32_FLOAT; // Return to R32_FLOAT after debugging.
+    texture_params.format = ri_texture_format::R16_FLOAT; 
     texture_params.is_render_target = true;
     texture_params.optimal_clear_color = color(1.0f, 0.0f, 0.0f, 0.0f);
     m_ssao_texture = render_interface.create_texture(texture_params, "ssao buffer");
@@ -76,7 +76,7 @@ result<void> render_system_ssao::create_resources()
     std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between [0.0, 1.0]
     std::default_random_engine generator;
     std::vector<vector3> ssaoKernel;
-    for (unsigned int i = 0; i < 64; ++i)
+    for (unsigned int i = 0; i < 16; ++i)
     {
         vector3 sample(
             randomFloats(generator) * 2.0 - 1.0,
@@ -86,7 +86,7 @@ result<void> render_system_ssao::create_resources()
         sample = sample.normalize();
         sample *= randomFloats(generator);
 
-        float scale = (float)i / 64.0;
+        float scale = (float)i / 16.0;
         scale = math::lerp(0.1f, 1.0f, scale * scale);
         sample *= scale;
 
@@ -142,3 +142,5 @@ void render_system_ssao::step(const render_world_state& state)
 }
 
 }; // namespace ws
+
+

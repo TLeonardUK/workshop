@@ -15,6 +15,7 @@ struct ssao_output
     float4 color : SV_Target0;
 };
 
+#if 0
 static const int k_kernel_size = 64;
 static const float3 k_kernel_samples[64] = {
     float3(0.0498, -0.0447, 0.0500),
@@ -82,16 +83,34 @@ static const float3 k_kernel_samples[64] = {
     float3(0.4173, -0.1548, 0.4625),
     float3(-0.4427, -0.6793, 0.1865)
 };
- 
+#else
+static const int k_kernel_size = 16;
+static const float3 k_kernel_samples[16] = {
+float3(0.0498, -0.0447, 0.0500),
+    float3(0.0151, 0.0171, 0.0023),
+    float3(-0.0460, -0.0219, 0.0361),
+    float3(0.0178, -0.1182, 0.0528),
+    float3(0.0845, 0.0903, 0.0870),
+    float3(0.1643, 0.0789, 0.0275),
+    float3(-0.0043, -0.1142, 0.1401),
+    float3(-0.0008, -0.0005, 0.0009),
+    float3(0.1426, -0.1329, 0.0723),
+    float3(0.1245, 0.1026, 0.1074),
+    float3(-0.1180, 0.0757, 0.0834),
+    float3(0.2312, -0.1535, 0.2262),
+    float3(0.2642, -0.1038, 0.3479),
+    float3(-0.0814, -0.0191, 0.2808),
+    float3(-0.1381, -0.1369, 0.1376),
+    float3(-0.2009, 0.1275, 0.1515)
+};
+#endif
+
 ssao_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment f = load_gbuffer(input.uv * uv_scale);
+    gbuffer_fragment f = read_gbuffer(input.uv * uv_scale);
 
-    float2 noise_scale = float2(view_dimensions.x / 32.0f, view_dimensions.y / 32.0f);
-
-    float3x3 world_to_view_rotation = extract_rotation_matrix(view_matrix);
-
-    float3 view_space_normal = normalize(mul(world_to_view_rotation, float4(f.world_normal, 0.0f))).xyz;
+    float2 noise_scale = float2(view_dimensions.x / 4.0f, view_dimensions.y / 4.0f);
+    float3 view_space_normal = normalize(mul(view_matrix, float4(f.world_normal, 0.0f))).xyz;
     float3 view_space_position = mul(view_matrix, float4(f.world_position, 1.0f)).xyz;
     float3 random_vector = noise_texture.Sample(noise_texture_sampler, input.uv * uv_scale * noise_scale).xyz;
 
@@ -101,57 +120,42 @@ ssao_output pshader(fullscreen_pinput input)
     float3x3 tbn = float3x3(view_space_tangent, view_space_bitangent, view_space_normal);
 
     const float bias = 0.025f;
-    const float radius = 1;// ssao_radius;
-    const float power = 3.0f;
+    const float radius = 50.0f;// ssao_radius;
+    const float power = 4.0f;
 
     float ao = 0.0f;
     for (int i = 0; i < k_kernel_size; i++)
     {
-        float3 sample_pos = mul(k_kernel_samples[i], tbn);
+        // Select a view space sample position from the random rotation kernel.
+        float3 sample_pos = mul(tbn, k_kernel_samples[i]);
         sample_pos = sample_pos * radius + view_space_position;
+         
+        // Calculate clip space location of the fragment to sample.
+        // Then convert it to a UV so we can actually sample it.
+        float4 clip_space = mul(projection_matrix, float4(sample_pos, 1.0));
+        clip_space.xy /= clip_space.w;
+        clip_space.x = clip_space.x * 0.5f + 0.5f;          // 0...1 range
+        clip_space.y = -clip_space.y * 0.5f + 0.5f;          // 0...1 range
+        float2 view_uv = clip_space.xy;
+
+        // If sampling point is offscreen discard this sample otherwise we get halos around
+        // the edge of the screen when getting close to objects.
+        float on_screen_multiplier = (view_uv.x >= 0.0f && view_uv.y >= 0.0f && view_uv.x < 1.0f && view_uv.y < 1.0f);
+
+        gbuffer_fragment sample_frag = read_gbuffer(view_uv);
+        float sample_depth = mul(view_matrix, float4(sample_frag.world_position, 1.0f)).z;
         
         float3 sample_dir = normalize(sample_pos - view_space_position);
-
         float n_dot_s = max(dot(view_space_normal, sample_dir), 0.0f);
 
-        float4 offset = mul(float4(sample_pos, 1.0), projection_matrix);
-        offset.xy /= offset.w;
-        offset.x = offset.x * 0.5f + 0.5f;          // 0...1 range
-        offset.y = -offset.y * 0.5f + 0.5f;          // 0...1 range
-
-        gbuffer_fragment sample_frag = load_gbuffer(offset.xy * uv_scale);
-        float sample_depth = mul(view_matrix, float4(sample_frag.world_position, 1.0f)).z;
-        
         float range_check = smoothstep(0.0f, 1.0f, radius / abs(view_space_position.z - sample_depth));
-        ao += range_check * step(sample_depth, sample_pos.z) * n_dot_s;
-
-
-
-/*        float4 offset = float4(sample_pos, 1.0f);
-        offset = mul(projection_matrix, offset);        // view->clip
-        offset.xyz /= offset.w;                         // perspective divide
-        offset.xyz = offset.xyz * 0.5f + 0.5f;          // 0...1 range
-        offset.y = 1.0f - offset.y;                     // dx uses an inverted y.
-        
-        gbuffer_fragment sample_frag = load_gbuffer(offset.xy * uv_scale);
-        float sample_depth = mul(view_matrix, float4(sample_frag.world_position, 1.0f)).z;
-
-        float range_check = smoothstep(0.0f, 1.0f, radius / abs(view_space_position.z - sample_depth));
-        
-        ao += (sample_pos.z > sample_depth ? 1.0f : 0.0f);
-*/
-
-        //ao += (sample_pos.z >= sample_depth + bias ? 1.0f : 0.0f) * range_check;
-        //ao += range_check;
-        //ao += sample_pos.z*0.001f;
+        ao += range_check * (sample_depth + bias > sample_pos.z ? 0.0f : 1.0f) * n_dot_s * on_screen_multiplier;
     }
 
     ao = 1.0f - (ao / k_kernel_size);
-//    ao = saturate(pow(ao, power));
+    ao = saturate(pow(ao, power));
 
     ssao_output output;
-//    output.color = ao;
-    float3 adjsuted_normal =  mul(tbn, float3(0.0f, 0.0f, 1.0f));
-output.color = float4(view_space_position, 0.0f);
+    output.color = ao;
     return output;
 }

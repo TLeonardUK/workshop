@@ -91,7 +91,7 @@ output_targets:
     depth: D32_FLOAT
   # SSAO buffer.
   ssao_buffer:
-    color: [ R32G32B32A32_FLOAT ] # Only needs 1 channel, 4 for debugging.
+    color: [ R16_FLOAT ] # Only needs 1 channel, 4 for debugging.
 
 param_blocks:
   # Contains all the parameters needed to read/write from the gbuffer.
