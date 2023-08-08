@@ -17,6 +17,7 @@ The renderer uses a modern DX12/Vulkan deferred bindless architecture and will, 
 - Specular reflection probes
 - Automatic exposure
 - Blended weighted order independent transparency
+  Screen space ambient occlusion
 - Standard shadow mapping features
 - Standard light features
 
