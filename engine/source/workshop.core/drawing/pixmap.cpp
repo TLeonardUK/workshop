@@ -694,7 +694,7 @@ std::unique_ptr<pixmap> pixmap::resize(size_t width, size_t height, pixmap_filte
     {
         for (size_t dst_x = 0; dst_x < width; dst_x++)
         {
-            color filtered_color = sample(dst_x / scale_factor_x, dst_y / scale_factor_y, filter);
+            color filtered_color = sample((dst_x / scale_factor_x) + scale_factor_x, (dst_y / scale_factor_y) + scale_factor_y, filter);
             new_pixmap->set(dst_x, dst_y, filtered_color);
         }
     }
