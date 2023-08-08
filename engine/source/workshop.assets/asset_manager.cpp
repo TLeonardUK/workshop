@@ -9,6 +9,7 @@
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/async/async.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 #include <algorithm>
 #include <thread>
@@ -780,6 +781,8 @@ void asset_manager::do_load(asset_state* state)
         // Load the resulting compiled asset.
         if (!compiled_path.empty())
         {
+            memory_scope scope(memory_type::asset, state->path);
+
             state->instance = loader->load(compiled_path.c_str());
 
             if (state->instance)

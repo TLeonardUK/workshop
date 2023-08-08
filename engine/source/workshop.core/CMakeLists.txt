@@ -117,6 +117,9 @@ SET(SOURCES
     "geometry/geometry_assimp_loader.h"
     "geometry/geometry_assimp_loader.cpp"
     
+    "memory/memory_tracker.h"
+    "memory/memory_tracker.cpp"
+    
     "statistics/statistics_manager.h"
     "statistics/statistics_manager.cpp"
 

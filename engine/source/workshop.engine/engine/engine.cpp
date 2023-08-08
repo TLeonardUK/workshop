@@ -85,6 +85,11 @@ void engine::step()
 void engine::register_init(init_list& list)
 {
     list.add_step(
+        "Memory Tracker",
+        [this, &list]() -> result<void> { return create_memory_tracker(list); },
+        [this, &list]() -> result<void> { return destroy_memory_tracker(); }
+    );
+    list.add_step(
         "Task Scheduler",
         [this, &list]() -> result<void> { return create_task_scheduler(list); },
         [this, &list]() -> result<void> { return destroy_task_scheduler(); }
@@ -246,6 +251,20 @@ void engine::set_window_mode(const std::string& title, size_t width, size_t heig
         m_window->set_mode(mode);
         m_window->apply_changes();
     }
+}
+
+result<void> engine::create_memory_tracker(init_list& list)
+{
+    m_memory_tracker = std::make_unique<memory_tracker>();
+
+    return true;
+}
+
+result<void> engine::destroy_memory_tracker()
+{
+    m_memory_tracker = nullptr;
+
+    return true;
 }
 
 result<void> engine::create_task_scheduler(init_list& list)

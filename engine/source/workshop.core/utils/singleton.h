@@ -38,6 +38,11 @@ public:
         return *g_instance;
     }
 
+    static super_class* try_get()
+    {
+        return g_instance;
+    }
+
 protected:
 
    inline static super_class* g_instance = nullptr;

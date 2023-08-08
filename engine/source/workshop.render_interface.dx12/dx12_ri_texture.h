@@ -7,6 +7,7 @@
 #include "workshop.render_interface/ri_texture.h"
 #include "workshop.render_interface/ri_command_list.h"
 #include "workshop.core/utils/result.h"
+#include "workshop.core/memory/memory_tracker.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
 #include <array>
@@ -63,6 +64,8 @@ private:
     dx12_render_interface& m_renderer;
     std::string m_debug_name;
     ri_texture::create_params m_create_params;
+
+    std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
 

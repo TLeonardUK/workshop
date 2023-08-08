@@ -15,6 +15,7 @@
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/utils/event.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 #include <vector>
 #include <memory>
@@ -31,6 +32,7 @@ class virtual_file_system;
 class statistics_manager;
 class task_scheduler;
 class statistics_channel;
+class memory_tracker;
 
 // ================================================================================================
 //  This is the core engine class, its responsible for owning all the individual pieces (such as
@@ -115,6 +117,9 @@ public:
 
 private:
 
+    result<void> create_memory_tracker(init_list& list);
+    result<void> destroy_memory_tracker();
+
     result<void> create_task_scheduler(init_list& list);
     result<void> destroy_task_scheduler();
 
@@ -160,6 +165,7 @@ protected:
     std::unique_ptr<input_interface> m_input_interface;
     std::unique_ptr<platform_interface> m_platform_interface;
 
+    std::unique_ptr<memory_tracker> m_memory_tracker;
     std::unique_ptr<task_scheduler> m_task_scheduler;
     std::unique_ptr<renderer> m_renderer;
     std::unique_ptr<window> m_window;

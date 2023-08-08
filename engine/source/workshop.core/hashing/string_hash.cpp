@@ -8,6 +8,8 @@
 
 namespace ws {
 
+string_hash string_hash::empty = "";
+
 string_hash::string_hash(const char* value)
 {
     m_index = intern(value);
@@ -69,6 +71,14 @@ const char* string_hash::get_string()
     }
     
     return "";
+}
+
+size_t string_hash::get_hash() const
+{
+    size_t h = 0;
+    hash_combine(h, m_index.bucket);
+    hash_combine(h, m_index.offset);
+    return h;
 }
 
 }; // namespace workshop

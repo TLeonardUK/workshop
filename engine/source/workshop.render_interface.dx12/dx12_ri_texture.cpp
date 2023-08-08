@@ -8,6 +8,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_upload_manager.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 
@@ -81,6 +82,8 @@ dx12_ri_texture::~dx12_ri_texture()
 
 result<void> dx12_ri_texture::create_resources()
 {
+    memory_scope mem_scope(memory_type::rendering__vram__texture, string_hash::empty, string_hash(m_debug_name));
+
     D3D12_RESOURCE_DESC desc;
     desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
     desc.Width = static_cast<UINT64>(m_create_params.width);
@@ -182,13 +185,15 @@ result<void> dx12_ri_texture::create_resources()
         IID_PPV_ARGS(&m_handle)
     );
 
-    //db_log(renderer, "%zi MB : [TEXTURE] %s", m_create_params.data.size() / (1024 * 1024), m_debug_name.c_str());
-
     if (FAILED(hr))
     {
         db_error(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
         return false;
     }        
+
+    // Record the memory allocation.
+    D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
+    m_memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
     // Upload the linear data if any has been provided.
     if (!m_create_params.data.empty())

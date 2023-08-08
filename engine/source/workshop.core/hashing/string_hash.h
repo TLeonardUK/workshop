@@ -17,6 +17,8 @@ namespace ws {
 class string_hash
 {
 public:
+    static string_hash empty;
+
     string_hash() = default;
     string_hash(const string_hash& hash) = default;
     string_hash(string_hash&& hash) = default;
@@ -31,6 +33,8 @@ public:
     // Slow, use with care. Hashing should generally
     // be one way outside of debugging.
     const char* get_string();
+
+    size_t get_hash() const;
 
 private:
     struct db_bucket
@@ -57,3 +61,15 @@ private:
 };
 
 }; // namespace workshop
+
+// ================================================================================================
+// Specialization of std::hash for string_id's
+// ================================================================================================
+template<>
+struct std::hash<ws::string_hash>
+{
+    std::size_t operator()(const ws::string_hash& k) const
+    {
+        return k.get_hash();
+    }
+};
