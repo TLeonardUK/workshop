@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 10;
+constexpr size_t k_asset_compiled_version = 13;
 
 };
 
@@ -495,7 +495,7 @@ bool texture_loader::generate_mipchain(const char* path, texture& asset)
 
             face.mips.emplace_back(std::move(mip));
 #else
-            face.mips.emplace_back(last_mip.resize(mip_width, mip_height, pixmap_filter::bilinear));
+            face.mips.emplace_back(last_mip.box_resize(mip_width, mip_height));
 #endif
 
             mip_index++;

@@ -120,15 +120,13 @@ ssao_output pshader(fullscreen_pinput input)
     float3x3 tbn = float3x3(view_space_tangent, view_space_bitangent, view_space_normal);
 
     const float bias = 0.025f;
-    const float radius = 50.0f;// ssao_radius;
-    const float power = 4.0f;
 
     float ao = 0.0f;
     for (int i = 0; i < k_kernel_size; i++)
     {
         // Select a view space sample position from the random rotation kernel.
         float3 sample_pos = mul(tbn, k_kernel_samples[i]);
-        sample_pos = sample_pos * radius + view_space_position;
+        sample_pos = sample_pos * ssao_radius + view_space_position;
          
         // Calculate clip space location of the fragment to sample.
         // Then convert it to a UV so we can actually sample it.
@@ -148,12 +146,12 @@ ssao_output pshader(fullscreen_pinput input)
         float3 sample_dir = normalize(sample_pos - view_space_position);
         float n_dot_s = max(dot(view_space_normal, sample_dir), 0.0f);
 
-        float range_check = smoothstep(0.0f, 1.0f, radius / abs(view_space_position.z - sample_depth));
+        float range_check = smoothstep(0.0f, 1.0f, ssao_radius / abs(view_space_position.z - sample_depth));
         ao += range_check * (sample_depth + bias > sample_pos.z ? 0.0f : 1.0f) * n_dot_s * on_screen_multiplier;
     }
 
     ao = 1.0f - (ao / k_kernel_size);
-    ao = saturate(pow(ao, power));
+    ao = saturate(pow(ao, ssao_power));
 
     ssao_output output;
     output.color = ao;

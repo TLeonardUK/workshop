@@ -42,6 +42,7 @@ result<void> render_system_ssao::create_resources()
     texture_params.is_render_target = true;
     texture_params.optimal_clear_color = color(1.0f, 0.0f, 0.0f, 0.0f);
     m_ssao_texture = render_interface.create_texture(texture_params, "ssao buffer");
+    m_ssao_blur_texture = render_interface.create_texture(texture_params, "ssao blur buffer");
 
     // Generate a random vector texture.
     std::uniform_real_distribution<float> random_floats(0.0, 1.0);
@@ -117,6 +118,9 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     const render_options& options = m_renderer.get_options();
 
     ri_param_block* ssao_parameters = view.get_resource_cache().find_or_create_param_block(this, "ssao_parameters");
+    ri_param_block* h_blur_params = view.get_resource_cache().find_or_create_param_block(this, "blur_params");
+    ri_param_block* v_blur_params = view.get_resource_cache().find_or_create_param_block(this + 1, "blur_params");
+
     ssao_parameters->set("uv_scale", vector2(
         (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
         (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
@@ -124,6 +128,7 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     ssao_parameters->set("noise_texture", *m_noise_texture);
     ssao_parameters->set("noise_texture_sampler", *m_noise_texture_sampler);
     ssao_parameters->set("ssao_radius", options.ssao_sample_radius);
+    ssao_parameters->set("ssao_power", options.ssao_intensity_power);
     
     // Composite the transparent geometry onto the light buffer.
     std::unique_ptr<render_pass_fullscreen> resolve_pass = std::make_unique<render_pass_fullscreen>();
@@ -135,6 +140,42 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     resolve_pass->param_blocks.push_back(view.get_view_info_param_block());
     resolve_pass->param_blocks.push_back(ssao_parameters);
     graph.add_node(std::move(resolve_pass));
+
+    // Do horizontal blur.
+    h_blur_params->set("input_texture", *m_ssao_texture.get());
+    h_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    h_blur_params->set("input_texture_size", vector2i(m_ssao_texture->get_width(), m_ssao_texture->get_height()));
+
+    std::unique_ptr<render_pass_fullscreen> h_blur_pass = std::make_unique<render_pass_fullscreen>();
+    h_blur_pass->name = "ssao horizontal blur";
+    h_blur_pass->system = this;
+    h_blur_pass->technique = m_renderer.get_effect_manager().get_technique("blur", {
+        { "direction", "x" },
+        { "format", "R16_FLOAT" },
+        { "radius", "10" }
+    });
+    h_blur_pass->output.color_targets.push_back(m_ssao_blur_texture.get());
+    h_blur_pass->param_blocks.push_back(view.get_view_info_param_block());
+    h_blur_pass->param_blocks.push_back(h_blur_params);
+    graph.add_node(std::move(h_blur_pass));
+
+    // Do vertical blur.
+    v_blur_params->set("input_texture", *m_ssao_blur_texture.get());
+    v_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    v_blur_params->set("input_texture_size", vector2i(m_ssao_blur_texture->get_width(), m_ssao_blur_texture->get_height()));
+
+    std::unique_ptr<render_pass_fullscreen> v_blur_pass = std::make_unique<render_pass_fullscreen>();
+    v_blur_pass->name = "ssao vertical blur";
+    v_blur_pass->system = this;
+    v_blur_pass->technique = m_renderer.get_effect_manager().get_technique("blur", {
+        { "direction", "y" },
+        { "format", "R16_FLOAT" },
+        { "radius", "10" }
+        });
+    v_blur_pass->output.color_targets.push_back(m_ssao_texture.get());
+    v_blur_pass->param_blocks.push_back(view.get_view_info_param_block());
+    v_blur_pass->param_blocks.push_back(v_blur_params);
+    graph.add_node(std::move(v_blur_pass));
 }
 
 void render_system_ssao::step(const render_world_state& state)

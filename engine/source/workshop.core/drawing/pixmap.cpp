@@ -702,6 +702,48 @@ std::unique_ptr<pixmap> pixmap::resize(size_t width, size_t height, pixmap_filte
     return new_pixmap;
 }
 
+std::unique_ptr<pixmap> pixmap::box_resize(size_t width, size_t height)
+{
+    db_assert_message(m_format_metrics.is_mutable, "Attempting to resize a non-mutable image format, this is not supported.");
+    db_assert_message((m_width % width) == 0 && (m_height % height) == 0 && width < m_width && height < m_height, "Box resize is only supported for shrink resizes to multiple of the original size (its meant for mipmapping).");
+
+    std::unique_ptr<pixmap> new_pixmap = std::make_unique<pixmap>(width, height, m_format);
+
+    size_t scale_x = (m_width / width);
+    size_t scale_y = (m_height / height);
+
+    for (size_t dst_y = 0; dst_y < height; dst_y++)
+    {
+        for (size_t dst_x = 0; dst_x < width; dst_x++)
+        {
+            color accumulated(0.0f, 0.0f, 0.0f, 0.0f);
+            float sample_count = 0.0f;
+
+            for (size_t src_y = 0; src_y < scale_y; src_y++)
+            {
+                for (size_t src_x = 0; src_x < scale_x; src_x++)
+                {
+                    color sample = get((dst_x * scale_x) + src_x, (dst_y * scale_y) + src_y);
+                    accumulated.r += sample.r;
+                    accumulated.g += sample.g;
+                    accumulated.b += sample.b;
+                    accumulated.a += sample.a;
+                    sample_count += 1.0f;
+                }
+            }
+
+            accumulated.r /= sample_count;
+            accumulated.g /= sample_count;
+            accumulated.b /= sample_count;
+            accumulated.a /= sample_count;
+
+            new_pixmap->set(dst_x, dst_y, accumulated);
+        }
+    }
+
+    return new_pixmap;
+}
+
 std::unique_ptr<pixmap> pixmap::swizzle(const std::array<size_t, 4>& pattern)
 {
     std::unique_ptr<pixmap> new_pixmap = std::make_unique<pixmap>(m_width, m_height, m_format);

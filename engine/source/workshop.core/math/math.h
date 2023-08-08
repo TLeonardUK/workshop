@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include <cmath>
+#include <algorithm>
 
 namespace ws::math {
 
@@ -95,6 +96,12 @@ template <typename T>
 inline T round(T a)
 {
 	return static_cast<T>(::round(a));
+}
+
+template <typename T>
+inline T saturate(T a)
+{
+	return static_cast<T>(std::clamp(a, 0.0f, 1.0f));
 }
 
 // Rounds up a value to a given multiple.

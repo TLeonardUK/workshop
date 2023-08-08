@@ -140,7 +140,7 @@ struct pixmap_format_metrics
 enum class pixmap_filter
 {
     nearest_neighbour,
-    bilinear,
+    bilinear
 };
 
 // Gets the metrics for a given pixmap format.
@@ -209,6 +209,10 @@ public:
 
     // Creates a new pixmap that is resized to the given size.
     std::unique_ptr<pixmap> resize(size_t width, size_t height, pixmap_filter filter);
+
+    // Creates a new pixmap that is resized to the given size. This uses box resizing and is only supported for 
+    // output dimensions that are smaller than the starting dimension and divisable by it.
+    std::unique_ptr<pixmap> box_resize(size_t width, size_t height);
 
     // Creates a new pixmap that contains the swizzle version of this pixmap
     std::unique_ptr<pixmap> swizzle(const std::array<size_t, 4>& pattern);
