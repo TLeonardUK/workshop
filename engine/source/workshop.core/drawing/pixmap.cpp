@@ -12,6 +12,7 @@
 #include "thirdparty/bc7enc/rgbcx.h"
 #include "thirdparty/bc7enc/bc7enc.h"
 #include "thirdparty/bc7enc/bc7decomp.h"
+#include "thirdparty/compressonator/cmp_core/source/cmp_core.h"
 
 #include <vector>
 #include <filesystem>
@@ -70,9 +71,12 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC1,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC3,
-        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },        // BC4,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC4,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC5,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC7,
+        
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC6H_SF16,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC6H_UF16,
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
@@ -588,6 +592,42 @@ std::unique_ptr<pixmap> pixmap::decode_bc1(pixmap_format new_format)
     });
 }
 
+std::unique_ptr<pixmap> pixmap::encode_bc6h_sf16(pixmap_format new_format)
+{
+    void* options = nullptr;
+    CreateOptionsBC6(&options);
+    SetQualityBC6(&options, 1.0f);
+    SetSignedBC6(&options, true);
+
+    return block_encode(new_format, [&options](uint8_t* output, uint8_t* pixels_rgba) {
+
+        // TODO
+        //CompressBlockBC6&(, , &options);
+
+    });
+}
+
+std::unique_ptr<pixmap> pixmap::decode_bc6h_sf16(pixmap_format new_format)
+{
+    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
+        // TODO
+    });
+}
+
+std::unique_ptr<pixmap> pixmap::encode_bc6h_uf16(pixmap_format new_format)
+{
+    return block_encode(new_format, [](uint8_t* output, uint8_t* pixels_rgba) {
+        // TODO
+    });
+}
+
+std::unique_ptr<pixmap> pixmap::decode_bc6h_uf16(pixmap_format new_format)
+{
+    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
+        // TODO
+    });
+}
+
 std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_quality)
 {
     std::unique_ptr<pixmap> result = nullptr;
@@ -620,6 +660,16 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
             result = encode_bc7(new_format, high_quality);
             break;
         }
+        case pixmap_format::BC6H_SF16:
+        {
+            result = encode_bc6h_sf16(new_format);
+            break;
+        }
+        case pixmap_format::BC6H_UF16:
+        {
+            result = encode_bc6h_uf16(new_format);
+            break;
+        }
 
         // Conversion to a linear uncompressed formats.
         default:
@@ -650,6 +700,16 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
                 case pixmap_format::BC7:
                 {
                     result = decode_bc7(new_format);
+                    break;
+                }
+                case pixmap_format::BC6H_SF16:
+                {
+                    result = decode_bc6h_sf16(new_format);
+                    break;
+                }
+                case pixmap_format::BC6H_UF16:
+                {
+                    result = decode_bc6h_uf16(new_format);
                     break;
                 }
 

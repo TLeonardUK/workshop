@@ -6,6 +6,8 @@
 
 #include "workshop.core/utils/result.h"
 #include "workshop.core/containers/memory_heap.h"
+#include "workshop.core/memory/memory_tracker.h"
+
 
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
@@ -59,6 +61,8 @@ private:
     dx12_render_interface& m_renderer;
     D3D12_DESCRIPTOR_HEAP_TYPE m_heap_type;
     size_t m_count;
+
+    std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
 
     UINT m_descriptor_increment = 0;
 

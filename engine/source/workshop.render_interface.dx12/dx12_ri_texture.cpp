@@ -82,7 +82,20 @@ dx12_ri_texture::~dx12_ri_texture()
 
 result<void> dx12_ri_texture::create_resources()
 {
-    memory_scope mem_scope(memory_type::rendering__vram__texture, string_hash::empty, string_hash(m_debug_name));
+    memory_type mem_type = memory_type::rendering__vram__texture;
+    if (m_create_params.is_render_target)
+    {
+        if (ri_is_format_depth_target(m_create_params.format))
+        {
+            mem_type = memory_type::rendering__vram__render_target_depth;
+        }
+        else
+        {
+            mem_type = memory_type::rendering__vram__render_target_color;
+        }
+    }
+
+    memory_scope mem_scope(mem_type, string_hash::empty, string_hash(m_debug_name));
 
     D3D12_RESOURCE_DESC desc;
     desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
@@ -194,6 +207,13 @@ result<void> dx12_ri_texture::create_resources()
     // Record the memory allocation.
     D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
     m_memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
+
+#if 0
+    if (mem_type == memory_type::rendering__vram__texture)
+    {
+        db_log(renderer, "[TEXTURE] %s [%zi x %zi] %zi kb",m_debug_name.c_str(), m_create_params.width, m_create_params.height, info.SizeInBytes / 1024); 
+    }
+#endif
 
     // Upload the linear data if any has been provided.
     if (!m_create_params.data.empty())

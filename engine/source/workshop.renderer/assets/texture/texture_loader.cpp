@@ -326,12 +326,12 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
 
         // If more faces than 1 or format is not a standard 32bit value, then use
         // the pixmaps format directly.
-        if (asset.faces.size() != 1 || face.get_format() != pixmap_format::R8G8B8A8)
-        {
-            asset.format = face.get_format();
-        }
-        else
-        {
+        //if (asset.faces.size() != 1 || face.get_format() != pixmap_format::R8G8B8A8)
+        //{
+        //    asset.format = face.get_format();
+        //}
+        //else
+        //{
             // Fallback to the pixmaps format if we cannot infer anything useful.
             asset.format = face.get_format();
 
@@ -345,8 +345,13 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
                     bool b_constant = face.is_channel_constant(2, { 0, 0, 0, 255 });
                     bool a_constant = face.is_channel_constant(3, { 0, 0, 0, 255 });
 
+                    // If its a 3 byte HDR image, BC6. 
+                    if (a_constant && asset.format == pixmap_format::R32G32B32A32_FLOAT)
+                    {
+                        asset.format = pixmap_format::BC6H_SF16;
+                    }
                     // If all channels but R are zero, BC4
-                    if (g_constant && b_constant && a_constant)
+                    else if (g_constant && b_constant && a_constant)
                     {
                         asset.format = pixmap_format::BC4;
                     }
@@ -378,7 +383,7 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
                     asset.format = pixmap_format::BC4;
                 }
             }
-        }
+        //}
     }
 
     if (asset.depth != 1)

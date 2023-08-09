@@ -6,6 +6,7 @@
 
 #include "workshop.core/utils/result.h"
 #include "workshop.core/containers/memory_heap.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface/ri_types.h"
@@ -55,6 +56,8 @@ private:
         size_t size = 0;
 
         size_t last_allocation_frame = 0;
+
+        std::unique_ptr<memory_allocation> memory_allocation_info;
     };
 
     struct upload_state

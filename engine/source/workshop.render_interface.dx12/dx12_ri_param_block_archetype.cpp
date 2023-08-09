@@ -124,6 +124,8 @@ void dx12_ri_param_block_archetype::free(allocation alloc)
 
 void dx12_ri_param_block_archetype::add_page()
 {
+    memory_scope mem_scope(memory_type::rendering__vram__param_blocks, m_debug_name);
+
     std::scoped_lock lock(m_allocation_mutex);
 
     alloc_page& instance = m_pages.emplace_back();
@@ -160,6 +162,10 @@ void dx12_ri_param_block_archetype::add_page()
     {
         db_fatal(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
     }
+
+    // Record the memory allocation.
+    D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
+    instance.memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
     // Set a debug name.
     std::string debug_name = string_format("Param Block Page [%s]", m_debug_name.c_str());

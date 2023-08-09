@@ -63,8 +63,10 @@ enum class pixmap_format
     BC3,
     BC4,
     BC5,
-    //BC6, // TODO: When we need to support HDR textures.
     BC7,
+
+    BC6H_SF16,
+    BC6H_UF16,
 
     COUNT
 };
@@ -112,6 +114,9 @@ inline static const char* pixmap_format_strings[static_cast<int>(pixmap_format::
     "BC4",
     "BC5",
     "BC7",
+
+    "BC6H_SF16",
+    "BC6H_UF16"
 };
 
 DEFINE_ENUM_TO_STRING(pixmap_format, pixmap_format_strings)
@@ -256,6 +261,12 @@ private:
 
     std::unique_ptr<pixmap> encode_bc1(pixmap_format new_format);
     std::unique_ptr<pixmap> decode_bc1(pixmap_format new_format);
+
+    std::unique_ptr<pixmap> encode_bc6h_sf16(pixmap_format new_format);
+    std::unique_ptr<pixmap> decode_bc6h_sf16(pixmap_format new_format);
+
+    std::unique_ptr<pixmap> encode_bc6h_uf16(pixmap_format new_format);
+    std::unique_ptr<pixmap> decode_bc6h_uf16(pixmap_format new_format);
 
 private:
 

@@ -58,8 +58,10 @@ void render_system_shadows::step(const render_world_state& state)
         {
             shadow_info& info = *iter;
 
+            render_view* view = scene_manager.resolve_id_typed<render_view>(info.view_id);
+
             // If the combination of light and view is no longer valid we can nuke the shadow data.
-            if ((info.view_id > 0 && scene_manager.resolve_id_typed<render_view>(info.view_id) == nullptr) ||
+            if ((info.view_id > 0 && view == nullptr) ||
                 (info.light_id > 0 && scene_manager.resolve_id_typed<render_light>(info.light_id) == nullptr))
             {
                 // Remove any views these shadows created.
@@ -72,6 +74,17 @@ void render_system_shadows::step(const render_world_state& state)
             }
             else
             {
+                // Clean up any shadow maps of inactive views, they no longer require their maps to be cached so
+                // we can purge them to keep memory usage down.
+                if (view && !view->get_active())
+                {
+                    for (cascade_info& cascade : info.cascades)
+                    {
+                        cascade.shadow_map = nullptr;
+                        cascade.shadow_map_view.texture = nullptr;
+                    }
+                }
+
                 iter++;
             }
         }
@@ -83,6 +96,11 @@ void render_system_shadows::step(const render_world_state& state)
 
         for (render_view* view : views)
         {
+            if (!view->get_active())
+            {
+                continue;
+            }
+
             if ((view->get_flags() & render_view_flags::normal) == (render_view_flags)0)
             {
                 continue;
@@ -261,13 +279,6 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         cascade_info& cascade = info.cascades[i];
 
         size_t cascade_map_size = map_size;
-
-        // Last cascade covers a lot larger area so we double the size of the shadow 
-        // map to try and keep detail as much as possible.
-        if (i == cascade_count - 1)
-        {
-            cascade_map_size *= 2;
-        }
 
         // Create shadow map if required.
         if (cascade.shadow_map == nullptr || cascade.map_size != cascade_map_size)

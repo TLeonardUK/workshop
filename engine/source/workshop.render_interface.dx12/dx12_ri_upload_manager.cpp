@@ -40,6 +40,8 @@ dx12_ri_upload_manager::~dx12_ri_upload_manager()
 
 void dx12_ri_upload_manager::allocate_new_heap(size_t minimum_size)
 {
+    memory_scope mem_scope(memory_type::rendering__vram__upload_heap);
+
     std::unique_ptr<heap_state> state = std::make_unique<heap_state>();
     state->size = math::round_up_multiple(minimum_size, k_heap_granularity);
 
@@ -75,6 +77,10 @@ void dx12_ri_upload_manager::allocate_new_heap(size_t minimum_size)
     {
         db_fatal(render_interface, "CreateCommittedResource failed with error 0x%08x when creating upload heap.", hr);
     }
+
+    // Record the memory allocation.
+    D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
+    state->memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
     D3D12_RANGE range;
     range.Begin = 0;

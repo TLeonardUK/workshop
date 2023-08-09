@@ -66,6 +66,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12QueryHeap> m_query_heap = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_read_back_buffer = nullptr;
 
+    std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
+
     size_t m_resolve_frame_index = 0;
 
     UINT64 m_timestamp_frequency = 0;

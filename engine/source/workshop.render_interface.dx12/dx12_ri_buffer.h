@@ -50,6 +50,8 @@ private:
     std::string m_debug_name;
     ri_buffer::create_params m_create_params;
 
+    std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
+
     ri_resource_state m_common_state;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;

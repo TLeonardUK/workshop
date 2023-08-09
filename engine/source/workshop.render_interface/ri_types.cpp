@@ -345,6 +345,9 @@ ri_texture_format ri_convert_pixmap_format(pixmap_format value)
         ri_texture_format::BC4,                 // BC4,
         ri_texture_format::BC5,                 // BC5,
         ri_texture_format::BC7,                 // BC7,
+
+        ri_texture_format::BC6H_SF16,           // BC6_SF16,
+        ri_texture_format::BC6H_UF16            // BC6_UF16,
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

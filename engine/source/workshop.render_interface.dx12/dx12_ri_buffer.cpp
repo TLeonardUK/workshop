@@ -8,6 +8,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_upload_manager.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 
@@ -36,6 +37,29 @@ dx12_ri_buffer::~dx12_ri_buffer()
 
 result<void> dx12_ri_buffer::create_resources()
 {
+    memory_type mem_type;
+    switch (m_create_params.usage)
+    {
+    case ri_buffer_usage::index_buffer:
+        {
+            mem_type = memory_type::rendering__vram__index_buffer;
+            break;
+        }
+    case ri_buffer_usage::vertex_buffer:
+        {
+            mem_type = memory_type::rendering__vram__vertex_buffer;
+            break;
+        }
+    case ri_buffer_usage::generic:
+    default:
+        {
+            mem_type = memory_type::rendering__vram__generic_buffer;
+            break;
+        }
+    }
+
+    memory_scope mem_scope(mem_type, string_hash::empty, string_hash(m_debug_name));
+
     D3D12_HEAP_PROPERTIES heap_properties;
     heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
     heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -90,6 +114,10 @@ result<void> dx12_ri_buffer::create_resources()
         db_error(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
         return false;
     }        
+
+    // Record the memory allocation.
+    D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
+    m_memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
     // Set a debug name.
     m_handle->SetName(widen_string(m_debug_name).c_str());

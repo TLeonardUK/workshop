@@ -145,5 +145,6 @@ target_link_libraries(${PROJECT_NAME}
     zlib
     dds-ktx
     stb
+    CMP_Core
     ${PLATFORM_LIB}
 )

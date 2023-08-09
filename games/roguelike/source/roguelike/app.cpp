@@ -65,7 +65,7 @@ ws::result<void> rl_game_app::start()
     cmd_queue.set_static_mesh_model(object_id, ass_manager.request_asset<model>("data:models/skyboxs/skybox_3.yaml", 0));
     cmd_queue.set_object_transform(object_id, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
 
-#if 0
+#if 1
     m_view_position = vector3(150.0f, 270.0f, -100.0f);
     m_view_rotation = quat::angle_axis(0.0f, vector3::up);
 
@@ -228,6 +228,21 @@ void rl_game_app::step(const frame_time& time)
         vector3 location = vector3::zero * transform;
 
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+    }
+
+    static size_t i = 0;
+    if (((i++) % 50) == 0)
+    {
+        memory_tracker& tracker = memory_tracker::get();
+        for (size_t i = 0; i < (int)memory_type::COUNT; i++)
+        {
+            memory_type type = (memory_type)i;
+            size_t used = tracker.get_memory_used_bytes(type);
+            size_t count = tracker.get_memory_allocation_count(type);
+            std::string name = memory_type_names[i];
+
+            db_log(core, "name=%s used=%zi mb count=%zi", name.c_str(), used / (1024 * 1024), count);
+        }
     }
 
     /*

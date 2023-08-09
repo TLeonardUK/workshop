@@ -80,7 +80,10 @@ public:
 
 	// Maximum number of shadows cascades that can be updated per frame. The cascades chosen for update
 	// are always the ones that have been waiting the longest.
-	size_t shadows_max_cascade_updates_per_frame = 9;
+    //
+    // 3 for main view plus (6*3) for probe captures, bleh.
+    // we need to figure out a better way of handling this for probe captures (one face rendered per frame?)
+	size_t shadows_max_cascade_updates_per_frame = 32; 
 
 	// ================================================================================================
 	//  Eye Adaption

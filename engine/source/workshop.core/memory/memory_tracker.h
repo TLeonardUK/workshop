@@ -22,6 +22,14 @@ enum class memory_type
 	COUNT
 };
 
+// Describes a high level grouping of different types of allocations.
+static inline const char* memory_type_names[] =
+{
+#define MEMORY_TYPE(name, path) path,
+#include "workshop.core/memory/memory_type.inc"
+#undef MEMORY_TYPE
+};
+
 // Acts as an RAII container for a recorded allocations. When disposed destructed
 // this automatically decreases the count.
 class memory_allocation

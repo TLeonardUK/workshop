@@ -24,6 +24,8 @@ dx12_ri_descriptor_heap::~dx12_ri_descriptor_heap()
 
 result<void> dx12_ri_descriptor_heap::create_resources()
 {
+    memory_scope mem_scope(memory_type::rendering__vram__descriptor_heap);
+
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.NumDescriptors = static_cast<UINT>(m_count);
     desc.Type = m_heap_type;
@@ -41,6 +43,9 @@ result<void> dx12_ri_descriptor_heap::create_resources()
         db_error(render_interface, "CreateDescriptorHeap failed with error 0x%08x.", hr);
         return false;
     }
+
+    // Record the memory allocation.
+    m_memory_allocation_info = mem_scope.record_alloc(m_descriptor_increment * m_count);
 
     m_descriptor_increment = m_renderer.get_device()->GetDescriptorHandleIncrementSize(m_heap_type);
 

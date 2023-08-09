@@ -80,6 +80,8 @@ private:
         uint8_t* base_address_gpu = nullptr;
 
         dx12_ri_descriptor_table::allocation srv;
+
+        std::unique_ptr<memory_allocation> memory_allocation_info = nullptr;
     };
 
     std::recursive_mutex m_allocation_mutex;

@@ -21,6 +21,8 @@ dx12_ri_query_manager::~dx12_ri_query_manager()
 
 result<void> dx12_ri_query_manager::create_resources()
 {
+    memory_scope mem_scope(memory_type::rendering__vram__queries);
+
     m_pipeline_depth = m_renderer.get_pipeline_depth();
     m_query_slots = m_max_queries * 2;
     m_read_back_times.resize(m_query_slots);
@@ -64,6 +66,10 @@ result<void> dx12_ri_query_manager::create_resources()
         db_fatal(render_interface, "CreateCommittedResource failed with error 0x%08x when creating query readback buffer.", hr);
         return false;
     }
+
+    // Record the memory allocation.
+    D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
+    m_memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
     D3D12_QUERY_HEAP_DESC query_heap_desc;
     query_heap_desc.Count = m_query_slots;
