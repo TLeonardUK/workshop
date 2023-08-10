@@ -230,6 +230,7 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
+    /*
     static size_t i = 0;
     if (((i++) % 50) == 0)
     {
@@ -244,6 +245,7 @@ void rl_game_app::step(const frame_time& time)
             db_log(core, "name=%s used=%zi mb count=%zi", name.c_str(), used / (1024 * 1024), count);
         }
     }
+    */
 
     /*
     for (int z = -2; z <= 2; z++)

@@ -97,6 +97,14 @@ public:
         out_a = static_cast<uint8_t>(255 * a);
     }
 
+    inline void get(float& out_r, float& out_g, float& out_b, float& out_a) const
+    {
+        out_r = r;
+        out_g = g;
+        out_b = b;
+        out_a = a;
+    }
+
     inline vector4 argb() const
     {
         return vector4(r, g, b, a);

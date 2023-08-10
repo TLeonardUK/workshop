@@ -9,7 +9,7 @@ group: world
 
 usage: color
 
-format: BC6H_SF16
+format: BC6H_UF16
 width: 2048
 height: 2048
 mipmapped: false 

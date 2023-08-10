@@ -9,10 +9,12 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/math/math.h"
+#include "workshop.core/async/async.h"
 #include "thirdparty/bc7enc/rgbcx.h"
 #include "thirdparty/bc7enc/bc7enc.h"
 #include "thirdparty/bc7enc/bc7decomp.h"
 #include "thirdparty/compressonator/cmp_core/source/cmp_core.h"
+#include "thirdparty/compressonator/cmp_core/shaders/bcn_common_api.h"
 
 #include <vector>
 #include <filesystem>
@@ -407,40 +409,41 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
     const size_t output_block_size = metrics.encoded_block_size;
 
     db_assert_message(m_format_metrics.is_mutable, "Attempting to encode a non-mutable format, this is not supported.");
-//    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
-//    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
 
     size_t blocks_x = std::max(1llu, m_width / block_size);
     size_t blocks_y = std::max(1llu, m_height / block_size);
 
-    std::vector<uint8_t> pixels_rgba;
-    pixels_rgba.resize((block_size * block_size) * 4, 0);
+    std::vector<color> pixels_rgba;
+    pixels_rgba.resize((block_size * block_size), color::white);
 
     std::vector<uint8_t> output_data;
     output_data.resize(blocks_x * blocks_y * output_block_size, 0);
 
     size_t output_offset = 0;
 
-    for (size_t y = 0; y < m_height; y += block_size)
-    {
-        for (size_t x = 0; x < m_width; x += block_size)
+    // Do each row in parallel. 
+    parallel_for("encode pixmap", task_queue::standard, blocks_y, [this, block_size, &pixels_rgba, &block_callback, &output_data, &output_offset, output_block_size, blocks_x, blocks_y](size_t y) {
+
+        size_t row_output_stride = (output_block_size * blocks_x);
+
+        for (size_t x = 0; x < blocks_x; x++)
         {
             for (size_t block_y = 0; block_y < block_size; block_y++)
             {
                 for (size_t block_x = 0; block_x < block_size; block_x++)
                 {
-                    size_t pixel_data_offset = ((block_y * block_size) + block_x) * 4;
-                    color source_color = get(x + block_x, y + block_y);
-                    source_color.get(pixels_rgba[pixel_data_offset + 0], pixels_rgba[pixel_data_offset + 1], pixels_rgba[pixel_data_offset + 2], pixels_rgba[pixel_data_offset + 3]);
+                    size_t pixel_data_offset = ((block_y * block_size) + block_x);
+                    color source_color = get((x * block_size) + block_x, (y * block_size) + block_y);
+                    pixels_rgba[pixel_data_offset] = source_color;
                 }
             }
 
             // TODO: Do we need to split into rows for output?
-
+            size_t output_offset = (y * row_output_stride) + (x * output_block_size);
             block_callback(output_data.data() + output_offset, pixels_rgba.data());
-            output_offset += output_block_size;
         }
-    }
+        
+    });
 
     return std::make_unique<pixmap>(std::span{ output_data.data(), output_data.size() }, m_width, m_height, new_format);
 }
@@ -458,15 +461,8 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
     size_t blocks_x = std::max(1llu, m_width / block_size);
     size_t blocks_y = std::max(1llu, m_height / block_size);
 
-    std::vector<uint8_t> pixels_rgba;
-    pixels_rgba.resize((block_size * block_size) * 4, 0);
-
-    // Set all pixels to black full-alpha, some decoding formats (eg. BC5) may not 
-    // write to all channels, so put sane defaults in.
-    for (size_t i = 3; i < pixels_rgba.size(); i += 4)
-    {
-        *(pixels_rgba.data() + i) = 0xFF;
-    }
+    std::vector<color> pixels_rgba;
+    pixels_rgba.resize((block_size * block_size), color::white);
 
     std::unique_ptr<pixmap> rgba_pixmap = std::make_unique<pixmap>(m_width, m_height, pixmap_format::R8G8B8A8);
 
@@ -486,14 +482,9 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
                     size_t abs_pixel_x = (block_x * block_size) + pixel_x;
                     size_t abs_pixel_y = (block_y * block_size) + pixel_y;
 
-                    size_t pixel_offset = ((pixel_y * block_size) + pixel_x) * 4;
+                    size_t pixel_offset = ((pixel_y * block_size) + pixel_x);
 
-                    color result_color(
-                        pixels_rgba[pixel_offset + 0], 
-                        pixels_rgba[pixel_offset + 1], 
-                        pixels_rgba[pixel_offset + 2], 
-                        pixels_rgba[pixel_offset + 3]
-                    );
+                    color result_color = pixels_rgba[pixel_offset];
 
                     // If we have a pixmap below a single block size we will have dead pixels we don't need to use.
                     if (abs_pixel_x < m_width && abs_pixel_y < m_height)
@@ -524,108 +515,221 @@ std::unique_ptr<pixmap> pixmap::encode_bc7(pixmap_format new_format, bool high_q
         pack_params.m_uber_level = 0;
     }
 
-    return block_encode(new_format, [&pack_params](uint8_t* output, uint8_t* pixels_rgba) {
-        bc7enc_compress_block(output, pixels_rgba, &pack_params);
+    return block_encode(new_format, [&pack_params](uint8_t* output, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+        }
+
+        bc7enc_compress_block(output, pixels, &pack_params);
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::decode_bc7(pixmap_format new_format)
 {
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
+    return block_decode(new_format, [](uint8_t* input, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+
         bc7decomp::unpack_bc7(input, (bc7decomp::color_rgba*)pixels_rgba);
+
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba[i] = color((int)pixels[(i * 4) + 0], (int)pixels[(i * 4) + 1], (int)pixels[(i * 4) + 2], (int)pixels[(i * 4) + 3]);
+        }
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::encode_bc5(pixmap_format new_format)
 {
-    return block_encode(new_format, [](uint8_t* output, uint8_t* pixels_rgba) {
-        rgbcx::encode_bc5(output, pixels_rgba, 0, 1, 4);
+    return block_encode(new_format, [](uint8_t* output, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+        }
+
+        rgbcx::encode_bc5(output, pixels, 0, 1, 4);
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::decode_bc5(pixmap_format new_format)
 {
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
-        rgbcx::unpack_bc5(input, pixels_rgba, 0, 1, 4);
+    return block_decode(new_format, [](uint8_t* input, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+        
+        rgbcx::unpack_bc5(input, pixels, 0, 1, 4);
+
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba[i] = color((int)pixels[(i * 4) + 0], (int)pixels[(i * 4) + 1], (int)pixels[(i * 4) + 2], (int)pixels[(i * 4) + 3]);
+        }        
     });
 }
 
 std::unique_ptr<pixmap> pixmap::encode_bc4(pixmap_format new_format)
 {
-    return block_encode(new_format, [](uint8_t* output, uint8_t* pixels_rgba) {
-        rgbcx::encode_bc4(output, pixels_rgba, 4);
+    return block_encode(new_format, [](uint8_t* output, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+        }
+
+        rgbcx::encode_bc4(output, pixels, 4);
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::decode_bc4(pixmap_format new_format)
 {
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
-        rgbcx::unpack_bc4(input, pixels_rgba, 4);
+    return block_decode(new_format, [](uint8_t* input, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+
+        rgbcx::unpack_bc4(input, pixels, 4);
+
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba[i] = color((int)pixels[(i * 4) + 0], (int)pixels[(i * 4) + 1], (int)pixels[(i * 4) + 2], (int)pixels[(i * 4) + 3]);
+        }
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::encode_bc3(pixmap_format new_format)
 {
-    return block_encode(new_format, [](uint8_t* output, uint8_t* pixels_rgba) {
-        rgbcx::encode_bc3(rgbcx::MAX_LEVEL, output, pixels_rgba);
+    return block_encode(new_format, [](uint8_t* output, color* pixels_rgba) {
+        
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+        }
+        
+        rgbcx::encode_bc3(rgbcx::MAX_LEVEL, output, pixels);
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::decode_bc3(pixmap_format new_format)
 {
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
-        rgbcx::unpack_bc3(input, pixels_rgba);
+    return block_decode(new_format, [](uint8_t* input, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+
+        rgbcx::unpack_bc3(input, pixels);
+
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba[i] = color((int)pixels[(i * 4) + 0], (int)pixels[(i * 4) + 1], (int)pixels[(i * 4) + 2], (int)pixels[(i * 4) + 3]);
+        }
     });
 }
 
 std::unique_ptr<pixmap> pixmap::encode_bc1(pixmap_format new_format)
 {
-    return block_encode(new_format, [](uint8_t* output, uint8_t* pixels_rgba) {
-        rgbcx::encode_bc1(rgbcx::MAX_LEVEL, output, pixels_rgba, true, false);
+    return block_encode(new_format, [](uint8_t* output, color* pixels_rgba) {
+
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+        }
+
+        rgbcx::encode_bc1(rgbcx::MAX_LEVEL, output, pixels, true, false);
+
     });
 }
 
 std::unique_ptr<pixmap> pixmap::decode_bc1(pixmap_format new_format)
 {
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
-        rgbcx::unpack_bc1(input, pixels_rgba);
+    return block_decode(new_format, [](uint8_t* input, color* pixels_rgba) {
+        
+        const size_t k_block_size = 4 * 4;
+        uint8_t pixels[k_block_size * 4];
+       
+        rgbcx::unpack_bc1(input, pixels);
+
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba[i] = color((int)pixels[(i * 4) + 0], (int)pixels[(i * 4) + 1], (int)pixels[(i * 4) + 2], (int)pixels[(i * 4) + 3]);
+        }
+
     });
 }
 
-std::unique_ptr<pixmap> pixmap::encode_bc6h_sf16(pixmap_format new_format)
+std::unique_ptr<pixmap> pixmap::encode_bc6h_f16(pixmap_format new_format, bool is_signed, bool high_quality)
 {
     void* options = nullptr;
     CreateOptionsBC6(&options);
-    SetQualityBC6(&options, 1.0f);
-    SetSignedBC6(&options, true);
+    SetQualityBC6(options, high_quality ? 1.0f : 0.0f);
+    SetSignedBC6(options, is_signed);
 
-    return block_encode(new_format, [&options](uint8_t* output, uint8_t* pixels_rgba) {
+    return block_encode(new_format, [&options, is_signed](uint8_t* output, color* pixels_rgba) {
 
-        // TODO
-        //CompressBlockBC6&(, , &options);
+        const size_t k_block_size = 4 * 4;
+        uint16_t pixels[k_block_size * 3];
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            float r, g, b, a;
+            pixels_rgba->get(r, g, b, a);
+
+            pixels[(i * 3) + 0] = math::to_float16(r);
+            pixels[(i * 3) + 1] = math::to_float16(g);
+            pixels[(i * 3) + 2] = math::to_float16(b);
+        }
+
+        CompressBlockBC6(pixels, 3, output, options);
 
     });
+
+    DestroyOptionsBC6(options);
 }
 
-std::unique_ptr<pixmap> pixmap::decode_bc6h_sf16(pixmap_format new_format)
+std::unique_ptr<pixmap> pixmap::decode_bc6h_f16(pixmap_format new_format, bool is_signed)
 {
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
-        // TODO
-    });
-}
+    void* options = nullptr;
+    CreateOptionsBC6(&options);
+    SetSignedBC6(options, is_signed);
 
-std::unique_ptr<pixmap> pixmap::encode_bc6h_uf16(pixmap_format new_format)
-{
-    return block_encode(new_format, [](uint8_t* output, uint8_t* pixels_rgba) {
-        // TODO
-    });
-}
+    return block_decode(new_format, [&options, is_signed](uint8_t* input, color* pixels_rgba) {
 
-std::unique_ptr<pixmap> pixmap::decode_bc6h_uf16(pixmap_format new_format)
-{
-    return block_decode(new_format, [](uint8_t* input, uint8_t* pixels_rgba) {
-        // TODO
+        const size_t k_block_size = 4 * 4;
+        uint16_t pixels[k_block_size * 3];
+
+        DecompressBlockBC6(input, pixels, &options);
+
+        for (size_t i = 0; i < k_block_size; i++)
+        {
+            pixels_rgba[i] = color(
+                math::from_float16(pixels[(i * 3) + 0]),
+                math::from_float16(pixels[(i * 3) + 1]),
+                math::from_float16(pixels[(i * 3) + 2]),
+                1.0f
+            );
+        }
+
     });
+
+    DestroyOptionsBC6(options);
 }
 
 std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_quality)
@@ -662,12 +766,12 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
         }
         case pixmap_format::BC6H_SF16:
         {
-            result = encode_bc6h_sf16(new_format);
+            result = encode_bc6h_f16(new_format, true, high_quality);
             break;
         }
         case pixmap_format::BC6H_UF16:
         {
-            result = encode_bc6h_uf16(new_format);
+            result = encode_bc6h_f16(new_format, false, high_quality);
             break;
         }
 
@@ -704,12 +808,12 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
                 }
                 case pixmap_format::BC6H_SF16:
                 {
-                    result = decode_bc6h_sf16(new_format);
+                    result = decode_bc6h_f16(new_format, true);
                     break;
                 }
                 case pixmap_format::BC6H_UF16:
                 {
-                    result = decode_bc6h_uf16(new_format);
+                    result = decode_bc6h_f16(new_format, false);
                     break;
                 }
 

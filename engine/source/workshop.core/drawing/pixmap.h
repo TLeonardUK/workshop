@@ -240,8 +240,8 @@ public:
 
 private:
 
-    using encode_block_function_t = std::function<void(uint8_t* output, uint8_t* pixels_rgba)>;
-    using decode_block_function_t = std::function<void(uint8_t* input, uint8_t* pixels_rgba)>;
+    using encode_block_function_t = std::function<void(uint8_t* output, color* pixels_rgba)>;
+    using decode_block_function_t = std::function<void(uint8_t* input, color* pixels_rgba)>;
 
     std::unique_ptr<pixmap> block_encode(pixmap_format new_format, const encode_block_function_t& block_callback);
     std::unique_ptr<pixmap> block_decode(pixmap_format new_format, const decode_block_function_t& block_callback);
@@ -262,11 +262,8 @@ private:
     std::unique_ptr<pixmap> encode_bc1(pixmap_format new_format);
     std::unique_ptr<pixmap> decode_bc1(pixmap_format new_format);
 
-    std::unique_ptr<pixmap> encode_bc6h_sf16(pixmap_format new_format);
-    std::unique_ptr<pixmap> decode_bc6h_sf16(pixmap_format new_format);
-
-    std::unique_ptr<pixmap> encode_bc6h_uf16(pixmap_format new_format);
-    std::unique_ptr<pixmap> decode_bc6h_uf16(pixmap_format new_format);
+    std::unique_ptr<pixmap> encode_bc6h_f16(pixmap_format new_format, bool is_signed, bool high_quality);
+    std::unique_ptr<pixmap> decode_bc6h_f16(pixmap_format new_format, bool is_signed);
 
 private:
 
