@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 13;
+constexpr size_t k_asset_compiled_version = 16;
 
 };
 
@@ -346,9 +346,22 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
                     bool a_constant = face.is_channel_constant(3, { 0, 0, 0, 255 });
 
                     // If its a 3 byte HDR image, BC6. 
-                    if (a_constant && asset.format == pixmap_format::R32G32B32A32_FLOAT)
+                    if (asset.format == pixmap_format::R32G32B32A32_FLOAT || 
+                        asset.format == pixmap_format::R32G32B32_FLOAT ||
+                        asset.format == pixmap_format::R32G32_FLOAT ||
+                        asset.format == pixmap_format::R32_FLOAT ||
+                        asset.format == pixmap_format::R16G16B16A16_FLOAT ||
+                        asset.format == pixmap_format::R16G16_FLOAT ||
+                        asset.format == pixmap_format::R16_FLOAT)
                     {
-                        asset.format = pixmap_format::BC6H_SF16;
+                        if (a_constant)
+                        {
+                            asset.format = pixmap_format::BC6H_SF16;
+                        }
+                        else
+                        {
+                            // Keep original format.
+                        }
                     }
                     // If all channels but R are zero, BC4
                     else if (g_constant && b_constant && a_constant)

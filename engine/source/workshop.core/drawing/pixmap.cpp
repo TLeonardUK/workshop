@@ -19,6 +19,10 @@
 #include <vector>
 #include <filesystem>
 
+// If set then individual rows in a pixmap will be encoded in parallel to make better use of
+// cpu cores.
+#define PIXMAP_PARALLEL_ENCODE 1
+
 namespace ws {
 
 // TODO: We should probably find somewhere a bit more appropriate for this.
@@ -410,23 +414,28 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
 
     db_assert_message(m_format_metrics.is_mutable, "Attempting to encode a non-mutable format, this is not supported.");
 
-    size_t blocks_x = std::max(1llu, m_width / block_size);
-    size_t blocks_y = std::max(1llu, m_height / block_size);
-
-    std::vector<color> pixels_rgba;
-    pixels_rgba.resize((block_size * block_size), color::white);
+    size_t total_blocks_x = std::max(1llu, m_width / block_size);
+    size_t total_blocks_y = std::max(1llu, m_height / block_size);
 
     std::vector<uint8_t> output_data;
-    output_data.resize(blocks_x * blocks_y * output_block_size, 0);
+    output_data.resize(total_blocks_x * total_blocks_y * output_block_size, 0);
 
     size_t output_offset = 0;
 
     // Do each row in parallel. 
-    parallel_for("encode pixmap", task_queue::standard, blocks_y, [this, block_size, &pixels_rgba, &block_callback, &output_data, &output_offset, output_block_size, blocks_x, blocks_y](size_t y) {
+#if PIXMAP_PARALLEL_ENCODE
+    parallel_for("encode pixmap", task_queue::standard, total_blocks_y, [this, block_size, &block_callback, &output_data, &output_offset, output_block_size, total_blocks_x, total_blocks_y](size_t y) {
+#else
+    for (size_t y = 0; y < total_blocks_y; y++)
+    { 
+#endif
 
-        size_t row_output_stride = (output_block_size * blocks_x);
+        std::vector<color> pixels_rgba;
+        pixels_rgba.resize((block_size * block_size), color::white);
 
-        for (size_t x = 0; x < blocks_x; x++)
+        size_t row_output_stride = (output_block_size * total_blocks_x);
+
+        for (size_t x = 0; x < total_blocks_x; x++)
         {
             for (size_t block_y = 0; block_y < block_size; block_y++)
             {
@@ -442,8 +451,12 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
             size_t output_offset = (y * row_output_stride) + (x * output_block_size);
             block_callback(output_data.data() + output_offset, pixels_rgba.data());
         }
-        
+      
+#if PIXMAP_PARALLEL_ENCODE
     });
+#else
+    }
+#endif
 
     return std::make_unique<pixmap>(std::span{ output_data.data(), output_data.size() }, m_width, m_height, new_format);
 }
@@ -458,19 +471,19 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
 //    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
 //    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
 
-    size_t blocks_x = std::max(1llu, m_width / block_size);
-    size_t blocks_y = std::max(1llu, m_height / block_size);
+    size_t total_blocks_x = std::max(1llu, m_width / block_size);
+    size_t total_blocks_y = std::max(1llu, m_height / block_size);
 
     std::vector<color> pixels_rgba;
     pixels_rgba.resize((block_size * block_size), color::white);
 
     std::unique_ptr<pixmap> rgba_pixmap = std::make_unique<pixmap>(m_width, m_height, pixmap_format::R8G8B8A8);
 
-    for (size_t block_y = 0; block_y < blocks_y; block_y++)
+    for (size_t block_y = 0; block_y < total_blocks_y; block_y++)
     {
-        for (size_t block_x = 0; block_x < blocks_x; block_x++)
+        for (size_t block_x = 0; block_x < total_blocks_x; block_x++)
         {
-            size_t block_offset = (block_x + block_y * blocks_x) * output_block_size;
+            size_t block_offset = (block_x + block_y * total_blocks_x) * output_block_size;
             uint8_t* block_data = m_data.data() + block_offset;
 
             block_callback(block_data, pixels_rgba.data());
