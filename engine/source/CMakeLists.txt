@@ -38,6 +38,12 @@ add_subdirectory(workshop.debug_menu)
 #  Tier 2 - Engine functionality
 # ================================================================================================
 add_subdirectory(workshop.engine)
+add_subdirectory(workshop.editor)
+
+# ================================================================================================
+#  Tier 3 - Games
+# ================================================================================================
+# This should always remain empty, games are stored in a higher directory.
 
 # ================================================================================================
 #  Misc third party stuff

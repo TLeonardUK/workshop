@@ -13,7 +13,7 @@ class input_interface;
 class renderer;
 
 // ================================================================================================
-//  This renders a imgui menu used for controlling various debugging settings.
+//  This is used to register debug menu/windows that will be rendered later.
 // ================================================================================================
 class debug_menu
 {
@@ -21,10 +21,6 @@ public:
     debug_menu();
     
     void register_init(init_list& list);
-    void step(const frame_time& time);
-
-    void set_renderer(renderer& renderer);
-    void set_input(input_interface& input);
 
 public:
 

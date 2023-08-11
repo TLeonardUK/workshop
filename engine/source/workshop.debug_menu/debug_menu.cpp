@@ -26,16 +26,6 @@ void debug_menu::register_init(init_list& list)
 {
 }
 
-void debug_menu::set_renderer(renderer& renderer)
-{
-    m_renderer = &renderer;
-}
-
-void debug_menu::set_input(input_interface& input)
-{
-    m_input = &input;
-}
-
 debug_menu::option_handle debug_menu::add_option(const char* path, option_callback_t callback)
 {
     option_handle handle = std::make_unique<option>();
@@ -119,32 +109,6 @@ void debug_menu::draw_node(node& base)
             }
 
             ImGui::EndMenu();
-        }
-    }
-}
-
-void debug_menu::step(const frame_time& time)
-{
-    imgui_scope scope(m_renderer->get_imgui_manager(), "Debug Menu");
-
-    if (m_input->was_key_pressed(input_key::escape))
-    {
-        m_is_active = !m_is_active;
-    }
-
-    m_input->set_mouse_hidden(!m_is_active);
-    m_input->set_mouse_capture(!m_is_active);
-
-    if (m_is_active)
-    {
-        if (ImGui::BeginMainMenuBar())
-        {
-            for (node& base_menu : m_root.children)
-            {
-                draw_node(base_menu);
-            }
-
-            ImGui::EndMainMenuBar();
         }
     }
 }

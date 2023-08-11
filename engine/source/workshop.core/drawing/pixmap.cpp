@@ -442,7 +442,9 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
                 for (size_t block_x = 0; block_x < block_size; block_x++)
                 {
                     size_t pixel_data_offset = ((block_y * block_size) + block_x);
-                    color source_color = get((x * block_size) + block_x, (y * block_size) + block_y);
+                    size_t pixel_x = (x * block_size) + block_x;
+                    size_t pixel_y = (y * block_size) + block_y;
+                    color source_color = get(pixel_x, pixel_y);
                     pixels_rgba[pixel_data_offset] = source_color;
                 }
             }
@@ -534,7 +536,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc7(pixmap_format new_format, bool high_q
         uint8_t pixels[k_block_size * 4];
         for (size_t i = 0; i < k_block_size; i++)
         {
-            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+            pixels_rgba[i].get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
         }
 
         bc7enc_compress_block(output, pixels, &pack_params);
@@ -567,7 +569,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc5(pixmap_format new_format)
         uint8_t pixels[k_block_size * 4];
         for (size_t i = 0; i < k_block_size; i++)
         {
-            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+            pixels_rgba[i].get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
         }
 
         rgbcx::encode_bc5(output, pixels, 0, 1, 4);
@@ -599,7 +601,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc4(pixmap_format new_format)
         uint8_t pixels[k_block_size * 4];
         for (size_t i = 0; i < k_block_size; i++)
         {
-            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+            pixels_rgba[i].get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
         }
 
         rgbcx::encode_bc4(output, pixels, 4);
@@ -632,7 +634,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc3(pixmap_format new_format)
         uint8_t pixels[k_block_size * 4];
         for (size_t i = 0; i < k_block_size; i++)
         {
-            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+            pixels_rgba[i].get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
         }
         
         rgbcx::encode_bc3(rgbcx::MAX_LEVEL, output, pixels);
@@ -664,7 +666,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc1(pixmap_format new_format)
         uint8_t pixels[k_block_size * 4];
         for (size_t i = 0; i < k_block_size; i++)
         {
-            pixels_rgba->get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
+            pixels_rgba[i].get(pixels[(i * 4) + 0], pixels[(i * 4) + 1], pixels[(i * 4) + 2], pixels[(i * 4) + 3]);
         }
 
         rgbcx::encode_bc1(rgbcx::MAX_LEVEL, output, pixels, true, false);
@@ -693,7 +695,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc6h_f16(pixmap_format new_format, bool i
 {
     void* options = nullptr;
     CreateOptionsBC6(&options);
-    SetQualityBC6(options, high_quality ? 1.0f : 0.0f);
+    SetQualityBC6(options, high_quality ? 0.5f : 0.0f); // Using > 0.8 goes down a VERY slow path for little quality benefit.
     SetSignedBC6(options, is_signed);
 
     return block_encode(new_format, [&options, is_signed](uint8_t* output, color* pixels_rgba) {
@@ -703,7 +705,7 @@ std::unique_ptr<pixmap> pixmap::encode_bc6h_f16(pixmap_format new_format, bool i
         for (size_t i = 0; i < k_block_size; i++)
         {
             float r, g, b, a;
-            pixels_rgba->get(r, g, b, a);
+            pixels_rgba[i].get(r, g, b, a);
 
             pixels[(i * 3) + 0] = math::to_float16(r);
             pixels[(i * 3) + 1] = math::to_float16(g);

@@ -61,8 +61,10 @@ void engine::step()
     m_input_interface->pump_events();
 
     on_step.broadcast(m_frame_time);
+
+    m_editor->step(m_frame_time);
+
     m_presenter->step(m_frame_time);
-    m_debug_menu->step(m_frame_time);
 
     m_filesystem->raise_watch_events();
 
@@ -130,6 +132,11 @@ void engine::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_debug_menu(); }
     );
     list.add_step(
+        "Editor",
+        [this, &list]() -> result<void> { return create_editor(list); },
+        [this, &list]() -> result<void> { return destroy_editor(); }
+    );
+    list.add_step(
         "Render Interface",
         [this, &list]() -> result<void> { return create_render_interface(list); },
         [this, &list]() -> result<void> { return destroy_render_interface(); }
@@ -194,6 +201,11 @@ window& engine::get_main_window()
 debug_menu& engine::get_debug_menu()
 {
     return *m_debug_menu.get();
+}
+
+editor& engine::get_editor()
+{
+    return *m_editor.get();
 }
 
 virtual_file_system& engine::get_filesystem()
@@ -443,8 +455,6 @@ result<void> engine::create_input_interface(init_list& list)
         }
     }
 
-    m_debug_menu->set_input(*m_input_interface);
-
     return true;
 }
 
@@ -521,8 +531,6 @@ result<void> engine::create_renderer(init_list& list)
         *m_debug_menu.get());
     m_renderer->register_init(list);
 
-    m_debug_menu->set_renderer(*m_renderer);
-
     return true;
 }
 
@@ -577,6 +585,21 @@ result<void> engine::create_debug_menu(init_list& list)
 result<void> engine::destroy_debug_menu()
 {
     m_debug_menu = nullptr;
+
+    return true;
+}
+
+result<void> engine::create_editor(init_list& list)
+{
+    m_editor = std::make_unique<editor>(*this);
+    m_editor->register_init(list);
+
+    return true;
+}
+
+result<void> engine::destroy_editor()
+{
+    m_editor = nullptr;
 
     return true;
 }

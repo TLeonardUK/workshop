@@ -335,6 +335,8 @@ render_imgui_manager::context* render_imgui_manager::create_context(const char* 
     io.GetClipboardTextFn = &get_clipboard_text_callback;
     io.ClipboardUserData = this;
 
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
     if (m_contexts.empty())
     {
         create_font_resources();

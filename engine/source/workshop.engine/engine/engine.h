@@ -12,6 +12,7 @@
 #include "workshop.window_interface/window_interface.h"
 #include "workshop.engine/presentation/presenter.h"
 #include "workshop.debug_menu/debug_menu.h"
+#include "workshop.editor/editor/editor.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/utils/event.h"
@@ -23,6 +24,7 @@
 
 namespace ws {
 
+class editor;
 class world;
 class presentation;
 class presenter;
@@ -85,6 +87,9 @@ public:
     // Gets the debug menu.
     debug_menu& get_debug_menu();
 
+    // Gets the main editor instance.
+    editor& get_editor();
+
     // Gets the main filesystem.
     virtual_file_system& get_filesystem();
 
@@ -116,6 +121,9 @@ public:
     event<frame_time> on_step;
 
 private:
+
+    result<void> create_editor(init_list& list);
+    result<void> destroy_editor();
 
     result<void> create_memory_tracker(init_list& list);
     result<void> destroy_memory_tracker();
@@ -165,6 +173,7 @@ protected:
     std::unique_ptr<input_interface> m_input_interface;
     std::unique_ptr<platform_interface> m_platform_interface;
 
+    std::unique_ptr<editor> m_editor;
     std::unique_ptr<memory_tracker> m_memory_tracker;
     std::unique_ptr<task_scheduler> m_task_scheduler;
     std::unique_ptr<renderer> m_renderer;
