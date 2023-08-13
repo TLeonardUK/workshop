@@ -23,7 +23,7 @@ class render_system_light_probes
     : public render_system
 {
 public:
-    render_system_light_probes(renderer& render, debug_menu& menu);
+    render_system_light_probes(renderer& render);
 
     virtual void register_init(init_list& list) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
@@ -71,9 +71,6 @@ private:
 
     size_t m_probes_regenerating;
     bool m_should_regenerate = false;
-
-    debug_menu& m_debug_menu;
-    std::vector<debug_menu::option_handle> m_debug_menu_options;
 
 };
 

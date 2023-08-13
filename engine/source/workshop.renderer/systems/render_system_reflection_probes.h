@@ -22,7 +22,7 @@ class render_system_reflection_probes
     : public render_system
 {
 public:
-    render_system_reflection_probes(renderer& render, debug_menu& menu);
+    render_system_reflection_probes(renderer& render);
 
     virtual void register_init(init_list& list) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
@@ -58,9 +58,6 @@ private:
     size_t m_probe_regenerations_per_frame = 1;
     float m_probe_near_z = 10.0f;
     float m_probe_far_z = 10000.0f;
-
-    debug_menu& m_debug_menu;
-    std::vector<debug_menu::option_handle> m_debug_menu_options;
 
 };
 

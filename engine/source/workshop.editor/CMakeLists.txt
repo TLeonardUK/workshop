@@ -11,6 +11,12 @@ project(workshop.editor C CXX)
 SET(SOURCES
     "editor/editor.cpp"
     "editor/editor.h"
+    "editor/editor_main_menu.cpp"
+    "editor/editor_main_menu.h"
+    "editor/editor_window.cpp"
+    "editor/editor_window.h"
+    "editor/windows/editor_log_window.cpp"
+    "editor/windows/editor_log_window.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

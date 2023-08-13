@@ -24,8 +24,6 @@
 
 #include "workshop.assets/asset_manager.h"
 
-#include "workshop.debug_menu/debug_menu.h"
-
 #include <queue>
 
 namespace ws {
@@ -44,7 +42,6 @@ class asset_manager;
 class window;
 class shader;
 class input_interface;
-class debug_menu;
 class statistics_channel;
 
 // Decribes the usage of a specific default texture, used to select
@@ -96,23 +93,47 @@ enum class visualization_mode
 };
 
 static inline const char* visualization_mode_strings[] = {
-    "normal",
-    "albedo",
-    "wireframe",
-    "metallic",
-    "roughness",
-    "world normal",
-    "world position",
-    "lighting",
-    "shadow cascades",
-    "light clusters",
-    "light heatmap",
-    "light probes",
-    "light probe contribution",
-    "indirect specular",
-    "indirect diffuse",
-    "direct light",
-    "ao"
+    "Normal",
+    "Albedo",
+    "Wireframe",
+    "Metallic",
+    "Roughness",
+    "World Normal",
+    "World Position",
+    "Lighting",
+    "Shadow Cascades",
+    "Light Clusters",
+    "Light Heatmap",
+    "Light Probes",
+    "Light Probe Contribution",
+    "Indirect Specular",
+    "Indirect Diffuse",
+    "Direct Light",
+    "Ambient Occlusion"
+};
+
+// Global render flags are used to define how various parts of the render pipeline should behave.
+enum class render_flag
+{
+    // Draws the bounds of the active cells in the rendering octtree.
+    draw_cell_bounds,
+
+    // Draws the bounds of individual objects in the rendering octree.
+    draw_object_bounds,
+
+    // If false direct lighting is used when rendering the scene.
+    disable_direct_lighting,
+
+    // If false ambient lighting is used when rendering the scene.
+    disable_ambient_lighting,
+
+    // If true the rendering is frozen on a given frame but allows the user to continue moving the camera about.
+    freeze_rendering,
+
+    // Draws a simple performance overlay in the top-right with memory/perf stats in it.
+    draw_performance_overlay,
+
+    COUNT
 };
 
 // Defines a set of preloaded models that are commonly used for debugging.
@@ -134,7 +155,7 @@ class renderer
 public:
 
     renderer() = delete;
-    renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager, debug_menu& debug_menu);
+    renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager);
 
     // Registers all the steps required to initialize the renderer.
     void register_init(init_list& list);
@@ -231,26 +252,29 @@ public:
     // Gets the current visualization mode on the render thread.
     visualization_mode get_visualization_mode();
 
-    // Returns true if the rendering is frozen and culling/etc should not be updated.
-    bool is_rendering_frozen();
-
     // Gets buffers desc
     void get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index);
 
     // Gets a pointer to the given debug model.
     asset_ptr<model> get_debug_model(debug_model model);
 
-    // Returns true if we should be using direct lighting.
-    bool should_draw_direct_lighting();
-
-    // Returns true if we should be using ambient lighting.
-    bool should_draw_ambient_lighting();
-
     // Gets the configuration of the rendering pipeline.
     const render_options& get_options();
 
     // Sets the configuration of the rendering pipeline.
     void set_options(const render_options& options);
+
+    // Sets the value of a flag dictating what and how things should be rendered.
+    void set_render_flag(render_flag flag, bool value);
+
+    // Gets the value of a flag dictating what and how things should be rendered.
+    bool get_render_flag(render_flag flag);
+
+    // Regenerates all diffuse light probe volumes.
+    void regenerate_diffuse_probes();
+
+    // Regenerates all reflection light probes.
+    void regenerate_reflection_probes();
 
 private:
 
@@ -273,10 +297,8 @@ private:
 
     result<void> recreate_resizable_targets();
 
-    // Performs any needed setup for any debug menu options
-    // exposed by the renderer.
-    result<void> create_debug_menu();
-    result<void> destroy_debug_menu();
+    result<void> create_statistics();
+    result<void> destroy_statistics();
 
     // Called to run one or more render jobs currently in the queue.
     void render_job();
@@ -319,8 +341,7 @@ private:
     input_interface& m_input_interface;
     window& m_window;
     asset_manager& m_asset_manager;
-    debug_menu& m_debug_menu;
-
+    
     render_options m_options;
 
     std::vector<std::unique_ptr<render_system>> m_systems;
@@ -331,6 +352,8 @@ private:
     std::unique_ptr<render_visibility_manager> m_visibility_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
+
+    std::array<bool, static_cast<int>(render_flag::COUNT)> m_render_flags = { 0 };
 
     // Debug models.
 
@@ -351,15 +374,6 @@ private:
     // Debug menu.
 
     visualization_mode m_visualization_mode = visualization_mode::normal;
-    bool m_draw_octtree_cell_bounds = false;
-    bool m_draw_object_bounds = false;
-    bool m_rendering_frozen = false;
-    bool m_draw_debug_overlay = true;
-    bool m_draw_direct_lighting = true;
-    bool m_draw_ambient_lighting = true;
-    size_t m_frozen_rendering_frame = 0;
-
-    std::vector<debug_menu::option_handle> m_debug_menu_options;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

@@ -11,7 +11,6 @@
 #include "workshop.platform_interface/platform_interface.h"
 #include "workshop.window_interface/window_interface.h"
 #include "workshop.engine/presentation/presenter.h"
-#include "workshop.debug_menu/debug_menu.h"
 #include "workshop.editor/editor/editor.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
@@ -84,9 +83,6 @@ public:
     // Gets the main rendering window.
     window& get_main_window();
 
-    // Gets the debug menu.
-    debug_menu& get_debug_menu();
-
     // Gets the main editor instance.
     editor& get_editor();
 
@@ -152,9 +148,6 @@ private:
     result<void> create_presenter(init_list& list);
     result<void> destroy_presenter();
 
-    result<void> create_debug_menu(init_list& list);
-    result<void> destroy_debug_menu();
-
     result<void> create_filesystem(init_list& list);
     result<void> destroy_filesystem();
 
@@ -182,8 +175,7 @@ protected:
     std::unique_ptr<virtual_file_system> m_filesystem;
     std::unique_ptr<statistics_manager> m_statistics;
     std::unique_ptr<asset_manager> m_asset_manager;
-    std::unique_ptr<debug_menu> m_debug_menu;
-
+    
     ri_interface_type m_render_interface_type = ri_interface_type::dx12;
     window_interface_type m_window_interface_type = window_interface_type::sdl;
     input_interface_type m_input_interface_type = input_interface_type::sdl;

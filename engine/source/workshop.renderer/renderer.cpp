@@ -42,8 +42,6 @@
 #include "workshop.render_interface/ri_param_block.h"
 #include "workshop.render_interface/ri_query.h"
 
-#include "workshop.debug_menu/debug_menu.h"
-
 #include "workshop.assets/asset_manager.h"
 
 #include "workshop.window_interface/window.h"
@@ -61,12 +59,11 @@
 
 namespace ws {
 
-renderer::renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager, debug_menu& debug_menu)
+renderer::renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager)
     : m_render_interface(rhi)
     , m_input_interface(input)
     , m_window(main_window)
     , m_asset_manager(asset_manager)
-    , m_debug_menu(debug_menu)
 {
     for (size_t i = 0; i < k_frame_depth; i++)
     {
@@ -101,9 +98,9 @@ void renderer::register_init(init_list& list)
     );
 
     list.add_step(
-        "Renderer Debug Menu",
-        [this, &list]() -> result<void> { return create_debug_menu(); },
-        [this, &list]() -> result<void> { return destroy_debug_menu(); }
+        "Renderer Statistics",
+        [this, &list]() -> result<void> { return create_statistics(); },
+        [this, &list]() -> result<void> { return destroy_statistics(); }
     );
     list.add_step(
         "Renderer Debug Models",
@@ -122,8 +119,8 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_ssao>(*this));
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_transparent_geometry>(*this));
-    m_systems.push_back(std::make_unique<render_system_light_probes>(*this, m_debug_menu));
-    m_systems.push_back(std::make_unique<render_system_reflection_probes>(*this, m_debug_menu));
+    m_systems.push_back(std::make_unique<render_system_light_probes>(*this));
+    m_systems.push_back(std::make_unique<render_system_reflection_probes>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
@@ -500,21 +497,6 @@ void renderer::render_state(render_world_state& state)
 
     m_frame_index = state.time.frame_count;
 
-    // Debug drawing.
-    {
-        profile_marker(profile_colors::render, "debug drawing");
-
-        if (m_draw_octtree_cell_bounds || m_draw_object_bounds)
-        {
-            m_visibility_manager->draw_cell_bounds(m_draw_octtree_cell_bounds, m_draw_object_bounds);
-        }
-
-        if (m_draw_debug_overlay)
-        {
-            draw_debug_overlay();
-        }
-    }
-
     // Grab the next backbuffer, and wait for gpu if pipeline is full.
     {
         profile_marker(profile_colors::render, "get next back buffer");
@@ -534,6 +516,24 @@ void renderer::render_state(render_world_state& state)
     // Process the command queue.
     process_render_commands(state);
 
+    // Debug drawing.
+    {
+        profile_marker(profile_colors::render, "debug drawing");
+
+        bool draw_cell_bounds = get_render_flag(render_flag::draw_cell_bounds);
+        bool draw_object_bounds = get_render_flag(render_flag::draw_object_bounds);
+
+        if (draw_cell_bounds || draw_object_bounds)
+        {
+            m_visibility_manager->draw_cell_bounds(draw_cell_bounds, draw_object_bounds);
+        }
+
+        if (get_render_flag(render_flag::draw_performance_overlay))
+        {
+            draw_debug_overlay();
+        }
+    }
+
     // Update all systems in parallel.
     parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {
         profile_marker(profile_colors::render, "step render system: %s", m_systems[index]->name.c_str());
@@ -545,7 +545,7 @@ void renderer::render_state(render_world_state& state)
     m_batch_manager->begin_frame();
 
     // Perform frustum culling for all views.
-    if (!m_rendering_frozen)
+    if (!get_render_flag(render_flag::freeze_rendering))
     {
         m_visibility_manager->update_visibility();
     }
@@ -892,9 +892,8 @@ void renderer::resume()
     m_paused = false;
 }
 
-result<void> renderer::create_debug_menu()
+result<void> renderer::create_statistics()
 {
-    // Grab statistics the debug menu will want.
     m_stats_triangles_rendered = statistics_manager::get().find_or_create_channel("rendering/triangles_rendered");
     m_stats_draw_calls = statistics_manager::get().find_or_create_channel("rendering/draw_calls");
     m_stats_drawn_instances = statistics_manager::get().find_or_create_channel("rendering/drawn_instances");
@@ -907,31 +906,11 @@ result<void> renderer::create_debug_menu()
     m_stats_frame_rate = statistics_manager::get().find_or_create_channel("frame rate");
     m_stats_render_bytes_uploaded = statistics_manager::get().find_or_create_channel("render/bytes uploaded");
 
-    // Setup debug menu toggles.
-    for (size_t i = 0; i < static_cast<size_t>(visualization_mode::COUNT); i++)
-    {
-        std::string path = string_format("rendering/visualization/%s", visualization_mode_strings[i]);
-
-        auto option = m_debug_menu.add_option(path.c_str(), [this, i]() {
-            get_command_queue().set_visualization_mode(static_cast<visualization_mode>(i));
-        });
-
-        m_debug_menu_options.push_back(std::move(option));
-    }
-
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/toggle cell bounds", [this]() { m_draw_octtree_cell_bounds = !m_draw_octtree_cell_bounds; }));
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/partitioning/toggle object bounds", [this]() { m_draw_object_bounds = !m_draw_object_bounds; }));
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggles/toggle direct lighting", [this]() { m_draw_direct_lighting = !m_draw_direct_lighting; }));
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggles/toggle ambient lighting", [this]() { m_draw_ambient_lighting = !m_draw_ambient_lighting; }));
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle freeze rendering", [this]() { m_rendering_frozen = !m_rendering_frozen; }));
-    m_debug_menu_options.push_back(m_debug_menu.add_option("rendering/toggle overlay", [this]() { m_draw_debug_overlay = !m_draw_debug_overlay; }));
-
     return true;
 }
 
-result<void> renderer::destroy_debug_menu()
+result<void> renderer::destroy_statistics()
 {
-    m_debug_menu_options.clear();
 
     return true;
 }
@@ -947,21 +926,6 @@ visualization_mode renderer::get_visualization_mode()
     return m_visualization_mode;
 }
 
-bool renderer::is_rendering_frozen()
-{
-    return m_rendering_frozen;
-}
-
-bool renderer::should_draw_direct_lighting()
-{
-    return m_draw_direct_lighting;
-}
-
-bool renderer::should_draw_ambient_lighting()
-{
-    return m_draw_ambient_lighting;
-}
-
 const render_options& renderer::get_options()
 {
     return m_options;
@@ -970,6 +934,26 @@ const render_options& renderer::get_options()
 void renderer::set_options(const render_options& options)
 {
     m_options = options;
+}
+
+void renderer::set_render_flag(render_flag flag, bool value)
+{
+    m_render_flags[static_cast<int>(flag)] = value;
+}
+
+bool renderer::get_render_flag(render_flag flag)
+{
+    return m_render_flags[static_cast<int>(flag)];
+}
+
+void renderer::regenerate_diffuse_probes()
+{
+    get_system<render_system_light_probes>()->regenerate();
+}
+
+void renderer::regenerate_reflection_probes()
+{
+    get_system<render_system_reflection_probes>()->regenerate();
 }
 
 void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index)
@@ -1035,7 +1019,9 @@ void renderer::draw_debug_overlay()
 
     ImGui::SetNextWindowPos(ImVec2(display_width - k_width - k_padding, k_padding), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(k_width, 0), ImGuiCond_Always);
-    if (ImGui::Begin("Rendering Debug Overlay", &m_draw_debug_overlay, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_AlwaysAutoResize))
+
+    bool visible = get_render_flag(render_flag::draw_performance_overlay);
+    if (ImGui::Begin("Rendering Debug Overlay", &visible, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::BeginTable("Stats Table", 2);
 

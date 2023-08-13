@@ -254,7 +254,7 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
     size_t map_size = light->get_shadow_map_size();
     float cascade_exponent = light->get_shodow_cascade_exponent();
 
-    if (!m_renderer.is_rendering_frozen())
+    if (!m_renderer.get_render_flag(render_flag::freeze_rendering))
     {
         info.view_frustum = view->get_frustum();
         info.view_view_frustum = view->get_view_frustum();
@@ -365,7 +365,7 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
 
     float range = light->get_range();
 
-    if (!m_renderer.is_rendering_frozen())
+    if (!m_renderer.get_render_flag(render_flag::freeze_rendering))
     {
         info.light_rotation = light->get_local_rotation();
         info.light_location = light->get_local_location();
@@ -445,7 +445,7 @@ void render_system_shadows::step_spot_shadow(render_view* view, render_spot_ligh
     float outer_radius = 0.0f;
     light->get_radius(inner_radius, outer_radius);
 
-    if (!m_renderer.is_rendering_frozen())
+    if (!m_renderer.get_render_flag(render_flag::freeze_rendering))
     {
         info.light_rotation = light->get_local_rotation();
         info.light_location = light->get_local_location();

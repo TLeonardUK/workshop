@@ -127,11 +127,6 @@ void engine::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_main_window(); }
     );
     list.add_step(
-        "Debug Menu",
-        [this, &list]() -> result<void> { return create_debug_menu(list); },
-        [this, &list]() -> result<void> { return destroy_debug_menu(); }
-    );
-    list.add_step(
         "Editor",
         [this, &list]() -> result<void> { return create_editor(list); },
         [this, &list]() -> result<void> { return destroy_editor(); }
@@ -196,11 +191,6 @@ window_interface& engine::get_windowing()
 window& engine::get_main_window()
 {
     return *m_window.get();
-}
-
-debug_menu& engine::get_debug_menu()
-{
-    return *m_debug_menu.get();
 }
 
 editor& engine::get_editor()
@@ -527,8 +517,7 @@ result<void> engine::create_renderer(init_list& list)
         *m_render_interface.get(), 
         *m_input_interface.get(), 
         *m_window.get(), 
-        *m_asset_manager.get(),
-        *m_debug_menu.get());
+        *m_asset_manager.get());
     m_renderer->register_init(list);
 
     return true;
@@ -570,21 +559,6 @@ result<void> engine::create_presenter(init_list& list)
 result<void> engine::destroy_presenter()
 {
     m_presenter = nullptr;
-
-    return true;
-}
-
-result<void> engine::create_debug_menu(init_list& list)
-{
-    m_debug_menu = std::make_unique<debug_menu>();
-    m_debug_menu->register_init(list);
-
-    return true;
-}
-
-result<void> engine::destroy_debug_menu()
-{
-    m_debug_menu = nullptr;
 
     return true;
 }

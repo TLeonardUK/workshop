@@ -33,6 +33,34 @@ void render_command_queue::set_options(const render_options& options)
     });
 }
 
+void render_command_queue::set_render_flag(render_flag flag, bool value)
+{
+    queue_command("set_render_flag", [renderer = &m_renderer, flag, value]() {
+        renderer->set_render_flag(flag, value);
+    });
+}
+
+void render_command_queue::toggle_render_flag(render_flag flag)
+{
+    queue_command("toggle_render_flag", [renderer = &m_renderer, flag]() {
+        renderer->set_render_flag(flag, !renderer->get_render_flag(flag));
+    });
+}
+
+void render_command_queue::regenerate_diffuse_probes()
+{
+    queue_command("regenerate_diffuse_probes", [renderer = &m_renderer]() {
+        renderer->regenerate_diffuse_probes();
+    });
+}
+
+void render_command_queue::regenerate_reflection_probes()
+{
+    queue_command("regenerate_reflection_probes", [renderer = &m_renderer]() {
+        renderer->regenerate_reflection_probes();
+    });
+}
+
 // ===========================================================================================
 //  Debug rendering.
 // ===========================================================================================

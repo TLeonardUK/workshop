@@ -23,6 +23,7 @@ namespace ws {
 class renderer;
 class model;
 enum class visualization_mode;
+enum class render_flag;
 class render_options;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
@@ -56,6 +57,18 @@ public:
 
     // Sets the rendering configuration for the pipeline.
     void set_options(const render_options& options);
+
+    // Sets the value of a flag dictating what and how things should be rendered.
+    void set_render_flag(render_flag flag, bool value);
+
+    // Same as set_render_flag but toggles the current value of the flag.
+    void toggle_render_flag(render_flag flag);
+
+    // Regenerates all diffuse light probe volumes.
+    void regenerate_diffuse_probes();
+
+    // Regenerates all reflection light probes.
+    void regenerate_reflection_probes();
 
     // ===========================================================================================
     //  Debug rendering.

@@ -17,9 +17,8 @@
 
 namespace ws {
 
-render_system_light_probes::render_system_light_probes(renderer& render, debug_menu& menu)
+render_system_light_probes::render_system_light_probes(renderer& render)
     : render_system(render, "light probes")
-    , m_debug_menu(menu)
 {
 }
 
@@ -101,9 +100,6 @@ result<void> render_system_light_probes::create_resources()
         }
     }
 
-    // Add an option to regenerate.
-    m_debug_menu_options.push_back(m_debug_menu.add_option("build/rebuild light probes", [this]() { regenerate(); }));
-
     return true;
 }
 
@@ -121,7 +117,6 @@ result<void> render_system_light_probes::destroy_resources()
 
     m_probe_capture_views.clear();
     m_probe_capture_targets.clear();
-    m_debug_menu_options.clear();
 
     return true;
 }
