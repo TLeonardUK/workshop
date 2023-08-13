@@ -4,8 +4,6 @@
 // ================================================================================================
 #include "workshop.core/memory/memory_tracker.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 namespace {
 
