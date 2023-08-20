@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.editor/editor/editor_window.h"
+#include "workshop.editor/editor/utils/allocation_tree.h"
 #include "workshop.core/debug/log_handler.h"
 
 namespace ws {
@@ -23,26 +24,18 @@ public:
     virtual editor_window_layout get_layout() override;
 
 private:
-    struct node
-    {
-        std::string name;
-        std::string path;
-
-        bool is_asset = false;
-
-        size_t used;
-        size_t peak;
-
-        std::vector<node> children;
-    };
-
-    void add_node(node& parent, const char* path, const std::vector<std::string>& fragments, bool is_asset, size_t used_bytes, size_t allocation_count);
-
     void build_tree();
+
+
+    void draw_node(const allocation_tree::node& node, size_t depth, const allocation_tree::node& root_node);
     void draw_tree();
 
 private:
-    node m_root;
+    allocation_tree m_allocation_tree;
+
+    bool m_flat_view = false;
+    char m_filter_buffer[256] = { '\0' };
+
 
 };
 

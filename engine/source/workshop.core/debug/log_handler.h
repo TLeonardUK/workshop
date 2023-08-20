@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <array>
 
 namespace ws {
 
@@ -26,6 +27,15 @@ enum class log_level
     count
 };
 
+static inline constexpr std::array<const char*, static_cast<int>(log_level::count)> log_level_strings = {
+    "fatal",
+    "error",
+    "warning",
+    "success",
+    "log",
+    "verbose"
+};
+
 // ================================================================================================
 //  Defines the source of a log message.
 // ================================================================================================
@@ -40,6 +50,16 @@ enum class log_source
     asset,
 
     count
+};
+
+static inline constexpr std::array<const char*, static_cast<int>(log_source::count)> log_source_strings = {
+    "core",
+    "engine",
+    "game",
+    "window",
+    "render interface",
+    "renderer",
+    "asset"
 };
 
 // ================================================================================================
@@ -57,7 +77,10 @@ public:
     // Called each time a message is recieved that needs to be logged. The log_level is already
     // formatted into the message, its passed in only so log handlers can make visual changes
     // if wanted (eg. terminal color changes).
-    virtual void write(log_level level, const std::string& message) = 0;
+    virtual void write(log_level level, const std::string& message) {};
+
+    // Writes the raw message without any formatting.
+    virtual void write_raw(log_level level, log_source source, const std::string& timestamp, const std::string& message) {};
 
     // This is the entry point for all log message macros defined in debug.h. This will appropriatly
     // format the recieve data before forwarding it to all instanced log_handlers.
@@ -65,6 +88,7 @@ public:
 
     // Sets the maximum log level to show. All logs beyond this will be ignored.
     static void set_max_log_level(log_level level);
+    static log_level get_max_log_level();
 
 protected:
 

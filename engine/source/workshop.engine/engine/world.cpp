@@ -6,4 +6,24 @@
 
 namespace ws {
 
+world::world()
+{
+    m_object_manager = std::make_unique<object_manager>();
+}
+
+const char* world::get_name()
+{
+    return m_name.c_str();
+}
+
+object_manager& world::get_object_manager()
+{
+    return *m_object_manager;
+}
+
+void world::step(const frame_time& time)
+{
+    m_object_manager->step(time);
+}
+
 }; // namespace ws

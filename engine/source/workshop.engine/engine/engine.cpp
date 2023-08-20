@@ -60,6 +60,11 @@ void engine::step()
     m_window_interface->pump_events();
     m_input_interface->pump_events();
 
+    for (auto& world : m_worlds)
+    {
+        world->step(m_frame_time);
+    }
+
     on_step.broadcast(m_frame_time);
 
     m_editor->step(m_frame_time);
@@ -145,6 +150,11 @@ void engine::register_init(init_list& list)
         "Renderer",
         [this, &list]() -> result<void> { return create_renderer(list); },
         [this, &list]() -> result<void> { return destroy_renderer(); }
+    );
+    list.add_step(
+        "Default World",
+        [this, &list]() -> result<void> { return create_default_world(list); },
+        [this, &list]() -> result<void> { return destroy_default_world(); }
     );
     list.add_step(
         "Presentation",
@@ -548,6 +558,19 @@ result<void> engine::destroy_main_window()
     return true;
 }
 
+
+result<void> engine::create_default_world(init_list& list)
+{
+    m_default_world = create_world("Default World");
+    return true;
+}
+
+result<void> engine::destroy_default_world()
+{
+    destroy_world(m_default_world);
+    return true;
+}
+
 result<void> engine::create_presenter(init_list& list)
 {
     m_presenter = std::make_unique<presenter>(*this);
@@ -576,6 +599,45 @@ result<void> engine::destroy_editor()
     m_editor = nullptr;
 
     return true;
+}
+
+std::vector<world*> engine::get_worlds()
+{
+    std::vector<world*> result;
+    for (auto& world : m_worlds)
+    {
+        result.push_back(world.get());
+    }
+    return result;
+}
+
+world& engine::get_default_world()
+{
+    return *m_default_world;
+}
+
+world* engine::create_world(const char* name)
+{
+    db_log(engine, "Creating new world: %s", name);
+
+    std::unique_ptr<world> new_world = std::make_unique<world>();
+    world* result = new_world.get();
+    m_worlds.push_back(std::move(new_world));
+    return result;
+}
+
+void engine::destroy_world(world* world)
+{
+    auto iter = std::find_if(m_worlds.begin(), m_worlds.end(), [world](auto& existing_world) {
+        return existing_world.get() == world;    
+    });
+    if (iter == m_worlds.end())
+    {
+        return;
+    }
+
+    db_log(engine, "Destroying world: %s", world->get_name());
+    m_worlds.erase(iter);
 }
 
 }; // namespace ws

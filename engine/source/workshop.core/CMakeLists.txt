@@ -29,6 +29,7 @@ SET(SOURCES
     "containers/string.h"
     "containers/oct_tree.cpp"
     "containers/oct_tree.h"
+    "containers/sparse_vector.h"
     
     "debug/log.h"
     "debug/debug.cpp"
@@ -117,6 +118,7 @@ SET(SOURCES
     "geometry/geometry_assimp_loader.h"
     "geometry/geometry_assimp_loader.cpp"
     
+    "memory/memory.h"
     "memory/memory_tracker.h"
     "memory/memory_tracker.cpp"
     

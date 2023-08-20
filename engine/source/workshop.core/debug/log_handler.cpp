@@ -16,28 +16,14 @@
 
 namespace ws {
 
-std::array<const char*, static_cast<int>(log_level::count)> log_level_strings = {
-    "fatal",
-    "error",
-    "warning",
-    "success",
-    "log",
-    "verbose"
-};
-
-std::array<const char*, static_cast<int>(log_source::count)> log_source_strings = {
-    "core",
-    "engine",
-    "game",
-    "window",
-    "render interface",
-    "renderer",
-    "asset"
-};
-
 void log_handler::set_max_log_level(log_level level)
 {
     m_max_log_level = level;
+}
+
+log_level log_handler::get_max_log_level()
+{
+    return m_max_log_level;
 }
 
 log_handler::log_handler()
@@ -80,6 +66,7 @@ void log_handler::static_write_formatted(log_level level, log_source source, con
 
         for (log_handler* handler : m_handlers)
         {
+            handler->write_raw(level, source, time_buffer, log);
             handler->write(level, formatter.c_str());
         }
     }

@@ -37,6 +37,7 @@ add_subdirectory(workshop.input_interface.sdl)
 # ================================================================================================
 add_subdirectory(workshop.engine)
 add_subdirectory(workshop.editor)
+add_subdirectory(workshop.game_framework)
 
 # ================================================================================================
 #  Tier 3 - Games

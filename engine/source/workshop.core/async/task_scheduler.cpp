@@ -240,6 +240,7 @@ task_handle task_scheduler::create_task(const char* name, task_queue queue, task
     state.queue = queue;
     state.state = task_run_state::pending_dispatch;
     state.work = workload;
+    state.dependents.clear();
 
     return task_handle(this, index);
 }
@@ -261,6 +262,7 @@ std::vector<task_handle> task_scheduler::create_tasks(size_t count, const char* 
         state.queue = queue;
         state.state = task_run_state::pending_dispatch;
         state.work = workload;
+        state.dependents.clear();
 
         result[i] = task_handle(this, index);
     }
@@ -372,7 +374,7 @@ void task_scheduler::dispatch_tasks_lockless(const std::vector<task_index_t>& in
         if (state.outstanding_dependencies > 0)
         {
             state.state = task_run_state::pending_dependencies;
-            return;
+            continue;
         }
 
         queue_state& queue_state = m_queues[static_cast<int>(state.queue)];

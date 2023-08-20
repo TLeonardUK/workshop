@@ -535,10 +535,41 @@ void renderer::render_state(render_world_state& state)
     }
 
     // Update all systems in parallel.
-    parallel_for("step render systems", task_queue::standard, m_systems.size(), [this, &state](size_t index) {
-        profile_marker(profile_colors::render, "step render system: %s", m_systems[index]->name.c_str());
-        m_systems[index]->step(state);
-    });
+    task_scheduler& scheduler = task_scheduler::get();
+    std::vector<task_handle> step_tasks;
+    step_tasks.resize(m_systems.size());
+
+    // Create tasks for stepping each system.
+    for (size_t i = 0; i < m_systems.size(); i++)
+    {
+        auto& system = m_systems[i];
+
+        step_tasks[i] = scheduler.create_task(system->name.c_str(), task_queue::standard, [this, &state, i]() {
+            profile_marker(profile_colors::render, "step render system: %s", m_systems[i]->name.c_str());
+            m_systems[i]->step(state);
+        });
+    }
+
+    // Add dependencies between the tasks.
+    for (size_t i = 0; i < m_systems.size(); i++)
+    {
+        auto& system = m_systems[i];
+
+        for (render_system* dependency : system->get_dependencies())
+        {
+            auto iter = std::find_if(m_systems.begin(), m_systems.end(), [dependency](auto& system) {
+                return system.get() == dependency;
+            });
+            db_assert(iter != m_systems.end());
+
+            size_t dependency_index = std::distance(m_systems.begin(), iter);
+            step_tasks[i].add_dependency(step_tasks[dependency_index]);
+        }
+    }
+
+    // Dispatch and away for completion.
+    scheduler.dispatch_tasks(step_tasks);
+    scheduler.wait_for_tasks(step_tasks, true);
 
     // Begin the new frame.
     m_render_interface.begin_frame();
@@ -864,7 +895,7 @@ void renderer::step(std::unique_ptr<render_world_state>&& state)
     if (start_new_render_job)
     {
         m_render_job_task = async("Render Job", task_queue::standard, [this]() {
-            render_job();    
+            render_job();
         });
     }
 

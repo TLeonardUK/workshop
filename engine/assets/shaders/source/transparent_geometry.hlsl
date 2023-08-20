@@ -71,7 +71,7 @@ geometry_poutput pshader(geometry_pinput input)
     f.world_position = input.world_position;
     f.uv = (input.position.xy / view_dimensions.xy) * uv_scale;
 
-    float4 shaded_color = float4(shade_fragment(f).rgb, albedo.a);
+    float4 shaded_color = float4(shade_fragment(f, true).rgb, albedo.a);
     float weight = calculate_weight(input.position.z, shaded_color.a); 
 
     geometry_poutput output;

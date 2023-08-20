@@ -6,4 +6,15 @@
 
 namespace ws {
 
+// ================================================================================================
+//  Base class for all components.
+// 
+//  Components should act as flat data structures, any logic should be performed in
+//  the relevant systems.
+// ================================================================================================
+class component
+{
+public:
+};
+
 }; // namespace ws

@@ -51,9 +51,26 @@ public:
     // Called once per frame, generates a graph for rendering that occurs after all view rendering.
     virtual void build_post_graph(render_graph& graph, const render_world_state& state) {};
 
+    // Gets a list of systems that need to be ticked before this one.
+    std::vector<render_system*> get_dependencies();
+
+protected:
+
+    // Adds a dependency to another render system. This system will not be stepped until 
+    // all dependencies have completed their stepping.
+    template <typename system_type>
+    void add_dependency()
+    {
+        add_dependency(typeid(system_type));
+    }
+
+    void add_dependency(const std::type_info& type_info);
+
 protected:
 
     renderer& m_renderer;
+
+    std::vector<render_system*> m_dependencies;
 
 };
 

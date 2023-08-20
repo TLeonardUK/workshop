@@ -4,14 +4,21 @@
 // ================================================================================================
 #pragma once
 
-#include <cstdint>
+#include "workshop.engine/ecs/system.h"
 
 namespace ws {
 
 // ================================================================================================
-//  Acts as an opaque handle representing a specific object within the world.
+//  Moves all objects with a fly_camera_component with very simple wasd/mouse movement.
 // ================================================================================================
-using object = uint64_t;
-static inline constexpr object null_object = 0;
+class fly_camera_movement_system : public system
+{
+public:
+
+    fly_camera_movement_system(object_manager& manager);
+
+    virtual void step(const frame_time& time) override;
+
+};
 
 }; // namespace ws

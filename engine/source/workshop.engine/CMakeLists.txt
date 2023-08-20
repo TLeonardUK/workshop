@@ -20,14 +20,16 @@ SET(SOURCES
     "engine/world.cpp"
     "engine/world.h"
 
+    "ecs/system.cpp"
+    "ecs/system.h"
     "ecs/component.cpp"
     "ecs/component.h"
     "ecs/component_filter.cpp"
     "ecs/component_filter.h"
     "ecs/object.cpp"
     "ecs/object.h"
-    "ecs/ecs_manager.cpp"
-    "ecs/ecs_manager.h"
+    "ecs/object_manager.cpp"
+    "ecs/object_manager.h"
     
     "presentation/presenter.cpp"
     "presentation/presenter.h"

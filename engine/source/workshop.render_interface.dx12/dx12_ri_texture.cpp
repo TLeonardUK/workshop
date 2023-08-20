@@ -208,13 +208,6 @@ result<void> dx12_ri_texture::create_resources()
     D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
     m_memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
-#if 1
-    if (mem_type == memory_type::rendering__vram__texture)
-    {
-        db_log(renderer, "[TEXTURE] %s [%zi x %zi] %zi kb",m_debug_name.c_str(), m_create_params.width, m_create_params.height, info.SizeInBytes / 1024); 
-    }
-#endif
-
     // Upload the linear data if any has been provided.
     if (!m_create_params.data.empty())
     {

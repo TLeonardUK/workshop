@@ -113,6 +113,18 @@ public:
     // Sets the initial window mode, should be set during configuration.
     void set_window_mode(const std::string& title, size_t width, size_t height, window_mode mode);
 
+    // Gets all active worlds.
+    std::vector<world*> get_worlds();
+
+    // Gets the persistent world that always exists.
+    world& get_default_world();
+
+    // Creates a new world.
+    world* create_world(const char* name);
+
+    // Destroys a previous world.
+    void destroy_world(world* id);
+
     // Invoked when the engine is stepped.
     event<frame_time> on_step;
 
@@ -157,9 +169,13 @@ private:
     result<void> create_asset_manager(init_list& list);
     result<void> destroy_asset_manager();
 
+    result<void> create_default_world(init_list& list);
+    result<void> destroy_default_world();
+
 protected:
 
     std::vector<std::unique_ptr<world>> m_worlds;
+    world* m_default_world = nullptr;
 
     std::unique_ptr<window_interface> m_window_interface;
     std::unique_ptr<ri_interface> m_render_interface;
@@ -175,7 +191,7 @@ protected:
     std::unique_ptr<virtual_file_system> m_filesystem;
     std::unique_ptr<statistics_manager> m_statistics;
     std::unique_ptr<asset_manager> m_asset_manager;
-    
+
     ri_interface_type m_render_interface_type = ri_interface_type::dx12;
     window_interface_type m_window_interface_type = window_interface_type::sdl;
     input_interface_type m_input_interface_type = input_interface_type::sdl;

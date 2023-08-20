@@ -4,14 +4,26 @@
 // ================================================================================================
 #pragma once
 
-#include <cstdint>
+#include "workshop.engine/ecs/component.h"
+
+#include "workshop.core/math/quat.h"
+#include "workshop.core/math/vector3.h"
 
 namespace ws {
 
 // ================================================================================================
-//  Acts as an opaque handle representing a specific object within the world.
+//  The fly camera provides simple movement of the camera view with wasd/mouse.
 // ================================================================================================
-using object = uint64_t;
-static inline constexpr object null_object = 0;
+class fly_camera_movement_component : public component
+{
+public:
+
+    // How much the mouse delta is scaled to determine angular speed.
+    float sensitivity = 0.001f;
+
+    // Speed of camera movement in units per second.
+    float speed = 1500.0f;
+
+};
 
 }; // namespace ws

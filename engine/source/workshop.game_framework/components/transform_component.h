@@ -4,14 +4,27 @@
 // ================================================================================================
 #pragma once
 
-#include <cstdint>
+#include "workshop.engine/ecs/component.h"
+
+#include "workshop.core/math/quat.h"
+#include "workshop.core/math/vector3.h"
 
 namespace ws {
 
 // ================================================================================================
-//  Acts as an opaque handle representing a specific object within the world.
+//  Represents the position, scale and rotation of an object in 3d space.
 // ================================================================================================
-using object = uint64_t;
-static inline constexpr object null_object = 0;
+class transform_component : public component
+{
+public:
+
+    //component_ref<transform_component> parent = null_object;
+
+    // Transform relative to the parent.
+    quat    local_rotation;
+    vector3 local_location;
+    vector3 local_scale;
+
+};
 
 }; // namespace ws

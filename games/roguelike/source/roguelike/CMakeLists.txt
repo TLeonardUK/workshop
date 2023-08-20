@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 target_link_libraries(${PROJECT_NAME} 
     workshop.core
     workshop.engine
+    workshop.game_framework
 )
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "games/roguelike")

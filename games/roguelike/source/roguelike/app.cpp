@@ -7,8 +7,10 @@
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/math/sphere.h"
+#include "workshop.core/containers/sparse_vector.h"
 
 #include "workshop.engine/engine/engine.h"
+#include "workshop.engine/engine/world.h"
 
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_object.h"
@@ -17,6 +19,11 @@
 #include "workshop.renderer/assets/model/model.h"
 
 #include "workshop.renderer/render_imgui_manager.h"
+
+#include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
+#include "workshop.game_framework/components/camera/camera_component.h"
+#include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
+#include "workshop.game_framework/components/transform_component.h"
 
 #include <chrono>
 
@@ -42,6 +49,7 @@ std::string rl_game_app::get_name()
 
 void rl_game_app::configure_engine(engine& engine)
 {
+    // Register default interface configuration.
     engine.set_render_interface_type(ri_interface_type::dx12);
     engine.set_window_interface_type(window_interface_type::sdl);
     engine.set_input_interface_type(input_interface_type::sdl);
@@ -51,6 +59,38 @@ void rl_game_app::configure_engine(engine& engine)
 
 ws::result<void> rl_game_app::start()
 {   
+    auto& obj_manager = get_engine().get_default_world().get_object_manager();
+
+    struct test
+    {
+        float a = 0.0f;
+        float b = 1.0f;
+        float c = 3.0f;
+        std::string something = "test";
+        std::array<uint8_t, 4096> test;
+    };
+
+    sparse_vector<test> v(100);
+    for (size_t i = 0; i < 100; i++)
+    {
+        v.insert(test());
+    }
+    for (size_t i = 0; i < 100; i++)
+    {
+        v.remove(100 - (i + 1));
+    }
+
+    // Register all systems we want to use in this game.
+    obj_manager.register_system<fly_camera_movement_system>();
+
+
+    object camera_obj = obj_manager.create_object();
+    obj_manager.add_component<transform_component>(camera_obj);
+    obj_manager.add_component<camera_component>(camera_obj);
+    obj_manager.add_component<fly_camera_movement_component>(camera_obj);
+
+
+
     auto& cmd_queue = get_engine().get_renderer().get_command_queue();
     auto& ass_manager = get_engine().get_asset_manager();
 
@@ -229,23 +269,6 @@ void rl_game_app::step(const frame_time& time)
 
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
-
-    
-    static size_t i = 0;
-    if (((i++) % 100) == 0)
-    {
-        memory_tracker& tracker = memory_tracker::get();
-        for (size_t i = 0; i < (int)memory_type::COUNT; i++)
-        {
-            memory_type type = (memory_type)i;
-            size_t used = tracker.get_memory_used_bytes(type);
-            size_t count = tracker.get_memory_allocation_count(type);
-            std::string name = memory_type_names[i];
-
-            db_log(core, "name=%s used=%zi mb count=%zi", name.c_str(), used / (1024 * 1024), count);
-        }
-    }
-    
 
     /*
     for (int z = -2; z <= 2; z++)

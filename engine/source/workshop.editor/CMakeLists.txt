@@ -17,6 +17,11 @@ SET(SOURCES
     "editor/editor_window.h"
     "editor/windows/editor_log_window.cpp"
     "editor/windows/editor_log_window.h"
+    "editor/windows/editor_memory_window.cpp"
+    "editor/windows/editor_memory_window.h"
+    
+    "editor/utils/allocation_tree.cpp"
+    "editor/utils/allocation_tree.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

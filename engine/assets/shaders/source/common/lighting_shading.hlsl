@@ -494,7 +494,7 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     return ret;
 }
 
-float3 calculate_ambient_lighting(gbuffer_fragment frag)
+float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent)
 {    
     if (use_constant_ambient)
     {
@@ -534,7 +534,11 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag)
     float3 specular = reflection_probe_color * (F * brdf.x + brdf.y);
 
     // Grab the AO output to tint our ambient term.
-    float ao = ao_texture.Sample(ao_sampler, frag.uv).r;
+    float ao = 1.0f;
+    if (!is_transparent)
+    {
+        ao = ao_texture.Sample(ao_sampler, frag.uv).r;
+    }
 
     float3 ambient = (kD * diffuse + specular) * ao;
 
@@ -570,7 +574,7 @@ uint get_cluster_index(float3 world_position)
 //  The all powerful shade function!
 // ================================================================================================
 
-float4 shade_fragment(gbuffer_fragment frag)
+float4 shade_fragment(gbuffer_fragment frag, bool is_transparent)
 {
     float3 final_color = 0.0f;
     float3 ambient_lighting = 0.0f;
@@ -582,7 +586,7 @@ float4 shade_fragment(gbuffer_fragment frag)
     if ((frag.flags & gbuffer_flag::unlit) == 0)
     {
         // Calculate ambient lighting from our light probes.
-        ambient_lighting = calculate_ambient_lighting(frag);
+        ambient_lighting = calculate_ambient_lighting(frag, is_transparent);
         
         // Calculate the cluser we are contained inside of.
         cluster_index = get_cluster_index(frag.world_position.xyz);

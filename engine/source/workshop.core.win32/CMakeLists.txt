@@ -12,6 +12,8 @@ SET(SOURCES
     "filesystem/file.cpp"
     "filesystem/path_watcher.cpp"
     
+    "memory/memory.cpp"
+    
     "platform/platform.cpp"
     
     "hashing/guid.cpp"

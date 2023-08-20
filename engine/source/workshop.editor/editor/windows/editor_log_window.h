@@ -20,7 +20,7 @@ struct log_handler_window
 public:    
     log_handler_window(editor_log_window* window);
 
-    virtual void write(log_level level, const std::string& message) override;   
+    virtual void write_raw(log_level level, log_source source, const std::string& timestamp, const std::string& message) override;
 
 private:
     editor_log_window* m_window;
@@ -40,13 +40,20 @@ public:
     virtual const char* get_window_id() override;
     virtual editor_window_layout get_layout() override;
 
-    void add_log(log_level level, const std::string& message);
+    void add_log(log_level level, log_source source, const std::string& timestamp, const std::string& message);
+
+private:
+    void apply_filter();
 
 private:
     struct log_entry
     {
         log_level level;
-        std::vector<std::string> fragments;
+        log_source category;
+        std::string message;
+        std::string timestamp;
+        bool filtered_out = false;
+        std::string search_key;
     };
 
     static inline constexpr size_t k_max_log_entries = 1000;
@@ -56,6 +63,16 @@ private:
     
     std::mutex m_logs_mutex;
     std::vector<log_entry> m_logs;
+
+    log_level m_base_max_log_level;
+
+    // 0=all, all other values = log_level
+    int m_log_level = 0;
+
+    // 0=all, all other values = log_category
+    int m_log_category = 0;
+
+    char m_filter_buffer[256] = { '\0' };
 
 };
 

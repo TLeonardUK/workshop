@@ -177,6 +177,18 @@ public:
         }
         return nullptr;
     }
+    
+    inline render_system* get_system(const std::type_info& info)
+    {
+        for (auto& system : m_systems)
+        {
+            if (info == typeid(*system))
+            {
+                return system.get();
+            }
+        }
+        return nullptr;
+    }
 
     // Gets the render interface this renderer is using.
     ri_interface& get_render_interface();

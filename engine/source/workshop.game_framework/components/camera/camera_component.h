@@ -4,14 +4,20 @@
 // ================================================================================================
 #pragma once
 
-#include <cstdint>
+#include "workshop.engine/ecs/component.h"
+
+#include "workshop.core/math/quat.h"
+#include "workshop.core/math/vector3.h"
 
 namespace ws {
 
 // ================================================================================================
-//  Acts as an opaque handle representing a specific object within the world.
+//  Represents a camera rendering a view into the world.
 // ================================================================================================
-using object = uint64_t;
-static inline constexpr object null_object = 0;
+class camera_component : public component
+{
+public:
+
+};
 
 }; // namespace ws
