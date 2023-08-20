@@ -15,6 +15,8 @@ namespace ws {
 class component
 {
 public:
+    virtual ~component() {};
+
 };
 
 }; // namespace ws

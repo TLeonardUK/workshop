@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/memory/memory.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 #include <string>
 #include <array>
@@ -20,7 +21,7 @@ namespace ws {
 // 
 //  Due to linear address space, inserting/removing/accessing is all O(1).
 // ================================================================================================
-template <typename element_type>
+template <typename element_type, memory_type mem_type = memory_type::low_level__misc_sparse_vector>
 class sparse_vector
 {
 public:
@@ -33,11 +34,17 @@ public:
     // Removes the given index in the vector and allows it to be reused.
     void remove(size_t index);
 
+    // Removes an index given a pointer to its data.
+    void remove(element_type* type);
+
     // Gets the given index in the vector.
     element_type& at(size_t index);
 
     // Gets the given index in the vector.
     element_type& operator[](size_t index);
+
+    // Returns if the given index is actively in use.
+    bool is_valid(size_t index);
 
 private:
 
@@ -49,6 +56,7 @@ private:
     {
         uint8_t* memory;
         size_t commit_count;
+        std::unique_ptr<memory_allocation> alloc_record;
     };
 
     size_t m_max_elements;
@@ -59,10 +67,12 @@ private:
 
     std::vector<size_t> m_free_indices;
 
+    std::vector<bool> m_active_indices;
+
 };
 
-template <typename element_type>
-inline sparse_vector<element_type>::sparse_vector(size_t max_elements)
+template <typename element_type, memory_type mem_type>
+inline sparse_vector<element_type, mem_type>::sparse_vector(size_t max_elements)
     : m_max_elements(max_elements)
 {
     m_page_size = get_page_size();
@@ -77,6 +87,8 @@ inline sparse_vector<element_type>::sparse_vector(size_t max_elements)
         m_free_indices.push_back(max_elements - (i + 1));
     }
 
+    m_active_indices.resize(max_elements);
+
     m_pages.resize(page_count);
     for (size_t i = 0; i < page_count; i++)
     {
@@ -86,15 +98,15 @@ inline sparse_vector<element_type>::sparse_vector(size_t max_elements)
     }
 }
 
-template <typename element_type>
-inline sparse_vector<element_type>::~sparse_vector()
+template <typename element_type, memory_type mem_type>
+inline sparse_vector<element_type, mem_type>::~sparse_vector()
 {
     free_virtual_memory(m_memory_base);
     m_memory_base = nullptr;
 }
 
-template <typename element_type>
-inline void sparse_vector<element_type>::commit_region(size_t index)
+template <typename element_type, memory_type mem_type>
+inline void sparse_vector<element_type, mem_type>::commit_region(size_t index)
 {
     size_t start_offset = index * sizeof(element_type);
     size_t end_offset = ((index + 1) * sizeof(element_type)) - 1;
@@ -107,13 +119,16 @@ inline void sparse_vector<element_type>::commit_region(size_t index)
         if (m_pages[i].commit_count == 0)
         {
             commit_virtual_memory(m_pages[i].memory, m_page_size);
+
+            memory_scope scope(mem_type);
+            m_pages[i].alloc_record = scope.record_alloc(m_page_size);
         }
         m_pages[i].commit_count++;
     }
 }
 
-template <typename element_type>
-inline void sparse_vector<element_type>::decommit_region(size_t index)
+template <typename element_type, memory_type mem_type>
+inline void sparse_vector<element_type, mem_type>::decommit_region(size_t index)
 {
     size_t start_offset = index * sizeof(element_type);
     size_t end_offset = ((index + 1) * sizeof(element_type)) - 1;
@@ -129,12 +144,13 @@ inline void sparse_vector<element_type>::decommit_region(size_t index)
         if (m_pages[i].commit_count == 0)
         {
             decommit_virtual_memory(m_pages[i].memory, m_page_size);
+            m_pages[i].alloc_record = nullptr;
         }
     }
 }
 
-template <typename element_type>
-inline size_t sparse_vector<element_type>::insert(const element_type& type)
+template <typename element_type, memory_type mem_type>
+inline size_t sparse_vector<element_type, mem_type>::insert(const element_type& type)
 {
     if (m_free_indices.empty())
     {
@@ -145,6 +161,8 @@ inline size_t sparse_vector<element_type>::insert(const element_type& type)
     m_free_indices.pop_back();
     commit_region(index);
 
+    m_active_indices[index] = true;
+
     element_type* element = reinterpret_cast<element_type*>(m_memory_base + (index * sizeof(element_type)));
     new(element) element_type();
     *element = type;
@@ -152,9 +170,12 @@ inline size_t sparse_vector<element_type>::insert(const element_type& type)
     return index;
 }
 
-template <typename element_type>
-inline void sparse_vector<element_type>::remove(size_t index)
+template <typename element_type, memory_type mem_type>
+inline void sparse_vector<element_type, mem_type>::remove(size_t index)
 {
+    db_assert_message(m_active_indices[index], "Trying to remove inactive index.");
+    m_active_indices[index] = false;
+
     element_type* element = reinterpret_cast<element_type*>(m_memory_base + (index * sizeof(element_type)));
     element->~element_type();
 
@@ -163,16 +184,30 @@ inline void sparse_vector<element_type>::remove(size_t index)
     m_free_indices.push_back(index);
 }
 
-template <typename element_type>
-inline element_type& sparse_vector<element_type>::at(size_t index)
+template <typename element_type, memory_type mem_type>
+inline void sparse_vector<element_type, mem_type>::remove(element_type* type)
+{
+    size_t offset = reinterpret_cast<uint8_t*>(type) - m_memory_base;
+    size_t index = offset / sizeof(element_type);
+    remove(index);
+}
+
+template <typename element_type, memory_type mem_type>
+inline element_type& sparse_vector<element_type, mem_type>::at(size_t index)
 {
     return *reinterpret_cast<element_type*>(m_memory_base + (index * sizeof(element_type)));
 }
 
-template <typename element_type>
-inline element_type& sparse_vector<element_type>::operator[](size_t index)
+template <typename element_type, memory_type mem_type>
+inline element_type& sparse_vector<element_type, mem_type>::operator[](size_t index)
 {
     return at(index);
+}
+
+template <typename element_type, memory_type mem_type>
+inline bool sparse_vector<element_type, mem_type>::is_valid(size_t index)
+{
+    return m_active_indices[index];
 }
 
 }; // namespace workshop

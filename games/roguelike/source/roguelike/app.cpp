@@ -61,25 +61,6 @@ ws::result<void> rl_game_app::start()
 {   
     auto& obj_manager = get_engine().get_default_world().get_object_manager();
 
-    struct test
-    {
-        float a = 0.0f;
-        float b = 1.0f;
-        float c = 3.0f;
-        std::string something = "test";
-        std::array<uint8_t, 4096> test;
-    };
-
-    sparse_vector<test> v(100);
-    for (size_t i = 0; i < 100; i++)
-    {
-        v.insert(test());
-    }
-    for (size_t i = 0; i < 100; i++)
-    {
-        v.remove(100 - (i + 1));
-    }
-
     // Register all systems we want to use in this game.
     obj_manager.register_system<fly_camera_movement_system>();
 
@@ -88,6 +69,12 @@ ws::result<void> rl_game_app::start()
     obj_manager.add_component<transform_component>(camera_obj);
     obj_manager.add_component<camera_component>(camera_obj);
     obj_manager.add_component<fly_camera_movement_component>(camera_obj);
+    obj_manager.remove_component<fly_camera_movement_component>(camera_obj);
+    obj_manager.remove_component<camera_component>(camera_obj);
+    obj_manager.remove_component<transform_component>(camera_obj);
+    obj_manager.destroy_object(camera_obj);
+
+
 
 
 

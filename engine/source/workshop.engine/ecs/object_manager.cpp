@@ -8,6 +8,14 @@
 
 namespace ws {
 
+object_manager::object_manager()
+    : m_objects(k_max_objects)
+{
+    // Always allocate the first index so we can assume 0=null.
+    size_t index = m_objects.insert({});
+    db_assert(index == 0);
+}
+
 system* object_manager::get_system(const std::type_index& type_info)
 {
     std::scoped_lock lock(m_system_mutex);
@@ -29,37 +37,18 @@ object object_manager::create_object()
 {
     std::scoped_lock lock(m_object_mutex);
 
-    object_state state;
-    state.handle = m_next_object_handle++;
+    size_t index = m_objects.insert({});
+    object_state& state = m_objects[index];
+    state.handle = index;
 
-    m_objects.emplace(state.handle, state);
-
-    if (m_is_system_step_active)
-    {
-        m_pending_registration.push_back(state.handle);
-    }
-    else
-    {
-        update_object_registration(state);
-    }
-
+    update_object_registration(state);
+    
     return state.handle;
-}
-
-void object_manager::update_object_registration(object_state& obj)
-{
-    // TODO: register with all filters.
 }
 
 void object_manager::destroy_object(object obj)
 {
     std::scoped_lock lock(m_object_mutex);
-
-    auto iter = m_objects.find(obj);
-    if (iter == m_objects.end())
-    {
-        return;
-    }
 
     if (m_is_system_step_active)
     {
@@ -71,46 +60,125 @@ void object_manager::destroy_object(object obj)
     }
 }
 
-void object_manager::commit_destroy_object(object obj)
+object_manager::component_pool_base* object_manager::get_component_pool(const std::type_index& component_type_index)
 {
-    auto iter = m_objects.find(obj);
-    if (iter == m_objects.end())
+    auto iter = m_component_pools.find(component_type_index);
+    if (iter != m_component_pools.end())
+    {
+        return iter->second.get();
+    }
+
+    return nullptr;
+}
+
+void object_manager::commit_destroy_object(object handle)
+{
+    object_manager::object_state* state = get_object_state(handle);
+    if (!state)
     {
         return;
     }
 
-    // TODO: erase all components.
+    // TODO: Remove references from filters.
 
-    m_objects.erase(iter);
+    std::vector<component*> to_remove = state->components;
+    for (component* comp : to_remove)
+    {
+        commit_remove_component(handle, comp);
+    }
+    
+    m_objects.remove(handle);
+}
+
+void object_manager::commit_remove_component(object handle, component* comp)
+{
+    object_manager::object_state* state = get_object_state(handle);
+    if (!state)
+    {
+        return;
+    }
+
+    // TODO: Remove references from filters.
+
+    auto iter = std::find(state->components.begin(), state->components.end(), comp);
+    if (iter != state->components.end())
+    {
+        component_pool_base* base = get_component_pool(typeid(*comp));
+        base->free(comp);
+
+        state->components.erase(iter);
+    }
+}
+
+void object_manager::update_object_registration(object_state& obj)
+{
+    // Defer till end of tick.
+    if (m_is_system_step_active)
+    {
+        m_pending_registration.push_back(obj.handle);
+        return;
+    }
+
+    // TODO: register with all filters.
 }
 
 bool object_manager::is_object_alive(object obj)
 {
     std::scoped_lock lock(m_object_mutex);
 
-    return m_objects.find(obj) != m_objects.end();
+    return m_objects.is_valid(obj);
 }
 
 object_manager::object_state* object_manager::get_object_state(object obj)
 {
-    auto iter = m_objects.find(obj);
-    if (iter == m_objects.end())
+    if (!m_objects.is_valid(obj))
     {
         return nullptr;
     }
 
-    return &iter->second;
+    return &m_objects[obj];
+}
+
+void object_manager::add_component(object handle, component* component)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    object_manager::object_state* state = get_object_state(handle);
+    if (!state)
+    {
+        return;
+    }
+
+    state->components.push_back(component);
+
+    update_object_registration(*state);
 }
 
 void object_manager::remove_component(object handle, component* component)
 {
-    // TODO
+    std::scoped_lock lock(m_object_mutex);
+
+    if (m_is_system_step_active)
+    {
+        m_pending_remove_component.push_back({ handle, component });
+    }
+    else
+    {
+        commit_remove_component(handle, component);
+    }
 }
 
 std::vector<component*> object_manager::get_components(object handle)
 {
-    // TODO
-    return {};
+    std::scoped_lock lock(m_object_mutex);
+
+    object_manager::object_state* state = get_object_state(handle);
+    if (!state)
+    {
+        return {};
+    }
+
+    return state->components;
 }
 
 void object_manager::step_systems(const frame_time& time)
@@ -167,6 +235,13 @@ void object_manager::step(const frame_time& time)
     // Deferred actions.
     {
         std::scoped_lock lock(m_object_mutex);
+
+        // Run deferred component removal.
+        for (auto& obj : m_pending_remove_component)
+        {
+            commit_remove_component(obj.first, obj.second);
+        }
+        m_pending_remove_component.clear();
 
         // Run deferred deletions.
         for (object obj : m_pending_destroy)

@@ -14,6 +14,10 @@
 // be broken down further in lower memory scopes.
 MEMORY_TYPE(asset,				"asset")
 
+MEMORY_TYPE(low_level__misc_sparse_vector,	        "low level/misc sparse vector")
+
+MEMORY_TYPE(engine__ecs,	                        "engine/ecs")
+
 // ================================================================================================
 //  Rendering
 // ================================================================================================
