@@ -63,8 +63,8 @@ void render_batch_instance_buffer::commit()
             slot& dirty_slot = buf.slots[j];
 
             instance_offset_info* offset_info = reinterpret_cast<instance_offset_info*>(ptr) + (j - start);
-            offset_info->data_buffer_index = dirty_slot.table_index;
-            offset_info->data_buffer_offset = dirty_slot.table_offset;
+            offset_info->data_buffer_index = (uint32_t)dirty_slot.table_index;
+            offset_info->data_buffer_offset = (uint32_t)dirty_slot.table_offset;
 
             dirty_slot.dirty = false;
         }

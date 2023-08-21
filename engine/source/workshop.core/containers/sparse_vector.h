@@ -28,6 +28,9 @@ public:
     sparse_vector(size_t max_elements);
     ~sparse_vector();
 
+    // Maximum size of this vector.
+    size_t capacity();
+
     // Inserts the given element into the vector and returns the index it was inserted at.
     size_t insert(const element_type& type);
 
@@ -103,6 +106,12 @@ inline sparse_vector<element_type, mem_type>::~sparse_vector()
 {
     free_virtual_memory(m_memory_base);
     m_memory_base = nullptr;
+}
+
+template <typename element_type, memory_type mem_type>
+inline size_t sparse_vector<element_type, mem_type>::capacity()
+{
+    return m_max_elements;
 }
 
 template <typename element_type, memory_type mem_type>

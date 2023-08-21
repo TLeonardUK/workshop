@@ -8,6 +8,8 @@
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 fly_camera_movement_system::fly_camera_movement_system(object_manager& manager)
@@ -25,7 +27,7 @@ void fly_camera_movement_system::step(const frame_time& time)
         transform_component* transform = filter.get_component<transform_component>(i);
         camera_component* camera = filter.get_component<camera_component>(i);
         fly_camera_movement_component* movement = filter.get_component<fly_camera_movement_component>(i);
-
+        
         // do stuff
     }
 }

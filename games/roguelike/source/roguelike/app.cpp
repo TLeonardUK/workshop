@@ -11,6 +11,7 @@
 
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
+#include "workshop.engine/ecs/component_filter.h"
 
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_object.h"
@@ -65,15 +66,23 @@ ws::result<void> rl_game_app::start()
     obj_manager.register_system<fly_camera_movement_system>();
 
 
-    object camera_obj = obj_manager.create_object();
-    obj_manager.add_component<transform_component>(camera_obj);
-    obj_manager.add_component<camera_component>(camera_obj);
-    obj_manager.add_component<fly_camera_movement_component>(camera_obj);
-    obj_manager.remove_component<fly_camera_movement_component>(camera_obj);
-    obj_manager.remove_component<camera_component>(camera_obj);
-    obj_manager.remove_component<transform_component>(camera_obj);
-    obj_manager.destroy_object(camera_obj);
 
+    component_filter<transform_component, camera_component, fly_camera_movement_component> filter(obj_manager);
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        object camera_obj = obj_manager.create_object();
+        obj_manager.add_component<transform_component>(camera_obj);
+        obj_manager.add_component<camera_component>(camera_obj);
+        obj_manager.add_component<fly_camera_movement_component>(camera_obj);
+        //obj_manager.remove_component<fly_camera_movement_component>(camera_obj);
+        //obj_manager.remove_component<camera_component>(camera_obj);
+        if ((i % 3) == 0)
+        {
+            obj_manager.remove_component<transform_component>(camera_obj);
+            obj_manager.destroy_object(camera_obj);
+        }
+    }
 
 
 

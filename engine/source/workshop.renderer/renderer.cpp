@@ -297,7 +297,7 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_param_block->set("gbuffer3_texture", *m_gbuffer_textures[3]);
 #endif
     m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
-    m_gbuffer_param_block->set("gbuffer_dimensions", vector2i(params.width,  params.height));
+    m_gbuffer_param_block->set("gbuffer_dimensions", vector2i((int)params.width,  (int)params.height));
 
     // Create default resources.
     std::vector<uint8_t> default_data = { 0, 0, 0, 0 };
@@ -1048,7 +1048,7 @@ void renderer::draw_debug_overlay()
     size_t display_width = get_display_width();
     size_t display_height = get_display_height();
 
-    ImGui::SetNextWindowPos(ImVec2(display_width - k_width - k_padding, k_padding), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2((float)(display_width - k_width - k_padding), (float)k_padding), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(k_width, 0), ImGuiCond_Always);
 
     bool visible = get_render_flag(render_flag::draw_performance_overlay);
@@ -1056,14 +1056,14 @@ void renderer::draw_debug_overlay()
     {
         ImGui::BeginTable("Stats Table", 2);
 
-        float render_wait = m_stats_frame_time_render_wait->current_value() * 1000.0f;
-        float present_wait = m_stats_frame_time_present_wait->current_value() * 1000.0f;
+        double render_wait = m_stats_frame_time_render_wait->current_value() * 1000.0;
+        double present_wait = m_stats_frame_time_present_wait->current_value() * 1000.0;
 
-        float game_time = m_stats_frame_time_game->current_value() * 1000.0f;
-        float render_time = m_stats_frame_time_render->current_value() * 1000.0f;
-        float gpu_time = m_stats_frame_time_gpu->current_value() * 1000.0f;
+        double game_time = m_stats_frame_time_game->current_value() * 1000.0;
+        double render_time = m_stats_frame_time_render->current_value() * 1000.0;
+        double gpu_time = m_stats_frame_time_gpu->current_value() * 1000.0;
 
-        float frame_rate = m_stats_frame_rate->average_value();
+        double frame_rate = m_stats_frame_rate->average_value();
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);

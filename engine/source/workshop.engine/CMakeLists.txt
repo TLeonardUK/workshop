@@ -26,6 +26,8 @@ SET(SOURCES
     "ecs/component.h"
     "ecs/component_filter.cpp"
     "ecs/component_filter.h"
+    "ecs/component_filter_archetype.cpp"
+    "ecs/component_filter_archetype.h"
     "ecs/object.cpp"
     "ecs/object.h"
     "ecs/object_manager.cpp"

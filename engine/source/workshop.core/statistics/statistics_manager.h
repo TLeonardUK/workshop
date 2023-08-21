@@ -41,6 +41,12 @@ public:
     // Submits a new sample value to the channel.
     void submit(double value);
 
+    // Submits a new sample value to the channel.
+    void submit(size_t value)
+    {
+        submit(static_cast<double>(value));
+    }
+
     // Clears any samples currently in the channel.
     void clear();
 

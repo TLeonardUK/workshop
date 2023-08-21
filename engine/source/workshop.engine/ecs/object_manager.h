@@ -9,13 +9,58 @@
 #include "workshop.engine/ecs/object.h"
 #include "workshop.engine/ecs/system.h"
 #include "workshop.engine/ecs/component.h"
+#include "workshop.engine/ecs/component_filter_archetype.h"
 #include "workshop.core/memory/memory_tracker.h"
+#include "workshop.core/hashing/hash.h"
 #include <typeindex>
 #include <unordered_map>
 
 namespace ws {
 
 class component;
+class component_filter_archetype;
+
+// Simple wrapper for a set of component types, used as a key for associative containers.
+struct component_types_key
+{
+    std::vector<std::type_index> component_types;
+
+    size_t get_hash() const
+    {
+        std::size_t h = 0;
+        for (size_t i = 0; i < component_types.size(); i++)
+        {
+            hash_combine(h, component_types[i]);
+        }
+        return h;
+    }
+
+    bool operator==(const component_types_key& other) const
+    {
+        return std::equal(component_types.begin(), component_types.end(), other.component_types.begin(), other.component_types.end());
+    }
+
+    bool operator!=(const component_types_key& other) const
+    {
+        return !operator==(other);
+    }
+};
+
+}; // namespace ws
+
+// ================================================================================================
+// Specialization of object_manager::component_filter_archetype_key for guid so we can use it in maps/etc.
+// ================================================================================================
+template<>
+struct std::hash<ws::component_types_key>
+{
+    std::size_t operator()(const ws::component_types_key& k) const
+    {
+        return k.get_hash();
+    }
+};
+
+namespace ws {
 
 // ================================================================================================
 //  Responsible for the creation/destruction of objects and their associated components.
@@ -24,6 +69,14 @@ class component;
 class object_manager
 {
 public:
+
+    // Maximum number of objects that can exist at once. 
+    // This does not imply that memory for all these objects will be created.
+    static inline constexpr size_t k_max_objects = 1'000'000;
+
+    // Maximum number of components of each type that can exist at once. 
+    // This does not imply that memory for all these components will be created.
+    static inline constexpr size_t k_max_components = 1'000'000;
 
     object_manager();
 
@@ -49,7 +102,7 @@ public:
 
         auto iter = std::find(m_systems.begin(), m_systems.end(), [](auto& sys) {
             return typeid(sys.get()) == typeid(system_type);
-            });
+        });
         if (iter != m_systems.end())
         {
             m_systems.erase(iter);
@@ -65,15 +118,11 @@ public:
         return static_cast<system_type*>(get_system(typeid(system_type)));
     }
 
-private:
+    // Gets a filter archetype for the given set of component types. Generally
+    // there isn't a good reason to use this directly, use a component_filter instead.
+    component_filter_archetype* get_filter_archetype(const std::vector<std::type_index>& component_types);
 
-    // Maximum number of objects that can exist at once. 
-    // This does not imply that memory for all these objects will be created.
-    static inline constexpr size_t k_max_objects = 1'000'000;
-
-    // Maximum number of components of each type that can exist at once. 
-    // This does not imply that memory for all these components will be created.
-    static inline constexpr size_t k_max_components = 1'000'000;
+private:    
 
     struct object_state
     {
@@ -102,6 +151,10 @@ private:
             size_t index = m_storage.insert({});
             db_assert(index == 0);
         }
+
+        // TODO: Allocate the same index as the object handle, this would keep
+        // all components for each object in consecutive addresses. Better cache efficiency
+        // and no need to do sorting in filters.
 
         virtual component* alloc() override
         {
@@ -193,6 +246,9 @@ public:
     // Gets all components attached to the given object.
     std::vector<component*> get_components(object handle);
 
+    // Gets all components attached to the given object.
+    std::vector<std::type_index> get_component_tyes(object handle);
+
 protected:
 
     // Commits the creation/destruction of an object. This is either done
@@ -221,9 +277,10 @@ private:
 
     std::unordered_map<std::type_index, std::unique_ptr<component_pool_base>> m_component_pools;
 
+    std::unordered_map<component_types_key, std::unique_ptr<component_filter_archetype>> m_component_filter_archetype;
+
     bool m_is_system_step_active = false;
 
 };
-
 
 }; // namespace ws

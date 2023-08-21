@@ -16,37 +16,52 @@ namespace ws {
 template <typename ...component_types>
 class component_filter
 {
+private:
+    template <typename ...a>
+    typename std::enable_if<sizeof...(a) == 0>::type unpack_types(std::vector<std::type_index>& output)
+    {
+    }
+
+    template <typename a, typename ...b>
+    void unpack_types(std::vector<std::type_index>& output)
+    {
+        output.push_back(typeid(a));
+        unpack_types<b...>(output);
+    }
+
 public: 
     component_filter(object_manager& manager)
         : m_manager(manager)
     {
-        //m_archetype = m_manager.get_filter_archetype<component_types...>();
+        std::vector<std::type_index> type_indices;
+        unpack_types<component_types...>(type_indices);
+
+        m_archetype = m_manager.get_filter_archetype(type_indices);
     }
 
     // Gets number of elements.
     size_t size()
     {
-        return 0;
-        //return m_archetype->size();
+        return m_archetype->size();
     }
 
     // Gets the object at the given index.
     object get_object(size_t index)
     {
-        return null_object;
-        //return m_archetype->get_object(index);
+        return m_archetype->get_object(index);
     }
 
     // Gets the component at the given index.
     template<typename component_type>
     component_type* get_component(size_t index)
     {
-        return nullptr;
-        //return m_archetype->get_component<component_type>(index);
+        return static_cast<component_type*>(m_archetype->get_component(index, typeid(component_type)));
     }
 
 private:
     object_manager& m_manager;
+
+    component_filter_archetype* m_archetype;
 
 };
 

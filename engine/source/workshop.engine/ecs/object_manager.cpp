@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.engine/ecs/object_manager.h"
+#include "workshop.engine/ecs/component_filter_archetype.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/perf/profile.h"
 
@@ -71,6 +72,43 @@ object_manager::component_pool_base* object_manager::get_component_pool(const st
     return nullptr;
 }
 
+component_filter_archetype* object_manager::get_filter_archetype(const std::vector<std::type_index>& unsorted_component_types)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    // Sort into a deterministic order so filters that just have an order difference
+    // don't create an entirely new archetype.
+    std::vector<std::type_index> component_types = unsorted_component_types;
+    std::sort(component_types.begin(), component_types.end());
+
+    component_types_key key;
+    key.component_types = component_types;
+
+    auto iter = m_component_filter_archetype.find(key);
+    if (iter != m_component_filter_archetype.end())
+    {
+        return iter->second.get();
+    }
+
+    std::unique_ptr<component_filter_archetype> archetype = std::make_unique<component_filter_archetype>(*this, component_types);
+    component_filter_archetype* ret = archetype.get();
+    m_component_filter_archetype.emplace(key, std::move(archetype));
+
+    // All all objects to the archetype.
+    // Start at 1 to skip the 0=null index.
+    // This is a shit way to do this, we need to store all active objects in a better way. But it should
+    // only happen once per filter type, so tolerable for now.
+    for (size_t i = 1; i < m_objects.capacity(); i++)
+    {
+        if (m_objects.is_valid(i))
+        {
+            ret->update_object(i);
+        }
+    }
+
+    return ret;
+}
+
 void object_manager::commit_destroy_object(object handle)
 {
     object_manager::object_state* state = get_object_state(handle);
@@ -79,7 +117,10 @@ void object_manager::commit_destroy_object(object handle)
         return;
     }
 
-    // TODO: Remove references from filters.
+    for (auto& pair : m_component_filter_archetype)
+    {
+        pair.second->remove_object(handle);
+    }
 
     std::vector<component*> to_remove = state->components;
     for (component* comp : to_remove)
@@ -98,8 +139,6 @@ void object_manager::commit_remove_component(object handle, component* comp)
         return;
     }
 
-    // TODO: Remove references from filters.
-
     auto iter = std::find(state->components.begin(), state->components.end(), comp);
     if (iter != state->components.end())
     {
@@ -108,6 +147,8 @@ void object_manager::commit_remove_component(object handle, component* comp)
 
         state->components.erase(iter);
     }
+
+    update_object_registration(*state);
 }
 
 void object_manager::update_object_registration(object_state& obj)
@@ -119,7 +160,10 @@ void object_manager::update_object_registration(object_state& obj)
         return;
     }
 
-    // TODO: register with all filters.
+    for (auto& pair : m_component_filter_archetype)
+    {
+        pair.second->update_object(obj.handle);
+    }
 }
 
 bool object_manager::is_object_alive(object obj)
@@ -139,7 +183,7 @@ object_manager::object_state* object_manager::get_object_state(object obj)
     return &m_objects[obj];
 }
 
-void object_manager::add_component(object handle, component* component)
+void object_manager::add_component(object handle, component* comp)
 {
     std::scoped_lock lock(m_object_mutex);
 
@@ -149,7 +193,16 @@ void object_manager::add_component(object handle, component* component)
         return;
     }
 
-    state->components.push_back(component);
+    for (component* existing_comp : state->components)
+    {
+        if (typeid(*existing_comp) == typeid(*comp))
+        {
+            db_error(engine, "Attempt to register duplicate component to object. An object can only have a single component of each type.");
+            return;
+        }
+    }
+
+    state->components.push_back(comp);
 
     update_object_registration(*state);
 }
@@ -179,6 +232,27 @@ std::vector<component*> object_manager::get_components(object handle)
     }
 
     return state->components;
+}
+
+std::vector<std::type_index> object_manager::get_component_tyes(object handle)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    object_manager::object_state* state = get_object_state(handle);
+    if (!state)
+    {
+        return {};
+    }
+
+    std::vector<std::type_index> component_types;
+    component_types.reserve(state->components.size());
+
+    for (component* comp : state->components)
+    {
+        component_types.push_back(typeid(*comp));
+    }
+
+    return component_types;
 }
 
 void object_manager::step_systems(const frame_time& time)
