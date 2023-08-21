@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.engine/app/engine_app.h"
+#include "workshop.engine/ecs/object.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/event.h"
 #include "workshop.renderer/render_command_queue.h"
@@ -41,6 +42,8 @@ private:
     int m_mouse_control_frames = 0;
 
     std::vector<render_object_id> m_rotating_objects;
+
+    std::vector<object> m_ecs_objects;
 
     struct moving_light
     {

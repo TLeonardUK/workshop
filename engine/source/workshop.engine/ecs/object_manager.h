@@ -8,7 +8,7 @@
 #include "workshop.core/containers/sparse_vector.h"
 #include "workshop.engine/ecs/object.h"
 #include "workshop.engine/ecs/system.h"
-#include "workshop.engine/ecs/component.h"
+//#include "workshop.engine/ecs/component.h"
 #include "workshop.engine/ecs/component_filter_archetype.h"
 #include "workshop.core/memory/memory_tracker.h"
 #include "workshop.core/hashing/hash.h"
@@ -154,7 +154,8 @@ private:
 
         // TODO: Allocate the same index as the object handle, this would keep
         // all components for each object in consecutive addresses. Better cache efficiency
-        // and no need to do sorting in filters.
+        // and no need to do sorting in filters. Linear accessing when trying to get inidividual
+        // object ids as well.
 
         virtual component* alloc() override
         {
@@ -247,7 +248,29 @@ public:
     std::vector<component*> get_components(object handle);
 
     // Gets all components attached to the given object.
-    std::vector<std::type_index> get_component_tyes(object handle);
+    std::vector<std::type_index> get_component_types(object handle);
+    
+    // Removes the first component of the given type from the given object.
+    template <typename component_type>
+    component_type* get_component(object handle)
+    {
+        object_state* state = get_object_state(handle);
+        if (!state)
+        {
+            return nullptr;
+        }
+
+        std::type_index search_comp_type_index = typeid(component_type);
+        for (auto& comp : state->components)
+        {
+            if (typeid(*comp) == search_comp_type_index)
+            {
+                return static_cast<component_type*>(comp);
+            }
+        }
+
+        return nullptr;
+    }
 
 protected:
 

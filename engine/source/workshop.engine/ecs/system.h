@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/utils/frame_time.h"
+#include "workshop.core/containers/command_queue.h"
 #include <typeindex>
 
 namespace ws {
@@ -34,6 +35,10 @@ public:
 
 protected:
 
+    // Runs all commands currently in the systems command queue. Should be called at least
+    // once a frame to avoid it building up.
+    void flush_command_queue();
+
     // Adds a dependency to another system. This system will not be stepped until 
     // all dependencies have completed their stepping.
     void add_dependency(const std::type_index& type_info);
@@ -46,11 +51,15 @@ protected:
 
 protected:
 
+    static inline constexpr size_t k_command_queue_capacity = 4 * 1024 * 1024;
+
     object_manager& m_manager;
 
     std::vector<system*> m_dependencies;
 
     std::string m_name;
+
+    command_queue m_command_queue;
 
 };
 

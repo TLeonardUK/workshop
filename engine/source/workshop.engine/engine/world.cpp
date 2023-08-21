@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.engine/engine/world.h"
+#include "workshop.core/perf/profile.h"
 
 namespace ws {
 
@@ -23,6 +24,8 @@ object_manager& world::get_object_manager()
 
 void world::step(const frame_time& time)
 {
+    profile_marker(profile_colors::engine, "world: %s", m_name.c_str());
+
     m_object_manager->step(time);
 }
 

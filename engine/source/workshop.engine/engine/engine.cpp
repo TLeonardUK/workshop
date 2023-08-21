@@ -56,19 +56,26 @@ void engine::step()
     frame_timer.start();
 
     m_frame_time.step();
-    m_platform_interface->pump_events();
-    m_window_interface->pump_events();
-    m_input_interface->pump_events();
+
+    {
+        profile_marker(profile_colors::engine, "pump platform events");
+
+        m_platform_interface->pump_events();
+        m_window_interface->pump_events();
+        m_input_interface->pump_events();
+    }
+
+    {
+        profile_marker(profile_colors::engine, "game step");
+        on_step.broadcast(m_frame_time);
+    }
 
     for (auto& world : m_worlds)
     {
         world->step(m_frame_time);
     }
 
-    on_step.broadcast(m_frame_time);
-
     m_editor->step(m_frame_time);
-
     m_presenter->step(m_frame_time);
 
     m_filesystem->raise_watch_events();

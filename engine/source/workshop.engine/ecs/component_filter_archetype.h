@@ -10,6 +10,8 @@
 
 namespace ws {
 
+class component;
+
 // ================================================================================================ 
 //  A component_filter_archetype stores all objects that match a specific filter, its used directly
 //  by a component_filter to extract the needed information without recalculating what entities

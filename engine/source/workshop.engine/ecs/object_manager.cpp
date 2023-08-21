@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.engine/ecs/object_manager.h"
 #include "workshop.engine/ecs/component_filter_archetype.h"
+#include "workshop.engine/ecs/component.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/perf/profile.h"
 
@@ -22,7 +23,7 @@ system* object_manager::get_system(const std::type_index& type_info)
     std::scoped_lock lock(m_system_mutex);
 
     auto iter = std::find_if(m_systems.begin(), m_systems.end(), [&type_info](const std::unique_ptr<system>& sys) {
-        std::type_index sys_index = typeid(sys.get());
+        std::type_index sys_index = typeid(*sys.get());
         return sys_index == type_info;
     });
 
@@ -234,7 +235,7 @@ std::vector<component*> object_manager::get_components(object handle)
     return state->components;
 }
 
-std::vector<std::type_index> object_manager::get_component_tyes(object handle)
+std::vector<std::type_index> object_manager::get_component_types(object handle)
 {
     std::scoped_lock lock(m_object_mutex);
 
@@ -270,7 +271,7 @@ void object_manager::step_systems(const frame_time& time)
         auto& system = m_systems[i];
 
         step_tasks[i] = scheduler.create_task(system->get_name(), task_queue::standard, [this, &time, i]() {
-            profile_marker(profile_colors::simulation, "step system: %s", m_systems[i]->get_name());
+            profile_marker(profile_colors::simulation, "step ecs system: %s", m_systems[i]->get_name());
             m_systems[i]->step(time);
         });
     }
@@ -295,8 +296,12 @@ void object_manager::step_systems(const frame_time& time)
     // Dispatch and away for completion.
     m_is_system_step_active = true;
 
-    scheduler.dispatch_tasks(step_tasks);
-    scheduler.wait_for_tasks(step_tasks, true);
+    {
+        profile_marker(profile_colors::simulation, "step ecs systems");
+
+        scheduler.dispatch_tasks(step_tasks);
+        scheduler.wait_for_tasks(step_tasks, true);
+    }
 
     m_is_system_step_active = false;
 }
@@ -308,6 +313,8 @@ void object_manager::step(const frame_time& time)
 
     // Deferred actions.
     {
+        profile_marker(profile_colors::simulation, "executing deferred ecs actions");
+
         std::scoped_lock lock(m_object_mutex);
 
         // Run deferred component removal.

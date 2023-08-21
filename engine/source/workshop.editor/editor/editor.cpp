@@ -132,6 +132,8 @@ result<void> editor::destroy_windows()
 
 void editor::step(const frame_time& time)
 {
+    profile_marker(profile_colors::engine, "editor");
+
 	imgui_scope imgui_scope(m_engine.get_renderer().get_imgui_manager(), "Editor Dock");
 
 	input_interface& input = m_engine.get_input_interface();

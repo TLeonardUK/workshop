@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.engine/ecs/component_filter_archetype.h"
+#include "workshop.engine/ecs/component.h"
 
 namespace ws {
 

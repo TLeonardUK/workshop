@@ -11,6 +11,7 @@ namespace ws {
 system::system(object_manager& manager, const char* name)
     : m_manager(manager)
     , m_name(name)
+    , m_command_queue(k_command_queue_capacity)
 {
 }
 
@@ -29,6 +30,15 @@ void system::add_dependency(const std::type_index& type_info)
 const char* system::get_name()
 {
     return m_name.c_str();
+}
+
+void system::flush_command_queue()
+{
+    while (!m_command_queue.empty())
+    {
+        m_command_queue.execute_next();
+    }
+    m_command_queue.reset();
 }
 
 }; // namespace ws

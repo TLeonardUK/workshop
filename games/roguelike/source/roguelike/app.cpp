@@ -22,9 +22,10 @@
 #include "workshop.renderer/render_imgui_manager.h"
 
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
+#include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
-#include "workshop.game_framework/components/transform_component.h"
+#include "workshop.game_framework/components/transform/transform_component.h"
 
 #include <chrono>
 
@@ -63,11 +64,13 @@ ws::result<void> rl_game_app::start()
     auto& obj_manager = get_engine().get_default_world().get_object_manager();
 
     // Register all systems we want to use in this game.
+    obj_manager.register_system<transform_system>();
     obj_manager.register_system<fly_camera_movement_system>();
 
 
 
     component_filter<transform_component, camera_component, fly_camera_movement_component> filter(obj_manager);
+    object parent = null_object;
 
     for (size_t i = 0; i < 10; i++)
     {
@@ -75,15 +78,15 @@ ws::result<void> rl_game_app::start()
         obj_manager.add_component<transform_component>(camera_obj);
         obj_manager.add_component<camera_component>(camera_obj);
         obj_manager.add_component<fly_camera_movement_component>(camera_obj);
-        //obj_manager.remove_component<fly_camera_movement_component>(camera_obj);
-        //obj_manager.remove_component<camera_component>(camera_obj);
-        if ((i % 3) == 0)
-        {
-            obj_manager.remove_component<transform_component>(camera_obj);
-            obj_manager.destroy_object(camera_obj);
-        }
-    }
 
+        transform_system* transform_sys = obj_manager.get_system<transform_system>();
+        transform_sys->set_local_transform(camera_obj, vector3(i * 10.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+        transform_sys->set_parent(camera_obj, parent);
+
+        parent = camera_obj;
+
+        m_ecs_objects.push_back(camera_obj);
+    }
 
 
 
@@ -264,6 +267,16 @@ void rl_game_app::step(const frame_time& time)
         vector3 location = vector3::zero * transform;
 
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
+    }
+
+
+    for (size_t i = 0; i < m_ecs_objects.size(); i++)
+    {
+        object obj = m_ecs_objects[i];
+
+        transform_system* transform_sys = get_engine().get_default_world().get_object_manager().get_system<transform_system>();
+        transform_sys->set_local_transform(obj, vector3(i * 10.0f, 0.0f, 0.0f), quat::identity, vector3::one);
+        transform_sys->set_parent(obj, i > 0 ? m_ecs_objects[i - 1] : null_object);
     }
 
     /*

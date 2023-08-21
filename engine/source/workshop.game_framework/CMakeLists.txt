@@ -10,10 +10,13 @@ project(workshop.game_framework C CXX)
 SET(SOURCES
     "components/camera/camera_component.h"    
     "components/camera/fly_camera_movement_component.h"    
-    "components/transform_component.h"    
+    "components/transform/transform_component.h"    
     
     "systems/camera/fly_camera_movement_system.cpp"
-    "systems/camera/fly_camera_movement_system.h"    
+    "systems/camera/fly_camera_movement_system.h"  
+    
+    "systems/transform/transform_system.h"  
+    "systems/transform/transform_system.cpp"  
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

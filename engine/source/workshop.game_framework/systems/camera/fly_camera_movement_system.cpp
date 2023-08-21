@@ -4,11 +4,9 @@
 // ================================================================================================
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
 #include "workshop.engine/ecs/component_filter.h"
-#include "workshop.game_framework/components/transform_component.h"
+#include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
-
-#pragma optimize("", off)
 
 namespace ws {
 
