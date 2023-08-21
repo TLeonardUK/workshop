@@ -20,11 +20,19 @@ std::vector<system*> system::get_dependencies()
     return m_dependencies;
 }
 
-void system::add_dependency(const std::type_index& type_info)
+void system::add_dependency(const std::type_index& type_info, bool predecessor)
 {
     system* dep = m_manager.get_system(type_info);
     db_assert(dep != nullptr);
-    m_dependencies.push_back(dep);
+
+    if (predecessor)
+    {
+        m_dependencies.push_back(dep);
+    }
+    else
+    {
+        dep->m_dependencies.push_back(this);
+    }
 }
 
 const char* system::get_name()

@@ -21,6 +21,7 @@
 
 #include "workshop.renderer/render_imgui_manager.h"
 
+#include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
@@ -62,11 +63,7 @@ void rl_game_app::configure_engine(engine& engine)
 ws::result<void> rl_game_app::start()
 {   
     auto& obj_manager = get_engine().get_default_world().get_object_manager();
-
-    // Register all systems we want to use in this game.
-    obj_manager.register_system<transform_system>();
-    obj_manager.register_system<fly_camera_movement_system>();
-
+    register_default_systems(obj_manager);
 
 
     component_filter<transform_component, camera_component, fly_camera_movement_component> filter(obj_manager);

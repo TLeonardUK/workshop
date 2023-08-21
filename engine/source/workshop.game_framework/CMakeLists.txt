@@ -12,11 +12,16 @@ SET(SOURCES
     "components/camera/fly_camera_movement_component.h"    
     "components/transform/transform_component.h"    
     
+    "systems/camera/camera_system.h"  
+    "systems/camera/camera_system.cpp"  
     "systems/camera/fly_camera_movement_system.cpp"
     "systems/camera/fly_camera_movement_system.h"  
     
     "systems/transform/transform_system.h"  
-    "systems/transform/transform_system.cpp"  
+    "systems/transform/transform_system.cpp"    
+    
+    "systems/default_systems.h"    
+    "systems/default_systems.cpp"    
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

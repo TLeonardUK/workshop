@@ -41,12 +41,18 @@ protected:
 
     // Adds a dependency to another system. This system will not be stepped until 
     // all dependencies have completed their stepping.
-    void add_dependency(const std::type_index& type_info);
+    void add_dependency(const std::type_index& type_info, bool predecessor);
 
     template <typename system_type>
-    void add_dependency()
+    void add_predecessor()
     {
-        add_dependency(typeid(system_type));
+        add_dependency(typeid(system_type), true);
+    }
+
+    template <typename system_type>
+    void add_successor()
+    {
+        add_dependency(typeid(system_type), false);
     }
 
 protected:
