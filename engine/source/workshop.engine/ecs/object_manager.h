@@ -265,12 +265,12 @@ public:
             return nullptr;
         }
 
-        std::type_index search_comp_type_index = typeid(component_type);
+        //std::type_index search_comp_type_index = typeid(component_type);
         for (auto& comp : state->components)
         {
-            if (typeid(*comp) == search_comp_type_index)
+            if (component_type* ret = dynamic_cast<component_type*>(comp); ret != nullptr)
             {
-                return static_cast<component_type*>(comp);
+                return ret;
             }
         }
 

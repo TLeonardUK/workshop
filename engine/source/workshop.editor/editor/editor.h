@@ -59,10 +59,10 @@ public:
     editor_main_menu& get_main_menu();
 
     // Creates a window and returns a reference to it. The window is owned by the editor.
-    template <typename window_type>
-    window_type& create_window()
+    template <typename window_type, typename... arg_types>
+    window_type& create_window(arg_types... args)
     {
-        std::unique_ptr<editor_window> window = std::make_unique<window_type>();
+        std::unique_ptr<editor_window> window = std::make_unique<window_type>(args...);
         window_type& result = static_cast<window_type&>(*window.get());
         m_windows.push_back(std::move(window));
         return result;

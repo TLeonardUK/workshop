@@ -29,11 +29,22 @@ enum class asset_loading_state
     unloaded,
     unloading,
     loading,
+    compiling,
     waiting_for_dependencies,
     loaded,
     failed,
 
     COUNT
+};
+
+static const char* asset_loading_state_strings[static_cast<int>(asset_loading_state::COUNT)] = {
+    "unloaded",
+    "unloading",
+    "loading",
+    "compiling",
+    "waiting for dependencies",
+    "loaded",
+    "failed",
 };
 
 // Internal state representing the current loading state of an asset.
@@ -201,6 +212,11 @@ public:
     // Performs any needed hot reload swapping. Done explicitly so higher level code
     // can control any syncronisation problems.
     void apply_hot_reloads();
+
+    // Runs callback for every asset state the manager is currently handling. 
+    // This is mostly here for debugging, its not fast and will block loading, so don't use it anywhere time critical.
+    using visit_callback_t = std::function<void(asset_state* state)>;
+    void visit_assets(visit_callback_t callback);
 
 protected:
     template <typename asset_type>

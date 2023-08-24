@@ -627,7 +627,7 @@ bool asset_manager::search_cache_for_key(const asset_cache_key& cache_key, std::
 bool asset_manager::compile_asset(asset_cache_key& cache_key, asset_loader* loader, asset_state* state, std::string& compiled_path)
 {
     std::string temporary_path = string_format("temp:%s", to_string(guid::generate()).c_str());
-
+    
     asset_flags flags = asset_flags::none;
     if (state->is_for_hot_reload)
     {
@@ -753,7 +753,11 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
         // If no compiled version is available, compile to a temporary location.
         if (needs_compile)
         {
-            if (!compile_asset(cache_key, loader, state, compiled_path))
+            set_load_state(state, asset_loading_state::compiling);
+            bool result = compile_asset(cache_key, loader, state, compiled_path);
+            set_load_state(state, asset_loading_state::loading);
+
+            if (!result)
             {
                 return false;
             }
@@ -849,6 +853,16 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
     }
 
     state->on_change_callback.broadcast();
+}
+
+void asset_manager::visit_assets(visit_callback_t callback)
+{
+    std::scoped_lock lock(m_states_mutex);
+
+    for (asset_state* state : m_states)
+    {
+        callback(state);
+    }
 }
 
 void asset_manager::hot_reload(asset_state* state)

@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.editor/editor/editor.h"
 #include "workshop.editor/editor/editor_main_menu.h"
+#include "workshop.editor/editor/windows/editor_loading_window.h"
 #include "workshop.editor/editor/windows/editor_log_window.h"
 #include "workshop.editor/editor/windows/editor_memory_window.h"
 #include "workshop.renderer/renderer.h"
@@ -117,6 +118,7 @@ result<void> editor::destroy_main_menu()
 
 result<void> editor::create_windows(init_list& list)
 {
+    create_window<editor_loading_window>(& m_engine.get_asset_manager());
     create_window<editor_log_window>();
     create_window<editor_memory_window>();
 
