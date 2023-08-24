@@ -165,7 +165,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             size_t index, offset;
             block.get_table(index, offset);
 
-            light_probe_grid_instance_buffer->add(index, offset);
+            light_probe_grid_instance_buffer->add((uint32_t)index, (uint32_t)offset);
         }
 
         light_probe_grid_instance_buffer->commit();
@@ -182,7 +182,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             size_t index, offset;
             block.get_table(index, offset);
 
-            reflection_probe_instance_buffer->add(index, offset);
+            reflection_probe_instance_buffer->add((uint32_t)index, (uint32_t)offset);
         }
 
         reflection_probe_instance_buffer->commit();
@@ -219,17 +219,17 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             light_state_block->set("shadow_map_start_index", total_shadow_maps);
             light_state_block->set("shadow_map_count", (int)shadows.cascades.size());
             light_state_block->get_table(index, offset);
-            light_instance_buffer->add(index, offset);
+            light_instance_buffer->add((uint32_t)index, (uint32_t)offset);
 
             // Add each shadow info to buffer.
             for (render_system_shadows::cascade_info& cascade : shadows.cascades)
             {
                 cascade.shadow_map_state_param_block->get_table(index, offset);
-                shadow_map_instance_buffer->add(index, offset);
+                shadow_map_instance_buffer->add((uint32_t)index, (uint32_t)offset);
             }
 
             total_lights++;
-            total_shadow_maps += shadows.cascades.size();
+            total_shadow_maps += (int)shadows.cascades.size();
         }
 
         light_instance_buffer->commit();
@@ -333,7 +333,7 @@ void render_system_lighting::get_cluster_values(vector3u& out_grid_size, size_t&
         return;
     }
 
-    out_grid_size = vector3u(light_grid_size_x, light_grid_size_y, light_grid_size_z);
+    out_grid_size = vector3u((uint32_t)light_grid_size_x, (uint32_t)light_grid_size_y, (uint32_t)light_grid_size_z);
     out_cluster_size = m_renderer.get_param_block_manager().get_param_block_archetype("light_cluster")->get_size();
 }
 

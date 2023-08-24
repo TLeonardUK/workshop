@@ -105,7 +105,7 @@ void render_imgui_manager::step(frame_time& time)
             // Emplace vertices
             for (size_t vert_index = 0; vert_index < cmd_list->VtxBuffer.Size; vert_index++)
             {
-                const ImDrawVert& vert = cmd_list->VtxBuffer[vert_index];
+                const ImDrawVert& vert = cmd_list->VtxBuffer[static_cast<int>(vert_index)];
 
                 render_system_imgui::vertex& render_vert = vertices.emplace_back();
                 render_vert.position.x = vert.pos.x;
@@ -121,13 +121,13 @@ void render_imgui_manager::step(frame_time& time)
             // Emplace indices
             for (size_t idx_index = 0; idx_index < cmd_list->IdxBuffer.Size; idx_index++)
             {
-                indices.emplace_back((uint16_t)(vertex_offset + cmd_list->IdxBuffer[idx_index]));
+                indices.emplace_back((uint16_t)(vertex_offset + cmd_list->IdxBuffer[static_cast<int>(idx_index)]));
             }
 
             // Append draw commands.
             for (size_t cmd_index = 0; cmd_index < cmd_list->CmdBuffer.Size; cmd_index++)
             {
-                const ImDrawCmd& cmd = cmd_list->CmdBuffer[cmd_index];
+                const ImDrawCmd& cmd = cmd_list->CmdBuffer[static_cast<int>(cmd_index)];
 
                 render_system_imgui::draw_command& render_cmd = commands.emplace_back();
                 render_cmd.texture = reinterpret_cast<render_system_imgui::texture_id>(cmd.TextureId);

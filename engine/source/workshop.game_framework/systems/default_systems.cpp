@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
+#include "workshop.game_framework/systems/camera/camera_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.engine/ecs/object_manager.h"
 
@@ -13,6 +14,7 @@ void register_default_systems(object_manager& manager)
 {
     manager.register_system<transform_system>();
 
+    manager.register_system<camera_system>();
     manager.register_system<fly_camera_movement_system>();
 }
 

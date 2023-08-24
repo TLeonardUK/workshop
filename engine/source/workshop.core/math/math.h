@@ -43,7 +43,7 @@ inline T max(T a, T b)
 template <typename T>
 inline T sign(T a)
 {
-	return (a >= 0 ? 1 : -1);
+	return static_cast<T>(a >= 0 ? 1 : -1);
 }
 
 inline float sqrt(float in)

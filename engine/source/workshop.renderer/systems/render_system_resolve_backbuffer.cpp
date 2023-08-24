@@ -94,8 +94,8 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     histogram_pass->technique = m_renderer.get_effect_manager().get_technique("calculate_luminance_histogram", {});
     histogram_pass->param_blocks.push_back(resolve_luminance_params);
     histogram_pass->dispatch_size_coverage = vector3i(
-        texture.get_width(),
-        texture.get_height(),
+        (int)texture.get_width(),
+        (int)texture.get_height(),
         1
     );
     graph.add_node(std::move(histogram_pass));

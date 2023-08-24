@@ -266,8 +266,8 @@ void render_system_debug::add_sphere(const sphere& bounds, const color& color)
                 float y = cos(vertical_delta * math::pi);
                 float next_y = cos(next_vertical_delta * math::pi);
 
-                float radial_delta = sin(radial_delta * math::pi2) * plane_radius;
-                float nex_radial_delta = sin(radial_delta * math::pi2) * next_plane_radius;
+                float radial_delta = sin(vertical_delta * math::pi2) * plane_radius;
+                float nex_radial_delta = sin(next_vertical_delta * math::pi2) * next_plane_radius;
 
                 float x = sin(angle) * plane_radius;
                 float next_x = sin(angle) * next_plane_radius;
@@ -408,8 +408,8 @@ void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& 
             float y = cos(vertical_delta * math::halfpi) * radius;
             float next_y = cos(next_vertical_delta * math::halfpi) * radius;
 
-            float radial_delta = sin(radial_delta * math::pi2) * plane_radius;
-            float nex_radial_delta = sin(radial_delta * math::pi2) * next_plane_radius;
+            float radial_delta = sin(vertical_delta * math::pi2) * plane_radius;
+            float nex_radial_delta = sin(next_vertical_delta * math::pi2) * next_plane_radius;
 
             float x = sin(angle) * plane_radius;
             float next_x = sin(angle) * next_plane_radius;
@@ -457,9 +457,9 @@ void render_system_debug::add_arrow(const vector3& start, const vector3& end, co
 {
     float total_length = (end - start).length();
 
-    float spoke_radius = total_length * 0.05;
+    float spoke_radius = total_length * 0.05f;
     float cone_radius = spoke_radius * 3.0f;
-    float cone_length = total_length * 0.3;
+    float cone_length = total_length * 0.3f;
     float spoke_length = (end - start).length() - cone_length;
 
     vector3 normal = (end - start).normalize();

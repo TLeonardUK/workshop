@@ -392,7 +392,7 @@ void dx12_ri_command_list::set_render_targets(const std::vector<ri_texture_view>
 
 void dx12_ri_command_list::draw(size_t indexes_per_instance, size_t instance_count, size_t start_index_location)
 {
-    m_command_list->DrawIndexedInstanced(static_cast<UINT>(indexes_per_instance), static_cast<UINT>(instance_count), start_index_location, 0, 0);
+    m_command_list->DrawIndexedInstanced(static_cast<UINT>(indexes_per_instance), static_cast<UINT>(instance_count), static_cast<UINT>(start_index_location), 0, 0);
 }
 
 void dx12_ri_command_list::dispatch(size_t group_size_x, size_t group_size_y, size_t group_size_z)

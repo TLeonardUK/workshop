@@ -5,6 +5,9 @@
 
 #include "gzguts.h"
 
+ // WS_CHANGE: Get rid of various spurious warnings.
+#pragma warning (disable : 4996)
+
 /* Local functions */
 local int gz_load OF((gz_statep, unsigned char *, unsigned, unsigned *));
 local int gz_avail OF((gz_statep));

@@ -32,6 +32,11 @@ public:
     matrix4 local_to_world = matrix4::identity;
     matrix4 world_to_local = matrix4::identity;
 
+    // Transform in world space.
+    quat    world_rotation = quat::identity;
+    vector3 world_location = vector3::zero;
+    vector3 world_scale = vector3::one;
+
     // If the local transform has been modified and the local-to-world
     // needs to be update.d
     bool is_dirty = true;

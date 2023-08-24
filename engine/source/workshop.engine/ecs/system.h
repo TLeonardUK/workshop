@@ -6,11 +6,13 @@
 
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/containers/command_queue.h"
+#include "workshop.engine/ecs/object.h"
 #include <typeindex>
 
 namespace ws {
 
 class object_manager;
+class component;
 
 // ================================================================================================
 //  Base class for all systems.
@@ -32,6 +34,14 @@ public:
 
     // Gets a list of systems that need to be ticked before this one.
     std::vector<system*> get_dependencies();
+
+    // Notifies the system that a component has been added to a given object so it can 
+    // do any required setup.
+    virtual void component_added(object handle, component* comp) {}
+
+    // Notifies the system that a component has been removed from a given object so it can 
+    // do any required teardown.
+    virtual void component_removed(object handle, component* comp) {}
 
 protected:
 

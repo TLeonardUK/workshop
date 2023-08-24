@@ -23,7 +23,7 @@ std::vector<std::unique_ptr<pixmap>> pixmap_dds_loader::load(const std::vector<c
     }
 
     ddsktx_sub_data sub_data;
-    ddsktx_get_sub(&info, &sub_data, buffer.data(), buffer.size(), 0, 0, 0);
+    ddsktx_get_sub(&info, &sub_data, buffer.data(), (int)buffer.size(), 0, 0, 0);
 
     pixmap_format direct_format = pixmap_format::COUNT;
     size_t block_size = 1;

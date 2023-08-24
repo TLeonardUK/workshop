@@ -65,36 +65,18 @@ ws::result<void> rl_game_app::start()
     auto& obj_manager = get_engine().get_default_world().get_object_manager();
     register_default_systems(obj_manager);
 
+    // Add the main camera!
+    m_camera_object = obj_manager.create_object();
+    obj_manager.add_component<transform_component>(m_camera_object);
+    obj_manager.add_component<camera_component>(m_camera_object);
+    obj_manager.add_component<fly_camera_movement_component>(m_camera_object);
 
-    component_filter<transform_component, camera_component, fly_camera_movement_component> filter(obj_manager);
-    object parent = null_object;
+    transform_system* transform_sys = obj_manager.get_system<transform_system>();
+    transform_sys->set_local_transform(m_camera_object, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
 
-    for (size_t i = 0; i < 10; i++)
-    {
-        object camera_obj = obj_manager.create_object();
-        obj_manager.add_component<transform_component>(camera_obj);
-        obj_manager.add_component<camera_component>(camera_obj);
-        obj_manager.add_component<fly_camera_movement_component>(camera_obj);
-
-        transform_system* transform_sys = obj_manager.get_system<transform_system>();
-        transform_sys->set_local_transform(camera_obj, vector3(i * 10.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-        transform_sys->set_parent(camera_obj, parent);
-
-        parent = camera_obj;
-
-        m_ecs_objects.push_back(camera_obj);
-    }
-
-
-
+    // Spawn various bits and pieces
     auto& cmd_queue = get_engine().get_renderer().get_command_queue();
     auto& ass_manager = get_engine().get_asset_manager();
-
-    m_view_id = cmd_queue.create_view("Main View");
-    cmd_queue.set_view_viewport(m_view_id, recti(0, 0, static_cast<int>(get_engine().get_main_window().get_width()), static_cast<int>(get_engine().get_main_window().get_height())));
-    cmd_queue.set_view_projection(m_view_id, 45.0f, 1.77f, 10.0f, 20000.0f);
-    cmd_queue.set_object_transform(m_view_id, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
-    
     render_object_id object_id;
 
     object_id = cmd_queue.create_static_mesh("Skybox");
@@ -252,6 +234,10 @@ void rl_game_app::step(const frame_time& time)
     window& main_window = get_engine().get_main_window();
     input_interface& input = get_engine().get_input_interface();
     
+
+    auto& obj_manager = get_engine().get_default_world().get_object_manager();
+    obj_manager.destroy_object(m_camera_object);
+
     static float angle = 0.0f;
     angle += 0.2f * time.delta_seconds;
 
@@ -266,15 +252,6 @@ void rl_game_app::step(const frame_time& time)
         cmd_queue.set_object_transform(id, location, quat::identity, vector3(50.0f, 50.0f, 50.0f));
     }
 
-
-    for (size_t i = 0; i < m_ecs_objects.size(); i++)
-    {
-        object obj = m_ecs_objects[i];
-
-        transform_system* transform_sys = get_engine().get_default_world().get_object_manager().get_system<transform_system>();
-        transform_sys->set_local_transform(obj, vector3(i * 10.0f, 0.0f, 0.0f), quat::identity, vector3::one);
-        transform_sys->set_parent(obj, i > 0 ? m_ecs_objects[i - 1] : null_object);
-    }
 
     /*
     for (int z = -2; z <= 2; z++)
@@ -318,69 +295,6 @@ void rl_game_app::step(const frame_time& time)
     //cmd_queue.set_object_transform(m_light_id, light_pos, light_rot, vector3::one);
 //    cmd_queue.draw_sphere(sphere(light_pos, 100.0f), color::red);
 //    cmd_queue.draw_arrow(light_pos, light_pos + (vector3::forward * light_rot) * 100.0f, color::green);
-
-    if (input.get_mouse_capture())
-    {
-        vector2 center_pos(main_window.get_width() * 0.5f, main_window.get_height() * 0.5f);
-        vector2 delta_pos = (input.get_mouse_position() - center_pos);
-        if (delta_pos.length() > 0)
-        {
-            input.set_mouse_position(center_pos);
-        }
-
-        constexpr float k_sensitivity = 0.001f;
-        constexpr float k_speed = 1500.0f;
-
-        m_mouse_control_frames++;
-        if (m_mouse_control_frames > 2)
-        {
-            m_view_rotation_euler.y += (-delta_pos.x * k_sensitivity);
-            m_view_rotation_euler.x = std::min(std::max(m_view_rotation_euler.x - (delta_pos.y * k_sensitivity), math::pi * -0.4f), math::pi * 0.4f);
-
-            quat x_rotation = quat::angle_axis(m_view_rotation_euler.y, vector3::up);
-            quat y_rotation = quat::angle_axis(m_view_rotation_euler.x, vector3::right);
-            m_view_rotation = y_rotation * x_rotation;
-        }
-
-        if (input.is_key_down(input_key::w))
-        {
-            m_view_position += (vector3::forward * m_view_rotation) * k_speed * time.delta_seconds;
-        }
-        if (input.is_key_down(input_key::s))
-        {
-            m_view_position -= (vector3::forward * m_view_rotation) * k_speed * time.delta_seconds;
-        }
-        if (input.is_key_down(input_key::a))
-        {
-            m_view_position -= (vector3::right * m_view_rotation) * k_speed * time.delta_seconds;
-        }
-        if (input.is_key_down(input_key::d))
-        {
-            m_view_position += (vector3::right * m_view_rotation) * k_speed * time.delta_seconds;
-        }
-        if (input.is_key_down(input_key::q))
-        {
-            m_view_position += (vector3::up * m_view_rotation) * k_speed * time.delta_seconds;
-        }
-        if (input.is_key_down(input_key::e))
-        {
-            m_view_position -= (vector3::up * m_view_rotation) * k_speed * time.delta_seconds;
-        }
-
-        #if 1
-        cmd_queue.set_object_transform(m_view_id,
-            m_view_position,
-            m_view_rotation,
-            vector3::one
-        );
-        #endif
-
-//        db_log(core, "position:%.2f,%.2f,%.2f", m_view_position.x, m_view_position.y, m_view_position.z);
-    }
-    else
-    {
-        m_mouse_control_frames = 0;
-    }
 }
 
 }; // namespace hg

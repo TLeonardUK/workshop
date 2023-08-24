@@ -233,7 +233,7 @@ void render_view::update_view_info_param_block()
     m_view_info_param_block->set("view_z_near", m_near_clip);
     m_view_info_param_block->set("view_z_far", m_far_clip);
     m_view_info_param_block->set("view_world_position", m_local_location);
-    m_view_info_param_block->set("view_dimensions", vector2(m_viewport.width, m_viewport.height));
+    m_view_info_param_block->set("view_dimensions", vector2((float)m_viewport.width, (float)m_viewport.height));
     m_view_info_param_block->set("view_matrix", get_view_matrix());
     m_view_info_param_block->set("projection_matrix", get_projection_matrix());
     m_view_info_param_block->set("inverse_view_matrix", get_view_matrix().inverse());

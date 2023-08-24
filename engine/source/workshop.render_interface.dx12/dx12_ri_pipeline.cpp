@@ -44,7 +44,7 @@ bool dx12_ri_pipeline::create_root_signature()
         range.RegisterSpace = static_cast<UINT>(i + 1); // space0 is reserved for non-bindless stuff.
         range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-        range.NumDescriptors = dx12_render_interface::k_descriptor_table_sizes[(int)type];
+        range.NumDescriptors = static_cast<UINT>(dx12_render_interface::k_descriptor_table_sizes[(int)type]);
 
         switch (type)
         {

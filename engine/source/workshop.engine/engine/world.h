@@ -12,6 +12,8 @@
 
 namespace ws {
 
+    class engine;
+
 // ================================================================================================
 //  Each world class represents an individual "universe", with its own set of objects 
 //  and attributes. 
@@ -20,7 +22,7 @@ class world
 {
 public:
 
-    world();
+    world(engine& engine);
 
     // Gets a descriptive name of this world.
     const char* get_name();
@@ -31,12 +33,17 @@ public:
     // Called once each frame, steps the world.
     void step(const frame_time& time);
 
+    // Gets the engine that owns this world.
+    engine& get_engine();
+
 protected:
 
 private:
     std::string m_name;
 
     std::unique_ptr<object_manager> m_object_manager;
+
+    engine& m_engine;
 
 };
 

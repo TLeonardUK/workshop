@@ -27,6 +27,10 @@
 #include "core_simd.h"
 #include "common_def.h"
 
+// WS_CHANGE: Get rid of various spurious warnings.
+#pragma warning(disable : 4018)
+#pragma warning(disable : 4804)
+
 #if defined(_WIN32) || defined(_WIN64)
 #define ALIGN_16 __declspec(align(16))
 #else

@@ -125,7 +125,7 @@ void render_light_probe_grid::recalculate_probes()
 
     // Update the param block description.
     m_param_block->set("world_to_grid_matrix", grid_transform.inverse());
-    m_param_block->set("size", vector3i(m_width, m_height, m_depth));
+    m_param_block->set("size", vector3i((int)m_width, (int)m_height, (int)m_depth));
     m_param_block->set("bounds", bounds);
     m_param_block->set("density", m_density);
     m_param_block->set("sh_table", *m_spherical_harmonic_buffer, true);

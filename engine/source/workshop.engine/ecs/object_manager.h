@@ -62,6 +62,8 @@ struct std::hash<ws::component_types_key>
 
 namespace ws {
 
+class world;
+
 // ================================================================================================
 //  Responsible for the creation/destruction of objects and their associated components.
 //  Behaviour of public functions are thread safe.
@@ -78,10 +80,13 @@ public:
     // This does not imply that memory for all these components will be created.
     static inline constexpr size_t k_max_components = 1'000'000;
 
-    object_manager();
+    object_manager(world& world);
 
     // Called once each frame, steps all the systems.
     void step(const frame_time& time);
+
+    // Gets the world this object manager is owned by.
+    world& get_world();
 
 public:
 
@@ -303,6 +308,8 @@ private:
     std::unordered_map<component_types_key, std::unique_ptr<component_filter_archetype>> m_component_filter_archetype;
 
     bool m_is_system_step_active = false;
+
+    world& m_world;
 
 };
 

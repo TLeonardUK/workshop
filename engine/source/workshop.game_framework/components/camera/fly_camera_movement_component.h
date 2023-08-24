@@ -24,6 +24,24 @@ public:
     // Speed of camera movement in units per second.
     float speed = 1500.0f;
 
+    // Determines the maximum vertical angle of the camera to avoid the camera
+    // looping around on its rotations.
+    // 
+    // This is represented as a dot product value.
+    // 1 allows the camera to go fully vertical, 0.5 allows a max 45 degree angle, etc.
+    float max_vertical_angle = 0.8f;
+
+private:
+
+    friend class fly_camera_movement_system;
+
+    // Number of frame the mouse has been captured
+    size_t mouse_capture_frames = 0;
+
+    // Rotation we want to apply to camera in euler coordinates.
+    // TODO: Remove this and do it statelessly.
+    vector3 rotation_euler = vector3::zero;
+
 };
 
 }; // namespace ws

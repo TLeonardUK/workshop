@@ -72,7 +72,7 @@ result<void> dx12_ri_query_manager::create_resources()
     m_memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
 
     D3D12_QUERY_HEAP_DESC query_heap_desc;
-    query_heap_desc.Count = m_query_slots;
+    query_heap_desc.Count = static_cast<UINT>(m_query_slots);
     query_heap_desc.NodeMask = 1;
     query_heap_desc.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
     hr = m_renderer.get_device()->CreateQueryHeap(&query_heap_desc, IID_PPV_ARGS(&m_query_heap));
@@ -172,7 +172,7 @@ void dx12_ri_query_manager::start_query(query_id id, ID3D12GraphicsCommandList* 
         return;
     }
 
-    list->EndQuery(m_query_heap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, id * 2);
+    list->EndQuery(m_query_heap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, static_cast<UINT>(id) * 2);
 }
 
 void dx12_ri_query_manager::end_query(query_id id, ID3D12GraphicsCommandList* list)
@@ -184,7 +184,7 @@ void dx12_ri_query_manager::end_query(query_id id, ID3D12GraphicsCommandList* li
         return;
     }
 
-    list->EndQuery(m_query_heap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, id * 2 + 1);
+    list->EndQuery(m_query_heap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, static_cast<UINT>(id) * 2 + 1);
 
     // If this is the first time using the query record the frame so we can know when
     // results are first available.
@@ -206,7 +206,7 @@ void dx12_ri_query_manager::begin_frame()
     // Execute a command list to resolve queries for this frames timers.
     dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(queue.alloc_command_list());
     list.open();
-    list.get_dx_command_list()->ResolveQueryData(m_query_heap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, m_query_slots, m_read_back_buffer.Get(), resolve_base_offset);
+    list.get_dx_command_list()->ResolveQueryData(m_query_heap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, static_cast<UINT>(m_query_slots), m_read_back_buffer.Get(), resolve_base_offset);
     list.close();
     m_renderer.get_graphics_queue().execute(list);
 

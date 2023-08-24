@@ -262,15 +262,15 @@ void sdl_input_interface::pump_events()
     for (size_t i = 0; i < (size_t)input_key::mouse_0; i++)
     {
         bool down = (m_keyboard_state[g_input_key_to_scanecode[i]] != 0);
-        update_key_state(i, down);
+        update_key_state((int)i, down);
     }
 
     for (size_t i = (size_t)input_key::mouse_0; i <= (size_t)input_key::mouse_5; i++)
     {
-        int bit = i - (int)input_key::mouse_0;
+        int bit = (int)i - (int)input_key::mouse_0;
         bool down = (m_mouse_state & (1 << bit)) != 0;
 
-        update_key_state(i, down);
+        update_key_state((int)i, down);
     }
 }
 
@@ -336,11 +336,11 @@ float sdl_input_interface::get_mouse_wheel_delta(bool horizontal)
 {
     if (horizontal)
     {
-        return m_mouse_wheel_horizontal;
+        return static_cast<float>(m_mouse_wheel_horizontal);
     }
     else
     {
-        return m_mouse_wheel_vertical;
+        return static_cast<float>(m_mouse_wheel_vertical);
     }
 }
 

@@ -43,7 +43,7 @@ private:
 
     std::vector<render_object_id> m_rotating_objects;
 
-    std::vector<object> m_ecs_objects;
+    object m_camera_object;
 
     struct moving_light
     {

@@ -8,6 +8,7 @@
 #include "workshop.core/math/vector4.h"
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
+#include "workshop.core/math/matrix3.h"
 
 namespace ws {
 
@@ -227,9 +228,9 @@ template <typename T>
 inline base_vector3<T> base_matrix4<T>::extract_scale() const
 {
 	return base_vector3<T>(
-		get_column(0).length(),
-		get_column(1).length(),
-		get_column(2).length()
+		get_row(0).length(),
+		get_row(1).length(),
+		get_row(2).length()
 	);
 }
 
@@ -328,14 +329,20 @@ inline base_matrix4<T> base_matrix4<T>::inverse() const
 	return inverse * one_over_determinant;
 }
 
+#pragma optimize("", off)
+
 template <typename T>
 inline base_quat<T> base_matrix4<T>::to_quat() const
 {
-	return base_matrix3<T>(
-		columns[0][0], columns[0][1], columns[0][2],
-		columns[1][0], columns[1][1], columns[1][2],
-		columns[2][0], columns[2][1], columns[2][2]
-	).to_quat();
+	base_quat<T> q;
+	q.w = sqrtf(math::max(0.0f, 1 + columns[0][0] + columns[1][1] + columns[2][2])) / 2.0f;
+	q.x = sqrtf(math::max(0.0f, 1 + columns[0][0] - columns[1][1] - columns[2][2])) / 2.0f;
+	q.y = sqrtf(math::max(0.0f, 1 - columns[0][0] + columns[1][1] - columns[2][2])) / 2.0f;
+	q.z = sqrtf(math::max(0.0f, 1 - columns[0][0] - columns[1][1] + columns[2][2])) / 2.0f;
+	q.x *= math::sign(q.x * (columns[2][1] - columns[1][2]));
+	q.y *= math::sign(q.y * (columns[0][2] - columns[2][0]));
+	q.z *= math::sign(q.z * (columns[1][0] - columns[0][1]));
+	return q;
 }
 
 template <typename T>

@@ -43,7 +43,7 @@ void sdl_window::handle_event(const SDL_Event* event)
         SDL_GetWindowPosition(m_window, &x, &y);
         SDL_GetWindowSize(m_window, &width, &height);
 
-        db_move_console(x, y + height, width, 0.0f);        
+        db_move_console(x, y + height, width, 0);        
     }
     else if (event->type == SDL_KEYDOWN)
     {

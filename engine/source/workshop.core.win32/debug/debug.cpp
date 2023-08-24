@@ -172,7 +172,7 @@ void db_move_console(size_t x, size_t y, size_t width, size_t height)
         height = window_rect.bottom - window_rect.top;
     }
 
-    MoveWindow(hwnd, x, y, width, height, true);
+    MoveWindow(hwnd, (int)x, (int)y, (int)width, (int)height, true);
 }
 
 }; // namespace workshop

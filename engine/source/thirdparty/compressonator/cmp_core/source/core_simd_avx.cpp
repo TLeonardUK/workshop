@@ -32,6 +32,9 @@
 #define ALIGN_32 __attribute__((aligned(32)))
 #endif
 
+// WS_CHANGE: Get rid of various spurious warnings.
+#pragma warning(disable : 4018)
+
 CGU_FLOAT avx_bc1ComputeBestEndpoints(CGU_FLOAT endpointsOut[2], CGU_FLOAT endpointsIn[2],
                                       CGU_FLOAT prj[16], CGU_FLOAT prjError[16], CGU_FLOAT preMRep[16],
                                       int numColours, int numPoints)

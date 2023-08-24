@@ -54,6 +54,12 @@ void transform_system::update_transform(transform_component* transform, transfor
     }
 
     transform->world_to_local = transform->local_to_world.inverse();
+
+    quat extracted_quat = transform->local_to_world.to_quat();
+    transform->world_location = vector3::zero * transform->local_to_world;
+    transform->world_rotation = quat::identity * extracted_quat;
+    transform->world_scale = vector3::one * transform->local_to_world.extract_scale();
+    
     transform->is_dirty = false;
     transform->generation++;
     

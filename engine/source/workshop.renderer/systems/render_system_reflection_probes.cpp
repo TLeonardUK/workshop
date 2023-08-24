@@ -167,7 +167,7 @@ void render_system_reflection_probes::build_post_graph(render_graph& graph, cons
                 block->set("source_texture", *info.render_target);
                 block->set("source_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
                 block->set("source_texture_face", (int)face);
-                block->set("source_texture_size", vector2i(info.render_target->get_width(), info.render_target->get_height()));
+                block->set("source_texture_size", vector2i((int)info.render_target->get_width(), (int)info.render_target->get_height()));
                 block->set("roughness", float(mip) / float(texture.get_mip_levels() - 1));
 
                 std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();

@@ -144,7 +144,7 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     // Do horizontal blur.
     h_blur_params->set("input_texture", *m_ssao_texture.get());
     h_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-    h_blur_params->set("input_texture_size", vector2i(m_ssao_texture->get_width(), m_ssao_texture->get_height()));
+    h_blur_params->set("input_texture_size", vector2i((int)m_ssao_texture->get_width(), (int)m_ssao_texture->get_height()));
 
     std::unique_ptr<render_pass_fullscreen> h_blur_pass = std::make_unique<render_pass_fullscreen>();
     h_blur_pass->name = "ssao horizontal blur";
@@ -162,7 +162,7 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     // Do vertical blur.
     v_blur_params->set("input_texture", *m_ssao_blur_texture.get());
     v_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-    v_blur_params->set("input_texture_size", vector2i(m_ssao_blur_texture->get_width(), m_ssao_blur_texture->get_height()));
+    v_blur_params->set("input_texture_size", vector2i((int)m_ssao_blur_texture->get_width(), (int)m_ssao_blur_texture->get_height()));
 
     std::unique_ptr<render_pass_fullscreen> v_blur_pass = std::make_unique<render_pass_fullscreen>();
     v_blur_pass->name = "ssao vertical blur";

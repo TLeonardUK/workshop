@@ -29,6 +29,9 @@ class render_options;
 // Used as an opaque reference to objects created through the use of the render command queue.
 using render_object_id = size_t;
 
+// Represents an object id that points to nothing.
+static inline constexpr render_object_id null_render_object = 0;
+
 // ================================================================================================
 //  The render command queue is used by engine code to queue commands that modify
 //  the state of the world being rendered.

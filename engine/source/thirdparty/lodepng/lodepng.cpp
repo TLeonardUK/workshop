@@ -46,6 +46,10 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 
 const char* LODEPNG_VERSION_STRING = "20221108";
 
+// WS_CHANGE: Get rid of various spurious warnings.
+#pragma warning (disable : 4334)
+#pragma warning (disable : 4267)
+
 /*
 This source file is divided into the following large parts. The code sections
 with the "LODEPNG_COMPILE_" #defines divide this up further in an intermixed way.

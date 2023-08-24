@@ -5,6 +5,9 @@
 
 #include "gzguts.h"
 
+ // WS_CHANGE: Get rid of various spurious warnings.
+#pragma warning (disable : 4996)
+
 #if defined(_WIN32) && !defined(__BORLANDC__)
 #  define LSEEK _lseeki64
 #else

@@ -349,11 +349,11 @@ void render_system_shadows::step_directional_shadow(render_view* view, render_di
         // We do this to avoid shimmering as the camera moves, we always want to move in texel steps.
         matrix4 shadow_matrix = light_view_matrix * cascade.projection_matrix;
         vector3 shadow_origin = shadow_matrix.transform_location(vector3(0.0f, 0.0f, 0.0f));
-        shadow_origin = shadow_origin * cascade.map_size / 2.0f;
+        shadow_origin = shadow_origin * static_cast<float>(cascade.map_size) / 2.0f;
 
         vector3 rounded_origin = shadow_origin.round();
         vector3 rounded_offset = rounded_origin - shadow_origin;
-        rounded_offset = rounded_offset * 2.0f / cascade.map_size;
+        rounded_offset = rounded_offset * 2.0f / static_cast<float>(cascade.map_size);
         rounded_offset.z = 0.0f;
 
         cascade.projection_matrix[0][3] = cascade.projection_matrix[0][3] + rounded_offset.x;
@@ -522,7 +522,7 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
     view->set_projection_matrix(cascade.projection_matrix);
     view->set_view_matrix(cascade.view_matrix);
     view->set_render_target(cascade.shadow_map_view);
-    view->set_viewport(recti(0, 0, cascade.map_size, cascade.map_size));
+    view->set_viewport(recti(0, 0, (int)cascade.map_size, (int)cascade.map_size));
     if (cascade.use_linear_depth)
     {
         view->set_flags(render_view_flags::linear_depth_only);

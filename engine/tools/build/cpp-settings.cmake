@@ -15,7 +15,8 @@ if (WIN32)
 
     # Disable secure CRT warnings on windows, our code is designed to be platform agnostic
     # and these get in the way of that.
-    set(COMPILE_OPTIONS ${COMPILE_OPTIONS} -D_CRT_SECURE_NO_WARNINGS)
+    set(COMPILE_OPTIONS ${COMPILE_OPTIONS} -D_CRT_SECURE_NO_WARNINGS=1)
+    set(COMPILE_OPTIONS ${COMPILE_OPTIONS} -D_CRT_SECURE_NO_WARNINGS_GLOBALS=1)
 
     # Platform type define.
     set(COMPILE_OPTIONS ${COMPILE_OPTIONS} -DWS_WINDOWS)
@@ -30,7 +31,7 @@ else()
 endif()
 
 # We always want to generate debug information in all configurations.
-set(COMPILE_OPTIONS ${COMPILE_OPTIONS} /Zi)
+set(COMPILE_OPTIONS ${COMPILE_OPTIONS} /Zi /W3 /WX)
 set(LINK_OPTIONS ${LINK_OPTIONS} /DEBUG)
 
 # Ensure we build with multiple cores where possible.

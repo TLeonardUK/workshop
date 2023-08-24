@@ -70,7 +70,7 @@ bool win32_path_watcher::init(const std::filesystem::path& path)
     bool success = ReadDirectoryChangesW(
         m_handle,
         m_buffer.data(),
-        m_buffer.size(),
+        static_cast<DWORD>(m_buffer.size()),
         true,
         m_event_mask,
         nullptr,
@@ -143,7 +143,7 @@ void win32_path_watcher::poll_changes()
         bool success = ReadDirectoryChangesW(
             m_handle,
             m_buffer.data(),
-            m_buffer.size(),
+            static_cast<DWORD>(m_buffer.size()),
             true,
             m_event_mask,
             nullptr,

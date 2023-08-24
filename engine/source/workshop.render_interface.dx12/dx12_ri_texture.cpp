@@ -329,7 +329,7 @@ void dx12_ri_texture::calculate_formats()
 
             for (size_t mip = 0; mip < mip_levels; mip++)
             {
-                rtv_template_desc.Texture1D.MipSlice = mip;
+                rtv_template_desc.Texture1D.MipSlice = static_cast<UINT>(mip);
 
                 m_rtv_view_descs[mip].push_back(rtv_template_desc);
                 m_rtvs[mip].resize(1);
@@ -367,7 +367,7 @@ void dx12_ri_texture::calculate_formats()
 
             for (size_t mip = 0; mip < mip_levels; mip++)
             {
-                rtv_template_desc.Texture2D.MipSlice = mip;
+                rtv_template_desc.Texture2D.MipSlice = static_cast<UINT>(mip);
 
                 m_rtv_view_descs[mip].push_back(rtv_template_desc);
                 m_rtvs[mip].resize(1);
@@ -378,7 +378,7 @@ void dx12_ri_texture::calculate_formats()
 
             for (size_t mip = 0; mip < mip_levels; mip++)
             {
-                uav_template_desc.Texture2D.MipSlice = mip;
+                uav_template_desc.Texture2D.MipSlice = static_cast<UINT>(mip);
 
                 m_uav_view_descs[mip].push_back(uav_template_desc);
                 m_uavs[mip].resize(1);
@@ -391,7 +391,7 @@ void dx12_ri_texture::calculate_formats()
             {
                 D3D12_SHADER_RESOURCE_VIEW_DESC desc = m_main_srv_view_desc;
                 desc.Texture2D.MipLevels = 1;
-                desc.Texture2D.MostDetailedMip = mip;
+                desc.Texture2D.MostDetailedMip = static_cast<UINT>(mip);
 
                 m_srv_view_descs[mip].push_back(desc);
                 m_srvs[mip].resize(1);
@@ -430,7 +430,7 @@ void dx12_ri_texture::calculate_formats()
             m_dsvs.resize(m_create_params.depth);
             for (size_t i = 0; i < m_create_params.depth; i++)
             {
-                dsv_template_desc.Texture2DArray.FirstArraySlice = i;
+                dsv_template_desc.Texture2DArray.FirstArraySlice = static_cast<UINT>(i);
                 m_dsv_view_descs.push_back(dsv_template_desc);
             }
 
@@ -442,8 +442,8 @@ void dx12_ri_texture::calculate_formats()
                 m_rtvs[mip].resize(m_create_params.depth);
                 for (size_t i = 0; i < m_create_params.depth; i++)
                 {
-                    rtv_template_desc.Texture2DArray.PlaneSlice = i;
-                    rtv_template_desc.Texture2DArray.MipSlice = mip;
+                    rtv_template_desc.Texture2DArray.PlaneSlice = static_cast<UINT>(i);
+                    rtv_template_desc.Texture2DArray.MipSlice = static_cast<UINT>(mip);
                     m_rtv_view_descs[mip].push_back(rtv_template_desc);
                 }
             }
@@ -456,8 +456,8 @@ void dx12_ri_texture::calculate_formats()
                 m_uavs[mip].resize(m_create_params.depth);
                 for (size_t i = 0; i < m_create_params.depth; i++)
                 {
-                    uav_template_desc.Texture2DArray.PlaneSlice = i;
-                    uav_template_desc.Texture2DArray.MipSlice = mip;
+                    uav_template_desc.Texture2DArray.PlaneSlice = static_cast<UINT>(i);
+                    uav_template_desc.Texture2DArray.MipSlice = static_cast<UINT>(mip);
                     m_uav_view_descs[mip].push_back(uav_template_desc);
                 }
             }
@@ -472,12 +472,12 @@ void dx12_ri_texture::calculate_formats()
                 {                    
                     D3D12_SHADER_RESOURCE_VIEW_DESC desc = m_main_srv_view_desc;
                     desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                    desc.Texture2DArray.MostDetailedMip = mip;
+                    desc.Texture2DArray.MostDetailedMip = static_cast<UINT>(mip);
                     desc.Texture2DArray.MipLevels = 1;
-                    desc.Texture2DArray.PlaneSlice = i;
+                    desc.Texture2DArray.PlaneSlice = static_cast<UINT>(i);
 
-                    rtv_template_desc.Texture2DArray.PlaneSlice = i;
-                    rtv_template_desc.Texture2DArray.MipSlice = mip;
+                    rtv_template_desc.Texture2DArray.PlaneSlice = static_cast<UINT>(i);
+                    rtv_template_desc.Texture2DArray.MipSlice = static_cast<UINT>(mip);
                     m_srv_view_descs[mip].push_back(desc);
                 }
             }
@@ -514,7 +514,7 @@ void dx12_ri_texture::calculate_formats()
             m_dsvs.resize(m_create_params.depth);
             for (size_t i = 0; i < m_create_params.depth; i++)
             {
-                dsv_template_desc.Texture2DArray.FirstArraySlice = i;
+                dsv_template_desc.Texture2DArray.FirstArraySlice = static_cast<UINT>(i);
                 m_dsv_view_descs.push_back(dsv_template_desc);
             }
 
@@ -526,8 +526,8 @@ void dx12_ri_texture::calculate_formats()
                 m_rtvs[mip].resize(m_create_params.depth);
                 for (size_t i = 0; i < m_create_params.depth; i++)
                 {
-                    rtv_template_desc.Texture2DArray.FirstArraySlice = i;
-                    rtv_template_desc.Texture2DArray.MipSlice = mip;
+                    rtv_template_desc.Texture2DArray.FirstArraySlice = static_cast<UINT>(i);
+                    rtv_template_desc.Texture2DArray.MipSlice = static_cast<UINT>(mip);
                     m_rtv_view_descs[mip].push_back(rtv_template_desc);
                 }
             }
@@ -540,8 +540,8 @@ void dx12_ri_texture::calculate_formats()
                 m_uavs[mip].resize(m_create_params.depth);
                 for (size_t i = 0; i < m_create_params.depth; i++)
                 {
-                    uav_template_desc.Texture2DArray.FirstArraySlice = i;
-                    uav_template_desc.Texture2DArray.MipSlice = mip;
+                    uav_template_desc.Texture2DArray.FirstArraySlice = static_cast<UINT>(i);
+                    uav_template_desc.Texture2DArray.MipSlice = static_cast<UINT>(mip);
                     m_uav_view_descs[mip].push_back(uav_template_desc);
                 }
             }
@@ -556,14 +556,14 @@ void dx12_ri_texture::calculate_formats()
                 {
                     D3D12_SHADER_RESOURCE_VIEW_DESC desc = m_main_srv_view_desc;
                     desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                    desc.Texture2DArray.MostDetailedMip = mip;
+                    desc.Texture2DArray.MostDetailedMip = static_cast<UINT>(mip);
                     desc.Texture2DArray.MipLevels = 1;
                     desc.Texture2DArray.PlaneSlice = 0;
-                    desc.Texture2DArray.FirstArraySlice = i;
+                    desc.Texture2DArray.FirstArraySlice = static_cast<UINT>(i);
                     desc.Texture2DArray.ArraySize = 1;
 
-                    rtv_template_desc.Texture2DArray.PlaneSlice = i;
-                    rtv_template_desc.Texture2DArray.MipSlice = mip;
+                    rtv_template_desc.Texture2DArray.PlaneSlice = static_cast<UINT>(i);
+                    rtv_template_desc.Texture2DArray.MipSlice = static_cast<UINT>(mip);
                     m_srv_view_descs[mip].push_back(desc);
                 }
             }

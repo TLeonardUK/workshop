@@ -28,6 +28,10 @@
 #include "cpu_extensions.h"
 #include "cmp_math_common.h"
 
+// WS_CHANGE: Get rid of various spurious warnings.
+#pragma warning(disable : 4018)
+#pragma warning(disable : 4804)
+
 void GetCPUID(int outInfo[4], int functionID) {
     // subfunction_id = 0
 #ifdef _WIN32

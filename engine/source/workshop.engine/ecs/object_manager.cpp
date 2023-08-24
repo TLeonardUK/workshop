@@ -10,12 +10,18 @@
 
 namespace ws {
 
-object_manager::object_manager()
+object_manager::object_manager(world& world)
     : m_objects(k_max_objects)
+    , m_world(world)
 {
     // Always allocate the first index so we can assume 0=null.
     size_t index = m_objects.insert({});
     db_assert(index == 0);
+}
+
+world& object_manager::get_world()
+{
+    return m_world;
 }
 
 system* object_manager::get_system(const std::type_index& type_info)
@@ -143,9 +149,18 @@ void object_manager::commit_remove_component(object handle, component* comp)
     auto iter = std::find(state->components.begin(), state->components.end(), comp);
     if (iter != state->components.end())
     {
+        // Let systems know the component is being freed to sit can clean up anything if needed.
+        {
+            std::scoped_lock lock(m_system_mutex);
+            for (size_t i = 0; i < m_systems.size(); i++)
+            {
+                auto& system = m_systems[i];
+                system->component_removed(handle, comp);
+            }
+        }
+
         component_pool_base* base = get_component_pool(typeid(*comp));
         base->free(comp);
-
         state->components.erase(iter);
     }
 
@@ -200,6 +215,16 @@ void object_manager::add_component(object handle, component* comp)
         {
             db_error(engine, "Attempt to register duplicate component to object. An object can only have a single component of each type.");
             return;
+        }
+    }
+
+    // Let systems know the component is being added so it can set anything up if it cares.
+    {
+        std::scoped_lock lock(m_system_mutex);
+        for (size_t i = 0; i < m_systems.size(); i++)
+        {
+            auto& system = m_systems[i];
+            system->component_added(handle, comp);
         }
     }
 
@@ -258,38 +283,41 @@ std::vector<std::type_index> object_manager::get_component_types(object handle)
 
 void object_manager::step_systems(const frame_time& time)
 {
-    std::scoped_lock lock(m_system_mutex);
-
-    // Update all systems in parallel.
     task_scheduler& scheduler = task_scheduler::get();
     std::vector<task_handle> step_tasks;
-    step_tasks.resize(m_systems.size());
 
-    // Create tasks for stepping each system.
-    for (size_t i = 0; i < m_systems.size(); i++)
     {
-        auto& system = m_systems[i];
+        std::scoped_lock lock(m_system_mutex);
 
-        step_tasks[i] = scheduler.create_task(system->get_name(), task_queue::standard, [this, &time, i]() {
-            profile_marker(profile_colors::simulation, "step ecs system: %s", m_systems[i]->get_name());
-            m_systems[i]->step(time);
-        });
-    }
+        // Update all systems in parallel.
+        step_tasks.resize(m_systems.size());
 
-    // Add dependencies between the tasks.
-    for (size_t i = 0; i < m_systems.size(); i++)
-    {
-        auto& main_system = m_systems[i];
-
-        for (system* dependency : main_system->get_dependencies())
+        // Create tasks for stepping each system.
+        for (size_t i = 0; i < m_systems.size(); i++)
         {
-            auto iter = std::find_if(m_systems.begin(), m_systems.end(), [dependency](auto& system) {
-                return system.get() == dependency;
-            });
-            db_assert(iter != m_systems.end());
+            auto& system = m_systems[i];
 
-            size_t dependency_index = std::distance(m_systems.begin(), iter);
-            step_tasks[i].add_dependency(step_tasks[dependency_index]);
+            step_tasks[i] = scheduler.create_task(system->get_name(), task_queue::standard, [this, &time, i]() {
+                profile_marker(profile_colors::simulation, "step ecs system: %s", m_systems[i]->get_name());
+                m_systems[i]->step(time);
+            });
+        }
+
+        // Add dependencies between the tasks.
+        for (size_t i = 0; i < m_systems.size(); i++)
+        {
+            auto& main_system = m_systems[i];
+
+            for (system* dependency : main_system->get_dependencies())
+            {
+                auto iter = std::find_if(m_systems.begin(), m_systems.end(), [dependency](auto& system) {
+                    return system.get() == dependency;
+                    });
+                db_assert(iter != m_systems.end());
+
+                size_t dependency_index = std::distance(m_systems.begin(), iter);
+                step_tasks[i].add_dependency(step_tasks[dependency_index]);
+            }
         }
     }
 

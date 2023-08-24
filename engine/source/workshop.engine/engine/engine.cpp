@@ -627,7 +627,7 @@ world* engine::create_world(const char* name)
 {
     db_log(engine, "Creating new world: %s", name);
 
-    std::unique_ptr<world> new_world = std::make_unique<world>();
+    std::unique_ptr<world> new_world = std::make_unique<world>(*this);
     world* result = new_world.get();
     m_worlds.push_back(std::move(new_world));
     return result;
