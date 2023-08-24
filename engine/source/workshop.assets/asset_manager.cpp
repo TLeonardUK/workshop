@@ -827,9 +827,11 @@ void asset_manager::do_unload(asset_state* state)
 void asset_manager::set_load_state(asset_state* state, asset_loading_state new_state)
 {
     //db_verbose(asset, "[%s] %s", state->path.c_str(), k_loading_state_strings[static_cast<int>(new_state)]);
+    asset_loading_state old_state = state->loading_state;
+    
     state->loading_state = new_state;
 
-    if (new_state == asset_loading_state::loading)
+    if (new_state == asset_loading_state::loading && old_state != asset_loading_state::compiling)
     {
         state->load_timer.start();
     }
