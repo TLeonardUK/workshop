@@ -56,6 +56,26 @@ public:
         return *this;
     }
 
+    bool operator==(component_ref const& other) const
+    {
+        return m_object == other.m_object;
+    }
+
+    bool operator!=(component_ref const& other) const
+    {
+        return !operator==(other);
+    }
+
+    bool operator==(object const& other) const
+    {
+        return m_object == other;
+    }
+
+    bool operator!=(object const& other) const
+    {
+        return !operator==(other);
+    }
+
 private:
     object m_object = null_object;
 

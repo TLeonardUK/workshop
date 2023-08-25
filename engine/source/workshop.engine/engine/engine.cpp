@@ -139,11 +139,6 @@ void engine::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_main_window(); }
     );
     list.add_step(
-        "Editor",
-        [this, &list]() -> result<void> { return create_editor(list); },
-        [this, &list]() -> result<void> { return destroy_editor(); }
-    );
-    list.add_step(
         "Render Interface",
         [this, &list]() -> result<void> { return create_render_interface(list); },
         [this, &list]() -> result<void> { return destroy_render_interface(); }
@@ -167,6 +162,11 @@ void engine::register_init(init_list& list)
         "Presentation",
         [this, &list]() -> result<void> { return create_presenter(list); },
         [this, &list]() -> result<void> { return destroy_presenter(); }
+    );
+    list.add_step(
+        "Editor",
+        [this, &list]() -> result<void> { return create_editor(list); },
+        [this, &list]() -> result<void> { return destroy_editor(); }
     );
 }
 

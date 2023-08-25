@@ -23,21 +23,27 @@ class component_filter_archetype;
 // Simple wrapper for a set of component types, used as a key for associative containers.
 struct component_types_key
 {
-    std::vector<std::type_index> component_types;
+    std::vector<std::type_index> include_component_types;
+    std::vector<std::type_index> exclude_component_types;
 
     size_t get_hash() const
     {
         std::size_t h = 0;
-        for (size_t i = 0; i < component_types.size(); i++)
+        for (size_t i = 0; i < include_component_types.size(); i++)
         {
-            hash_combine(h, component_types[i]);
+            hash_combine(h, include_component_types[i]);
+        }
+        for (size_t i = 0; i < exclude_component_types.size(); i++)
+        {
+            hash_combine(h, exclude_component_types[i]);
         }
         return h;
     }
 
     bool operator==(const component_types_key& other) const
     {
-        return std::equal(component_types.begin(), component_types.end(), other.component_types.begin(), other.component_types.end());
+        return std::equal(include_component_types.begin(), include_component_types.end(), other.include_component_types.begin(), other.include_component_types.end()) &&
+               std::equal(exclude_component_types.begin(), exclude_component_types.end(), other.exclude_component_types.begin(), other.exclude_component_types.end());
     }
 
     bool operator!=(const component_types_key& other) const
@@ -125,7 +131,7 @@ public:
 
     // Gets a filter archetype for the given set of component types. Generally
     // there isn't a good reason to use this directly, use a component_filter instead.
-    component_filter_archetype* get_filter_archetype(const std::vector<std::type_index>& component_types);
+    component_filter_archetype* get_filter_archetype(const std::vector<std::type_index>& include_components, const std::vector<std::type_index>& exclude_components);
 
 private:    
 
@@ -203,7 +209,7 @@ private:
 public:
 
     // Creates a new object and returns an opaque reference to it.
-    object create_object();
+    object create_object(const char* name);
 
     // Destroys an object previously created with create_object.
     void destroy_object(object obj);
@@ -285,7 +291,7 @@ protected:
 
     // Commits the removal of a component. This is either done
     // immediately in remove_component or defered if a tick is active.
-    void commit_remove_component(object obj, component* component);
+    void commit_remove_component(object obj, component* component, bool update_registration);
 
     // Updates which filters/etc this object is registered for.
     void update_object_registration(object_state& state);

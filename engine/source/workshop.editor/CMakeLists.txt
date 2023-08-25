@@ -21,6 +21,10 @@ SET(SOURCES
     "editor/windows/editor_log_window.h"
     "editor/windows/editor_memory_window.cpp"
     "editor/windows/editor_memory_window.h"
+    "editor/windows/editor_properties_window.cpp"
+    "editor/windows/editor_properties_window.h"
+    "editor/windows/editor_scene_tree_window.cpp"
+    "editor/windows/editor_scene_tree_window.h"
     
     "editor/utils/allocation_tree.cpp"
     "editor/utils/allocation_tree.h"

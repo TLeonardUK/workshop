@@ -36,10 +36,64 @@ void transform_system::set_parent(object handle, object parent)
         transform_component* component = m_manager.get_component<transform_component>(handle);
         if (component)
         {
+            // Remove from child list of old parent.
+            if (component->parent.is_valid(&m_manager))
+            {
+                transform_component* old_parent = component->parent.get(&m_manager);
+                auto iter = std::find(old_parent->children.begin(), old_parent->children.end(), handle);
+                if (iter != old_parent->children.end())
+                {
+                    old_parent->children.erase(iter);
+                }
+            }
+
             component->parent = parent;
             component->is_dirty = true;
+
+            // Add to child list of new parent.
+            if (component->parent.is_valid(&m_manager))
+            {
+                transform_component* new_parent = component->parent.get(&m_manager);
+                new_parent->children.push_back(handle);
+            }
         }
     });
+}
+
+
+void transform_system::component_removed(object handle, component* comp)
+{
+    transform_component* component = dynamic_cast<transform_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+    
+    // Note: Save to do without deferring in command queue as all component/object deletion is 
+    //       deferred till after the system update.
+
+    // Remove reference in parent component.
+    transform_component* parent = nullptr;
+    if (component->parent.is_valid(&m_manager))
+    {
+        parent = component->parent.get(&m_manager);
+
+        auto iter = std::find(parent->children.begin(), parent->children.end(), handle);
+        db_assert(iter != parent->children.end());
+        parent->children.erase(iter);
+    }
+
+    // Move all children to parent.
+    for (auto& ref : component->children)
+    {
+        transform_component* child = ref.get(&m_manager);
+        child->parent = component->parent;
+
+        if (parent)
+        {
+            parent->children.push_back(ref);
+        }
+    }
 }
 
 void transform_system::update_transform(transform_component* transform, transform_component* parent_transform)

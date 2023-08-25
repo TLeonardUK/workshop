@@ -5,6 +5,7 @@
 #include "workshop.engine/ecs/object_manager.h"
 #include "workshop.engine/ecs/component_filter_archetype.h"
 #include "workshop.engine/ecs/component.h"
+#include "workshop.engine/ecs/meta_component.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/perf/profile.h"
 
@@ -41,7 +42,7 @@ system* object_manager::get_system(const std::type_index& type_info)
     return nullptr;
 }
 
-object object_manager::create_object()
+object object_manager::create_object(const char* name)
 {
     std::scoped_lock lock(m_object_mutex);
 
@@ -49,8 +50,10 @@ object object_manager::create_object()
     object_state& state = m_objects[index];
     state.handle = index;
 
-    update_object_registration(state);
-    
+    // Add the meta component that should always exist.
+    meta_component* meta = add_component<meta_component>(state.handle);
+    meta->name = name;
+
     return state.handle;
 }
 
@@ -79,17 +82,20 @@ object_manager::component_pool_base* object_manager::get_component_pool(const st
     return nullptr;
 }
 
-component_filter_archetype* object_manager::get_filter_archetype(const std::vector<std::type_index>& unsorted_component_types)
+component_filter_archetype* object_manager::get_filter_archetype(const std::vector<std::type_index>& include_components_unsorted, const std::vector<std::type_index>& exclude_components_unsorted)
 {
     std::scoped_lock lock(m_object_mutex);
 
     // Sort into a deterministic order so filters that just have an order difference
     // don't create an entirely new archetype.
-    std::vector<std::type_index> component_types = unsorted_component_types;
-    std::sort(component_types.begin(), component_types.end());
+    std::vector<std::type_index> include_component_types = include_components_unsorted;
+    std::vector<std::type_index> exclude_component_types = exclude_components_unsorted;
+    std::sort(include_component_types.begin(), include_component_types.end());
+    std::sort(exclude_component_types.begin(), exclude_component_types.end());
 
     component_types_key key;
-    key.component_types = component_types;
+    key.include_component_types = include_component_types;
+    key.exclude_component_types = exclude_component_types;
 
     auto iter = m_component_filter_archetype.find(key);
     if (iter != m_component_filter_archetype.end())
@@ -97,7 +103,7 @@ component_filter_archetype* object_manager::get_filter_archetype(const std::vect
         return iter->second.get();
     }
 
-    std::unique_ptr<component_filter_archetype> archetype = std::make_unique<component_filter_archetype>(*this, component_types);
+    std::unique_ptr<component_filter_archetype> archetype = std::make_unique<component_filter_archetype>(*this, include_component_types, exclude_component_types);
     component_filter_archetype* ret = archetype.get();
     m_component_filter_archetype.emplace(key, std::move(archetype));
 
@@ -124,21 +130,21 @@ void object_manager::commit_destroy_object(object handle)
         return;
     }
 
+    std::vector<component*> to_remove = state->components;
+    for (component* comp : to_remove)
+    {
+        commit_remove_component(handle, comp, false);
+    }
+
     for (auto& pair : m_component_filter_archetype)
     {
         pair.second->remove_object(handle);
     }
 
-    std::vector<component*> to_remove = state->components;
-    for (component* comp : to_remove)
-    {
-        commit_remove_component(handle, comp);
-    }
-    
     m_objects.remove(handle);
 }
 
-void object_manager::commit_remove_component(object handle, component* comp)
+void object_manager::commit_remove_component(object handle, component* comp, bool update_registration)
 {
     object_manager::object_state* state = get_object_state(handle);
     if (!state)
@@ -164,7 +170,10 @@ void object_manager::commit_remove_component(object handle, component* comp)
         state->components.erase(iter);
     }
 
-    update_object_registration(*state);
+    if (update_registration)
+    {
+        update_object_registration(*state);
+    }
 }
 
 void object_manager::update_object_registration(object_state& obj)
@@ -237,13 +246,19 @@ void object_manager::remove_component(object handle, component* component)
 {
     std::scoped_lock lock(m_object_mutex);
 
+    if (dynamic_cast<meta_component*>(component))
+    {
+        db_assert_message(false, "Attempted to remove meta_component, this is not supported, this component is internal and should not be touched.");
+        return;
+    }
+
     if (m_is_system_step_active)
     {
         m_pending_remove_component.push_back({ handle, component });
     }
     else
     {
-        commit_remove_component(handle, component);
+        commit_remove_component(handle, component, true);
     }
 }
 
@@ -348,7 +363,7 @@ void object_manager::step(const frame_time& time)
         // Run deferred component removal.
         for (auto& obj : m_pending_remove_component)
         {
-            commit_remove_component(obj.first, obj.second);
+            commit_remove_component(obj.first, obj.second, true);
         }
         m_pending_remove_component.clear();
 

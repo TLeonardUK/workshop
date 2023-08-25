@@ -20,7 +20,7 @@ class component;
 class component_filter_archetype
 {
 public: 
-    component_filter_archetype(object_manager& manager, const std::vector<std::type_index>& component_types);
+    component_filter_archetype(object_manager& manager, const std::vector<std::type_index>& include_component_types, const std::vector<std::type_index>& exclude_component_types);
 
     // Gets the number of objects mathcing the filter.
     size_t size();
@@ -35,7 +35,7 @@ public:
     void update_object(object handle);
 
     // Removes registration of a given object.
-    void remove_object(object handle, bool ignore_match = false);
+    void remove_object(object handle);
 
 protected:
 
@@ -44,7 +44,8 @@ protected:
 
 private:
     object_manager& m_manager;
-    std::vector<std::type_index> m_component_types;
+    std::vector<std::type_index> m_include_component_types;
+    std::vector<std::type_index> m_exclude_component_types;
 
     struct object_info
     {

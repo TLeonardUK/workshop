@@ -9,34 +9,62 @@
 
 namespace ws {
 
+// Allows you to make an entry in the component_filter a negative - meaning an object will only
+// be matched if it excludes the given component.
+template <typename component_type>
+struct excludes
+{
+    using is_exclude = void;
+    using type = component_type;
+};
+
 // ================================================================================================ 
 //  A component filter allows you to retrieve a list of all objects and their associated components
 //  that match the filter parameters.
+// 
+//  The template argument allows some basic logic to select objects:
+// 
+//      component_filter<transform_component, camera_component> cameras_filter;
+//      component_filter<transform_component, excludes<camera_component>> no_cameras_filter;
+// 
 // ================================================================================================
 template <typename ...component_types>
 class component_filter
 {
 private:
+    template <typename a>
+    void filter_type(a value, std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
+    {
+        include_list.push_back(typeid(a));
+    }
+    template <typename a>
+    void filter_type(excludes<a> value, std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
+    {
+        exclude_list.push_back(typeid(a));
+    }
+
     template <typename ...a>
-    typename std::enable_if<sizeof...(a) == 0>::type unpack_types(std::vector<std::type_index>& output)
+    typename std::enable_if<sizeof...(a) == 0>::type unpack_types(std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
     {
     }
 
     template <typename a, typename ...b>
-    void unpack_types(std::vector<std::type_index>& output)
+    void unpack_types(std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
     {
-        output.push_back(typeid(a));
-        unpack_types<b...>(output);
+        a value;
+        filter_type(value, include_list, exclude_list);
+        unpack_types<b...>(include_list, exclude_list);
     }
 
 public: 
     component_filter(object_manager& manager)
         : m_manager(manager)
     {
-        std::vector<std::type_index> type_indices;
-        unpack_types<component_types...>(type_indices);
+        std::vector<std::type_index> includes;
+        std::vector<std::type_index> excludes;
+        unpack_types<component_types...>(includes, excludes);
 
-        m_archetype = m_manager.get_filter_archetype(type_indices);
+        m_archetype = m_manager.get_filter_archetype(includes, excludes);
     }
 
     // Gets number of elements.

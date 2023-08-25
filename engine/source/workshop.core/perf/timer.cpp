@@ -33,12 +33,21 @@ void timer::reset()
 
 double timer::get_elapsed_ms()
 {
-    return m_elapsed_seconds * 1000.0f;
+    return get_elapsed_seconds() * 1000.0f;
 }
 
 double timer::get_elapsed_seconds()
 {
-    return m_elapsed_seconds;
+    if (m_started)
+    {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        double elapsed = std::chrono::duration<double, std::chrono::seconds::period>(current_time - m_start_time).count();
+        return elapsed;
+    }
+    else
+    {
+        return m_elapsed_seconds;
+    }
 }
 
 

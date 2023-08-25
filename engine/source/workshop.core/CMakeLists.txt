@@ -41,6 +41,8 @@ SET(SOURCES
     "debug/log_handler_file.cpp"
     "debug/log_handler_file.h"
     
+    "filesystem/async_io_manager.cpp"
+    "filesystem/async_io_manager.h"
     "filesystem/file.cpp"
     "filesystem/file.h"
     "filesystem/path_watcher.cpp"

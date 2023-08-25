@@ -33,15 +33,17 @@ void editor_loading_window::draw()
                 load_state_items[i + 1] = asset_loading_state_strings[i];
             }
 
-            //ImGui::Text("IO Bandwidth: %.2f MB/s", 2.01f);
-            //ImGui::SameLine();
-
             ImGui::Text("State");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(200.0f);
             ImGui::PushID("LoadState");
             ImGui::Combo("", &m_load_state, load_state_items, load_state_item_count);
             ImGui::PopID();
+
+            /*
+            ImGui::SameLine();
+            ImGui::Text("IO Bandwidth: %.2f MB/s", 2.01f);
+            */
 
             ImGui::BeginChild("OutputTableView");
             ImGui::BeginTable("OutputTable", 4);

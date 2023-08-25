@@ -7,9 +7,10 @@
 
 namespace ws {
 
-component_filter_archetype::component_filter_archetype(object_manager& manager, const std::vector<std::type_index>& component_types)
+component_filter_archetype::component_filter_archetype(object_manager& manager, const std::vector<std::type_index>& include_component_types, const std::vector<std::type_index>& exclude_component_types)
     : m_manager(manager)
-    , m_component_types(component_types)
+    , m_include_component_types(include_component_types)
+    , m_exclude_component_types(exclude_component_types)
     , m_object_info(object_manager::k_max_objects)
 {
 }
@@ -31,9 +32,9 @@ component* component_filter_archetype::get_component(size_t index, std::type_ind
     size_t info_index = m_sorted_object_indices[index];
     object_info& info = m_object_info[info_index];
 
-    for (size_t i = 0; i < m_component_types.size(); i++)
+    for (size_t i = 0; i < m_include_component_types.size(); i++)
     {
-        if (m_component_types[i] == component_type)
+        if (m_include_component_types[i] == component_type)
         {
             return info.components[i];
         }
@@ -45,12 +46,22 @@ component* component_filter_archetype::get_component(size_t index, std::type_ind
 bool component_filter_archetype::matches(object handle)
 {
     std::vector<component*> comps = m_manager.get_components(handle);
-    for (std::type_index& required_type : m_component_types)
+    for (std::type_index& required_type : m_include_component_types)
     {
         auto iter = std::find_if(comps.begin(), comps.end(), [required_type](component* val) {
             return typeid(*val) == required_type;
         });
         if (iter == comps.end())
+        {
+            return false;
+        }
+    }
+    for (std::type_index& excluded_type : m_exclude_component_types)
+    {
+        auto iter = std::find_if(comps.begin(), comps.end(), [excluded_type](component* val) {
+            return typeid(*val) == excluded_type;
+        });
+        if (iter != comps.end())
         {
             return false;
         }
@@ -65,10 +76,10 @@ void component_filter_archetype::update_object(object handle)
         std::vector<component*> components = m_manager.get_components(handle);
 
         object_info info;
-        info.components.resize(m_component_types.size());
-        for (size_t i = 0; i < m_component_types.size(); i++)
+        info.components.resize(m_include_component_types.size());
+        for (size_t i = 0; i < m_include_component_types.size(); i++)
         {
-            std::type_index expected_type = m_component_types[i];
+            std::type_index expected_type = m_include_component_types[i];
 
             auto iter = std::find_if(components.begin(), components.end(), [expected_type](const component* comp) {
                 return expected_type == typeid(*comp);
@@ -81,7 +92,15 @@ void component_filter_archetype::update_object(object handle)
             info.components[i] = *iter;
         }
         info.handle = handle;
-        info.sort_key = reinterpret_cast<size_t>(info.components[0]);
+
+        if (info.components.empty())
+        {
+            info.sort_key = 0;
+        }
+        else
+        {
+            info.sort_key = reinterpret_cast<size_t>(info.components[0]);
+        }
 
         return info;
     };
@@ -93,7 +112,7 @@ void component_filter_archetype::update_object(object handle)
         // If it no longer matches out requirements remove it.
         if (!matches(handle))
         {
-            remove_object(handle, true);
+            remove_object(handle);
         }
         // Otherwise update existing entry.
         else
@@ -135,13 +154,8 @@ void component_filter_archetype::update_object(object handle)
     }
 }
 
-void component_filter_archetype::remove_object(object handle, bool ignore_match)
+void component_filter_archetype::remove_object(object handle)
 {
-    if (!ignore_match && !matches(handle))
-    {
-        return;
-    }
-
     auto iter = m_object_info_lookup.find(handle);
     if (iter != m_object_info_lookup.end())
     {

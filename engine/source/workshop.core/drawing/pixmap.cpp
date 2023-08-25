@@ -424,7 +424,7 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
 
     // Do each row in parallel. 
 #if PIXMAP_PARALLEL_ENCODE
-    parallel_for("encode pixmap", task_queue::standard, total_blocks_y, [this, block_size, &block_callback, &output_data, &output_offset, output_block_size, total_blocks_x, total_blocks_y](size_t y) {
+    parallel_for("encode pixmap", task_queue::loading, total_blocks_y, [this, block_size, &block_callback, &output_data, &output_offset, output_block_size, total_blocks_x, total_blocks_y](size_t y) {
 #else
     for (size_t y = 0; y < total_blocks_y; y++)
     { 

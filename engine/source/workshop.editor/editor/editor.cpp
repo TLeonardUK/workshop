@@ -7,6 +7,9 @@
 #include "workshop.editor/editor/windows/editor_loading_window.h"
 #include "workshop.editor/editor/windows/editor_log_window.h"
 #include "workshop.editor/editor/windows/editor_memory_window.h"
+#include "workshop.editor/editor/windows/editor_scene_tree_window.h"
+#include "workshop.editor/editor/windows/editor_properties_window.h"
+#include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_imgui_manager.h"
 
@@ -44,6 +47,17 @@ void editor::set_editor_mode(editor_mode mode)
 editor_main_menu& editor::get_main_menu()
 {
     return *m_main_menu.get();
+}
+
+std::vector<object> editor::get_selected_objects()
+{
+    // TODO: Undo/Redo Stack
+    return m_selected_objects;
+}
+
+void editor::set_selected_objects(std::vector<object>& objects)
+{
+    m_selected_objects = objects;
 }
 
 result<void> editor::create_main_menu(init_list& list)
@@ -118,7 +132,9 @@ result<void> editor::destroy_main_menu()
 
 result<void> editor::create_windows(init_list& list)
 {
-    create_window<editor_loading_window>(& m_engine.get_asset_manager());
+    create_window<editor_properties_window>();
+    create_window<editor_scene_tree_window>(this, &m_engine.get_default_world());
+    create_window<editor_loading_window>(&m_engine.get_asset_manager());
     create_window<editor_log_window>();
     create_window<editor_memory_window>();
 
@@ -208,9 +224,9 @@ void editor::reset_dockspace_layout()
     ImGui::DockBuilderAddNode(m_dockspace_id, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(m_dockspace_id, viewport->Size);
 
-    auto dock_id_top = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Up, 0.2f, nullptr, &m_dockspace_id);
-    auto dock_id_bottom = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Down, 0.25f, nullptr, &m_dockspace_id);
-    auto dock_id_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &m_dockspace_id);
+    auto dock_id_top = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Up, 0.3f, nullptr, &m_dockspace_id);
+    auto dock_id_bottom = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Down, 0.3f, nullptr, &m_dockspace_id);
+    auto dock_id_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Left, 0.15f, nullptr, &m_dockspace_id);
     auto dock_id_right = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Right, 0.15f, nullptr, &m_dockspace_id);
 
     // we now dock our windows into the docking node we made above
