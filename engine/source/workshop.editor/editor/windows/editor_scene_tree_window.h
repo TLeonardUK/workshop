@@ -30,6 +30,8 @@ public:
 protected:
     void draw_object_node(object obj, transform_component* transform, size_t depth);
 
+    void add_new_object();
+
 private:
     world* m_world;
     editor* m_editor;

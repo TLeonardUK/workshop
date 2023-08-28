@@ -9,6 +9,7 @@
 
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
+#include "workshop.core/reflection/reflect.h"
 
 #include "workshop.renderer/render_object.h"
 
@@ -32,6 +33,16 @@ public:
 protected:
 
 	friend class spot_light_system;
+
+    // Component is dirty and all settings need to be applied to render object.
+    bool is_dirty = false;
+
+public:
+
+    BEGIN_REFLECT(spot_light_component, "Spot Light", light_component, reflect_class_flags::none)
+        REFLECT_FIELD(inner_radius, "Inner Radius", "The inner radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
+        REFLECT_FIELD(outer_radius, "Outer Radius", "The outer radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
+    END_REFLECT()
 
 };
 

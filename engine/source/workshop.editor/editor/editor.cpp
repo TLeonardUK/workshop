@@ -132,7 +132,7 @@ result<void> editor::destroy_main_menu()
 
 result<void> editor::create_windows(init_list& list)
 {
-    create_window<editor_properties_window>();
+    create_window<editor_properties_window>(this, &m_engine.get_default_world());
     create_window<editor_scene_tree_window>(this, &m_engine.get_default_world());
     create_window<editor_loading_window>(&m_engine.get_asset_manager());
     create_window<editor_log_window>();

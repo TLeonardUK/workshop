@@ -37,6 +37,8 @@ public:
 	base_quat<element_type> conjugate() const;
 	base_quat<element_type> inverse() const;
 
+    vector3_type to_euler() const;
+
 	base_quat<element_type> rotate_x(element_type radians) const;
 	base_quat<element_type> rotate_y(element_type radians) const;
 	base_quat<element_type> rotate_z(element_type radians) const;
@@ -153,6 +155,27 @@ template <typename element_type>
 inline base_quat<element_type> base_quat<element_type>::inverse() const
 {
 	return conjugate() / dot(*this, *this);
+}
+
+
+template <typename element_type>
+inline base_quat<element_type>::vector3_type base_quat<element_type>::to_euler() const
+{
+    double sinr_cosp = 2 * (w * x + y * z);
+    double cosr_cosp = 1 - 2 * (x * x + y * y);
+
+    double sinp = std::sqrt(1 + 2 * (w * y - x * z));
+    double cosp = std::sqrt(1 - 2 * (w * y - x * z));
+
+    double siny_cosp = 2 * (w * z + x * y);
+    double cosy_cosp = 1 - 2 * (y * y + z * z);
+
+    vector3_type ret;
+    ret.x = (float)std::atan2(sinr_cosp, cosr_cosp);
+    ret.y = 2 * (float)std::atan2(sinp, cosp) - math::pi / 2;
+    ret.z = (float)std::atan2(siny_cosp, cosy_cosp);
+
+    return ret;
 }
 
 template <typename element_type>

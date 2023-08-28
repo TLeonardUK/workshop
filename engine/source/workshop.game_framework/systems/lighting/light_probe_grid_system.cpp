@@ -57,6 +57,17 @@ void light_probe_grid_system::component_removed(object handle, component* comp)
     });
 }
 
+void light_probe_grid_system::component_modified(object handle, component* comp)
+{
+    light_probe_grid_component* component = dynamic_cast<light_probe_grid_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
+}
+
 void light_probe_grid_system::step(const frame_time& time)
 {
     engine& engine = m_manager.get_world().get_engine();
@@ -75,7 +86,14 @@ void light_probe_grid_system::step(const frame_time& time)
         if (light->render_id == null_render_object)
         {
             light->render_id = render_command_queue.create_light_probe_grid("Light Probe Grid");
+            light->is_dirty = true;
+        }
+
+        // Apply changes if dirty.
+        if (light->is_dirty)
+        {
             render_command_queue.set_light_probe_grid_density(light->render_id, light->density);
+            light->is_dirty = false;
         }
 
         // Apply object transform if its changed.

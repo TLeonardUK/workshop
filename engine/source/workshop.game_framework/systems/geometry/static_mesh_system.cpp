@@ -42,6 +42,17 @@ void static_mesh_system::component_removed(object handle, component* comp)
     });
 }
 
+void static_mesh_system::component_modified(object handle, component* comp)
+{
+    static_mesh_component* component = dynamic_cast<static_mesh_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
+}
+
 void static_mesh_system::set_model(object handle, asset_ptr<model> model)
 {
     m_command_queue.queue_command("set_model", [this, handle, model]() {
@@ -75,7 +86,14 @@ void static_mesh_system::step(const frame_time& time)
         if (light->render_id == null_render_object)
         {
             light->render_id = render_command_queue.create_static_mesh("Static Mesh");
+            light->is_dirty = true;
+        }
+
+        // Apply changes if dirty.
+        if (light->is_dirty)
+        {
             render_command_queue.set_static_mesh_model(light->render_id, light->model);
+            light->is_dirty = false;
         }
 
         // Apply object transform if its changed.

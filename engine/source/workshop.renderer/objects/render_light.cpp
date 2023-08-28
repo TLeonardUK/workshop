@@ -23,6 +23,8 @@ render_light::~render_light()
 void render_light::set_color(color value)
 {
     m_color = value;
+
+    update_render_data();
 }
 
 color render_light::get_color()
@@ -33,6 +35,8 @@ color render_light::get_color()
 void render_light::set_intensity(float value)
 {
     m_intensity = value;
+
+    update_render_data();
 }
 
 float render_light::get_intensity()
@@ -45,6 +49,7 @@ void render_light::set_range(float value)
     m_range = value;
 
     bounds_modified();
+    update_render_data();
 }
 
 float render_light::get_range()
@@ -55,6 +60,8 @@ float render_light::get_range()
 void render_light::set_importance_distance(float value)
 {
     m_importance_distance = value;
+
+    update_render_data();
 }
 
 float render_light::get_importance_distance()
@@ -65,6 +72,8 @@ float render_light::get_importance_distance()
 void render_light::set_shadow_casting(bool value)
 {
     m_shadow_casting = value;
+
+    update_render_data();
 }
 
 bool render_light::get_shodow_casting()
@@ -75,6 +84,8 @@ bool render_light::get_shodow_casting()
 void render_light::set_shadow_map_size(size_t value)
 {
     m_shadow_map_size = value;
+
+    update_render_data();
 }
 
 size_t render_light::get_shadow_map_size()
@@ -85,6 +96,8 @@ size_t render_light::get_shadow_map_size()
 void render_light::set_shadow_max_distance(float value)
 {
     m_shadow_max_distance = value;
+
+    update_render_data();
 }
 
 float render_light::get_shadow_max_distance()

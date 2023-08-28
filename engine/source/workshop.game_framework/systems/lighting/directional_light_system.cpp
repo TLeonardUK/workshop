@@ -42,6 +42,17 @@ void directional_light_system::component_removed(object handle, component* comp)
     });
 }
 
+void directional_light_system::component_modified(object handle, component* comp)
+{
+    directional_light_component* component = dynamic_cast<directional_light_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
+}
+
 void directional_light_system::set_light_shadow_cascades(object handle, size_t shadow_cascades)
 {
     m_command_queue.queue_command("set_light_shadow_cascades", [this, handle, shadow_cascades]() {
@@ -105,6 +116,12 @@ void directional_light_system::step(const frame_time& time)
         if (light->render_id == null_render_object)
         {
             light->render_id = render_command_queue.create_directional_light("Light");
+            light->is_dirty = true;
+        }
+
+        // Apply changes if dirty.
+        if (light->is_dirty)
+        {
             render_command_queue.set_light_intensity(light->render_id, light->intensity);
             render_command_queue.set_light_range(light->render_id, light->range);
             render_command_queue.set_light_importance_distance(light->render_id, light->importance_range);
@@ -115,6 +132,8 @@ void directional_light_system::step(const frame_time& time)
             render_command_queue.set_directional_light_shadow_cascades(light->render_id, light->shadow_cascades);
             render_command_queue.set_directional_light_shadow_cascade_exponent(light->render_id, light->shadow_cascade_exponent);
             render_command_queue.set_directional_light_shadow_cascade_blend(light->render_id, light->shadow_cascade_blend);
+
+            light->is_dirty = false;
         }
 
         // Apply object transform if its changed.

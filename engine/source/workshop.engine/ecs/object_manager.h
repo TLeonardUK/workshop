@@ -96,6 +96,15 @@ public:
 
 public:
 
+    // Registers a component type with the object manager. 
+    // This just ensures pools/etc are setup, there is no need to handle unregistering.
+    template <typename component_type>
+    void register_component()
+    {
+        // Ensure the pool is setup for this component.
+        get_component_pool<component_type>();
+    }
+
     // Registers a system that will be updated as part of this world.
     template <typename system_type, typename ...args>
     void register_system(args... input)
@@ -132,6 +141,14 @@ public:
     // Gets a filter archetype for the given set of component types. Generally
     // there isn't a good reason to use this directly, use a component_filter instead.
     component_filter_archetype* get_filter_archetype(const std::vector<std::type_index>& include_components, const std::vector<std::type_index>& exclude_components);
+
+    // Invoked when a reflected field of a component has been modified and the systems
+    // that use it need to be updated.
+    // 
+    // In generaly this SHOULD NEVER be used in user-code, its here to support property-modification
+    // in the editor. User code should send messages to systems for them to modify a component, not
+    // do it directly.
+    void component_edited(object obj, component* comp);
 
 private:    
 
@@ -226,6 +243,9 @@ public:
         add_component(handle, comp);
         return static_cast<component_type*>(comp);
     }
+
+    // Add a component of the given type to the given object.
+    component* add_component(object handle, std::type_index index);
 
     // Adds the specific component from the given object.
     void add_component(object handle, component* component);

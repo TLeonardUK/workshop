@@ -8,6 +8,7 @@
 
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
+#include "workshop.core/reflection/reflect.h"
 
 #include "workshop.renderer/render_object.h"
 
@@ -41,6 +42,18 @@ private:
 
 	// Tracks the last transform we applied to the render view.
 	size_t last_transform_generation = 0;
+
+    // Component is dirty and all settings need to be applied to render object.
+    bool is_dirty = false;
+
+public:
+
+    BEGIN_REFLECT(camera_component, "Camera", component, reflect_class_flags::none)
+        REFLECT_FIELD(fov,              "Field Of View",    "Field of view of the camera in degrees.")
+        REFLECT_FIELD(aspect_ratio,     "Aspect Ratio",     "Aspect ratio of the view, should normally be the proportion between width and height.")
+        REFLECT_FIELD(min_depth,        "Min Depth",        "Minimum z value that can be seen by the view, defines the near clipping plane.")
+        REFLECT_FIELD(max_depth,        "Max Depth",        "Maximum z value that can be seen by the view, defines the far clipping plane.")
+    END_REFLECT()
 
 };
 

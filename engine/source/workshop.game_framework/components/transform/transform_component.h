@@ -9,6 +9,7 @@
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/math/matrix4.h"
+#include "workshop.core/reflection/reflect.h"
 
 namespace ws {
 
@@ -43,6 +44,14 @@ public:
 
     // Generation increases by one each time the transform has been modified.
     size_t generation = 0;
+
+public:
+
+    BEGIN_REFLECT(transform_component, "Transform", component, reflect_class_flags::none)
+        REFLECT_FIELD(local_rotation,   "Rotation",       "Rotation releative to parent.")
+        REFLECT_FIELD(local_location,   "Location",       "Local releative to parent.")
+        REFLECT_FIELD(local_scale,      "Scale",          "Scale releative to parent.")
+    END_REFLECT()
 
 };
 

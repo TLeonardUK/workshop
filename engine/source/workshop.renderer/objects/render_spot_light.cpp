@@ -23,6 +23,8 @@ void render_spot_light::set_radius(float inner, float outer)
 {
     m_inner_radius = inner;
     m_outer_radius = outer;
+
+    update_render_data();
 }
 
 void render_spot_light::get_radius(float& inner, float& outer)

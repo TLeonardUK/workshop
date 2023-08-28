@@ -14,6 +14,7 @@ SET(SOURCES
     "components/lighting/point_light_component.h"    
     "components/lighting/directional_light_component.h"    
     "components/lighting/light_probe_grid_component.h"    
+    "components/lighting/light_component.h"         
     "components/lighting/reflection_probe_component.h"         
     "components/geometry/static_mesh_component.h"    
     "components/transform/transform_component.h"    

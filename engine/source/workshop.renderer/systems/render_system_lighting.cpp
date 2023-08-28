@@ -217,7 +217,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             // Add light instance to buffer.
             size_t index, offset;
             light_state_block->set("shadow_map_start_index", total_shadow_maps);
-            light_state_block->set("shadow_map_count", (int)shadows.cascades.size());
+            light_state_block->set("shadow_map_count", light->get_shodow_casting() ? (int)shadows.cascades.size() : 0);
             light_state_block->get_table(index, offset);
             light_instance_buffer->add((uint32_t)index, (uint32_t)offset);
 

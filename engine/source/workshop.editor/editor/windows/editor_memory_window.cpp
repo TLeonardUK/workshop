@@ -152,7 +152,7 @@ void editor_memory_window::draw()
             }
 
             ImGui::BeginChild("MemoryTableView");
-            ImGui::BeginTable("MemoryTable", 5);
+            ImGui::BeginTable("MemoryTable", 5, ImGuiTableFlags_Resizable);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.35f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);

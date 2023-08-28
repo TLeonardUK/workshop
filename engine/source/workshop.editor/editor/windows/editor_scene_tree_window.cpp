@@ -12,6 +12,7 @@
 #include "workshop.engine/ecs/component_filter.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
+#include "workshop.game_framework/systems/transform/transform_system.h"
 
 #include "thirdparty/imgui/imgui.h"
 
@@ -77,7 +78,7 @@ void editor_scene_tree_window::draw_object_node(object obj, transform_component*
     ImVec2 draw_cursor_pos = ImGui::GetCursorPos();
     ImGui::Selectable("##Selectable", &selected, ImGuiSelectableFlags_None, ImVec2(0, 0));
     ImVec2 end_cursor_pos = ImGui::GetCursorPos();
-
+    
     // Draw text over selected region.
     ImGui::SetCursorPos(draw_cursor_pos);
     ImGui::Text("%s", obj_meta->name.c_str());
@@ -145,6 +146,39 @@ void editor_scene_tree_window::draw_object_node(object obj, transform_component*
     }
 }
 
+void editor_scene_tree_window::add_new_object()
+{
+    object_manager& obj_manager = m_world->get_object_manager();
+    transform_system* transform_sys = obj_manager.get_system<transform_system>();
+
+    std::vector<object> selected_objects = m_editor->get_selected_objects();
+    object parent = null_object;
+    if (!selected_objects.empty())
+    {
+        parent = selected_objects[0];
+
+        // If object has no transform, add one as we need one for parenting them.
+        if (!obj_manager.get_component<transform_component>(parent))
+        {
+            obj_manager.add_component<transform_component>(parent);
+        }
+
+        // Make sure parent is expanded.
+        auto iter = std::find(m_expanded_objects.begin(), m_expanded_objects.end(), parent);
+        if (iter == m_expanded_objects.end())
+        {
+            m_expanded_objects.push_back(parent);
+        }
+    }
+
+    object new_object = obj_manager.create_object("unnamed object");
+    obj_manager.add_component<transform_component>(new_object);
+    transform_sys->set_parent(new_object, parent);
+
+    selected_objects = { new_object };
+    m_editor->set_selected_objects(selected_objects);
+}
+
 void editor_scene_tree_window::draw()
 { 
     if (m_open)
@@ -156,13 +190,15 @@ void editor_scene_tree_window::draw()
             component_filter<const transform_component> transform_filter(obj_manager);
             component_filter<excludes<const transform_component>> no_transform_filter(obj_manager);
 
+            if (ImGui::Button("Add Object", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+            {
+                add_new_object();
+            }
+
             ImGui::BeginChild("ObjectTableView");
             ImGui::BeginTable("ObjectTable", 2);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 1.0f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 16.0f);
-
-            ImGui::TableNextColumn(); ImGui::TableHeader("Name");
-            ImGui::TableNextColumn(); ImGui::TableHeader("");
 
             m_clicked_item = false;
             m_pending_delete = null_object;
@@ -178,6 +214,11 @@ void editor_scene_tree_window::draw()
                     draw_object_node(obj, transform, 0);
                 }
             }
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn(); ImGui::Separator();
+            ImGui::TableNextColumn(); ImGui::Separator();
+
             for (size_t i = 0; i < no_transform_filter.size(); i++)
             {
                 object obj = no_transform_filter.get_object(i);
@@ -209,7 +250,7 @@ void editor_scene_tree_window::draw()
 
 const char* editor_scene_tree_window::get_window_id()
 {
-    return "Scene tree";
+    return "Scene Tree";
 }
 
 editor_window_layout editor_scene_tree_window::get_layout()

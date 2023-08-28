@@ -62,7 +62,17 @@ void camera_system::component_removed(object handle, component* comp)
 
         render_command_queue.destroy_view(view_id);
     });
+}
 
+void camera_system::component_modified(object handle, component* comp)
+{
+    camera_component* component = dynamic_cast<camera_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
 }
 
 void camera_system::step(const frame_time& time)
@@ -87,9 +97,17 @@ void camera_system::step(const frame_time& time)
         if (camera->view_id == null_render_object)
         {
             camera->view_id = render_command_queue.create_view("Camera");
+            camera->is_dirty = true;
+        }
+
+        // Apply settings if component is dirty.
+        if (camera->is_dirty)
+        {
             render_command_queue.set_view_viewport(camera->view_id, recti(0, 0, static_cast<int>(screen_size.x), static_cast<int>(screen_size.y)));
             render_command_queue.set_view_projection(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
+
+            camera->is_dirty = false;
         }
 
         // Apply object transform if its changed.

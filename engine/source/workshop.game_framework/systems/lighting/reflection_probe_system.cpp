@@ -42,6 +42,17 @@ void reflection_probe_system::component_removed(object handle, component* comp)
     });
 }
 
+void reflection_probe_system::component_modified(object handle, component* comp)
+{
+    reflection_probe_component* component = dynamic_cast<reflection_probe_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
+}
+
 void reflection_probe_system::step(const frame_time& time)
 {
     engine& engine = m_manager.get_world().get_engine();
@@ -60,6 +71,13 @@ void reflection_probe_system::step(const frame_time& time)
         if (light->render_id == null_render_object)
         {
             light->render_id = render_command_queue.create_reflection_probe("Reflection Probe");
+        }
+
+        // Apply changes if dirty.
+        if (light->is_dirty)
+        {
+            // Nothing to do here ...
+            light->is_dirty = false;
         }
 
         // Apply object transform if its changed.

@@ -122,6 +122,16 @@ component_filter_archetype* object_manager::get_filter_archetype(const std::vect
     return ret;
 }
 
+void object_manager::component_edited(object obj, component* comp)
+{
+    std::scoped_lock lock(m_system_mutex);
+    for (size_t i = 0; i < m_systems.size(); i++)
+    {
+        auto& system = m_systems[i];
+        system->component_modified(obj, comp);
+    }
+}
+
 void object_manager::commit_destroy_object(object handle)
 {
     object_manager::object_state* state = get_object_state(handle);
@@ -206,6 +216,14 @@ object_manager::object_state* object_manager::get_object_state(object obj)
     }
 
     return &m_objects[obj];
+}
+
+component* object_manager::add_component(object handle, std::type_index index)
+{
+    component_pool_base& pool = *get_component_pool(index);
+    component* comp = pool.alloc();
+    add_component(handle, comp);
+    return comp;
 }
 
 void object_manager::add_component(object handle, component* comp)

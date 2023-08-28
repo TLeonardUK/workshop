@@ -28,6 +28,8 @@ SET(SOURCES
     
     "editor/utils/allocation_tree.cpp"
     "editor/utils/allocation_tree.h"
+    "editor/utils/property_list.cpp"
+    "editor/utils/property_list.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

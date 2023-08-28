@@ -8,6 +8,7 @@
 
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
+#include "workshop.core/reflection/reflect.h"
 
 #include "workshop.renderer/render_object.h"
 
@@ -29,6 +30,14 @@ private:
 
 	// Tracks the last transform we applied to the render object.
 	size_t last_transform_generation = 0;
+
+    // Component is dirty and all settings need to be applied to render object.
+    bool is_dirty = false;
+
+public:
+
+    BEGIN_REFLECT(reflection_probe_component, "Reflection Probe", component, reflect_class_flags::none)
+    END_REFLECT()
 
 };
 

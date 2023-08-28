@@ -129,7 +129,7 @@ void editor_log_window::draw()
             ImGui::PopID();
 
             ImGui::BeginChild("OutputTableView");
-            ImGui::BeginTable("OutputTable", 4);
+            ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);

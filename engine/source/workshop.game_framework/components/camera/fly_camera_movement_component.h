@@ -8,6 +8,7 @@
 
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
+#include "workshop.core/reflection/reflect.h"
 
 namespace ws {
 
@@ -41,6 +42,14 @@ private:
     // Rotation we want to apply to camera in euler coordinates.
     // TODO: Remove this and do it statelessly.
     vector3 rotation_euler = vector3::zero;
+    
+public:
+
+    BEGIN_REFLECT(fly_camera_movement_component, "Fly Camera Movement", component, reflect_class_flags::none)
+        REFLECT_FIELD(sensitivity,              "Sensitivity",              "How much the mouse delta is scaled to determine angular speed.")
+        REFLECT_FIELD(speed,                    "Speed",                    "Speed of camera movement in units per second.")
+        REFLECT_FIELD(max_vertical_angle,       "Max Vertical Angle",       "Determines the maximum vertical angle of the camera to avoid the camera looping around on its rotations.\n\nThis is represented as a dot product value.\n1 allows the camera to go fully vertical, 0.5 allows a max 45 degree angle, etc.")
+    END_REFLECT()
 
 };
 

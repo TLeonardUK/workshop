@@ -42,6 +42,17 @@ void spot_light_system::component_removed(object handle, component* comp)
     });
 }
 
+void spot_light_system::component_modified(object handle, component* comp)
+{
+    spot_light_component* component = dynamic_cast<spot_light_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
+}
+
 void spot_light_system::set_light_radius(object handle, float inner_radius, float outer_radius)
 {
     m_command_queue.queue_command("set_light_radius", [this, handle, inner_radius, outer_radius]() {
@@ -76,6 +87,12 @@ void spot_light_system::step(const frame_time& time)
         if (light->render_id == null_render_object)
         {
             light->render_id = render_command_queue.create_directional_light("Light");
+            light->is_dirty = true;
+        }
+
+        // Apply changes if dirty.
+        if (light->is_dirty)
+        {
             render_command_queue.set_light_intensity(light->render_id, light->intensity);
             render_command_queue.set_light_range(light->render_id, light->range);
             render_command_queue.set_light_importance_distance(light->render_id, light->importance_range);
@@ -84,6 +101,7 @@ void spot_light_system::step(const frame_time& time)
             render_command_queue.set_light_shadow_map_size(light->render_id, light->shadow_map_size);
             render_command_queue.set_light_shadow_max_distance(light->render_id, light->shadow_map_distance);
             render_command_queue.set_spot_light_radius(light->render_id, light->inner_radius, light->outer_radius);
+            light->is_dirty = false;
         }
 
         // Apply object transform if its changed.

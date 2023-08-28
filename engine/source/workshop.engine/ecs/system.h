@@ -43,6 +43,11 @@ public:
     // do any required teardown.
     virtual void component_removed(object handle, component* comp) {}
 
+    // Notifies that a reflected field in the component has been modified. In general 
+    // this should only be invoked by the editor when changing reflected fields. When this
+    // occurs the system should make any changes needed to apply the changes.
+    virtual void component_modified(object handle, component* comp) {}
+
 protected:
 
     // Runs all commands currently in the systems command queue. Should be called at least

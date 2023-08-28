@@ -396,6 +396,40 @@ inline base_matrix4<T> base_matrix4<T>::rotation(const quat& quat)
 {
 	base_matrix4 out = identity;
 
+#if 1
+
+    float qx = quat.x;
+    float qxx = qx * qx;
+
+    float qy = quat.y;
+    float qyy = qy * qy;
+
+    float qz = quat.z;
+    float qzz = qz * qz;
+
+    float qw = quat.w;
+
+    out[0][0] = 1.f - 2.f * qyy - 2.f * qzz;
+    out[1][0] = 2.f * qx * qy + 2.f * qz * qw;
+    out[2][0] = 2.f * qx * qz - 2.f * qy * qw;
+    out[3][0] = 0.f;
+
+    out[0][1] = 2.f * qx * qy - 2.f * qz * qw;
+    out[1][1] = 1.f - 2.f * qxx - 2.f * qzz;
+    out[2][1] = 2.f * qy * qz + 2.f * qx * qw;
+    out[3][1] = 0.f;
+
+    out[0][2] = 2.f * qx * qz + 2.f * qy * qw;
+    out[1][2] = 2.f * qy * qz - 2.f * qx * qw;
+    out[2][2] = 1.f - 2.f * qxx - 2.f * qyy;
+    out[3][2] = 0.f;
+
+    out[0][3] = 0.f;
+    out[1][3] = 0.f;
+    out[2][3] = 0.f;
+    out[3][3] = 1.0f;
+
+#else
 	T x = quat.x;
 	T y = quat.y;
 	T z = quat.z;
@@ -435,6 +469,7 @@ inline base_matrix4<T> base_matrix4<T>::rotation(const quat& quat)
 	out[1][3] = 0;
 	out[2][3] = 0;
 	out[3][3] = 1;
+#endif
 
 	return out;
 }

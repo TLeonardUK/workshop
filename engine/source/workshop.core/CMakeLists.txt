@@ -126,6 +126,13 @@ SET(SOURCES
     
     "statistics/statistics_manager.h"
     "statistics/statistics_manager.cpp"
+    
+    "reflection/reflect.cpp"
+    "reflection/reflect.h"
+    "reflection/reflect_class.cpp"
+    "reflection/reflect_class.h"
+    "reflection/reflect_field.cpp"
+    "reflection/reflect_field.h"
 
     "entry.cpp"
     "entry.h"

@@ -7,6 +7,8 @@
 #include "workshop.engine/ecs/object.h"
 #include "workshop.engine/ecs/object_manager.h"
 
+#include "workshop.core/reflection/reflect.h"
+
 namespace ws {
 
 // ================================================================================================
@@ -19,6 +21,11 @@ class component
 {
 public:
     virtual ~component() {};
+    
+public:
+
+    BEGIN_REFLECT(component, "Component", reflect_no_parent, reflect_class_flags::none)
+    END_REFLECT()
 
 };
 

@@ -46,7 +46,7 @@ void editor_loading_window::draw()
             */
 
             ImGui::BeginChild("OutputTableView");
-            ImGui::BeginTable("OutputTable", 4);
+            ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);

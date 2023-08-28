@@ -46,6 +46,8 @@ float render_directional_light::get_shodow_cascade_exponent()
 void render_directional_light::set_shadow_cascade_blend(float value)
 {
     m_shadow_map_blend = value;
+
+    update_render_data();
 }
 
 float render_directional_light::get_shodow_cascade_blend()

@@ -60,7 +60,6 @@ void transform_system::set_parent(object handle, object parent)
     });
 }
 
-
 void transform_system::component_removed(object handle, component* comp)
 {
     transform_component* component = dynamic_cast<transform_component*>(comp);
@@ -96,23 +95,34 @@ void transform_system::component_removed(object handle, component* comp)
     }
 }
 
+void transform_system::component_modified(object handle, component* comp)
+{
+    transform_component* component = dynamic_cast<transform_component*>(comp);
+    if (!component)
+    {
+        return;
+    }
+
+    component->is_dirty = true;
+}
+
 void transform_system::update_transform(transform_component* transform, transform_component* parent_transform)
 {
     transform->local_to_world = matrix4::scale(transform->local_scale) *
                                 matrix4::rotation(transform->local_rotation) *
                                 matrix4::translate(transform->local_location);
+    transform->world_rotation = transform->local_rotation;
+    transform->world_scale = transform->local_scale;
 
     if (parent_transform != nullptr)
     {
         transform->local_to_world = transform->local_to_world * parent_transform->local_to_world;
+        transform->world_rotation = transform->world_rotation * parent_transform->world_rotation;
+        transform->world_scale = transform->world_scale * parent_transform->world_scale;
     }
 
     transform->world_to_local = transform->local_to_world.inverse();
-
-    quat extracted_quat = transform->local_to_world.to_quat();
-    transform->world_location = vector3::zero * transform->local_to_world;
-    transform->world_rotation = quat::identity * extracted_quat;
-    transform->world_scale = vector3::one * transform->local_to_world.extract_scale();
+    transform->world_location = transform->local_to_world.transform_location(vector3::zero);
     
     transform->is_dirty = false;
     transform->generation++;
