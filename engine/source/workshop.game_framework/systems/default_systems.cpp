@@ -12,6 +12,7 @@
 #include "workshop.game_framework/systems/lighting/reflection_probe_system.h"
 #include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.game_framework/systems/transform/bounds_system.h"
 
 
 #include "workshop.game_framework/components/camera/camera_component.h"
@@ -23,6 +24,7 @@
 #include "workshop.game_framework/components/lighting/reflection_probe_component.h"
 #include "workshop.game_framework/components/lighting/spot_light_component.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
+#include "workshop.game_framework/components/transform/bounds_component.h"
 
 #include "workshop.engine/ecs/object_manager.h"
 
@@ -33,6 +35,7 @@ void register_default_systems(object_manager& manager)
     // Components
 
     manager.register_component<transform_component>();
+    manager.register_component<bounds_component>();
 
     manager.register_component<directional_light_component>();
     manager.register_component<light_probe_grid_component>();
@@ -48,6 +51,7 @@ void register_default_systems(object_manager& manager)
     // Systems
 
     manager.register_system<transform_system>();
+    manager.register_system<bounds_system>();
 
     manager.register_system<camera_system>();
     manager.register_system<directional_light_system>();

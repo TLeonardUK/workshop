@@ -8,16 +8,19 @@
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
+#include "workshop.core/math/obb.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.editor/editor/editor_main_menu.h"
 #include "workshop.engine/ecs/object.h"
 
 #include "thirdparty/imgui/imgui.h"
+#include "thirdparty/ImGuizmo/ImGuizmo.h"
 
 namespace ws {
 
 class editor_main_menu;
 class editor_window;
+class camera_component;
 
 // Describes what parts of the editor UI should be shown.
 enum class editor_mode
@@ -73,6 +76,9 @@ public:
     std::vector<object> get_selected_objects();
     void set_selected_objects(std::vector<object>& objects);
 
+    // Gets the main camera used by the editor.
+    camera_component* get_camera();
+
 protected:
 
     result<void> create_main_menu(init_list& list);
@@ -80,6 +86,8 @@ protected:
 
     result<void> create_windows(init_list& list);
     result<void> destroy_windows();
+
+    void draw_selection();
 
     void draw_dockspace();
 
@@ -97,10 +105,21 @@ protected:
 
     std::vector<std::unique_ptr<editor_window>> m_windows;
 
+    struct object_state
+    {
+        vector3 local_location;
+        vector3 local_scale;
+        quat local_rotation;
+    };
+
     std::vector<object> m_selected_objects;
+    std::vector<object_state> m_selected_object_state;
+    obb m_selected_objects_obb;
 
     ImGuiID m_dockspace_id;
     bool m_set_default_dock_space = false;
+
+    ImGuizmo::OPERATION m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
 
 };
 

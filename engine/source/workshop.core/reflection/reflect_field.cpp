@@ -42,4 +42,9 @@ std::type_index reflect_field::get_type_index()
     return m_type;
 }
 
+void reflect_field::add_constraint(std::unique_ptr<reflect_constraint> constraint)
+{
+    m_constraints.push_back(std::move(constraint));
+}
+
 }; // namespace workshop

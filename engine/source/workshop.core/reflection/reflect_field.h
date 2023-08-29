@@ -6,6 +6,7 @@
 
 #include "workshop.core/containers/string.h"
 #include "workshop.core/math/math.h"
+#include "workshop.core/reflection/reflect_constraint.h"
 
 #include <typeindex>
 
@@ -34,6 +35,24 @@ public:
     // Gets the type of this field.
     std::type_index get_type_index();
 
+    // Adds a constraint to this field.
+    void add_constraint(std::unique_ptr<reflect_constraint> constraint);
+
+    // Gets a constraint of the given type.
+    template <typename constraint_type>
+    constraint_type* get_constraint()
+    {
+        for (auto& val : m_constraints)
+        {
+            constraint_type* type = dynamic_cast<constraint_type*>(val.get());
+            if (type)
+            {
+                return type;
+            }
+        }
+        return nullptr;
+    }
+
 private:
     std::string m_name;
     std::string m_display_name;
@@ -41,6 +60,8 @@ private:
 
     size_t m_offset;
     std::type_index m_type;
+
+    std::vector<std::unique_ptr<reflect_constraint>> m_constraints;
 
 };
 

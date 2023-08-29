@@ -17,7 +17,8 @@ SET(SOURCES
     "components/lighting/light_component.h"         
     "components/lighting/reflection_probe_component.h"         
     "components/geometry/static_mesh_component.h"    
-    "components/transform/transform_component.h"    
+    "components/transform/transform_component.h"     
+    "components/transform/bounds_component.h"    
     
     "systems/camera/camera_system.h"  
     "systems/camera/camera_system.cpp"  
@@ -42,6 +43,8 @@ SET(SOURCES
 
     "systems/transform/transform_system.h"  
     "systems/transform/transform_system.cpp"    
+    "systems/transform/bounds_system.h"  
+    "systems/transform/bounds_system.cpp"    
     
     "systems/default_systems.h"    
     "systems/default_systems.cpp"    

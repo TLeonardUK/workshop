@@ -34,6 +34,7 @@
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
+#include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/components/lighting/directional_light_component.h"
 #include "workshop.game_framework/components/lighting/point_light_component.h"
 #include "workshop.game_framework/components/lighting/spot_light_component.h"
@@ -86,6 +87,7 @@ ws::result<void> rl_game_app::start()
     // Add the main camera!
     m_camera_object = obj_manager.create_object("main camera");
     obj_manager.add_component<transform_component>(m_camera_object);
+    obj_manager.add_component<bounds_component>(m_camera_object);
     obj_manager.add_component<camera_component>(m_camera_object);
     obj_manager.add_component<fly_camera_movement_component>(m_camera_object);
     transform_sys->set_local_transform(m_camera_object, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
@@ -93,6 +95,7 @@ ws::result<void> rl_game_app::start()
     // Add a directional light for the scene.
     object sun_object = obj_manager.create_object("sun light");
     obj_manager.add_component<transform_component>(sun_object);
+    obj_manager.add_component<bounds_component>(sun_object);
     obj_manager.add_component<directional_light_component>(sun_object);
     direction_light_sys->set_light_shadow_casting(sun_object, true);
     direction_light_sys->set_light_shadow_map_size(sun_object, 2048);
@@ -104,6 +107,7 @@ ws::result<void> rl_game_app::start()
     // Add a skybox.
     object mesh_object = obj_manager.create_object("skybox");
     obj_manager.add_component<transform_component>(mesh_object);
+    obj_manager.add_component<bounds_component>(mesh_object);
     obj_manager.add_component<static_mesh_component>(mesh_object);
     transform_sys->set_local_transform(mesh_object, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
     static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/skyboxs/skybox_3.yaml", 0));
@@ -114,6 +118,7 @@ ws::result<void> rl_game_app::start()
     // Add light probe grid.
     object light_probe_object = obj_manager.create_object("light probe grid");
     obj_manager.add_component<transform_component>(light_probe_object);
+    obj_manager.add_component<bounds_component>(light_probe_object);
     obj_manager.add_component<light_probe_grid_component>(light_probe_object);
     light_probe_grid_sys->set_grid_density(light_probe_object, 350.0f);
     transform_sys->set_local_transform(light_probe_object, vector3(200.0, 1050.0f, -100.0f), quat::identity, vector3(3900.f, 2200.0f, 2200.0f));
@@ -121,32 +126,38 @@ ws::result<void> rl_game_app::start()
     // Add reflection probe.
     object reflection_probe_object = obj_manager.create_object("reflection probe");
     obj_manager.add_component<transform_component>(reflection_probe_object);
+    obj_manager.add_component<bounds_component>(reflection_probe_object);
     obj_manager.add_component<reflection_probe_component>(reflection_probe_object);
     transform_sys->set_local_transform(reflection_probe_object, vector3(0.0, 200.0f, 0.0f), quat::identity, vector3(4000.f, 4000.0f, 4000.0f));
 
     // Add meshes
     mesh_object = obj_manager.create_object("sponza");
     obj_manager.add_component<transform_component>(mesh_object);
+    obj_manager.add_component<bounds_component>(mesh_object);
     obj_manager.add_component<static_mesh_component>(mesh_object);
     static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
 
     mesh_object = obj_manager.create_object("sponza curtains");
     obj_manager.add_component<transform_component>(mesh_object);
+    obj_manager.add_component<bounds_component>(mesh_object);
     obj_manager.add_component<static_mesh_component>(mesh_object);
     static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/sponza_curtains/sponza_curtains.yaml", 0));
 
     //mesh_object = obj_manager.create_object();
     //obj_manager.add_component<transform_component>(mesh_object);
+    //obj_manager.add_component<bounds_component>(mesh_object);
     //obj_manager.add_component<static_mesh_component>(mesh_object);
     //static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/sponza_ivy/sponza_ivy.yaml", 0));
 
     //mesh_object = obj_manager.create_object();
     //obj_manager.add_component<transform_component>(mesh_object);
+    //obj_manager.add_component<bounds_component>(mesh_object);
     //obj_manager.add_component<static_mesh_component>(mesh_object);
     //static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
 
     mesh_object = obj_manager.create_object("cerberus");
     obj_manager.add_component<transform_component>(mesh_object);
+    obj_manager.add_component<bounds_component>(mesh_object);
     obj_manager.add_component<static_mesh_component>(mesh_object);
     static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));
 
@@ -159,10 +170,12 @@ ws::result<void> rl_game_app::start()
 
         object child1 = obj_manager.create_object("child 1");
         obj_manager.add_component<transform_component>(child1);
+        obj_manager.add_component<bounds_component>(child1);
         transform_sys->set_parent(child1, parent);
 
         object child2 = obj_manager.create_object("child 2");
         obj_manager.add_component<transform_component>(child2);
+        obj_manager.add_component<bounds_component>(child2);
         transform_sys->set_parent(child2, child1);
         
 

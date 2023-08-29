@@ -43,6 +43,7 @@ void unregister_reflect_class(reflect_class* object);
 // public:
 //      BEGIN_REFLECT(transform_component, "Transform Component", component, reflect_class_flags::none)
 //          REFLECT_FIELD(a, "A", "Does something something something")
+//          REFLECT_CONSTRAINT_RANGE(a, 0, 10)
 //      END_REFLECTIO()
 //
 // Eventually we will automate this when I'm less lazy and can be bothered to
@@ -62,6 +63,9 @@ class reflect_no_parent { };
 
 #define REFLECT_FIELD(name, display_name, description)                                      \
             add_field(#name, offsetof(class_t, class_t::name), typeid(decltype(class_t::name)), display_name, description); 
+
+#define REFLECT_CONSTRAINT_RANGE(name, min_val, max_val)                                      \
+            add_constraint(#name, static_cast<float>(min_val), static_cast<float>(max_val)); 
 
 #define END_REFLECT()                                                                           \
         }                                                                                       \

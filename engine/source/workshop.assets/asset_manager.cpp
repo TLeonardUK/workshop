@@ -854,6 +854,7 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
         }
     }
 
+    state->version.fetch_add(1);
     state->on_change_callback.broadcast();
 }
 
@@ -982,6 +983,7 @@ void asset_manager::apply_hot_reloads()
             }
 
             // Invoke any change callbacks for reloaded state.
+            state->version.fetch_add(1);
             state->on_change_callback.broadcast();
 
             // Remove reference from state that we added when we queued it for hot reload.

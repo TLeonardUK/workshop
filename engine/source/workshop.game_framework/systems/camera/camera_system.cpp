@@ -92,6 +92,7 @@ void camera_system::step(const frame_time& time)
 
         const transform_component* transform = filter.get_component<transform_component>(i);
         camera_component* camera = filter.get_component<camera_component>(i);
+        bool update_matrices = false;
 
         // Create view if it doesn't exist yet.
         if (camera->view_id == null_render_object)
@@ -106,6 +107,7 @@ void camera_system::step(const frame_time& time)
             render_command_queue.set_view_viewport(camera->view_id, recti(0, 0, static_cast<int>(screen_size.x), static_cast<int>(screen_size.y)));
             render_command_queue.set_view_projection(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
+            update_matrices = true;
 
             camera->is_dirty = false;
         }
@@ -115,6 +117,22 @@ void camera_system::step(const frame_time& time)
         {
             camera->last_transform_generation = transform->generation;
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
+
+            update_matrices = true;
+        }
+
+        if (update_matrices)
+        {
+            camera->projection_matrix = matrix4::perspective(
+                math::radians(camera->fov),
+                camera->aspect_ratio,
+                camera->min_depth,
+                camera->max_depth);
+
+            camera->view_matrix = matrix4::look_at(
+                transform->world_location,
+                transform->world_location + (vector3::forward * transform->world_rotation),
+                vector3::up);
         }
     }
 }

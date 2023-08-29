@@ -41,6 +41,8 @@ public:
 
     BEGIN_REFLECT(light_probe_grid_component, "Light Probe Grid", component, reflect_class_flags::none)
         REFLECT_FIELD(density,  "Density", "Determines how much space there is between each light probe in the grid.")
+
+        REFLECT_CONSTRAINT_RANGE(density, 0.01f, 10000.0f)
     END_REFLECT()
 
 };

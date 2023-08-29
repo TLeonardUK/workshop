@@ -141,4 +141,5 @@ target_link_libraries(${PROJECT_NAME}
     workshop.render_interface
     workshop.assets
     imgui
+    imguizmo
 )

@@ -53,6 +53,7 @@ protected:
 
 	// Tracks the last transform we applied to the render object.
 	size_t last_transform_generation = 0;
+
 public:
 
     BEGIN_REFLECT(light_component, "Light Component", component, reflect_class_flags::abstract)
@@ -63,6 +64,13 @@ public:
         REFLECT_FIELD(shadow_casting,       "Shadow Casting",           "If true this light will cast shadows.")
         REFLECT_FIELD(shadow_map_size,      "Shadow Map Size",          "The size of the texture map that is used to render the lights view for shadow casting.")
         REFLECT_FIELD(shadow_map_distance,  "Shadow Map Distance",      "Maximum distance from the light before the shadwo factor is faded out.")
+
+
+        REFLECT_CONSTRAINT_RANGE(intensity,             0.01f, 1000000.0f)
+        REFLECT_CONSTRAINT_RANGE(range,                 0.01f, 1000000.0f)
+        REFLECT_CONSTRAINT_RANGE(importance_range,      0.01f, 1000000.0f)
+        REFLECT_CONSTRAINT_RANGE(shadow_map_size,       64,    16384)
+        REFLECT_CONSTRAINT_RANGE(shadow_map_distance,   0.01f, 1000000.0f)
     END_REFLECT()
 
 };

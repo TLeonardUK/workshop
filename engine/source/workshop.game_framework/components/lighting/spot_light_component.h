@@ -7,6 +7,7 @@
 #include "workshop.engine/ecs/component.h"
 #include "workshop.game_framework/components/lighting/light_component.h"
 
+#include "workshop.core/math/math.h"
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/reflection/reflect.h"
@@ -42,6 +43,8 @@ public:
     BEGIN_REFLECT(spot_light_component, "Spot Light", light_component, reflect_class_flags::none)
         REFLECT_FIELD(inner_radius, "Inner Radius", "The inner radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
         REFLECT_FIELD(outer_radius, "Outer Radius", "The outer radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
+
+        REFLECT_CONSTRAINT_RANGE(inner_radius, 0.0f, math::pi)
     END_REFLECT()
 
 };

@@ -73,6 +73,9 @@ struct asset_state
     bool is_for_hot_reload = false;
     asset_state* hot_reload_state = nullptr;
 
+    // Version number thats bumped each time the asset changes.
+    std::atomic_size_t version = 0;
+    
     event<> on_change_callback;
 
     timer load_timer;
@@ -104,6 +107,9 @@ public:
 
     // If the asset has been loaded.
     bool is_loaded();
+    
+    // Gets the version of the asset. Each time the asset changes the version is bumped.
+    size_t get_version();
 
     // Gets the current loading state of this asset.
     asset_loading_state get_state();
@@ -451,6 +457,12 @@ template <typename asset_type>
 inline bool asset_ptr<asset_type>::is_loaded()
 {
     return m_state != nullptr && m_state->loading_state == asset_loading_state::loaded;
+}
+
+template <typename asset_type>
+inline size_t asset_ptr<asset_type>::get_version()
+{
+    return m_state != nullptr ? m_state->version.load() : 0llu;
 }
 
 template <typename asset_type>

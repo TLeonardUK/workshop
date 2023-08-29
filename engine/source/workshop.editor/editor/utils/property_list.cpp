@@ -6,6 +6,8 @@
 
 #include "thirdparty/imgui/imgui.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 property_list::property_list(void* obj, reflect_class* reflection_class)
@@ -14,24 +16,47 @@ property_list::property_list(void* obj, reflect_class* reflection_class)
 {
 }
 
-bool property_list::draw_edit(reflect_field* field, int& value)
+bool property_list::draw_edit(reflect_field* field, int& value, int min_value, int max_value)
 {
+    ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+    float step = 1.0f;
+    if ((max_value - min_value) != 0.0f)
+    {
+        step = ((max_value - min_value) / 50.0f);
+        flags = ImGuiSliderFlags_Logarithmic;
+    }
+
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    return ImGui::DragInt("##", &value);
+    return ImGui::DragInt("##", &value, step, min_value, max_value, "%d", flags);
 }
 
-bool property_list::draw_edit(reflect_field* field, float& value)
+bool property_list::draw_edit(reflect_field* field, float& value, float min_value, float max_value)
 {
+    ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+    float step = 1.0f;
+    if ((max_value - min_value) != 0.0f)
+    {
+        step = ((max_value - min_value) / 50.0f);
+        flags = ImGuiSliderFlags_Logarithmic;
+    }
+
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    return ImGui::DragFloat("##", &value);
+    return ImGui::DragFloat("##", &value, step, min_value, max_value, "%.2f", flags);
 };
 
-bool property_list::draw_edit(reflect_field* field, vector3& value)
+bool property_list::draw_edit(reflect_field* field, vector3& value, float min_value, float max_value)
 {
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+    float step = 1.0f;
+    if ((max_value - min_value) != 0.0f)
+    {
+        step = ((max_value - min_value) / 50.0f);
+        flags = ImGuiSliderFlags_Logarithmic;
+    }
 
     float values[3] = { value.x, value.y, value.z };
-    bool ret = ImGui::DragFloat3("##", values);
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    bool ret = ImGui::DragFloat3("##", values, step, min_value, max_value, "%.2f", flags);
     value.x = values[0];
     value.y = values[1];
     value.z = values[2];
@@ -39,14 +64,20 @@ bool property_list::draw_edit(reflect_field* field, vector3& value)
     return ret;
 }
 
-bool property_list::draw_edit(reflect_field* field, quat& value)
+bool property_list::draw_edit(reflect_field* field, quat& value, float min_value, float max_value)
 {
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+    float step = 1.0f;
+    if ((max_value - min_value) != 0.0f)
+    {
+        step = ((max_value - min_value) / 50.0f);
+    }
 
     vector3 euler_angle = value.to_euler();
     float values[3] = { math::degrees(euler_angle.x), math::degrees(euler_angle.y), math::degrees(euler_angle.z) };
 
-    bool ret = ImGui::DragFloat3("##", values);
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    bool ret = ImGui::DragFloat3("##", values, step, min_value, max_value, "%.2f deg", flags);
 
     value = quat::euler(vector3(math::radians(values[0]), math::radians(values[1]), math::radians(values[2])));
 
@@ -65,7 +96,7 @@ bool property_list::draw_edit(reflect_field* field, color& value)
 
     float values[4] = { value.r, value.g, value.b, value.a };
     
-    bool ret = ImGui::ColorEdit4("", values, ImGuiColorEditFlags_NoLabel);
+    bool ret = ImGui::ColorEdit4("", values, ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_Float|ImGuiColorEditFlags_AlphaBar|ImGuiColorEditFlags_AlphaPreview);
 
     value.r = values[0];
     value.g = values[1];
@@ -110,20 +141,30 @@ void property_list::draw()
 
         bool modified = false;
 
+        float min_value = 0.0f;
+        float max_value = 0.0f;
+        if (reflect_constraint_range* range = field->get_constraint<reflect_constraint_range>())
+        {
+            min_value = range->get_min();
+            max_value = range->get_max();
+        }
+
+
         ImGui::PushID(field->get_name());
+
         if (field->get_type_index() == typeid(int))
         {
-            modified = draw_edit(field, *reinterpret_cast<int*>(field_data));
+            modified = draw_edit(field, *reinterpret_cast<int*>(field_data), static_cast<int>(min_value), static_cast<int>(max_value));
         }
         else if (field->get_type_index() == typeid(size_t))
         {
             int value = (int)*reinterpret_cast<size_t*>(field_data);
-            modified = draw_edit(field, value);
+            modified = draw_edit(field, value, static_cast<int>(min_value), static_cast<int>(max_value));
             *reinterpret_cast<size_t*>(field_data) = value;
         }
         else if (field->get_type_index() == typeid(float))
         {
-            modified = draw_edit(field, *reinterpret_cast<float*>(field_data));
+            modified = draw_edit(field, *reinterpret_cast<float*>(field_data), min_value, max_value);
         }
         else if (field->get_type_index() == typeid(bool))
         {
@@ -131,11 +172,11 @@ void property_list::draw()
         }
         else if (field->get_type_index() == typeid(vector3))
         {
-            modified = draw_edit(field, *reinterpret_cast<vector3*>(field_data));
+            modified = draw_edit(field, *reinterpret_cast<vector3*>(field_data), min_value, max_value);
         }
         else if (field->get_type_index() == typeid(quat))
         {
-            modified = draw_edit(field, *reinterpret_cast<quat*>(field_data));
+            modified = draw_edit(field, *reinterpret_cast<quat*>(field_data), min_value, max_value);
         }
         else if (field->get_type_index() == typeid(color))
         {

@@ -48,6 +48,10 @@ public:
         REFLECT_FIELD(shadow_cascades,              "Shadow Cascade Count",             "Number of cacades the directional light has. Higher numbers of casts provide more detailed coverage across longer distances, but require more memory and gpu time.");
         REFLECT_FIELD(shadow_cascade_exponent,      "Shadow Cascade Exponent",          "Determines how the cascades are split across the viewing frustum.\nThe lower the exponent the closer to linear the split becomes.");
         REFLECT_FIELD(shadow_cascade_blend,         "Shadow Cascade Blend",             "The fraction of a cascade that is used to blend between it and the next cascade.\nProvides a gradual transition between the cascades.");
+
+        REFLECT_CONSTRAINT_RANGE(shadow_cascades,           1,      6)
+        REFLECT_CONSTRAINT_RANGE(shadow_cascade_exponent,   0.0f,   1.0f)
+        REFLECT_CONSTRAINT_RANGE(shadow_cascade_blend,      0.0f,   1.0f)
     END_REFLECT()
 
 };

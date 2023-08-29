@@ -33,6 +33,9 @@ public:
     matrix4 local_to_world = matrix4::identity;
     matrix4 world_to_local = matrix4::identity;
 
+    matrix4 local_transform = matrix4::identity;
+    matrix4 inverse_local_transform = matrix4::identity;
+
     // Transform in world space.
     quat    world_rotation = quat::identity;
     vector3 world_location = vector3::zero;
@@ -51,6 +54,9 @@ public:
         REFLECT_FIELD(local_rotation,   "Rotation",       "Rotation releative to parent.")
         REFLECT_FIELD(local_location,   "Location",       "Local releative to parent.")
         REFLECT_FIELD(local_scale,      "Scale",          "Scale releative to parent.")
+
+        REFLECT_CONSTRAINT_RANGE(local_rotation, -360.0f, 360.0f)
+        REFLECT_CONSTRAINT_RANGE(local_scale, 0.001f,  1000000.0f)
     END_REFLECT()
 
 };

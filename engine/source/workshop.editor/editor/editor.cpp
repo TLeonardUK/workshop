@@ -12,9 +12,18 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_imgui_manager.h"
+#include "workshop.engine/ecs/object_manager.h"
+#include "workshop.engine/ecs/component.h"
+#include "workshop.engine/ecs/component_filter.h"
+#include "workshop.game_framework/components/transform/transform_component.h"
+#include "workshop.game_framework/components/transform/bounds_component.h"
+#include "workshop.game_framework/components/camera/camera_component.h"
+#include "workshop.game_framework/systems/transform/bounds_system.h"
+#include "workshop.game_framework/systems/transform/transform_system.h"
 
 #include "thirdparty/imgui/imgui.h"
 #include "thirdparty/imgui/imgui_internal.h"
+#include "thirdparty/ImGuizmo/ImGuizmo.h"
 
 namespace ws {
 
@@ -172,6 +181,9 @@ void editor::step(const frame_time& time)
 	{
 		draw_dockspace();
 	}
+
+    // Draw selection.
+    draw_selection();
 }
 
 void editor::draw_dockspace()
@@ -261,6 +273,128 @@ void editor::reset_dockspace_layout()
     }
 
     ImGui::DockBuilderFinish(m_dockspace_id);
+}
+
+camera_component* editor::get_camera()
+{
+    component_filter<camera_component, const transform_component> filter(m_engine.get_default_world().get_object_manager());
+    if (filter.size())
+    {
+        return filter.get_component<camera_component>(0);
+    }
+    return nullptr;
+}
+
+#pragma optimize("", off)
+
+void editor::draw_selection()
+{
+    if (m_selected_objects.empty() || 
+        m_editor_mode != editor_mode::editor)
+    {
+        return;
+    }
+
+    camera_component* camera = get_camera();
+
+    renderer& render = m_engine.get_renderer();
+    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
+    bounds_system* bounds_sys = obj_manager.get_system<bounds_system>();
+    transform_system* transform_sys = obj_manager.get_system<transform_system>();
+
+    if (ImGui::IsKeyPressed(ImGuiKey_Space))
+    {
+        if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)
+        {
+            m_current_gizmo_mode = ImGuizmo::OPERATION::ROTATE;
+        }
+        else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
+        {
+            m_current_gizmo_mode = ImGuizmo::OPERATION::SCALE;
+        }
+        else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
+        {
+            m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
+        }
+    }
+
+    ImGuizmo::SetRect(0, 0, (float)render.get_display_width(), (float)render.get_display_height());
+
+    render.get_command_queue().draw_obb(m_selected_objects_obb, color::cyan);
+
+    matrix4 view_mat = camera->view_matrix;
+    matrix4 proj_mat = camera->projection_matrix;
+    matrix4 model_mat = m_selected_objects_obb.transform;
+
+    float view_mat_raw[16];
+    float proj_mat_raw[16];
+    float model_mat_raw[16];
+
+    view_mat.get_raw(view_mat_raw, false);
+    proj_mat.get_raw(proj_mat_raw, false);
+    model_mat.get_raw(model_mat_raw, false);
+
+    if (!m_selected_object_state.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::WORLD, model_mat_raw))
+    {
+        float translation_raw[3];
+        float rotation_raw[3];
+        float scale_raw[3];
+        ImGuizmo::DecomposeMatrixToComponents(model_mat_raw, translation_raw, rotation_raw, scale_raw);
+
+        vector3 world_location = vector3(translation_raw[0], translation_raw[1], translation_raw[2]);
+        vector3 world_scale = vector3(scale_raw[0], scale_raw[1], scale_raw[2]);
+        quat world_rotation = quat::euler(vector3(math::radians(rotation_raw[0]), math::radians(rotation_raw[1]), math::radians(rotation_raw[2])));
+
+        for (size_t i = 0; i < m_selected_objects.size(); i++)
+        {
+            object obj = m_selected_objects[i];
+            object_state& obj_state = m_selected_object_state[i];
+            transform_component* comp = obj_manager.get_component<transform_component>(obj);
+
+            // This is super annoying, we shouldn't need to do this but ImGuizmo zeros out the rotation when
+            // using scale mode. So to work around this we only modify the elements for the relevant mode.
+            if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)
+            {
+                vector3 bounds_origin = m_selected_objects_obb.transform.transform_location(vector3::zero);
+                vector3 relative_offset = (comp->world_location - bounds_origin);
+                transform_sys->set_world_transform(obj, world_location + relative_offset, comp->world_rotation, comp->world_scale);
+            }
+            else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
+            {
+                //quat delta = quat::rotate_to(vector3::forward * world_rotation, bounds.transform.transform_direction(vector3::forward));
+                transform_sys->set_world_transform(obj, comp->world_location, world_rotation/* * comp->world_rotation*/, comp->world_scale);
+            }
+            else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
+            {
+                db_log(core, "local_scale=%.2f,%.2f,%.2f world_scale=%.2f,%.2f,%.2f", 
+                    obj_state.local_scale.x,
+                    obj_state.local_scale.y,
+                    obj_state.local_scale.z,
+                    world_scale.x,
+                    world_scale.y,
+                    world_scale.z);
+                vector3 delta = (world_scale - m_selected_objects_obb.transform.extract_scale());
+                transform_sys->set_world_transform(obj, comp->world_location, comp->world_rotation, comp->world_scale + delta);
+            }
+        }
+
+        m_selected_objects_obb.transform.set_raw(model_mat_raw, false);
+    }
+    else
+    {
+        m_selected_object_state.clear();
+        for (object obj : m_selected_objects)
+        {
+            transform_component* comp = obj_manager.get_component<transform_component>(obj);
+            
+            object_state& state = m_selected_object_state.emplace_back();
+            state.local_location = comp->local_location;
+            state.local_rotation = comp->local_rotation;
+            state.local_scale = comp->local_scale;
+        }
+
+        m_selected_objects_obb = bounds_sys->get_combined_bounds(m_selected_objects);
+    }
 }
 
 }; // namespace ws

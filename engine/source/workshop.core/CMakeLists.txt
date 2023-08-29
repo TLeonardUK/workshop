@@ -133,6 +133,8 @@ SET(SOURCES
     "reflection/reflect_class.h"
     "reflection/reflect_field.cpp"
     "reflection/reflect_field.h"
+    "reflection/reflect_constraint.cpp"
+    "reflection/reflect_constraint.h"
 
     "entry.cpp"
     "entry.h"

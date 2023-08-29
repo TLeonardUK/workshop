@@ -57,6 +57,9 @@ public:
 	base_quat<T> to_quat() const;
 	base_matrix4 transpose() const;
 	
+    void get_raw(T raw[16], bool column_major) const;
+    void set_raw(T raw[16], bool column_major);
+
 	static base_matrix4 translate(const vector3& position);
 	static base_matrix4 scale(const vector3& scale);
 	static base_matrix4 rotation(const quat& quat);
@@ -329,8 +332,6 @@ inline base_matrix4<T> base_matrix4<T>::inverse() const
 	return inverse * one_over_determinant;
 }
 
-#pragma optimize("", off)
-
 template <typename T>
 inline base_quat<T> base_matrix4<T>::to_quat() const
 {
@@ -369,6 +370,104 @@ inline base_matrix4<T> base_matrix4<T>::transpose() const
 		columns[2][3],
 		columns[3][3]
 	);
+}
+
+template <typename T>
+inline void base_matrix4<T>::get_raw(T raw[16], bool column_major) const
+{
+    if (column_major)
+    {
+        raw[0] = columns[0][0];
+        raw[1] = columns[0][1];
+        raw[2] = columns[0][2];
+        raw[3] = columns[0][3];
+
+        raw[4] = columns[1][0];
+        raw[5] = columns[1][1];
+        raw[6] = columns[1][2];
+        raw[7] = columns[1][3];
+
+        raw[8] = columns[2][0];
+        raw[9] = columns[2][1];
+        raw[10] = columns[2][2];
+        raw[11] = columns[2][3];
+
+        raw[12] = columns[3][0];
+        raw[13] = columns[3][1];
+        raw[14] = columns[3][2];
+        raw[15] = columns[3][3];
+    }
+    else
+    {
+        raw[0] = columns[0][0];
+        raw[1] = columns[1][0];
+        raw[2] = columns[2][0];
+        raw[3] = columns[3][0];
+
+        raw[4] = columns[0][1];
+        raw[5] = columns[1][1];
+        raw[6] = columns[2][1];
+        raw[7] = columns[3][1];
+
+        raw[8] = columns[0][2];
+        raw[9] = columns[1][2];
+        raw[10] = columns[2][2];
+        raw[11] = columns[3][2];
+
+        raw[12] = columns[0][3];
+        raw[13] = columns[1][3];
+        raw[14] = columns[2][3];
+        raw[15] = columns[3][3];
+    }
+}
+
+template <typename T>
+inline void base_matrix4<T>::set_raw(T raw[16], bool column_major)
+{
+    if (column_major)
+    {
+        columns[0][0] = raw[0];
+        columns[0][1] = raw[1];
+        columns[0][2] = raw[2];
+        columns[0][3] = raw[3];
+
+        columns[1][0] = raw[4];
+        columns[1][1] = raw[5];
+        columns[1][2] = raw[6];
+        columns[1][3] = raw[7];
+
+        columns[2][0] = raw[8];
+        columns[2][1] = raw[9];
+        columns[2][2] = raw[10];
+        columns[2][3] = raw[11];
+
+        columns[3][0] = raw[12];
+        columns[3][1] = raw[13];
+        columns[3][2] = raw[14];
+        columns[3][3] = raw[15];
+    }
+    else
+    {
+        columns[0][0] = raw[0];
+        columns[1][0] = raw[1];
+        columns[2][0] = raw[2];
+        columns[3][0] = raw[3];
+
+        columns[0][1] = raw[4];
+        columns[1][1] = raw[5];
+        columns[2][1] = raw[6];
+        columns[3][1] = raw[7];
+
+        columns[0][2] = raw[8];
+        columns[1][2] = raw[9];
+        columns[2][2] = raw[10];
+        columns[3][2] = raw[11];
+
+        columns[0][3] = raw[12];
+        columns[1][3] = raw[13];
+        columns[2][3] = raw[14];
+        columns[3][3] = raw[15];
+    }
 }
 
 template <typename T>

@@ -30,6 +30,24 @@ void transform_system::set_local_transform(object handle, const vector3& locatio
     });
 }
 
+void transform_system::set_world_transform(object handle, const vector3& location, const quat& rotation, const vector3& scale)
+{
+    m_command_queue.queue_command("set_world_transform", [this, handle, location, rotation, scale]() {
+        transform_component* component = m_manager.get_component<transform_component>(handle);
+        if (component)
+        {
+            // Add a transform that cancels out the local transform.
+            matrix4 transform = component->world_to_local * component->local_transform;
+
+            component->local_location = transform.transform_location(location);
+            component->local_rotation = quat::rotate_to(vector3::forward, transform.transform_direction(rotation * vector3::forward));
+            component->local_scale = transform.extract_scale() * scale;
+
+            component->is_dirty = true;
+        }
+    });
+}
+
 void transform_system::set_parent(object handle, object parent)
 {
     m_command_queue.queue_command("set_parent", [this, handle, parent]() {
@@ -108,9 +126,11 @@ void transform_system::component_modified(object handle, component* comp)
 
 void transform_system::update_transform(transform_component* transform, transform_component* parent_transform)
 {
-    transform->local_to_world = matrix4::scale(transform->local_scale) *
+    transform->local_transform = matrix4::scale(transform->local_scale) *
                                 matrix4::rotation(transform->local_rotation) *
                                 matrix4::translate(transform->local_location);
+    transform->inverse_local_transform = transform->local_transform.inverse();
+    transform->local_to_world = transform->local_transform;
     transform->world_rotation = transform->local_rotation;
     transform->world_scale = transform->local_scale;
 
@@ -123,7 +143,7 @@ void transform_system::update_transform(transform_component* transform, transfor
 
     transform->world_to_local = transform->local_to_world.inverse();
     transform->world_location = transform->local_to_world.transform_location(vector3::zero);
-    
+
     transform->is_dirty = false;
     transform->generation++;
     

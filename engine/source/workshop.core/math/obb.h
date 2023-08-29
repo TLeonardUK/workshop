@@ -43,6 +43,7 @@ public:
 	void get_corners(vector3 corners[obb::k_corner_count]) const;
 	aabb get_aligned_bounds() const;
 
+    obb combine(const obb& other) const;
 };
 
 inline obb::obb(const aabb& bounds_, const matrix4& transform_)
@@ -102,6 +103,13 @@ inline aabb obb::get_aligned_bounds() const
 	}
 
 	return aabb(points);
+}
+
+inline obb obb::combine(const obb& other) const
+{
+    aabb this_aabb = get_aligned_bounds();
+    aabb other_aabb = other.get_aligned_bounds();
+    return obb(this_aabb.combine(other_aabb), matrix4::identity);
 }
 
 }; // namespace ws

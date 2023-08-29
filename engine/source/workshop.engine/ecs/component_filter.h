@@ -51,7 +51,7 @@ private:
     template <typename a, typename ...b>
     void unpack_types(std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
     {
-        a value;
+        a value = {};
         filter_type(value, include_list, exclude_list);
         unpack_types<b...>(include_list, exclude_list);
     }

@@ -48,6 +48,7 @@ public:
 	void subdivide(aabb divisions[8]) const;
 	bool intersects(const aabb& other) const;
 	bool contains(const aabb& other) const;
+    aabb combine(const aabb& other) const;
 };
 
 inline const aabb aabb::zero = aabb(vector3(0.0f, 0.0f, 0.0f), vector3(0.0f, 0.0f, 0.0f));
@@ -160,6 +161,13 @@ inline bool aabb::contains(const aabb& other) const
 	}
 
 	return false;
+}
+
+inline aabb aabb::combine(const aabb& other) const
+{
+    vector3 cmin = vector3::min(min, other.min);
+    vector3 cmax = vector3::max(max, other.max);
+    return aabb(cmin, cmax);
 }
 
 template<>

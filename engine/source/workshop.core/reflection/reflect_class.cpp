@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.core/reflection/reflect_class.h"
 #include "workshop.core/reflection/reflect_field.h"
+#include "workshop.core/reflection/reflect_constraint.h"
 #include "workshop.core/reflection/reflect.h"
 
 #include <algorithm>
@@ -75,6 +76,15 @@ void reflect_class::add_field(const char* name, size_t offset, std::type_index t
 {
     std::unique_ptr<reflect_field> field = std::make_unique<reflect_field>(name, offset, type, display_name, description);
     m_fields.push_back(std::move(field));
+}
+
+void reflect_class::add_constraint(const char* name, float min_value, float max_value)
+{
+    reflect_field* field = find_field(name);
+    db_assert(field != nullptr);
+
+    std::unique_ptr<reflect_constraint_range> constraint = std::make_unique<reflect_constraint_range>(min_value, max_value);
+    field->add_constraint(std::move(constraint));
 }
 
 bool reflect_class::is_derived_from(reflect_class* parent)

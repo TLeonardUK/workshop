@@ -32,10 +32,10 @@ public:
     event<reflect_field*> on_modified;
 
 protected:
-    bool draw_edit(reflect_field* field, int& value);
-    bool draw_edit(reflect_field* field, float& value);
-    bool draw_edit(reflect_field* field, vector3& value);
-    bool draw_edit(reflect_field* field, quat& value);
+    bool draw_edit(reflect_field* field, int& value, int min_value, int max_value);
+    bool draw_edit(reflect_field* field, float& value, float min_value, float max_value);
+    bool draw_edit(reflect_field* field, vector3& value, float min_value, float max_value);
+    bool draw_edit(reflect_field* field, quat& value, float min_value, float max_value);
     bool draw_edit(reflect_field* field, bool& value);
     bool draw_edit(reflect_field* field, color& value);
 

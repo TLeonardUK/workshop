@@ -59,6 +59,7 @@ public:
 
 protected:
     void add_field(const char* name, size_t offset, std::type_index type, const char* display_name, const char* description);
+    void add_constraint(const char* name, float min_value, float max_value);
 
 private:
     std::vector<std::unique_ptr<reflect_field>> m_fields;

@@ -13,6 +13,7 @@
 #include "workshop.core/perf/profile.h"
 
 #include "thirdparty/imgui/imgui.h"
+#include "thirdparty/ImGuizmo/ImGuizmo.h"
 
 namespace ws {
 
@@ -442,6 +443,9 @@ void render_imgui_manager::start_context_frame(context* context)
     }
 
     ImGui::NewFrame();
+
+    ImGuizmo::SetOrthographic(false);
+    ImGuizmo::BeginFrame();
 }
 
 }; // namespace ws

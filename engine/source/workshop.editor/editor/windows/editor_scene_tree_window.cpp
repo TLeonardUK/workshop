@@ -12,6 +12,7 @@
 #include "workshop.engine/ecs/component_filter.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
+#include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 
 #include "thirdparty/imgui/imgui.h"
@@ -162,6 +163,10 @@ void editor_scene_tree_window::add_new_object()
         {
             obj_manager.add_component<transform_component>(parent);
         }
+        if (!obj_manager.get_component<bounds_component>(parent))
+        {
+            obj_manager.add_component<bounds_component>(parent);
+        }
 
         // Make sure parent is expanded.
         auto iter = std::find(m_expanded_objects.begin(), m_expanded_objects.end(), parent);
@@ -173,6 +178,7 @@ void editor_scene_tree_window::add_new_object()
 
     object new_object = obj_manager.create_object("unnamed object");
     obj_manager.add_component<transform_component>(new_object);
+    obj_manager.add_component<bounds_component>(new_object);
     transform_sys->set_parent(new_object, parent);
 
     selected_objects = { new_object };

@@ -33,6 +33,10 @@ public:
 	// Maximum rendered depth of the view.
 	float max_depth = 20000.0f;
 
+    // Matrices calculated by the system.
+    matrix4 projection_matrix;
+    matrix4 view_matrix;
+
 private:
 
 	friend class camera_system;
@@ -53,6 +57,11 @@ public:
         REFLECT_FIELD(aspect_ratio,     "Aspect Ratio",     "Aspect ratio of the view, should normally be the proportion between width and height.")
         REFLECT_FIELD(min_depth,        "Min Depth",        "Minimum z value that can be seen by the view, defines the near clipping plane.")
         REFLECT_FIELD(max_depth,        "Max Depth",        "Maximum z value that can be seen by the view, defines the far clipping plane.")
+
+        REFLECT_CONSTRAINT_RANGE(fov,           1.0f,   170.0f)
+        REFLECT_CONSTRAINT_RANGE(aspect_ratio,  0.1f,   10.0f)
+        REFLECT_CONSTRAINT_RANGE(min_depth,     0.01f,  1000.0f)
+        REFLECT_CONSTRAINT_RANGE(max_depth,     0.01f,  1000000.0f)
     END_REFLECT()
 
 };
