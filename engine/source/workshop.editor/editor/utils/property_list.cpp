@@ -106,6 +106,19 @@ bool property_list::draw_edit(reflect_field* field, color& value)
     return ret;
 }
 
+bool property_list::draw_edit(reflect_field* field, std::string& value)
+{
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+    char buffer[2048];
+    strncpy(buffer, value.c_str(), sizeof(buffer));
+
+    bool ret = ImGui::InputText("", buffer, sizeof(buffer));
+    value = buffer;
+
+    return ret;
+}
+
 void property_list::draw()
 {
     std::vector<reflect_field*> fields;
@@ -181,6 +194,10 @@ void property_list::draw()
         else if (field->get_type_index() == typeid(color))
         {
             modified = draw_edit(field, *reinterpret_cast<color*>(field_data));
+        }
+        else if (field->get_type_index() == typeid(std::string))
+        {
+            modified = draw_edit(field, *reinterpret_cast<std::string*>(field_data));
         }
         else
         {

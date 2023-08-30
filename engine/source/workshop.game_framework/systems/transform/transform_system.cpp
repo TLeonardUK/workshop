@@ -40,7 +40,7 @@ void transform_system::set_world_transform(object handle, const vector3& locatio
             matrix4 transform = component->world_to_local * component->local_transform;
 
             component->local_location = transform.transform_location(location);
-            component->local_rotation = quat::rotate_to(vector3::forward, transform.transform_direction(rotation * vector3::forward));
+            component->local_rotation = (rotation * transform.to_quat());//quat::rotate_to(vector3::forward, transform.transform_direction(rotation * vector3::forward));
             component->local_scale = transform.extract_scale() * scale;
 
             component->is_dirty = true;

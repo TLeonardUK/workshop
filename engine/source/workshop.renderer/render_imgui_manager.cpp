@@ -29,7 +29,7 @@ imgui_scope::~imgui_scope()
     m_manager.leave_scope();
     m_manager.m_scope_mutex.unlock();
 }
-    
+
 render_imgui_manager::render_imgui_manager(renderer& renderer, input_interface& input)
     : m_renderer(renderer)
     , m_input(input)

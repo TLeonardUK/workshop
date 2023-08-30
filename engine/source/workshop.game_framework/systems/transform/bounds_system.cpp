@@ -17,6 +17,8 @@
 
 namespace ws {
 
+#pragma optimize("", off)
+
 bounds_system::bounds_system(object_manager& manager)
     : system(manager, "bounds system")
 {
@@ -58,10 +60,11 @@ void bounds_system::step(const frame_time& time)
     flush_command_queue();
 }
 
-obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float default_bounds)
+obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float default_bounds, vector3& pivot_point, bool consume_pivot_point)
 {    
     obb object_bounds;
     bool first_object = true;
+    vector3 first_object_center = vector3::zero;
 
     for (object obj : objects)
     {
@@ -72,6 +75,7 @@ obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float
         }
 
         obb world_bounds;
+        vector3 world_origin = transform->local_to_world.transform_location(vector3::zero);
 
         bounds_component* bounds = m_manager.get_component<bounds_component>(obj);
         if (bounds)
@@ -88,21 +92,36 @@ obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float
             );
         }
 
+        // TODO: We shouldn't have to use AABB for everything, but it makes some logic a lot simpler ...
+        world_bounds = obb(bounds->world_bounds.get_aligned_bounds(), matrix4::identity);
+
         if (!first_object)
         {
             object_bounds = object_bounds.combine(world_bounds);
         }
         else
         {
+            first_object_center = world_origin;
             object_bounds = world_bounds; 
             first_object = false;
         }
     }
 
-    // If we have more than 1 object, center the bounds so we get a gizmo in the center not at 0,0,0.
-    if (objects.size() > 1)
+    // Center the bounds so we get a gizmo in the center not at 0,0,0.
+    // Note: Center on the bounds of a single object rather than the center of the combined OBB. Gives better
+    //       results when doing things like using scaling gizmos.
+//    if (objects.size() > 1)
     {
-        vector3 center = object_bounds.get_center();
+        vector3 center = first_object_center;
+        if (consume_pivot_point)
+        {
+            center = pivot_point;
+        }
+        else
+        {
+            pivot_point = center;
+        }
+
         aabb bounds(object_bounds.bounds.min - center, object_bounds.bounds.max - center);
         object_bounds = obb(bounds, matrix4::translate(center));
     }

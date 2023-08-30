@@ -128,6 +128,12 @@ public:
     // Invoked when the engine is stepped.
     event<frame_time> on_step;
 
+    // Sets or gets if the mouse is currently over the game viewport or
+    // if its over part of the UI. 
+    // TODO: This should probably be stored somewhere else not the core engine.
+    bool get_mouse_over_viewport();
+    void set_mouse_over_viewport(bool over_viewport);
+
 private:
 
     result<void> create_editor(init_list& list);
@@ -210,6 +216,8 @@ protected:
 
     statistics_channel* m_stats_frame_time_game;
     statistics_channel* m_stats_frame_rate;
+
+    bool m_mouse_over_viewport = false;
 
 };
 

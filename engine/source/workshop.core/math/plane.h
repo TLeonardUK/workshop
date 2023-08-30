@@ -34,6 +34,8 @@ public:
 	plane normalize() const;
 	plane flip() const;
 
+    vector3 project(const vector3& input) const;
+
 	static vector3 intersect(const plane& plane1, const plane& plane2, const plane& plane3);
 
 	static float dot(const plane& plane1, const plane& plane2);
@@ -136,6 +138,13 @@ inline float plane::dot(const plane& plane1, const plane& plane2)
 inline float plane::dot(const plane& plane, const vector3& point)
 {
 	return plane.x * point.x + plane.y * point.y + plane.z * point.z - plane.w;
+}
+
+inline vector3 plane::project(const vector3& input) const
+{
+    vector3 normal = get_normal();
+    vector3 normal_projected = normal * vector3::dot(input, normal);
+    return input - normal_projected;
 }
 
 }; // namespace ws

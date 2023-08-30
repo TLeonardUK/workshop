@@ -248,6 +248,15 @@ void editor_scene_tree_window::draw()
             if (m_pending_delete != null_object)
             {
                 obj_manager.destroy_object(m_pending_delete);
+
+                // If deleted object is currently selected then remove it from selection.
+                std::vector<object> objs = m_editor->get_selected_objects();
+                auto iter = std::find(objs.begin(), objs.end(), m_pending_delete);
+                if (iter != objs.end())
+                {
+                    objs.erase(iter);
+                }
+                m_editor->set_selected_objects(objs);
             }
         }
         ImGui::End();

@@ -107,14 +107,13 @@ protected:
 
     struct object_state
     {
-        vector3 local_location;
-        vector3 local_scale;
-        quat local_rotation;
+        vector3 original_scale;
     };
 
     std::vector<object> m_selected_objects;
-    std::vector<object_state> m_selected_object_state;
-    obb m_selected_objects_obb;
+    std::vector<object_state> m_selected_object_states;
+
+    vector3 m_pivot_point = vector3::zero;
 
     ImGuiID m_dockspace_id;
     bool m_set_default_dock_space = false;

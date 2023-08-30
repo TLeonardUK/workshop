@@ -647,4 +647,14 @@ void engine::destroy_world(world* world)
     m_worlds.erase(iter);
 }
 
+bool engine::get_mouse_over_viewport()
+{
+    return m_mouse_over_viewport;
+}
+
+void engine::set_mouse_over_viewport(bool over_viewport)
+{
+    m_mouse_over_viewport = over_viewport;
+}
+
 }; // namespace ws

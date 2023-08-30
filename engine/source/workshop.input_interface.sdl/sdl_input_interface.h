@@ -83,11 +83,11 @@ private:
     std::string m_current_input = "";
     std::string m_pending_input = "";
 
-    int m_mouse_wheel_vertical;
-    int m_mouse_wheel_horizontal;
+    float m_mouse_wheel_vertical = 0.0f;
+    float m_mouse_wheel_horizontal = 0.0f;
 
-    int m_pending_mouse_wheel_vertical;
-    int m_pending_mouse_wheel_horizontal;
+    float m_pending_mouse_wheel_vertical = 0.0f;
+    float m_pending_mouse_wheel_horizontal = 0.0f;
 
     bool m_mouse_captured = false;
 

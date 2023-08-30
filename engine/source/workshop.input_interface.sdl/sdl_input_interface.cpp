@@ -336,11 +336,11 @@ float sdl_input_interface::get_mouse_wheel_delta(bool horizontal)
 {
     if (horizontal)
     {
-        return static_cast<float>(m_mouse_wheel_horizontal);
+        return m_mouse_wheel_horizontal;
     }
     else
     {
-        return static_cast<float>(m_mouse_wheel_vertical);
+        return m_mouse_wheel_vertical;
     }
 }
 
@@ -388,10 +388,8 @@ void sdl_input_interface::handle_event(const SDL_Event* event)
 		}
 	case SDL_MOUSEWHEEL:
 		{
-			if (event->wheel.x > 0) m_pending_mouse_wheel_horizontal += 1;
-			if (event->wheel.x < 0) m_pending_mouse_wheel_horizontal -= 1;
-			if (event->wheel.y > 0) m_pending_mouse_wheel_vertical += 1;
-			if (event->wheel.y < 0) m_pending_mouse_wheel_vertical -= 1;
+			m_pending_mouse_wheel_horizontal += event->wheel.preciseX;
+            m_pending_mouse_wheel_vertical += event->wheel.preciseY;
 		}
 	}
 }

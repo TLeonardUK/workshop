@@ -149,8 +149,11 @@ enum class input_key
     right_gui,
 
     mouse_0,
+    mouse_left = mouse_0,
     mouse_1,
+    mouse_middle = mouse_1,
     mouse_2,
+    mouse_right = mouse_2,
     mouse_3,
     mouse_4,
     mouse_5,

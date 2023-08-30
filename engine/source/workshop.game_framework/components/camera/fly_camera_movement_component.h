@@ -25,6 +25,12 @@ public:
     // Speed of camera movement in units per second.
     float speed = 1500.0f;
 
+    // Speed of camera movement for each mouse wheel rotation.
+    float zoom_speed = 50000.0f;
+
+    // Speed of camera movement when panning with uncaptured mouse movement.
+    float pan_speed = 50.0f;
+
     // Determines the maximum vertical angle of the camera to avoid the camera
     // looping around on its rotations.
     // 

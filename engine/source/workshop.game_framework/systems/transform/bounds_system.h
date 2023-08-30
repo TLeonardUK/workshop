@@ -30,7 +30,7 @@ public:
 
     // Gets a obb that contains all the objects provided. If an object has no bounds assinged to it
     // then the default bounds will be used for it.
-    obb get_combined_bounds(const std::vector<object>& objects, float default_bounds = 100.0f);
+    obb get_combined_bounds(const std::vector<object>& objects, float default_bounds, vector3& pivot_point, bool consume_pivot_point);
 
 };
 

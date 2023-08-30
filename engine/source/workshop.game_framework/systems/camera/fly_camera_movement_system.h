@@ -19,6 +19,10 @@ public:
 
     virtual void step(const frame_time& time) override;
 
+private:
+    size_t m_uncaptured_mouse_input_delay = 0;
+    size_t m_viewport_control_frames = 0;
+
 };
 
 }; // namespace ws

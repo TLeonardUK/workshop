@@ -22,6 +22,7 @@ SET(SOURCES
 
     "ecs/system.cpp"
     "ecs/system.h"
+    "ecs/meta_component.h"
     "ecs/component.cpp"
     "ecs/component.h"
     "ecs/component_filter.cpp"

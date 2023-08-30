@@ -38,6 +38,7 @@ protected:
     bool draw_edit(reflect_field* field, quat& value, float min_value, float max_value);
     bool draw_edit(reflect_field* field, bool& value);
     bool draw_edit(reflect_field* field, color& value);
+    bool draw_edit(reflect_field* field, std::string& value);
 
 private:
     
