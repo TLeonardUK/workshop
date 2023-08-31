@@ -46,10 +46,14 @@ public:
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) {};
 
     // Called once per frame, generates a graph for rendering that occurs before all view rendering.
-    virtual void build_pre_graph(render_graph& graph, const render_world_state& state) {};
+    virtual void build_pre_graph(render_graph& graph, const render_world_state& state) {}
 
     // Called once per frame, generates a graph for rendering that occurs after all view rendering.
-    virtual void build_post_graph(render_graph& graph, const render_world_state& state) {};
+    virtual void build_post_graph(render_graph& graph, const render_world_state& state) {}
+
+    // Called when the swapchain has been resized or its mode changed, systems can hook this to handle
+    // resizing any targets that are dependent on swapchan dimensions.
+    virtual void swapchain_resized() {}
 
     // Gets a list of systems that need to be ticked before this one.
     std::vector<render_system*> get_dependencies();

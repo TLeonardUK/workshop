@@ -179,6 +179,55 @@ result<void> renderer::create_resources()
         return false;
     }
 
+    // Create default textures.
+    std::vector<uint8_t> default_data = { 0, 0, 0, 0 };
+
+    ri_texture::create_params params;
+    params.dimensions = ri_texture_dimension::texture_2d;
+    params.format = ri_texture_format::R8G8B8A8;
+    params.width = 1;
+    params.height = 1;
+    params.data = default_data;
+    params.is_render_target = false;
+
+    default_data[0] = 0;
+    default_data[1] = 0;
+    default_data[2] = 0;
+    default_data[3] = 0;
+    m_default_textures[static_cast<int>(default_texture_type::black)] = m_render_interface.create_texture(params, "default black texture");
+
+    default_data[0] = 255;
+    default_data[1] = 255;
+    default_data[2] = 255;
+    default_data[3] = 255;
+    m_default_textures[static_cast<int>(default_texture_type::white)] = m_render_interface.create_texture(params, "default white texture");
+
+    default_data[0] = 128;
+    default_data[1] = 128;
+    default_data[2] = 255;
+    default_data[3] = 255;
+    m_default_textures[static_cast<int>(default_texture_type::normal)] = m_render_interface.create_texture(params, "default normal texture");
+
+    default_data[0] = 128;
+    default_data[1] = 128;
+    default_data[2] = 128;
+    default_data[3] = 128;
+    m_default_textures[static_cast<int>(default_texture_type::grey)] = m_render_interface.create_texture(params, "default grey texture");
+
+    // Create default samplers.
+    ri_sampler::create_params sampler_params;
+    m_default_samplers[static_cast<int>(default_sampler_type::color)] = m_render_interface.create_sampler(sampler_params, "default color sampler");
+    m_default_samplers[static_cast<int>(default_sampler_type::normal)] = m_render_interface.create_sampler(sampler_params, "default normal sampler");
+
+    m_gbuffer_sampler = m_render_interface.create_sampler(sampler_params, "gbuffer sampler");
+
+    sampler_params.address_mode_u = ri_texture_address_mode::clamp_to_edge;
+    sampler_params.address_mode_v = ri_texture_address_mode::clamp_to_edge;
+    sampler_params.address_mode_w = ri_texture_address_mode::clamp_to_edge;
+    sampler_params.filter = ri_texture_filter::linear;
+    sampler_params.border_color = ri_texture_border_color::opaque_white;
+    m_default_samplers[static_cast<int>(default_sampler_type::shadow_map)] = m_render_interface.create_sampler(sampler_params, "default shadow map sampler");
+
     // Recreates any targets that change based on swapchain size.
     if (result<void> ret = recreate_resizable_targets(); !ret)
     {
@@ -186,9 +235,9 @@ result<void> renderer::create_resources()
     }
 
     // Create a query for monitoring gpu time.
-    ri_query::create_params params;
-    params.type = ri_query_type::time;
-    m_gpu_time_query = m_render_interface.create_query(params, "Gpu time query");
+    ri_query::create_params query_params;
+    query_params.type = ri_query_type::time;
+    m_gpu_time_query = m_render_interface.create_query(query_params, "Gpu time query");
 
     return true;
 }
@@ -262,6 +311,10 @@ result<void> renderer::unregister_asset_loaders()
 
 result<void> renderer::recreate_resizable_targets()
 {
+    m_window_width = m_window.get_width();
+    m_window_height = m_window.get_height();
+    m_window_mode = m_window.get_mode();
+
     // Create depth buffer.
     ri_texture::create_params params;
     params.width = m_window.get_width();
@@ -284,10 +337,6 @@ result<void> renderer::recreate_resizable_targets()
     m_gbuffer_textures[3] = m_render_interface.create_texture(params, "gbuffer[3] rgba:debug data");
 #endif
 
-    // Create sampler used for reading the gbuffer.
-    ri_sampler::create_params sampler_params;
-    m_gbuffer_sampler = m_render_interface.create_sampler(sampler_params, "gbuffer sampler");
-
     // Create param block describing the above.
     m_gbuffer_param_block = m_param_block_manager->create_param_block("gbuffer");
     m_gbuffer_param_block->set("gbuffer0_texture", *m_gbuffer_textures[0]);
@@ -298,48 +347,6 @@ result<void> renderer::recreate_resizable_targets()
 #endif
     m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
     m_gbuffer_param_block->set("gbuffer_dimensions", vector2i((int)params.width,  (int)params.height));
-
-    // Create default resources.
-    std::vector<uint8_t> default_data = { 0, 0, 0, 0 };
-    params.format = ri_texture_format::R8G8B8A8;
-    params.width = 1;
-    params.height = 1;
-    params.data = default_data;
-    params.is_render_target = false;
-
-    default_data[0] = 0;
-    default_data[1] = 0;
-    default_data[2] = 0;
-    default_data[3] = 0;
-    m_default_textures[static_cast<int>(default_texture_type::black)] = m_render_interface.create_texture(params, "default black texture");
-
-    default_data[0] = 255;
-    default_data[1] = 255;
-    default_data[2] = 255;
-    default_data[3] = 255;
-    m_default_textures[static_cast<int>(default_texture_type::white)] = m_render_interface.create_texture(params, "default white texture");
-
-    default_data[0] = 128;
-    default_data[1] = 128;
-    default_data[2] = 255;
-    default_data[3] = 255;
-    m_default_textures[static_cast<int>(default_texture_type::normal)] = m_render_interface.create_texture(params, "default normal texture");
-
-    default_data[0] = 128;
-    default_data[1] = 128;
-    default_data[2] = 128;
-    default_data[3] = 128;
-    m_default_textures[static_cast<int>(default_texture_type::grey)] = m_render_interface.create_texture(params, "default grey texture");
-
-    m_default_samplers[static_cast<int>(default_sampler_type::color)] = m_render_interface.create_sampler(sampler_params,  "default color sampler");
-    m_default_samplers[static_cast<int>(default_sampler_type::normal)] = m_render_interface.create_sampler(sampler_params,  "default normal sampler");
-
-    sampler_params.address_mode_u = ri_texture_address_mode::clamp_to_edge;
-    sampler_params.address_mode_v = ri_texture_address_mode::clamp_to_edge;
-    sampler_params.address_mode_w = ri_texture_address_mode::clamp_to_edge;
-    sampler_params.filter = ri_texture_filter::linear;
-    sampler_params.border_color = ri_texture_border_color::opaque_white;
-    m_default_samplers[static_cast<int>(default_sampler_type::shadow_map)] = m_render_interface.create_sampler(sampler_params, "default shadow map sampler");
 
     return true;
 }
@@ -721,6 +728,24 @@ void renderer::render_state(render_world_state& state)
 
     // Commit rendering statistics.
     statistics_manager::get().commit(statistics_commit_point::end_of_render);
+
+    // Check if swapchain has been resized, if it has, recreate all resources.
+    if (m_window.get_width() != m_window_width ||
+        m_window.get_height() != m_window_height ||
+        m_window.get_mode() != m_window_mode)
+    {
+        db_log(renderer, "Window metrics changed, recreating resizable targets.");
+
+        m_swapchain->drain();
+
+        recreate_resizable_targets();
+
+        for (size_t i = 0; i < m_systems.size(); i++)
+        {
+            auto& system = m_systems[i];
+            system->swapchain_resized();
+        }
+    }
 }
 
 void renderer::render_single_view(render_world_state& state, render_view& view, std::vector<render_pass::generated_state>& output)

@@ -82,6 +82,9 @@ void camera_system::step(const frame_time& time)
     render_command_queue& render_command_queue = render.get_command_queue();
     vector2 screen_size = vector2((float)render.get_display_width(), (float)render.get_display_height());
 
+    bool screen_size_changed = (screen_size != m_last_screen_size);
+    m_last_screen_size = screen_size;
+
     // Execute all commands.
     flush_command_queue();
 
@@ -102,7 +105,7 @@ void camera_system::step(const frame_time& time)
         }
 
         // Apply settings if component is dirty.
-        if (camera->is_dirty)
+        if (camera->is_dirty || screen_size_changed)
         {
             render_command_queue.set_view_viewport(camera->view_id, recti(0, 0, static_cast<int>(screen_size.x), static_cast<int>(screen_size.y)));
             render_command_queue.set_view_projection(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);

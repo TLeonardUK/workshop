@@ -21,6 +21,7 @@
 #include "workshop.renderer/render_options.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
+#include "workshop.window_interface/window.h"
 
 #include "workshop.assets/asset_manager.h"
 
@@ -367,6 +368,12 @@ private:
 
     std::array<bool, static_cast<int>(render_flag::COUNT)> m_render_flags = { 0 };
 
+    // Swapchain state.
+
+    size_t m_window_width = 0;
+    size_t m_window_height = 0;
+    window_mode m_window_mode = window_mode::windowed;
+
     // Debug models.
 
     std::array<asset_ptr<model>, static_cast<int>(debug_model::COUNT)> m_debug_models;
@@ -434,7 +441,8 @@ private:
     std::array<std::unique_ptr<ri_texture>, static_cast<int>(default_texture_type::COUNT)> m_default_textures;
     std::array<std::unique_ptr<ri_sampler>, static_cast<int>(default_sampler_type::COUNT)> m_default_samplers;
 
-    // gbuffer
+    // G-Buffer
+    
 #ifdef GBUFFER_DEBUG_DATA
     static inline constexpr size_t k_gbuffer_count = 4;
 #else

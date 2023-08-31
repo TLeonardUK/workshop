@@ -44,6 +44,9 @@ void sdl_window::handle_event(const SDL_Event* event)
         SDL_GetWindowSize(m_window, &width, &height);
 
         db_move_console(x, y + height, width, 0);        
+
+        m_width = width;
+        m_height = height;
     }
     else if (event->type == SDL_KEYDOWN)
     {
@@ -107,6 +110,10 @@ result<void> sdl_window::apply_changes()
                 break;
             }
         }
+
+#ifndef WS_RELEASE
+        flags |= SDL_WINDOW_RESIZABLE;
+#endif
 
         m_window = SDL_CreateWindow(
             m_title.c_str(), 

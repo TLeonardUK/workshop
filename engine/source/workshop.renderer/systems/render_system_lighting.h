@@ -36,6 +36,7 @@ public:
     virtual void build_pre_graph(render_graph& graph, const render_world_state& state) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
+    virtual void swapchain_resized() override;
 
     ri_texture& get_lighting_buffer();
 

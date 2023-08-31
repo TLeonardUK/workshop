@@ -53,6 +53,12 @@ result<void> render_system_transparent_geometry::create_resources()
     return true;
 }
 
+void render_system_transparent_geometry::swapchain_resized()
+{
+    bool result = create_resources();
+    db_assert(result);
+}
+
 result<void> render_system_transparent_geometry::destroy_resources()
 {
     return true;

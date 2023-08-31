@@ -98,6 +98,12 @@ result<void> render_system_ssao::create_resources()
     return true;
 }
 
+void render_system_ssao::swapchain_resized()
+{
+    bool result = create_resources();
+    db_assert(result);
+}
+
 result<void> render_system_ssao::destroy_resources()
 {
     return true;

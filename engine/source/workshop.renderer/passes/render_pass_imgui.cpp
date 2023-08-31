@@ -38,6 +38,11 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
 
         for (render_system_imgui::draw_command& cmd : draw_commands)
         {
+            if ((int)cmd.scissor.width == 0 || (int)cmd.scissor.height == 0)
+            {
+                continue;
+            }
+
             ri_param_block* imgui_params = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "imgui_params");
             imgui_params->set("color_texture", *default_texture);
             imgui_params->set("color_sampler", *renderer.get_default_sampler(default_sampler_type::color));

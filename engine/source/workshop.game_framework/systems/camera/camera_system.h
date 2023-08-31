@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.engine/ecs/system.h"
+#include "workshop.core/math/vector2.h"
 
 namespace ws {
 
@@ -28,6 +29,9 @@ public:
 
     // Sets the projection settings for a given camera.
     void set_projection(object handle, float fov, float aspect_ratio, float min_depth, float max_depth);
+
+private:
+    vector2 m_last_screen_size;
 
 };
 

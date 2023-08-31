@@ -51,6 +51,7 @@ result<void> render_system_lighting::create_resources()
     m_lighting_buffer = render_interface.create_texture(texture_params, "lighting buffer");
     
     m_lighting_output.depth_target = nullptr;
+    m_lighting_output.color_targets.clear();
     m_lighting_output.color_targets.push_back(m_lighting_buffer.get());
 
     // LUT we will generate for calculating BRDF factors.
@@ -62,6 +63,12 @@ result<void> render_system_lighting::create_resources()
     m_brdf_lut_texture = render_interface.create_texture(texture_params, "BRDF LUT");
 
     return true;
+}
+
+void render_system_lighting::swapchain_resized()
+{
+    bool result = create_resources();
+    db_assert(result);
 }
 
 result<void> render_system_lighting::destroy_resources()
