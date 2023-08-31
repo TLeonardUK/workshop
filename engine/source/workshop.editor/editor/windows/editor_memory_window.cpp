@@ -152,31 +152,33 @@ void editor_memory_window::draw()
             }
 
             ImGui::BeginChild("MemoryTableView");
-            ImGui::BeginTable("MemoryTable", 5, ImGuiTableFlags_Resizable);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.35f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.35f);
-
-            ImGui::TableNextColumn(); ImGui::TableHeader("Path");
-            if (m_flat_view)
+            if (ImGui::BeginTable("MemoryTable", 5, ImGuiTableFlags_Resizable))
             {
-                ImGui::TableNextColumn(); ImGui::TableHeader("Exclusive Memory");
-                ImGui::TableNextColumn(); ImGui::TableHeader("Exclusive Peak Memory");
-            }
-            else
-            {
-                ImGui::TableNextColumn(); ImGui::TableHeader("Inclusive Memory");
-                ImGui::TableNextColumn(); ImGui::TableHeader("Inclusive Peak Memory");
-            }
-            ImGui::TableNextColumn(); ImGui::TableHeader("Allocations");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Description");
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.35f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.35f);
 
-            build_tree();
-            draw_tree();
+                ImGui::TableNextColumn(); ImGui::TableHeader("Path");
+                if (m_flat_view)
+                {
+                    ImGui::TableNextColumn(); ImGui::TableHeader("Exclusive Memory");
+                    ImGui::TableNextColumn(); ImGui::TableHeader("Exclusive Peak Memory");
+                }
+                else
+                {
+                    ImGui::TableNextColumn(); ImGui::TableHeader("Inclusive Memory");
+                    ImGui::TableNextColumn(); ImGui::TableHeader("Inclusive Peak Memory");
+                }
+                ImGui::TableNextColumn(); ImGui::TableHeader("Allocations");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Description");
 
-            ImGui::EndTable();
+                build_tree();
+                draw_tree();
+
+                ImGui::EndTable();
+            }
             ImGui::EndChild();
         }
         ImGui::End();

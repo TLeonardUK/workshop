@@ -37,6 +37,13 @@ protected:
     // Tracks the last model used for calculating bounds.
     size_t last_model_version = 0;
 
+    // True if bounds have been calculated and ready for use. 
+    bool is_valid = false;
+
+    // True if component has valid components to calculate bounds from. If false, a default
+    // bounds will be calculated.
+    bool has_bounds_source = false;
+
 public:
 
     BEGIN_REFLECT(bounds_component, "Bounds", component, reflect_class_flags::none)

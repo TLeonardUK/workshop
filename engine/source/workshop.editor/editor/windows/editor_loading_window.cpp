@@ -46,42 +46,44 @@ void editor_loading_window::draw()
             */
 
             ImGui::BeginChild("OutputTableView");
-            ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.7f);
+            if (ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable))
+            {
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.7f);
 
-            ImGui::TableNextColumn(); ImGui::TableHeader("State");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Priority");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Time");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Asset");
+                ImGui::TableNextColumn(); ImGui::TableHeader("State");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Priority");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Time");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Asset");
 
-            //Building 1.5s path/path/path/path
-            m_asset_manager->visit_assets([this](asset_state* state) {
+                //Building 1.5s path/path/path/path
+                m_asset_manager->visit_assets([this](asset_state* state) {
 
-                if (m_load_state != 0 && (size_t)state->loading_state != (m_load_state - 1))
-                {
-                    return;
-                }
+                    if (m_load_state != 0 && (size_t)state->loading_state != (m_load_state - 1))
+                    {
+                        return;
+                    }
 
-                ImGui::TableNextRow();
+                    ImGui::TableNextRow();
 
-                ImGui::TableNextColumn(); 
-                ImGui::Text("%s", asset_loading_state_strings[(int)state->loading_state]);
+                    ImGui::TableNextColumn(); 
+                    ImGui::Text("%s", asset_loading_state_strings[(int)state->loading_state]);
 
-                ImGui::TableNextColumn();
-                ImGui::Text("%i", state->priority);
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%i", state->priority);
 
-                ImGui::TableNextColumn(); 
-                ImGui::Text("%.1f ms", state->load_timer.get_elapsed_ms());
+                    ImGui::TableNextColumn(); 
+                    ImGui::Text("%.1f ms", state->load_timer.get_elapsed_ms());
                 
-                ImGui::TableNextColumn(); 
-                ImGui::Text("%s", state->path.c_str());
+                    ImGui::TableNextColumn(); 
+                    ImGui::Text("%s", state->path.c_str());
 
-            });
+                });
 
-            ImGui::EndTable();
+                ImGui::EndTable();
+            }
             ImGui::EndChild();
         }
         ImGui::End();

@@ -25,6 +25,8 @@
 #include "thirdparty/imgui/imgui_internal.h"
 #include "thirdparty/ImGuizmo/ImGuizmo.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 editor::editor(engine& in_engine)
@@ -198,7 +200,10 @@ void editor::step(const frame_time& time)
     // into the viewport but we don't wish to treat it as though it is.
     viewport_rect.Expand(-10.0f);
 
-    m_engine.set_mouse_over_viewport(ImGui::IsMouseHoveringRect(viewport_rect.Min, viewport_rect.Max, false) && !ImGuizmo::IsUsingAny());
+    m_engine.set_mouse_over_viewport(
+        ImGui::IsMouseHoveringRect(viewport_rect.Min, viewport_rect.Max, false) && 
+        !ImGuizmo::IsUsingAny() && 
+        !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup));
 }
 
 void editor::draw_dockspace()
@@ -335,7 +340,7 @@ void editor::draw_selection()
     ImGuizmo::SetRect(0, 0, (float)render.get_display_width(), (float)render.get_display_height());
 
     bool fixed_pivot_point = (ImGuizmo::IsUsingAny() && m_current_gizmo_mode != ImGuizmo::OPERATION::TRANSLATE);
-    obb selected_object_bounds = bounds_sys->get_combined_bounds(m_selected_objects, 100.f, m_pivot_point, fixed_pivot_point);
+    obb selected_object_bounds = bounds_sys->get_combined_bounds(m_selected_objects, m_pivot_point, fixed_pivot_point);
     render.get_command_queue().draw_obb(selected_object_bounds, color::cyan);
 
     matrix4 view_mat = camera->view_matrix;
@@ -350,19 +355,22 @@ void editor::draw_selection()
     proj_mat.get_raw(proj_mat_raw, false);
     model_mat.get_raw(model_mat_raw, false);
 
-    if (!m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::WORLD, model_mat_raw))
+    matrix4 world_to_pivot = selected_object_bounds.transform.inverse();
+
+    if (!m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::LOCAL, model_mat_raw))
     {
         matrix4 model_mat;
         model_mat.set_raw(model_mat_raw, false);
 
-        float translation_raw[3];
-        float rotation_raw[3];
-        float scale_raw[3];
-        ImGuizmo::DecomposeMatrixToComponents(model_mat_raw, translation_raw, rotation_raw, scale_raw);
+        vector3 world_location;
+        vector3 world_scale;
+        vector3 world_rotation_euler;
+        quat world_rotation;
+        model_mat.decompose(&world_location, &world_rotation_euler, &world_scale);
+        world_rotation = quat::euler(world_rotation_euler);
 
-        vector3 world_location = vector3(translation_raw[0], translation_raw[1], translation_raw[2]);
-        vector3 world_scale = vector3(scale_raw[0], scale_raw[1], scale_raw[2]);
-        quat world_rotation = quat::euler(vector3(math::radians(rotation_raw[0]), math::radians(rotation_raw[1]), math::radians(rotation_raw[2])));
+        matrix4 world_to_new_pivot = model_mat.inverse();
+        matrix4 new_pivot_to_world = model_mat;
 
         for (size_t i = 0; i < m_selected_objects.size(); i++)
         {
@@ -370,29 +378,37 @@ void editor::draw_selection()
             object_state& state = m_selected_object_states[i];
             transform_component* comp = obj_manager.get_component<transform_component>(obj);
 
-            matrix4 origin_to_object = 
-                matrix4::scale(comp->world_scale) *
+            // move object transform from world space to original bounds space
+            matrix4 object_to_world = 
+                //matrix4::scale(comp->world_scale) *           // We don't need to handle scale for this, and if we do we end up in a feedback loop.
                 matrix4::rotation(comp->world_rotation) *
                 matrix4::translate(comp->world_location);
 
-            matrix4 delta_transform = (model_mat * selected_object_bounds.transform.inverse());
-            matrix4 origin_to_new_object = origin_to_object * delta_transform;
+            matrix4 relative = object_to_world * world_to_pivot;
+             
+            // move object transform from original bounds space to world space using the new transform.
+            matrix4 new_object_world = relative * new_pivot_to_world;;
 
-            vector3 new_location = origin_to_new_object.transform_location(vector3::zero);
-            vector3 new_scale = state.original_scale * delta_transform.extract_scale();
-            quat new_rotation = origin_to_new_object.to_quat();
+            vector3 new_location;
+            vector3 new_scale_global;
+            vector3 new_rotation_euler;
 
-            db_log(core, "new_scale:%.2f,%.2f,%.2f delta:%.2f,%.2f,%.2f", new_scale.x, new_scale.y, new_scale.z, delta_transform.extract_scale().x, delta_transform.extract_scale().y, delta_transform.extract_scale().z);
+            new_object_world.decompose(&new_location, &new_rotation_euler, &new_scale_global);
 
-            // This is super annoying, we shouldn't need to do this but ImGuizmo zeros out the rotation when
-            // using scale mode. So to work around this we only modify the elements for the relevant mode.
-            if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE || m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
-            {
-                transform_sys->set_world_transform(obj, new_location, comp->world_rotation, new_scale);
-            }
-            else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
+            quat new_rotation = quat::euler(new_rotation_euler);
+            vector3 new_scale = state.original_scale * new_scale_global;
+
+            // Apply changes.
+            // We shouldn't need to do this as seperate operations, but imguizmo unfortunately zeros out the rotation
+            // when using the scale operation.
+            if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE ||
+                m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
             {
                 transform_sys->set_world_transform(obj, new_location, new_rotation, comp->world_scale);
+            }
+            else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
+            {
+                transform_sys->set_world_transform(obj, comp->world_location, comp->world_rotation, new_scale);
             }
         }
     }

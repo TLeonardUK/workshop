@@ -129,34 +129,36 @@ void editor_log_window::draw()
             ImGui::PopID();
 
             ImGui::BeginChild("OutputTableView");
-            ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.7f);
-
-            ImGui::TableNextColumn(); ImGui::TableHeader("Timestamp");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Level");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Category");
-            ImGui::TableNextColumn(); ImGui::TableHeader("Message");
-
-            for (auto iter = m_logs.rbegin(); iter != m_logs.rend(); iter++)
+            if (ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable))
             {
-                log_entry& entry = *iter;
-                if (entry.filtered_out)
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.7f);
+
+                ImGui::TableNextColumn(); ImGui::TableHeader("Timestamp");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Level");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Category");
+                ImGui::TableNextColumn(); ImGui::TableHeader("Message");
+
+                for (auto iter = m_logs.rbegin(); iter != m_logs.rend(); iter++)
                 {
-                    continue;
+                    log_entry& entry = *iter;
+                    if (entry.filtered_out)
+                    {
+                        continue;
+                    }
+
+                    ImGui::TableNextRow();
+
+                    ImGui::TableNextColumn(); ImGui::Text("%s", entry.timestamp.c_str());
+                    ImGui::TableNextColumn(); ImGui::Text("%s", log_level_strings[(int)entry.level]);
+                    ImGui::TableNextColumn(); ImGui::Text("%s", log_source_strings[(int)entry.category]);
+                    ImGui::TableNextColumn(); ImGui::Text("%s", entry.message.c_str());
                 }
 
-                ImGui::TableNextRow();
-
-                ImGui::TableNextColumn(); ImGui::Text("%s", entry.timestamp.c_str());
-                ImGui::TableNextColumn(); ImGui::Text("%s", log_level_strings[(int)entry.level]);
-                ImGui::TableNextColumn(); ImGui::Text("%s", log_source_strings[(int)entry.category]);
-                ImGui::TableNextColumn(); ImGui::Text("%s", entry.message.c_str());
+                ImGui::EndTable();
             }
-
-            ImGui::EndTable();
             ImGui::EndChild();
         }
         ImGui::End();

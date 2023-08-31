@@ -47,14 +47,17 @@ public:
 	base_matrix4& operator*=(T scalar);
 	base_matrix4& operator*=(const base_matrix4& other);
 
-	base_vector3<T> extract_scale() const;
-	base_vector3<T> extract_rotation() const;
+    base_matrix4 normalize() const;
+    void decompose(vector3* translation, vector3* rotation, vector3* scale) const;
+
+    base_vector3<T> extract_translation() const;
+    base_vector3<T> extract_scale() const;
+    base_quat<T> extract_rotation() const;
 
 	base_vector3<T> transform_direction(const base_vector3<T>& vec) const;
 	base_vector3<T> transform_location(const base_vector3<T>& vec) const;
 
 	base_matrix4 inverse() const;
-	base_quat<T> to_quat() const;
 	base_matrix4 transpose() const;
 	
     void get_raw(T raw[16], bool column_major) const;
@@ -230,19 +233,55 @@ inline base_matrix4<T>& base_matrix4<T>::operator*=(const base_matrix4& other)
 template <typename T>
 inline base_vector3<T> base_matrix4<T>::extract_scale() const
 {
-	return base_vector3<T>(
-		get_row(0).length(),
-		get_row(1).length(),
-		get_row(2).length()
-	);
+    vector3 scale;
+    decompose(nullptr, nullptr, &scale);
+    return scale;
 }
 
 template <typename T>
-inline base_vector3<T> base_matrix4<T>::extract_rotation() const
+inline base_quat<T> base_matrix4<T>::extract_rotation() const
 {
-	return to_quat();
+    vector3 rotation;
+    decompose(nullptr, &rotation, nullptr);
+    return quat::euler(rotation);
+
+    /*
+    base_matrix4<T> normalized = *this;
+    normalized.set_row(0, normalized.get_row(0).normalize());
+    normalized.set_row(1, normalized.get_row(1).normalize());
+    normalized.set_row(2, normalized.get_row(2).normalize());
+
+    vector3 rotation;
+    rotation.x = atan2f(normalized.columns[1][2], normalized.columns[2][2]);
+    rotation.y = atan2f(-normalized.columns[0][2], sqrtf(normalized.columns[1][2] * normalized.columns[1][2] + normalized.columns[2][2] * normalized.columns[2][2]));
+    rotation.z = atan2f(normalized.columns[0][1], normalized.columns[0][0]);
+
+    //	base_quat<T> q;
+    //  q.w = sqrtf(1 + normalized.columns[0][0] + normalized.columns[1][1] + normalized.columns[2][2]) / 2.0f;
+    //  q.x = (normalized.columns[1][2] - normalized.columns[2][1]) / (4.0f * q.w);
+    //  q.y = (normalized.columns[2][0] - normalized.columns[0][2]) / (4.0f * q.w);
+    //  q.z = (normalized.columns[0][1] - normalized.columns[1][0]) / (4.0f * q.w);
+    
+    return quat::euler(rotation);
+
+    //q.w = sqrtf(math::max(0.0f, 1 + columns[0][0] + columns[1][1] + columns[2][2])) / 2.0f;
+    //q.x = sqrtf(math::max(0.0f, 1 + columns[0][0] - columns[1][1] - columns[2][2])) / 2.0f;
+    //q.y = sqrtf(math::max(0.0f, 1 - columns[0][0] + columns[1][1] - columns[2][2])) / 2.0f;
+    //q.z = sqrtf(math::max(0.0f, 1 - columns[0][0] - columns[1][1] + columns[2][2])) / 2.0f;
+    //q.x *= math::sign(q.x * (columns[2][1] - columns[1][2]));
+    //q.y *= math::sign(q.y * (columns[0][2] - columns[2][0]));
+    //q.z *= math::sign(q.z * (columns[1][0] - columns[0][1]));
+    //return q;
+    */
 }
 
+template <typename T>
+inline base_vector3<T> base_matrix4<T>::extract_translation() const
+{
+    vector3 translation;
+    decompose(&translation, nullptr, nullptr);
+    return translation;
+}
 
 template <typename T>
 inline base_vector3<T> base_matrix4<T>::transform_direction(const base_vector3<T>& vec) const
@@ -332,18 +371,50 @@ inline base_matrix4<T> base_matrix4<T>::inverse() const
 	return inverse * one_over_determinant;
 }
 
+#pragma optimize("", off)
+
 template <typename T>
-inline base_quat<T> base_matrix4<T>::to_quat() const
+base_matrix4<T> base_matrix4<T>::normalize() const
 {
-	base_quat<T> q;
-	q.w = sqrtf(math::max(0.0f, 1 + columns[0][0] + columns[1][1] + columns[2][2])) / 2.0f;
-	q.x = sqrtf(math::max(0.0f, 1 + columns[0][0] - columns[1][1] - columns[2][2])) / 2.0f;
-	q.y = sqrtf(math::max(0.0f, 1 - columns[0][0] + columns[1][1] - columns[2][2])) / 2.0f;
-	q.z = sqrtf(math::max(0.0f, 1 - columns[0][0] - columns[1][1] + columns[2][2])) / 2.0f;
-	q.x *= math::sign(q.x * (columns[2][1] - columns[1][2]));
-	q.y *= math::sign(q.y * (columns[0][2] - columns[2][0]));
-	q.z *= math::sign(q.z * (columns[1][0] - columns[0][1]));
-	return q;
+    base_matrix4<T> ret;
+    ret.set_row(0, get_row(0).normalize());
+    ret.set_row(1, get_row(1).normalize());
+    ret.set_row(2, get_row(2).normalize());
+    ret.set_row(3, get_row(3));
+    return ret;
+}
+
+template <typename T>
+void base_matrix4<T>::decompose(vector3* translation, vector3* rotation, vector3* scale) const
+{
+    base_matrix4<T> mat = *this;
+
+    if (scale)
+    {
+        scale->x = mat.get_row(0).length();
+        scale->y = mat.get_row(1).length();
+        scale->z = mat.get_row(2).length();
+    }
+
+    if (rotation || translation)
+    {
+        mat = mat.normalize();
+
+        if (rotation)
+        {
+            rotation->x = atan2f(mat.columns[2][1], mat.columns[2][2]);
+            rotation->y = atan2f(-mat.columns[2][0], sqrtf(mat.columns[2][1] * mat.columns[2][1] + mat.columns[2][2] * mat.columns[2][2]));
+            rotation->z = atan2f(mat.columns[1][0], mat.columns[0][0]);
+        }
+
+        if (translation)
+        {
+            vector4 trans = mat.get_row(3);
+            translation->x = trans.x;
+            translation->y = trans.y;
+            translation->z = trans.z;
+        }
+    }
 }
 
 template <typename T>

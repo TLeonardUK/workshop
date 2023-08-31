@@ -132,87 +132,89 @@ void property_list::draw()
         collect_class = collect_class->get_parent();
     }
 
-    ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_Resizable| ImGuiTableFlags_BordersInnerV);
-    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.5f);
-    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.5f);
-
-    for (reflect_field* field : fields)
+    if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_Resizable| ImGuiTableFlags_BordersInnerV))
     {
-        ImGui::TableNextRow();
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.5f);
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.5f);
 
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", field->get_display_name());        
-        if (ImGui::IsItemHovered())
+        for (reflect_field* field : fields)
         {
-            ImGui::SetTooltip("%s", field->get_description());
+            ImGui::TableNextRow();
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%s", field->get_display_name());        
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip("%s", field->get_description());
+            }
+
+            ImGui::TableNextColumn();
+
+            // All the edit types, we should probably abstract these somewhere.
+            uint8_t* field_data = reinterpret_cast<uint8_t*>(m_context) + field->get_offset();
+
+            bool modified = false;
+
+            float min_value = 0.0f;
+            float max_value = 0.0f;
+            if (reflect_constraint_range* range = field->get_constraint<reflect_constraint_range>())
+            {
+                min_value = range->get_min();
+                max_value = range->get_max();
+            }
+
+
+            ImGui::PushID(field->get_name());
+
+            if (field->get_type_index() == typeid(int))
+            {
+                modified = draw_edit(field, *reinterpret_cast<int*>(field_data), static_cast<int>(min_value), static_cast<int>(max_value));
+            }
+            else if (field->get_type_index() == typeid(size_t))
+            {
+                int value = (int)*reinterpret_cast<size_t*>(field_data);
+                modified = draw_edit(field, value, static_cast<int>(min_value), static_cast<int>(max_value));
+                *reinterpret_cast<size_t*>(field_data) = value;
+            }
+            else if (field->get_type_index() == typeid(float))
+            {
+                modified = draw_edit(field, *reinterpret_cast<float*>(field_data), min_value, max_value);
+            }
+            else if (field->get_type_index() == typeid(bool))
+            {
+                modified = draw_edit(field, *reinterpret_cast<bool*>(field_data));
+            }
+            else if (field->get_type_index() == typeid(vector3))
+            {
+                modified = draw_edit(field, *reinterpret_cast<vector3*>(field_data), min_value, max_value);
+            }
+            else if (field->get_type_index() == typeid(quat))
+            {
+                modified = draw_edit(field, *reinterpret_cast<quat*>(field_data), min_value, max_value);
+            }
+            else if (field->get_type_index() == typeid(color))
+            {
+                modified = draw_edit(field, *reinterpret_cast<color*>(field_data));
+            }
+            else if (field->get_type_index() == typeid(std::string))
+            {
+                modified = draw_edit(field, *reinterpret_cast<std::string*>(field_data));
+            }
+            else
+            {
+                ImGui::Text("Unsupported Edit Type");
+            }
+
+            if (modified)
+            {
+                on_modified.broadcast(field);
+            }
+
+            ImGui::PopID();
         }
 
-        ImGui::TableNextColumn();
-
-        // All the edit types, we should probably abstract these somewhere.
-        uint8_t* field_data = reinterpret_cast<uint8_t*>(m_context) + field->get_offset();
-
-        bool modified = false;
-
-        float min_value = 0.0f;
-        float max_value = 0.0f;
-        if (reflect_constraint_range* range = field->get_constraint<reflect_constraint_range>())
-        {
-            min_value = range->get_min();
-            max_value = range->get_max();
-        }
-
-
-        ImGui::PushID(field->get_name());
-
-        if (field->get_type_index() == typeid(int))
-        {
-            modified = draw_edit(field, *reinterpret_cast<int*>(field_data), static_cast<int>(min_value), static_cast<int>(max_value));
-        }
-        else if (field->get_type_index() == typeid(size_t))
-        {
-            int value = (int)*reinterpret_cast<size_t*>(field_data);
-            modified = draw_edit(field, value, static_cast<int>(min_value), static_cast<int>(max_value));
-            *reinterpret_cast<size_t*>(field_data) = value;
-        }
-        else if (field->get_type_index() == typeid(float))
-        {
-            modified = draw_edit(field, *reinterpret_cast<float*>(field_data), min_value, max_value);
-        }
-        else if (field->get_type_index() == typeid(bool))
-        {
-            modified = draw_edit(field, *reinterpret_cast<bool*>(field_data));
-        }
-        else if (field->get_type_index() == typeid(vector3))
-        {
-            modified = draw_edit(field, *reinterpret_cast<vector3*>(field_data), min_value, max_value);
-        }
-        else if (field->get_type_index() == typeid(quat))
-        {
-            modified = draw_edit(field, *reinterpret_cast<quat*>(field_data), min_value, max_value);
-        }
-        else if (field->get_type_index() == typeid(color))
-        {
-            modified = draw_edit(field, *reinterpret_cast<color*>(field_data));
-        }
-        else if (field->get_type_index() == typeid(std::string))
-        {
-            modified = draw_edit(field, *reinterpret_cast<std::string*>(field_data));
-        }
-        else
-        {
-            ImGui::Text("Unsupported Edit Type");
-        }
-
-        if (modified)
-        {
-            on_modified.broadcast(field);
-        }
-
-        ImGui::PopID();
+        ImGui::EndTable();
     }
-
-    ImGui::EndTable();
 }
 
 }; // namespace ws

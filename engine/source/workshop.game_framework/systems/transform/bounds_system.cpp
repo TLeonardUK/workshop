@@ -53,6 +53,27 @@ void bounds_system::step(const frame_time& time)
 
             bounds->last_transform_generation = transform->generation;
             bounds->last_model_version = mesh->model.get_version();
+            bounds->is_valid = true;
+            bounds->has_bounds_source = true;
+        }
+    }
+
+    // Apply a default to any components that don't have any components we can calcualte bounds from.
+    component_filter<transform_component, bounds_component> all_filter(m_manager);
+    for (size_t i = 0; i < all_filter.size(); i++)
+    {
+        object obj = all_filter.get_object(i);
+
+        const transform_component* transform = all_filter.get_component<transform_component>(i);
+        bounds_component* bounds = all_filter.get_component<bounds_component>(i);
+
+        if (!bounds->has_bounds_source && transform->generation != bounds->last_transform_generation)
+        {
+            aabb unit_bounds(vector3(-0.5, -0.5, -0.5), vector3(0.5f, 0.5f, 0.5f));
+
+            bounds->local_bounds = obb(unit_bounds, matrix4::identity);
+            bounds->world_bounds = obb(unit_bounds, transform->local_to_world);
+            bounds->is_valid = true;
         }
     }
 
@@ -60,7 +81,7 @@ void bounds_system::step(const frame_time& time)
     flush_command_queue();
 }
 
-obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float default_bounds, vector3& pivot_point, bool consume_pivot_point)
+obb bounds_system::get_combined_bounds(const std::vector<object>& objects, vector3& pivot_point, bool consume_pivot_point)
 {    
     obb object_bounds;
     bool first_object = true;
@@ -78,22 +99,22 @@ obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float
         vector3 world_origin = transform->local_to_world.transform_location(vector3::zero);
 
         bounds_component* bounds = m_manager.get_component<bounds_component>(obj);
-        if (bounds)
+        if (bounds && bounds->is_valid)
         {
             world_bounds = bounds->world_bounds;
         }
         else
         {
             world_bounds = obb(aabb(
-                    vector3(-default_bounds, -default_bounds, -default_bounds),
-                    vector3(default_bounds, default_bounds, default_bounds)
+                    vector3(-k_default_bounds, -k_default_bounds, -k_default_bounds),
+                    vector3(k_default_bounds, k_default_bounds, k_default_bounds)
                 ),
                 transform->local_to_world
             );
         }
 
-        // TODO: We shouldn't have to use AABB for everything, but it makes some logic a lot simpler ...
-        world_bounds = obb(bounds->world_bounds.get_aligned_bounds(), matrix4::identity);
+        // In theory we can concatenate OBB's, but for consistency we are just always using AABB for now.
+        world_bounds = obb(world_bounds.get_aligned_bounds(), matrix4::identity);
 
         if (!first_object)
         {
@@ -107,10 +128,7 @@ obb bounds_system::get_combined_bounds(const std::vector<object>& objects, float
         }
     }
 
-    // Center the bounds so we get a gizmo in the center not at 0,0,0.
-    // Note: Center on the bounds of a single object rather than the center of the combined OBB. Gives better
-    //       results when doing things like using scaling gizmos.
-//    if (objects.size() > 1)
+    // Offset bounds by pivot, nicer experience than the origin being 0,0,0.
     {
         vector3 center = first_object_center;
         if (consume_pivot_point)

@@ -1054,106 +1054,107 @@ void renderer::draw_debug_overlay()
     bool visible = get_render_flag(render_flag::draw_performance_overlay);
     if (ImGui::Begin("Rendering Debug Overlay", &visible, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_AlwaysAutoResize))
     {
-        ImGui::BeginTable("Stats Table", 2);
+        if (ImGui::BeginTable("Stats Table", 2))
+        {
+            double render_wait = m_stats_frame_time_render_wait->current_value() * 1000.0;
+            double present_wait = m_stats_frame_time_present_wait->current_value() * 1000.0;
 
-        double render_wait = m_stats_frame_time_render_wait->current_value() * 1000.0;
-        double present_wait = m_stats_frame_time_present_wait->current_value() * 1000.0;
+            double game_time = m_stats_frame_time_game->current_value() * 1000.0;
+            double render_time = m_stats_frame_time_render->current_value() * 1000.0;
+            double gpu_time = m_stats_frame_time_gpu->current_value() * 1000.0;
 
-        double game_time = m_stats_frame_time_game->current_value() * 1000.0;
-        double render_time = m_stats_frame_time_render->current_value() * 1000.0;
-        double gpu_time = m_stats_frame_time_gpu->current_value() * 1000.0;
+            double frame_rate = m_stats_frame_rate->average_value();
 
-        double frame_rate = m_stats_frame_rate->average_value();
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("FPS");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f", frame_rate);
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("FPS");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f", frame_rate);
+            ImGui::NewLine();
 
-        ImGui::NewLine();
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Game Time");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f ms", game_time - render_wait);
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Game Time");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f ms", game_time - render_wait);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Render Time");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f ms", render_time - present_wait);
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Render Time");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f ms", render_time - present_wait);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("GPU Time");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f ms", gpu_time);
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("GPU Time");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f ms", gpu_time);
+            ImGui::NewLine();
 
-        ImGui::NewLine();
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Virtual Memory");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f mb", get_memory_usage() / (1024.0 * 1024.0f));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Virtual Memory");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f mb", get_memory_usage() / (1024.0 * 1024.0f));
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Pagefile Memory");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f mb", get_pagefile_usage() / (1024.0 * 1024.0f));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Pagefile Memory");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f mb", get_pagefile_usage() / (1024.0 * 1024.0f));
+            size_t vram_local = 0;
+            size_t vram_non_local = 0;
+            m_render_interface.get_vram_usage(vram_local, vram_non_local);
 
-        size_t vram_local = 0;
-        size_t vram_non_local = 0;
-        m_render_interface.get_vram_usage(vram_local, vram_non_local);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("VRAM Memory (Device)");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f mb", vram_local / (1024.0 * 1024.0f));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("VRAM Memory (Device)");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f mb", vram_local / (1024.0 * 1024.0f));
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("VRAM Memory (Shared)");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%.2f mb", vram_non_local / (1024.0 * 1024.0f));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("VRAM Memory (Shared)");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%.2f mb", vram_non_local / (1024.0 * 1024.0f));
+            ImGui::NewLine();
 
-        ImGui::NewLine();
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Triangles Rendered");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%zi", static_cast<size_t>(m_stats_triangles_rendered->current_value()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Triangles Rendered");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%zi", static_cast<size_t>(m_stats_triangles_rendered->current_value()));
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Draw Calls");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%zi", static_cast<size_t>(m_stats_draw_calls->current_value()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Draw Calls");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%zi", static_cast<size_t>(m_stats_draw_calls->current_value()));
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Instances Rendered");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%zi", static_cast<size_t>(m_stats_drawn_instances->current_value()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Instances Rendered");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%zi", static_cast<size_t>(m_stats_drawn_instances->current_value()));
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Instances Culled");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%zi", static_cast<size_t>(m_stats_culled_instances->current_value()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Instances Culled");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%zi", static_cast<size_t>(m_stats_culled_instances->current_value()));
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Bytes Uploaded");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%zi", static_cast<size_t>(m_stats_render_bytes_uploaded->current_value()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Bytes Uploaded");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%zi", static_cast<size_t>(m_stats_render_bytes_uploaded->current_value()));
-
-        ImGui::EndTable();
+            ImGui::EndTable();
+        }
         ImGui::End();
     }
 }

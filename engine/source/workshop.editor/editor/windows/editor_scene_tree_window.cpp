@@ -202,36 +202,38 @@ void editor_scene_tree_window::draw()
             }
 
             ImGui::BeginChild("ObjectTableView");
-            ImGui::BeginTable("ObjectTable", 2);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 1.0f);
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 16.0f);
-
-            m_clicked_item = false;
-            m_pending_delete = null_object;
-
-            // Draw all the root elements in the tree.
-            for (size_t i = 0; i < transform_filter.size(); i++)
+            if (ImGui::BeginTable("ObjectTable", 2))
             {
-                object obj = transform_filter.get_object(i);
-                transform_component* transform = transform_filter.get_component<transform_component>(i);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 1.0f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 16.0f);
 
-                if (!transform->parent.is_valid(&obj_manager))
+                m_clicked_item = false;
+                m_pending_delete = null_object;
+
+                // Draw all the root elements in the tree.
+                for (size_t i = 0; i < transform_filter.size(); i++)
                 {
-                    draw_object_node(obj, transform, 0);
+                    object obj = transform_filter.get_object(i);
+                    transform_component* transform = transform_filter.get_component<transform_component>(i);
+
+                    if (!transform->parent.is_valid(&obj_manager))
+                    {
+                        draw_object_node(obj, transform, 0);
+                    }
                 }
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Separator();
+                ImGui::TableNextColumn(); ImGui::Separator();
+
+                for (size_t i = 0; i < no_transform_filter.size(); i++)
+                {
+                    object obj = no_transform_filter.get_object(i);
+                    draw_object_node(obj, nullptr, 0);
+                }
+
+                ImGui::EndTable();
             }
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn(); ImGui::Separator();
-            ImGui::TableNextColumn(); ImGui::Separator();
-
-            for (size_t i = 0; i < no_transform_filter.size(); i++)
-            {
-                object obj = no_transform_filter.get_object(i);
-                draw_object_node(obj, nullptr, 0);
-            }
-
-            ImGui::EndTable();
             ImGui::EndChild();
 
             // If we clicked somewhere on this table but didn't click a button, then deselect everything.
