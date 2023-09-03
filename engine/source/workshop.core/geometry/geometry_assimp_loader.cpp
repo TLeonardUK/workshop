@@ -25,6 +25,11 @@ struct import_context
     struct material
     {
         std::string name;
+
+        std::string albedo_source;
+        std::string metallic_source;
+        std::string normal_source;
+        std::string roughness_source;
     };
 
     struct mesh
@@ -173,11 +178,41 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
     return true;
 }
 
+#pragma optimize("", off)
+
 // Imports a material node in the assimp scene.
 bool process_material(aiMaterial* node, const aiScene* scene, import_context& output)
 {
     import_context::material mat;
     mat.name = node->GetName().C_Str();
+
+    aiString texture_path;
+
+    if (node->GetTexture(aiTextureType_BASE_COLOR, 0, &texture_path) == AI_SUCCESS)
+    {
+        mat.albedo_source = texture_path.C_Str();
+    }
+    if (node->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path) == AI_SUCCESS)
+    {
+        mat.albedo_source = texture_path.C_Str();
+    }
+    if (node->GetTexture(aiTextureType_NORMALS, 0, &texture_path) == AI_SUCCESS)
+    {
+        mat.normal_source = texture_path.C_Str();
+    }
+    if (node->GetTexture(aiTextureType_METALNESS, 0, &texture_path) == AI_SUCCESS)
+    {
+        mat.metallic_source = texture_path.C_Str();
+    }
+    if (node->GetTexture(aiTextureType_SHININESS, 0, &texture_path) == AI_SUCCESS)
+    {
+        mat.roughness_source = texture_path.C_Str();
+    }
+    if (node->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texture_path) == AI_SUCCESS)
+    {
+        mat.roughness_source = texture_path.C_Str();
+    }
+
     output.materials.push_back(mat);
     return true;
 }
@@ -207,11 +242,20 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output)
 
 };
 
-std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& buffer, const char* path_hint, const vector3& scale)
+std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& buffer, const char* path_hint, const vector3& scale, bool high_quality)
 {
     Assimp::Importer importer;
 
-    int flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded);    
+    int flags = 0;
+    if (high_quality)
+    {
+        flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded);
+    }
+    else
+    {
+        flags = (aiProcessPreset_TargetRealtime_Fast | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded);
+    }
+
     flags &= ~aiProcess_RemoveRedundantMaterials;
 
     const aiScene* scene = importer.ReadFileFromMemory(
@@ -280,7 +324,13 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     // Insert all the materials into the geometry.
     for (import_context::material& mat : context.materials)
     {
-        result->add_material(mat.name.c_str());
+        size_t index = result->add_material(mat.name.c_str());
+
+        geometry_material& new_mat = result->get_materials()[index];
+        new_mat.albedo_texture.path = mat.albedo_source;
+        new_mat.normal_texture.path = mat.normal_source;
+        new_mat.metallic_texture.path = mat.metallic_source;
+        new_mat.roughness_texture.path = mat.roughness_source;
     }
 
     // Insert meshes into the geometry.

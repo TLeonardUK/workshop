@@ -88,13 +88,18 @@ public:
     bool modified_time(const char* path, virtual_file_system_time_point& timepoint);
 
     // Lists all the files or directories that exist in a given path.
-    std::vector<std::string> list(const char* path, virtual_file_system_path_type type);
+    std::vector<std::string> list(const char* path, virtual_file_system_path_type type, bool filename_only = false, bool recursive = true);
 
     // Watches a path within the file system for modifications and raises events when they occur.
     std::unique_ptr<virtual_file_system_watcher> watch(const char* path, virtual_file_system_watcher::callback_t callback);
 
     // Invokes any pending callbacks for paths that are being watched via watch(). 
     void raise_watch_events();
+
+    // Attempts to get the path on the host filesystem that the given vfs path will point towards.
+    // If multiple handlers are registered for the path, the highest priority one will be used.
+    // If no path can be calculated an empty string will be returned.
+    std::string get_disk_location(const char* path);
 
 public:
 

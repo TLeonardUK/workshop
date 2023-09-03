@@ -159,5 +159,6 @@ target_link_libraries(${PROJECT_NAME}
     dds-ktx
     stb
     CMP_Core
+    nativefiledialog
     ${PLATFORM_LIB}
 )

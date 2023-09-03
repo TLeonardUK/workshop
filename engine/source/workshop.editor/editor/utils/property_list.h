@@ -10,6 +10,12 @@
 #include "workshop.core/math/quat.h"
 #include "workshop.core/utils/event.h"
 #include "workshop.core/drawing/color.h"
+#include "workshop.assets/asset_manager.h"
+
+#include "workshop.renderer/assets/model/model.h"
+#include "workshop.renderer/assets/texture/texture.h"
+#include "workshop.renderer/assets/shader/shader.h"
+#include "workshop.renderer/assets/material/material.h"
 
 #include <functional>
 
@@ -39,6 +45,7 @@ protected:
     bool draw_edit(reflect_field* field, bool& value);
     bool draw_edit(reflect_field* field, color& value);
     bool draw_edit(reflect_field* field, std::string& value);
+    bool draw_edit(reflect_field* field, asset_ptr<model>& value);
 
 private:
     

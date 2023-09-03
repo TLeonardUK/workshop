@@ -45,14 +45,10 @@ void fly_camera_movement_system::step(const frame_time& time)
     bool mouse_captured = input.get_mouse_capture();
     bool mouse_over_viewport = engine.get_mouse_over_viewport();
     float mouse_delta = input.get_mouse_wheel_delta(false);
+    vector2 mouse_position = input.get_mouse_position();
 
     bool lmb_down = input.is_key_down(input_key::mouse_left);
     bool rmb_down = input.is_key_down(input_key::mouse_right);
-
-    float forward_movement = (static_cast<float>(w_down) - static_cast<float>(s_down)) * time.delta_seconds;
-    float right_movement = (static_cast<float>(d_down) - static_cast<float>(a_down)) * time.delta_seconds;
-    float up_movement = (static_cast<float>(e_down) - static_cast<float>(q_down)) * time.delta_seconds;
-    float mouse_delta_movement = mouse_delta * time.delta_seconds;
 
     plane y_plane = plane(vector3::up, vector3::zero);
     float y_plane_movement = 0.0f;
@@ -60,7 +56,18 @@ void fly_camera_movement_system::step(const frame_time& time)
     float pan_right_movement = 0.0f;
     float pan_up_movement = 0.0f;
 
-    if ((lmb_down || rmb_down) && mouse_over_viewport)
+    bool mouse_down = (lmb_down || rmb_down);
+
+    // Track the start position/viewport state when we first push a mouse button down.
+    if (mouse_down && !m_last_mouse_down)
+    {
+        m_mouse_down_started_over_viewport = mouse_over_viewport;
+        m_mouse_down_start_location = input.get_mouse_position();
+    }
+    m_last_mouse_down = mouse_down;
+
+    // Track how many frames we are in a situation that should allow us to control the viewport.
+    if (mouse_down && m_mouse_down_started_over_viewport && mouse_over_viewport && (mouse_position - m_mouse_down_start_location).length() > k_movement_capture_threshold)
     {
         m_viewport_control_frames++;
     }
@@ -69,10 +76,24 @@ void fly_camera_movement_system::step(const frame_time& time)
         m_viewport_control_frames = 0;
     }
 
+    // Calculate movement.
+    float forward_movement = (static_cast<float>(w_down) - static_cast<float>(s_down)) * time.delta_seconds;
+    float right_movement = (static_cast<float>(d_down) - static_cast<float>(a_down)) * time.delta_seconds;
+    float up_movement = (static_cast<float>(e_down) - static_cast<float>(q_down)) * time.delta_seconds;
+    float mouse_delta_movement = mouse_delta * time.delta_seconds;
+
+    if (!mouse_over_viewport)
+    {
+        forward_movement = 0.0f;
+        right_movement = 0.0f;
+        up_movement = 0.0f;
+        mouse_delta_movement = 0.0f;
+    }
+
     // Calculate how much the mouse has moved from the center of the screen and reset
     // it to the center.
     vector2 center_pos = screen_size * 0.5f;
-    vector2 delta_pos = (input.get_mouse_position() - center_pos);
+    vector2 delta_pos = (mouse_position - center_pos);
     bool reset_mouse = mouse_captured || m_viewport_control_frames > 2;
 
     if (delta_pos.length() > 0 && reset_mouse)

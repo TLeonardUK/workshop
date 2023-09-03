@@ -53,6 +53,10 @@ public:
     // 9 coefficients for each color channel.
     static inline constexpr size_t k_probe_coefficient_size = 9 * 3 * sizeof(float); 
 
+    // Maximum number of probes in each dimension. This is mostly here as a sanity check
+    // to avoid massive memory usage.
+    static inline constexpr size_t k_max_dimension = 150;
+
 private:
     void recalculate_probes();
 

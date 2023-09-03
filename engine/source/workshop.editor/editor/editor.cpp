@@ -9,6 +9,7 @@
 #include "workshop.editor/editor/windows/editor_memory_window.h"
 #include "workshop.editor/editor/windows/editor_scene_tree_window.h"
 #include "workshop.editor/editor/windows/editor_properties_window.h"
+#include "workshop.editor/editor/windows/editor_assets_window.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_imgui_manager.h"
@@ -146,6 +147,7 @@ result<void> editor::create_windows(init_list& list)
     create_window<editor_properties_window>(this, &m_engine.get_default_world());
     create_window<editor_scene_tree_window>(this, &m_engine.get_default_world());
     create_window<editor_loading_window>(&m_engine.get_asset_manager());
+    create_window<editor_assets_window>(&m_engine.get_asset_manager(), &m_engine.get_asset_database());
     create_window<editor_log_window>();
     create_window<editor_memory_window>();
 
@@ -257,7 +259,8 @@ void editor::reset_dockspace_layout()
     ImGui::DockBuilderSetNodeSize(m_dockspace_id, viewport->Size);
 
     auto dock_id_top = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Up, 0.3f, nullptr, &m_dockspace_id);
-    auto dock_id_bottom = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Down, 0.3f, nullptr, &m_dockspace_id);
+    auto dock_id_bottom_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Down, 0.3f, nullptr, &m_dockspace_id);
+    auto dock_id_bottom_right = ImGui::DockBuilderSplitNode(dock_id_bottom_left, ImGuiDir_Right, 0.5f, nullptr, &dock_id_bottom_left);
     auto dock_id_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Left, 0.15f, nullptr, &m_dockspace_id);
     auto dock_id_right = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Right, 0.15f, nullptr, &m_dockspace_id);
 
@@ -272,9 +275,14 @@ void editor::reset_dockspace_layout()
                 dock_id = dock_id_top;
                 break;
             }
-        case editor_window_layout::bottom:
+        case editor_window_layout::bottom_left:
             {
-                dock_id = dock_id_bottom;
+                dock_id = dock_id_bottom_left;
+                break;
+            }
+        case editor_window_layout::bottom_right:
+            {
+                dock_id = dock_id_bottom_right;
                 break;
             }
         case editor_window_layout::left:

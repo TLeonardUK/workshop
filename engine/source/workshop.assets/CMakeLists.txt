@@ -12,6 +12,8 @@ SET(SOURCES
     "asset_cache.cpp"
     "asset_loader.h"
     "asset_loader.cpp"
+    "asset_importer.h"
+    "asset_importer.cpp"
     "asset_manager.h"
     "asset_manager.cpp"
     "caches/asset_cache_disk.h"

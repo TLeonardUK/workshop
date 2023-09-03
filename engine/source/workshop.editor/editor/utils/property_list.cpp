@@ -119,6 +119,35 @@ bool property_list::draw_edit(reflect_field* field, std::string& value)
     return ret;
 }
 
+bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
+{
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+    char buffer[2048];
+    strncpy(buffer, value.get_path().c_str(), sizeof(buffer));
+
+    bool ret = false;
+
+    ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags_ReadOnly);
+    
+    if (ImGui::BeginDragDropTarget())
+    {
+        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("asset_model", ImGuiDragDropFlags_None);
+        if (payload)
+        {
+            std::string asset_path((const char*)payload->Data, payload->DataSize);
+
+            asset_manager* manager = value.get_asset_manager();
+            value = manager->request_asset<model>(asset_path.c_str(), 0);
+
+            ret = true;
+        }
+        ImGui::EndDragDropTarget();
+    }
+
+    return ret;
+}
+
 void property_list::draw()
 {
     std::vector<reflect_field*> fields;
@@ -199,6 +228,10 @@ void property_list::draw()
             else if (field->get_type_index() == typeid(std::string))
             {
                 modified = draw_edit(field, *reinterpret_cast<std::string*>(field_data));
+            }
+            else if (field->get_type_index() == typeid(asset_ptr<model>))
+            {
+                modified = draw_edit(field, *reinterpret_cast<asset_ptr<model>*>(field_data));
             }
             else
             {

@@ -29,6 +29,7 @@ class presentation;
 class presenter;
 class renderer;
 class asset_manager;
+class asset_database;
 class virtual_file_system;
 class statistics_manager;
 class task_scheduler;
@@ -73,6 +74,9 @@ public:
 
     // Gets the asset manager.
     asset_manager& get_asset_manager();
+
+    // Gets the asset database.
+    asset_database& get_asset_database();
 
     // Gets the statistics manager.
     statistics_manager& get_statistics_manager();
@@ -197,6 +201,7 @@ protected:
     std::unique_ptr<virtual_file_system> m_filesystem;
     std::unique_ptr<statistics_manager> m_statistics;
     std::unique_ptr<asset_manager> m_asset_manager;
+    std::unique_ptr<asset_database> m_asset_database;
 
     ri_interface_type m_render_interface_type = ri_interface_type::dx12;
     window_interface_type m_window_interface_type = window_interface_type::sdl;

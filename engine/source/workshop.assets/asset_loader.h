@@ -83,7 +83,7 @@ protected:
 
     // Helper function, reads the YAML asset descriptor from
     // the filesystem, does basic error processing and return it.
-    bool load_asset_descriptor(const char* path, YAML::Node& node, const char* expected_type, size_t min_version, size_t max_version);
+    static bool load_asset_descriptor(const char* path, YAML::Node& node, const char* expected_type, size_t min_version, size_t max_version);
 
     // Serializes an asset header into or out of the given stream.
     // When reading header the values read are validated to match those in the passed in header

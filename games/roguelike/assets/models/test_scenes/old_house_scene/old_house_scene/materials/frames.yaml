@@ -1,0 +1,14 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: opaque
+
+textures:
+  albedo_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/frame_low_frames_basecolor.yaml"
+  normal_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/frame_low_frames_normal.yaml"
+  metallic_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/frame_low_frames_metallic.yaml"
+  roughness_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/frame_low_frames_roughness.yaml"

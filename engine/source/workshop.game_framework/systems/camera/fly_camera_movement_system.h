@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.engine/ecs/system.h"
+#include "workshop.core/math/vector2.h"
 
 namespace ws {
 
@@ -22,6 +23,14 @@ public:
 private:
     size_t m_uncaptured_mouse_input_delay = 0;
     size_t m_viewport_control_frames = 0;
+
+    bool m_last_mouse_down = false;
+    bool m_mouse_down_started_over_viewport = false;
+    vector2 m_mouse_down_start_location = vector2::zero;
+
+    // How much we have to move the mouse after first pressing button
+    // before capturing the mouse.
+    constexpr inline static float k_movement_capture_threshold = 2.0f;
 
 };
 

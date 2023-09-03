@@ -10,7 +10,8 @@ namespace ws {
 enum class editor_window_layout
 {
     top,
-    bottom,
+    bottom_left,
+    bottom_right,
     left,
     right
 };

@@ -29,7 +29,9 @@
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
 #include "workshop.renderer/assets/model/model_loader.h"
+#include "workshop.renderer/assets/model/model_importer.h"
 #include "workshop.renderer/assets/texture/texture_loader.h"
+#include "workshop.renderer/assets/texture/texture_importer.h"
 #include "workshop.renderer/assets/material/material_loader.h"
 
 #include "workshop.render_interface/ri_interface.h"
@@ -300,6 +302,9 @@ result<void> renderer::register_asset_loaders()
     m_asset_manager.register_loader(std::make_unique<model_loader>(get_render_interface(), *this, m_asset_manager));
     m_asset_manager.register_loader(std::make_unique<material_loader>(get_render_interface(), *this, m_asset_manager));
     m_asset_manager.register_loader(std::make_unique<texture_loader>(get_render_interface(), *this));
+
+    m_asset_manager.register_importer(std::make_unique<model_importer>(get_render_interface(), *this, m_asset_manager));
+    m_asset_manager.register_importer(std::make_unique<texture_importer>(get_render_interface(), *this, m_asset_manager));
 
     return true;
 }

@@ -121,6 +121,8 @@ SET(SOURCES
     "assets/model/model.cpp"
     "assets/model/model_loader.h"
     "assets/model/model_loader.cpp"
+    "assets/model/model_importer.h"
+    "assets/model/model_importer.cpp"
     
     "assets/material/material.h"
     "assets/material/material.cpp"
@@ -131,6 +133,8 @@ SET(SOURCES
     "assets/texture/texture.cpp"
     "assets/texture/texture_loader.h"
     "assets/texture/texture_loader.cpp"
+    "assets/texture/texture_importer.h"
+    "assets/texture/texture_importer.cpp"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

@@ -15,6 +15,9 @@ SET(SOURCES
     "editor/editor_main_menu.h"
     "editor/editor_window.cpp"
     "editor/editor_window.h"
+    
+    "editor/windows/editor_assets_window.cpp"
+    "editor/windows/editor_assets_window.h"
     "editor/windows/editor_loading_window.cpp"
     "editor/windows/editor_loading_window.h"
     "editor/windows/editor_log_window.cpp"

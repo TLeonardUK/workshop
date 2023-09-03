@@ -1,0 +1,14 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: opaque
+
+textures:
+  albedo_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/bathtube_low_bathtube_basecolor.yaml"
+  normal_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/bathtube_low_bathtube_normal.yaml"
+  metallic_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/bathtube_low_bathtube_metallic.yaml"
+  roughness_texture: "data:models/test_scenes/old_house_scene/old_house_scene/textures/bathtube_low_bathtube_roughness.yaml"

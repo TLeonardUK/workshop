@@ -43,13 +43,16 @@ public:
     virtual bool modified_time(const char* path, virtual_file_system_time_point& timepoint) = 0;
 
     // Lists all the files or directories that exist in a given path.
-    virtual std::vector<std::string> list(const char* path, virtual_file_system_path_type type) = 0;
+    virtual std::vector<std::string> list(const char* path, virtual_file_system_path_type type, bool recursive) = 0;
 
     // Gets the time a file was modified.
     virtual std::unique_ptr<virtual_file_system_watcher> watch(const char* path, virtual_file_system_watcher::callback_t callback) = 0;
 
     // Invokes any pending callbacks for paths that are being watched via watch(). 
     virtual void raise_watch_events() = 0;
+
+    // Attempts to get the disk location of the given path, returns true if a disk location was resolved for it.
+    virtual bool get_disk_location(const char* path, std::string& output_path) = 0;
 
 
 };

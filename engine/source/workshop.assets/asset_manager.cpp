@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.assets/asset_manager.h"
 #include "workshop.assets/asset_loader.h"
+#include "workshop.assets/asset_importer.h"
 #include "workshop.assets/asset_cache.h"
 #include "workshop.assets/asset.h"
 #include "workshop.core/debug/debug.h"
@@ -115,6 +116,62 @@ void asset_manager::unregister_loader(loader_id id)
     {
         m_loaders.erase(iter);
     }
+}
+
+asset_manager::importer_id asset_manager::register_importer(std::unique_ptr<asset_importer>&& loader)
+{
+    std::scoped_lock lock(m_importers_mutex);
+
+    registered_importer handle;
+    handle.importer = std::move(loader);
+    handle.id = m_next_importer_id++;
+    m_importers.push_back(std::move(handle));
+
+    return handle.id;
+}
+
+void asset_manager::unregister_importer(importer_id id)
+{
+    std::scoped_lock lock(m_importers_mutex);
+
+    auto iter = std::find_if(m_importers.begin(), m_importers.end(), [id](const registered_importer& handle) {
+        return handle.id == id;
+    });
+
+    if (iter != m_importers.end())
+    {
+        m_importers.erase(iter);
+    }
+}
+
+std::vector<asset_importer*> asset_manager::get_asset_importers()
+{
+    std::scoped_lock lock(m_importers_mutex);
+
+    std::vector<asset_importer*> ret;
+
+    for (auto& ptr : m_importers)
+    {
+        ret.push_back(ptr.importer.get());
+    }
+
+    return ret;
+}
+
+asset_importer* asset_manager::get_importer_for_extension(const char* extension)
+{
+    std::scoped_lock lock(m_importers_mutex);
+
+    for (auto& ptr : m_importers)
+    {
+        std::vector<std::string> extensions = ptr.importer->get_supported_extensions();
+        if (std::find(extensions.begin(), extensions.end(), extension) != extensions.end())
+        {
+            return ptr.importer.get();
+        }
+    }
+
+    return nullptr;
 }
 
 asset_manager::cache_id asset_manager::register_cache(std::unique_ptr<asset_cache>&& cache)

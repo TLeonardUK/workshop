@@ -46,7 +46,8 @@ void bounds_system::step(const frame_time& time)
         }
 
         if (transform->generation != bounds->last_transform_generation ||
-            mesh->model.get_version() != bounds->last_model_version)
+            mesh->model.get_version() != bounds->last_model_version ||
+            mesh->model.get_hash() != bounds->last_model_hash)
         {
             bounds->local_bounds = obb(mesh->model->geometry->bounds, matrix4::identity);
             bounds->world_bounds = obb(mesh->model->geometry->bounds, transform->local_to_world);

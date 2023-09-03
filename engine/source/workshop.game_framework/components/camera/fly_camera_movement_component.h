@@ -54,10 +54,14 @@ public:
     BEGIN_REFLECT(fly_camera_movement_component, "Fly Camera Movement", component, reflect_class_flags::none)
         REFLECT_FIELD(sensitivity,              "Sensitivity",              "How much the mouse delta is scaled to determine angular speed.")
         REFLECT_FIELD(speed,                    "Speed",                    "Speed of camera movement in units per second.")
+        REFLECT_FIELD(zoom_speed,               "Zoom Speed",               "Speed of camera movement for each mouse wheel rotation.")
+        REFLECT_FIELD(pan_speed,                "Pan Speed",                "Speed of camera movement when panning with uncaptured mouse movement.")
         REFLECT_FIELD(max_vertical_angle,       "Max Vertical Angle",       "Determines the maximum vertical angle of the camera to avoid the camera looping around on its rotations.\n\nThis is represented as a dot product value.\n1 allows the camera to go fully vertical, 0.5 allows a max 45 degree angle, etc.")
 
         REFLECT_CONSTRAINT_RANGE(sensitivity,           0.0f, 100000.0f)
         REFLECT_CONSTRAINT_RANGE(speed,                 0.0f, 100000.0f)
+        REFLECT_CONSTRAINT_RANGE(zoom_speed,            0.0f, 100000.0f)
+        REFLECT_CONSTRAINT_RANGE(pan_speed,             0.0f, 100000.0f)
         REFLECT_CONSTRAINT_RANGE(max_vertical_angle,    0.0f, 1.0f)
     END_REFLECT()
 

@@ -8,6 +8,7 @@
 #include "workshop.core/perf/timer.h"
 #include "workshop.core/utils/event.h"
 #include "workshop.assets/asset_loader.h"
+#include "workshop.assets/asset_importer.h"
 #include "workshop.assets/asset_cache.h"
 
 #include <thread>
@@ -124,6 +125,9 @@ public:
     // given over stability of the hash or of collisions.
     size_t get_hash() const;
 
+    // Gets the manager that handles this assets loading.
+    asset_manager* get_asset_manager();
+
     // Gets the asset or asserts if not loaded.
     asset_type* get();
 
@@ -170,6 +174,7 @@ class asset_manager
 public:
 
     using loader_id = size_t;
+    using importer_id = size_t;
     using cache_id = size_t;
 
     inline static std::string k_compiled_asset_extension = ".compiled";
@@ -223,6 +228,21 @@ public:
     // This is mostly here for debugging, its not fast and will block loading, so don't use it anywhere time critical.
     using visit_callback_t = std::function<void(asset_state* state)>;
     void visit_assets(visit_callback_t callback);
+
+    // Registers a new importer for the given asset type.
+    // An id to uniquely identify this importer is returned, this can be later used to unregister it.
+    importer_id register_importer(std::unique_ptr<asset_importer>&& loader);
+
+    // Unregisters a previously registered importer.
+    // Ensure the importer is not being used.
+    void unregister_importer(importer_id id);
+
+    // Gets a list of all asset importers. Be careful as the pointers can be unregistered
+    // and become stale, so do not hold them at any point unregister_importer could be called.
+    std::vector<asset_importer*> get_asset_importers();
+
+    // Finds and returns the first registered importer that supports the given extension.
+    asset_importer* get_importer_for_extension(const char* extension);
 
 protected:
     template <typename asset_type>
@@ -335,6 +355,31 @@ private:
         loader_id id;
         std::unique_ptr<asset_loader> loader;
     };
+    
+    struct registered_importer
+    {
+        registered_importer()
+            : id(0)
+            , importer(nullptr)
+        {
+        }
+
+        registered_importer(registered_importer&& handle)
+            : id(handle.id)
+            , importer(std::move(handle.importer))
+        {
+        }
+
+        registered_importer& operator=(registered_importer&& other)
+        {
+            id = other.id;
+            importer = std::move(other.importer);
+            return *this;
+        }
+
+        importer_id id;
+        std::unique_ptr<asset_importer> importer;
+    };
 
     struct registered_cache
     {
@@ -364,6 +409,10 @@ private:
     std::recursive_mutex m_loaders_mutex; // TODO: Change to shared_mutex
     std::vector<registered_loader> m_loaders;
     size_t m_next_loader_id = 0;
+
+    std::recursive_mutex m_importers_mutex; // TODO: Change to shared_mutex
+    std::vector<registered_importer> m_importers;
+    size_t m_next_importer_id = 0;
 
     std::mutex m_states_mutex;
     std::condition_variable m_states_convar;
@@ -566,6 +615,12 @@ inline size_t asset_ptr<asset_type>::get_hash() const
     ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_state));
     ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_asset_manager));
     return hash;
+}
+
+template <typename asset_type>
+inline asset_manager* asset_ptr<asset_type>::get_asset_manager()
+{
+    return m_asset_manager;
 }
 
 template <typename asset_type>

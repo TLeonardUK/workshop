@@ -76,6 +76,12 @@ struct geometry_vertex_stream
 	std::vector<uint8_t> data;
 };
 
+// Represents an individual texture held in a geometry instance.
+struct geometry_texture
+{
+    std::string path;
+};
+
 // Represents an individual material held in a geometry instance.
 struct geometry_material
 {
@@ -84,6 +90,12 @@ struct geometry_material
 
     // Index of this material for easy lookup.
     size_t index;
+
+    // Relevant textures for this material.
+    geometry_texture albedo_texture;
+    geometry_texture normal_texture;
+    geometry_texture metallic_texture;
+    geometry_texture roughness_texture;
 };
 
 // Represents an individual mesh held in a geometry instance.
@@ -178,7 +190,7 @@ public:
 
     // Attempts to load the geometry data from the given file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
-    static std::unique_ptr<geometry> load(const char* path, const vector3& scale = vector3::one);
+    static std::unique_ptr<geometry> load(const char* path, const vector3& scale = vector3::one, bool high_quality = true);
 
 public:
 

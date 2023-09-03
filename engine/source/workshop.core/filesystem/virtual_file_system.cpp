@@ -8,6 +8,7 @@
 #include "workshop.core/containers/string.h"
 
 #include <algorithm>
+#include <filesystem>
 
 namespace ws {
 
@@ -225,6 +226,17 @@ bool virtual_file_system::create_directory(const char* path)
     return result;
 }
 
+std::string virtual_file_system::get_disk_location(const char* path)
+{
+    std::string result = "";
+
+    iterate_handlers(path, [&result](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        return handler->get_disk_location(filename.c_str(), result);
+    });
+
+    return result;
+}
+
 bool virtual_file_system::rename(const char* source, const char* destination)
 {
     bool result = false;
@@ -293,15 +305,27 @@ bool virtual_file_system::modified_time(const char* path, virtual_file_system_ti
     return result;
 }
 
-std::vector<std::string> virtual_file_system::list(const char* path, virtual_file_system_path_type type)
+std::vector<std::string> virtual_file_system::list(const char* path, virtual_file_system_path_type type, bool filename_only, bool recursive)
 {
     std::vector<std::string> result;
     
-    iterate_handlers(path, [&result, &type](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
-        std::vector<std::string> files = handler->list(filename.c_str(), type);
+    iterate_handlers(path, [&result, &type, filename_only, recursive](const std::string& protocol, const std::string& filename, virtual_file_system_handler* handler) -> bool {
+        std::vector<std::string> files = handler->list(filename.c_str(), type, recursive);
         for (std::string& file : files)
         {
             std::string file_with_protocol = protocol + ":" + file;
+            if (filename_only)
+            {
+                size_t index = file.find_last_of('/');
+                if (index != std::string::npos)
+                {
+                    file_with_protocol = file.substr(index + 1);
+                }
+                else
+                {
+                    file_with_protocol = file;
+                }
+            }
             if (std::find(result.begin(), result.end(), file_with_protocol) == result.end())
             {
                 result.push_back(file_with_protocol);

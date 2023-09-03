@@ -144,6 +144,12 @@ bool virtual_file_system_disk_handler::create_directory(const char* path)
     return true;
 }
 
+bool virtual_file_system_disk_handler::get_disk_location(const char* path, std::string& output_path)
+{
+    output_path = (m_root + "/" + path);
+    return true;
+}
+
 bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_file_system_time_point& timepoint)
 {
     std::filesystem::path fspath(m_root + "/" + path);
@@ -158,7 +164,7 @@ bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_f
     return false;
 }
 
-std::vector<std::string> virtual_file_system_disk_handler::list(const char* path, virtual_file_system_path_type type)
+std::vector<std::string> virtual_file_system_disk_handler::list(const char* path, virtual_file_system_path_type type, bool recursive)
 {
     std::vector<std::string> result;
 
@@ -166,25 +172,39 @@ std::vector<std::string> virtual_file_system_disk_handler::list(const char* path
 
     if (std::filesystem::is_directory(fspath))
     {
-        for (auto iter = std::filesystem::recursive_directory_iterator(fspath); iter != std::filesystem::recursive_directory_iterator(); iter++)
-        {
-            std::string abs_filename = std::string(path) + "/" + std::filesystem::relative(iter->path(), fspath).string();
+        auto handle_path = [path, type, recursive, &result, &fspath](const std::filesystem::path& in_path, bool is_dir, bool is_file) {
+
+            std::string abs_filename = std::string(path) + "/" + std::filesystem::relative(in_path, fspath).string();
             std::string normalized_filename = virtual_file_system::normalize(abs_filename.c_str());
 
             if (static_cast<int>(type) & static_cast<int>(virtual_file_system_path_type::directory))
             {
-                if (iter->is_directory())
+                if (is_dir)
                 {
                     result.push_back(normalized_filename);
                 }
             }
             else if (static_cast<int>(type) & static_cast<int>(virtual_file_system_path_type::file))
             {
-                if (iter->is_regular_file() ||
-                    iter->is_symlink())
+                if (is_file)
                 {
                     result.push_back(normalized_filename);
                 }
+            }
+        };
+
+        if (recursive)
+        {
+            for (auto iter = std::filesystem::recursive_directory_iterator(fspath); iter != std::filesystem::recursive_directory_iterator(); iter++)
+            {
+                handle_path(iter->path(), iter->is_directory(), iter->is_regular_file() || iter->is_symlink());
+            }
+        }
+        else
+        {
+            for (auto iter = std::filesystem::directory_iterator(fspath); iter != std::filesystem::directory_iterator(); iter++)
+            {
+                handle_path(iter->path(), iter->is_directory(), iter->is_regular_file() || iter->is_symlink());
             }
         }
     }

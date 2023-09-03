@@ -34,6 +34,9 @@ SET(SOURCES
     "ecs/object_manager.cpp"
     "ecs/object_manager.h"
     
+    "assets/asset_database.cpp"
+    "assets/asset_database.h"
+    
     "presentation/presenter.cpp"
     "presentation/presenter.h"
 )

@@ -41,4 +41,34 @@ size_t get_pagefile_usage()
     return counters.QuotaPagedPoolUsage;
 }
 
+void message_dialog(const char* text, message_dialog_type type)
+{
+    std::string caption = "";
+    UINT native_type = 0;
+
+    switch (type)
+    {
+        case message_dialog_type::error:
+        {
+            caption = "Error";
+            native_type = MB_ICONERROR | MB_OK;
+            break;
+        }
+        case message_dialog_type::warning:
+        {
+            caption = "Warning";
+            native_type = MB_ICONWARNING | MB_OK;
+            break;
+        }
+        case message_dialog_type::message:
+        {
+            caption = "Message";
+            native_type = MB_ICONINFORMATION | MB_OK;
+            break;
+        }
+    }
+
+    MessageBoxA(nullptr, text, caption.c_str(), native_type);
+}
+
 }; // namespace workshop

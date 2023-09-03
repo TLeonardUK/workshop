@@ -51,4 +51,16 @@ size_t get_memory_usage();
 // Gets the amount, in bytes,  of the page file currently being used.
 size_t get_pagefile_usage();
 
+// Type of message dialog to display when calling message_dialog, this dictates
+// the title/icon/etc that is shown in the dialog.
+enum class message_dialog_type
+{
+    error,
+    warning,
+    message
+};
+
+// Shows a message to the user with the native message dialog.
+void message_dialog(const char* text, message_dialog_type type);
+
 }; // namespace ws::math

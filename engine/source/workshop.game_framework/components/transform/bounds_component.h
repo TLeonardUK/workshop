@@ -36,6 +36,7 @@ protected:
 
     // Tracks the last model used for calculating bounds.
     size_t last_model_version = 0;
+    size_t last_model_hash = 0;
 
     // True if bounds have been calculated and ready for use. 
     bool is_valid = false;

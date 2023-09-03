@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
+#include "workshop.engine/assets/asset_database.h"
 
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/perf/profile.h"
@@ -193,6 +194,11 @@ renderer& engine::get_renderer()
 asset_manager& engine::get_asset_manager()
 {
     return *m_asset_manager.get();
+}
+
+asset_database& engine::get_asset_database()
+{
+    return *m_asset_database.get();
 }
 
 statistics_manager& engine::get_statistics_manager()
@@ -408,11 +414,14 @@ result<void> engine::create_asset_manager(init_list& list)
     m_asset_manager = std::make_unique<asset_manager>(get_platform(), get_config());
     m_asset_manager->register_cache(std::make_unique<asset_cache_disk>("local-cache", "cache", false));
 
+    m_asset_database = std::make_unique<asset_database>();
+
     return true;
 }
 
 result<void> engine::destroy_asset_manager()
 {
+    m_asset_database = nullptr;
     m_asset_manager = nullptr;
 
     return true;

@@ -79,6 +79,10 @@ void render_light_probe_grid::recalculate_probes()
     m_height = static_cast<size_t>(floor(bounds.y / m_density));
     m_depth = static_cast<size_t>(floor(bounds.z / m_density));
 
+    m_width = std::min(m_width, k_max_dimension);
+    m_height = std::min(m_height, k_max_dimension);
+    m_depth = std::min(m_depth, k_max_dimension);
+
     m_probes.resize(m_width * m_height * m_depth);
 
     // Create the buffer that will hold our SH values.
