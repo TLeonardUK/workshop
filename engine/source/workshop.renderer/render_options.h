@@ -106,7 +106,7 @@ public:
 	// ================================================================================================
 
 	// Determines over how large and area we sample texels to determine occlusion.
-	float ssao_sample_radius = 50.0f;
+	float ssao_sample_radius = 10.0f;
 
 	// Determines to what power we raise the output AO, the higher the more contrast 
 	// and stronger the SSAO effect is.

@@ -107,21 +107,25 @@ float3(0.0498, -0.0447, 0.0500),
 
 ssao_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment f = read_gbuffer(input.uv * uv_scale);
+    float2 input_uv = input.uv * uv_scale;
+
+    gbuffer_fragment f = read_gbuffer(input_uv);
 
     float2 noise_scale = float2(view_dimensions.x / 4.0f, view_dimensions.y / 4.0f);
     float3 view_space_normal = normalize(mul(view_matrix, float4(f.world_normal, 0.0f))).xyz;
     float3 view_space_position = mul(view_matrix, float4(f.world_position, 1.0f)).xyz;
-    float3 random_vector = noise_texture.Sample(noise_texture_sampler, input.uv * uv_scale * noise_scale).xyz;
+    float3 random_vector = noise_texture.Sample(noise_texture_sampler, input_uv * noise_scale).xyz;
 
     float3 view_space_tangent = normalize(random_vector - view_space_normal * dot(random_vector, view_space_normal));
     float3 view_space_bitangent = cross(view_space_normal, view_space_tangent);
 
     float3x3 tbn = float3x3(view_space_tangent, view_space_bitangent, view_space_normal);
 
-    const float bias = 0.025f;
+    const float k_bias = 0.025f;
+    const float k_max_uv_delta = (1.0f / view_dimensions.x) * ssao_radius * 3.0f;
 
     float ao = 0.0f;
+    float on_screen_samples = 0.0f;
     for (int i = 0; i < k_kernel_size; i++)
     {
         // Select a view space sample position from the random rotation kernel.
@@ -136,6 +140,14 @@ ssao_output pshader(fullscreen_pinput input)
         clip_space.y = -clip_space.y * 0.5f + 0.5f;          // 0...1 range
         float2 view_uv = clip_space.xy;
 
+        // Clamp distance sampled so we don't end up thrashing the texture cache by sampling very distance
+        // uvs when close to geometry.
+        float2 uv_offset_direct = (view_uv - input_uv);
+        if (length(uv_offset_direct) > k_max_uv_delta)
+        {
+            view_uv = input_uv + (normalize(uv_offset_direct) * k_max_uv_delta);
+        }
+
         // If sampling point is offscreen discard this sample otherwise we get halos around
         // the edge of the screen when getting close to objects.
         float on_screen_multiplier = (view_uv.x >= 0.0f && view_uv.y >= 0.0f && view_uv.x < 1.0f && view_uv.y < 1.0f);
@@ -147,10 +159,11 @@ ssao_output pshader(fullscreen_pinput input)
         float n_dot_s = max(dot(view_space_normal, sample_dir), 0.0f);
 
         float range_check = smoothstep(0.0f, 1.0f, ssao_radius / abs(view_space_position.z - sample_depth));
-        ao += range_check * (sample_depth + bias > sample_pos.z ? 0.0f : 1.0f) * n_dot_s * on_screen_multiplier;
+        ao += range_check * (sample_depth + k_bias > sample_pos.z ? 0.0f : 1.0f) * n_dot_s * on_screen_multiplier;
+        on_screen_samples += on_screen_multiplier;
     }
 
-    ao = 1.0f - (ao / k_kernel_size);
+    ao = 1.0f - (ao / on_screen_samples);
     ao = saturate(pow(ao, ssao_power));
 
     ssao_output output;
