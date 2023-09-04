@@ -10,6 +10,7 @@
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/math/math.h"
 #include "workshop.core/async/async.h"
+#include "workshop.core/utils/time.h"
 #include "thirdparty/bc7enc/rgbcx.h"
 #include "thirdparty/bc7enc/bc7enc.h"
 #include "thirdparty/bc7enc/bc7decomp.h"
@@ -1047,6 +1048,8 @@ std::vector<std::unique_ptr<pixmap>> pixmap::load(const char* path)
     std::vector<std::unique_ptr<pixmap>> result;
 
     std::string extension = virtual_file_system::get_extension(path);
+
+    // We can use STB for png loading, but its considerably slower.
     if (_stricmp(extension.c_str(), ".png") == 0)
     {
         result = pixmap_png_loader::load(buffer);

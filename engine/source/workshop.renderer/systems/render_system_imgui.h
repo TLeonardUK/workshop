@@ -14,6 +14,8 @@
 #include "workshop.core/math/vector4.h"
 #include "workshop.core/math/rect.h"
 
+#include "thirdparty/imgui/imgui.h"
+
 namespace ws {
 
 class renderer;
@@ -28,9 +30,6 @@ class render_system_imgui
 {
 public:
 
-    // Identifier used to reference a registered texture in a imgui draw command.
-    using texture_id = size_t;
-
     // Should match imgui_vertex in shader.
 #pragma pack(push, 1)
     struct vertex
@@ -43,7 +42,7 @@ public:
 
     struct draw_command
     {
-        texture_id texture;
+        ImTextureID texture;
 
         vector2 display_size;
         vector2 display_pos;
@@ -60,21 +59,16 @@ public:
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
     virtual void step(const render_world_state& state) override;
 
-    // Registers a texture that can be used in imgui rendering.
-    texture_id register_texture(std::unique_ptr<ri_texture> texture, bool default_texture);
-
-    // Unregisters a texture previously registered for imgui rendering.
-    void unregister_texture(texture_id id);
+    // Sets the default imgui texture.
+    void set_default_texture(std::unique_ptr<ri_texture> texture);
 
     // Updates the render data we will use to draw to screen.
     void update_draw_data(const std::vector<draw_command>& commands, const std::vector<vertex>& vertices, const std::vector<uint16_t>& indices);
 
 private:
     
-    std::unordered_map<texture_id, std::unique_ptr<ri_texture>> m_textures;
-    texture_id m_default_texture;
-    texture_id m_next_texture_id = 1;
-
+    std::unique_ptr<ri_texture> m_default_texture;
+    
     std::vector<draw_command> m_draw_commands;
     std::vector<vertex> m_draw_vertices;
     std::vector<uint16_t> m_draw_indices;

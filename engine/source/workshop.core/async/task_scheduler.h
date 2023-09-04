@@ -255,7 +255,7 @@ private:
 
 private:
 
-    inline static constexpr size_t k_max_tasks = 1024 * 64;
+    inline static constexpr size_t k_max_tasks = 1'000'000;
 
     std::mutex m_task_allocation_mutex;
     std::array<task_state, k_max_tasks> m_tasks;

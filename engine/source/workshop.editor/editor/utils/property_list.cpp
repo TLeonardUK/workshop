@@ -10,9 +10,10 @@
 
 namespace ws {
 
-property_list::property_list(void* obj, reflect_class* reflection_class)
+property_list::property_list(void* obj, reflect_class* reflection_class, asset_database& ass_database)
     : m_context(obj)
     , m_class(reflection_class)
+    , m_asset_database(ass_database)
 {
 }
 
@@ -119,6 +120,42 @@ bool property_list::draw_edit(reflect_field* field, std::string& value)
     return ret;
 }
 
+void property_list::draw_preview(const char* asset_path)
+{
+    ImColor frame_color = ImGui::GetStyleColorVec4(ImGuiCol_Border);
+
+    ImVec2 preview_min = ImGui::GetCursorScreenPos();
+    ImVec2 preview_max = ImVec2(
+        preview_min.x + k_preview_size,
+        preview_min.y + k_preview_size
+    );
+
+    ImVec2 thumbnail_min = ImVec2(
+        preview_min.x + k_preview_padding,
+        preview_min.y + k_preview_padding
+    );
+    ImVec2 thumbnail_max = ImVec2(
+        preview_max.x - k_preview_padding,
+        preview_max.y - k_preview_padding
+    );
+
+    ImGui::Dummy(ImVec2(k_preview_size, k_preview_size));
+
+    asset_database_entry* entry = m_asset_database.get(asset_path);
+    asset_database::thumbnail* thumb = m_asset_database.get_thumbnail(entry);
+    if (thumb)
+    {
+        ImTextureID texture = thumb->thumbnail_texture.get();
+        ImGui::GetWindowDrawList()->AddImage(texture, thumbnail_min, thumbnail_max, ImVec2(0, 0), ImVec2(1, 1), ImColor(1.0f, 1.0f, 1.0f, 0.5f));
+    }
+    else
+    {
+        ImGui::GetWindowDrawList()->AddRectFilled(thumbnail_min, thumbnail_max, ImColor(0.0f, 0.0f, 0.0f, 0.5f));
+    }
+
+    ImGui::GetWindowDrawList()->AddRect(preview_min, preview_max, frame_color);
+}
+
 bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
 {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
@@ -129,7 +166,8 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
     bool ret = false;
 
     ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags_ReadOnly);
-    
+    draw_preview(value.get_path().c_str());
+
     if (ImGui::BeginDragDropTarget())
     {
         const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("asset_model", ImGuiDragDropFlags_None);

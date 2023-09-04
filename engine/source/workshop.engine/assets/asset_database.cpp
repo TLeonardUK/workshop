@@ -6,8 +6,11 @@
 #include "workshop.core/containers/string.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/stream.h"
+#include "workshop.core/async/async.h"
+#include "workshop.core/async/task_scheduler.h"
 #include "workshop.assets/asset_loader.h"
 #include "workshop.assets/asset_manager.h"
+#include "workshop.render_interface/ri_texture_compiler.h"
 
 #pragma optimize("", off)
 
@@ -104,7 +107,7 @@ std::vector<asset_database_entry*> asset_database_entry::get_directories()
     for (auto& ptr : m_directories)
     {
         asset_database_entry* entry = ptr.get();
-        entry->update_if_needed();
+        //entry->update_if_needed();
 
         ret.push_back(entry);
     }
@@ -188,22 +191,19 @@ asset_database_entry* asset_database_entry::get_file(const char* name, bool can_
     return nullptr;
 }
 
-asset_database::asset_database()
+asset_database::asset_database(asset_manager* ass_manager)
     : m_root(this, nullptr)
+    , m_asset_manager(ass_manager)
 {
-    m_thread = std::make_unique<std::thread>([this]() {
-        metadata_thread();
-    });
 }
 
 asset_database::~asset_database()
 {
-    {
-        std::unique_lock lock(m_metadata_mutex);
-        m_shutting_down = true;
-        m_metadata_convar.notify_all();
-    }
-    m_thread->join();
+}
+
+void asset_database::set_render_interface(ri_interface* value)
+{
+    m_render_interface = value;
 }
 
 void asset_database::update_file_metadata(asset_database_entry* file)
@@ -211,7 +211,7 @@ void asset_database::update_file_metadata(asset_database_entry* file)
     if (virtual_file_system::get_extension(file->get_path()) == asset_manager::k_asset_extension)
     {
         file->m_metadata_query_in_progress = true;
-        gather_metadata(file);
+        gather_metadata(file, false);
     }
 }
 
@@ -299,7 +299,15 @@ void asset_database::update_directory(asset_database_entry* parent, const char* 
         update_file_metadata(entry);
     }
 
-    directory->m_update_in_progress = true;
+    directory->m_update_in_progress = false;
+
+    // Queue up a path watcher to update directory if any changes are needed.
+    if (!directory->m_watcher)
+    {
+        directory->m_watcher = virtual_file_system::get().watch(full_path.c_str(), [directory, full_path](const char* changed_path) {
+            directory->m_has_queried_children = false;
+        });
+    }
 }
 
 asset_database_entry* asset_database::get(asset_database_entry* parent, const char* path, const std::vector<std::string>& fragments)
@@ -352,12 +360,42 @@ asset_database_entry* asset_database::get(const char* path)
 }
 
 
-void asset_database::gather_metadata(asset_database_entry* entry)
+void asset_database::gather_metadata(asset_database_entry* entry, bool get_thumbnail)
 {
-    std::scoped_lock lock(m_metadata_mutex);
+    {
+        std::scoped_lock lock(m_metadata_mutex);
 
-    m_pending_metadata.push_back(entry);
-    m_metadata_convar.notify_all();
+        // Already queued, ignore.
+        auto iter = std::find(m_pending_metadata.begin(), m_pending_metadata.end(), entry);
+        if (iter != m_pending_metadata.end())
+        {
+            return;
+        }
+        
+        m_pending_metadata.push_back(entry);
+    }
+
+    std::string path = entry->get_path();
+
+    async("Generate Metadata", task_queue::loading, [this, path, entry, get_thumbnail]() {
+
+        db_verbose(engine, "Gathering metadata for %s", path.c_str());
+        std::unique_ptr<asset_database_metadata> metadata = generate_metadata(path.c_str(), get_thumbnail);
+
+        // If entry is still queued (eg. it hasn't been destroyed), remove it from the list
+        // and set the metadata on it.
+        {
+            std::unique_lock lock(m_metadata_mutex);
+
+            auto iter = std::find(m_pending_metadata.begin(), m_pending_metadata.end(), entry);
+            if (iter != m_pending_metadata.end())
+            {
+                entry->set_metadata(std::move(metadata));
+                m_pending_metadata.erase(iter);
+            }
+        }
+
+    });
 }
 
 void asset_database::cancel_gather_metadata(asset_database_entry* entry)
@@ -369,11 +407,54 @@ void asset_database::cancel_gather_metadata(asset_database_entry* entry)
     {
         m_pending_metadata.erase(iter);
     }
-
-    m_metadata_convar.notify_all();
 }
 
-std::unique_ptr<asset_database_metadata> asset_database::generate_metadata(const char* path)
+asset_database::thumbnail* asset_database::get_thumbnail(asset_database_entry* entry)
+{
+    std::scoped_lock lock(m_thumbnail_mutex);
+
+    auto iter = m_thumbnail_cache.find(entry->m_path.c_str());
+    if (iter != m_thumbnail_cache.end())
+    {
+        iter->second->unused_frames = 0;
+
+        // An entry in the cache with a null pixmap is to keep 
+        // track of thumbnails that fail to generate, rather than reloading them
+        // constantly.
+        if (!iter->second->thumbnail)
+        {
+            return nullptr;
+        }
+
+        return iter->second.get();
+    }
+    else
+    {
+        gather_metadata(entry, true);
+    }
+
+    return nullptr;
+}
+
+void asset_database::clean_cache()
+{
+    std::scoped_lock lock(m_thumbnail_mutex);
+
+    for (auto iter = m_thumbnail_cache.begin(); iter != m_thumbnail_cache.end() && m_thumbnail_cache.size() > k_thumbnail_capacity; /* empty */)
+    {
+        iter->second->unused_frames++;
+        if (iter->second->unused_frames > k_thumbnail_removal_frames)
+        {
+            iter = m_thumbnail_cache.erase(iter);
+        }
+        else
+        {
+            iter++;
+        }
+    }
+}
+
+std::unique_ptr<asset_database_metadata> asset_database::generate_metadata(const char* path, bool get_thumbnail)
 {
     std::unique_ptr<asset_database_metadata> ret = nullptr;
 
@@ -400,7 +481,14 @@ std::unique_ptr<asset_database_metadata> asset_database::generate_metadata(const
         {
             ret = std::make_unique<asset_database_metadata>();
             ret->descriptor_type = type_node.as<std::string>();
+            ret->path = path;
+
+            if (get_thumbnail)
+            {
+                generate_thumbnail(path, *ret);
+            }
         }
+
     }
     catch (YAML::ParserException& exception)
     {
@@ -411,59 +499,73 @@ std::unique_ptr<asset_database_metadata> asset_database::generate_metadata(const
         db_error(asset, "[%s] (Generating metadata)  Error loading asset file: %s", path, exception.what());
     }
 
-    // TODO: Generate thumbnails.
-
     return ret;
 }
 
-void asset_database::metadata_thread()
+void asset_database::generate_thumbnail(const char* path, asset_database_metadata& metadata)
 {
-    db_set_thread_name("Asset Database Metadata Gather");
+    std::unique_ptr<thumbnail> thumb = std::make_unique<thumbnail>();
 
-    while (!m_shutting_down)
-    {        
-        std::string next_path = "";
-        asset_database_entry* next_asset = nullptr;
-
-        // Find next block of work to do or wait
-        // until the convar is signaled for more work.
+    // Ask loader to generate a thumbnail.
+    asset_loader* loader = m_asset_manager->get_loader_for_descriptor_type(metadata.descriptor_type.c_str());
+    if (loader)
+    {
+        // Grab the cache key of the asset to use for indexing into the thumbnail cache.
+        asset_cache_key cache_key;
+        if (!loader->get_cache_key(path, m_asset_manager->get_asset_platform(), m_asset_manager->get_asset_config(), asset_flags::none, cache_key, {}))
         {
-            std::unique_lock lock(m_metadata_mutex);
-            if (m_shutting_down)
-            {
-                break;
-            }
+            db_error(asset, "[%s] Failed to calculate cache key for asset.", path);
+            return;
+        }
 
-            if (!m_pending_metadata.empty())
+        // Look in thumbnail cache for key.
+        std::string cache_path = string_format("thumbnail-cache:%s.png", cache_key.hash().c_str());
+        if (virtual_file_system::get().exists(cache_path.c_str()))
+        {
+            auto loaded_pixmaps = pixmap::load(cache_path.c_str());
+            if (!loaded_pixmaps.empty())
             {
-                next_asset = m_pending_metadata.front();       
-                next_path = next_asset->get_path();
+                thumb->thumbnail = std::move(loaded_pixmaps[0]);
             }
-            else
+        }
+        // If it doesn't exist in cache, regenerate it.
+        else
+        {
+            thumb->thumbnail = loader->generate_thumbnail(path, k_thumbnail_size);
+            if (thumb->thumbnail)
             {
-                m_metadata_convar.wait(lock);
+                thumb->thumbnail->save(cache_path.c_str());
             }
         }
 
-        // Process the current block of work.
-        if (next_asset != nullptr)
+        // Generate the texture from the thumbnail pix.
+        if (thumb->thumbnail)
         {
-            db_verbose(engine, "Gathering metadata for %s", next_path.c_str());
+            ri_texture::create_params params;
+            params.width = k_thumbnail_size;
+            params.height = k_thumbnail_size;
+            params.dimensions = ri_texture_dimension::texture_2d;
+            params.format = ri_texture_format::R8G8B8A8;
 
-            std::unique_ptr<asset_database_metadata> metadata = generate_metadata(next_path.c_str());
-            
-            // If entry is still queued (eg. it hasn't been destroyed), remove it from the list
-            // and set the metadata on it.
-            {
-                std::unique_lock lock(m_metadata_mutex);
+            std::vector<ri_texture_compiler::texture_face> faces;
+            ri_texture_compiler::texture_face& face = faces.emplace_back();
+            face.mips.push_back(thumb->thumbnail.get());
 
-                if (!m_pending_metadata.empty() && m_pending_metadata[0] == next_asset)
-                {
-                    next_asset->set_metadata(std::move(metadata));
-                    m_pending_metadata.erase(m_pending_metadata.begin());
-                }
-            }
+            std::vector<uint8_t> texture_data;
+            std::unique_ptr<ri_texture_compiler> compiler = m_render_interface->create_texture_compiler();
+            compiler->compile(params.dimensions, params.width, params.height, 1, faces, texture_data);
+
+            params.data = std::span<uint8_t>(texture_data.data(), texture_data.size());
+
+            thumb->thumbnail_texture = m_render_interface->create_texture(params, string_format("Thumbnail: %s", path).c_str());
         }
+    }
+
+    // Insert resulting thumbnail into cache. Insert it regardless of if we produced a thumbnail or
+    // not so we can avoid constantly trying to reload it.
+    {
+        std::scoped_lock lock(m_thumbnail_mutex);
+        m_thumbnail_cache[metadata.path] = std::move(thumb);
     }
 }
 

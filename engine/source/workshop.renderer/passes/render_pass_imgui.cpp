@@ -43,8 +43,14 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
                 continue;
             }
 
+            ri_texture* texture = static_cast<ri_texture*>(cmd.texture);
+            if (texture == nullptr)
+            {
+                texture = default_texture;
+            }
+
             ri_param_block* imgui_params = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "imgui_params");
-            imgui_params->set("color_texture", *default_texture);
+            imgui_params->set("color_texture", *texture);
             imgui_params->set("color_sampler", *renderer.get_default_sampler(default_sampler_type::color));
             imgui_params->set("projection_matrix", matrix4::orthographic(
                 cmd.display_pos.x,

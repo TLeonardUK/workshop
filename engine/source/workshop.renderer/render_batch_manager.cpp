@@ -99,6 +99,15 @@ void render_batch_manager::unregister_instance(const render_batch_instance& inst
 {
     render_batch* batch = find_or_create_batch(instance.key);
     batch->remove_instance(instance);
+
+    if (batch->get_instances().empty())
+    {
+        auto iter = m_batches.find(instance.key);
+        if (iter != m_batches.end())
+        {
+            m_batches.clear();
+        }
+    }
 }
 
 std::vector<render_batch*> render_batch_manager::get_batches(material_domain domain, render_batch_usage usage)

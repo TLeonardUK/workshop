@@ -92,6 +92,16 @@ asset_manager::~asset_manager()
     m_load_thread = std::thread();
 }
 
+platform_type asset_manager::get_asset_platform()
+{
+    return m_asset_platform;
+}
+
+config_type asset_manager::get_asset_config()
+{
+    return m_asset_config;
+}
+
 asset_manager::loader_id asset_manager::register_loader(std::unique_ptr<asset_loader>&& loader)
 {
     std::scoped_lock lock(m_loaders_mutex);
@@ -216,6 +226,22 @@ asset_loader* asset_manager::get_loader_for_type(const std::type_info* id)
     return nullptr;
 }
 
+asset_loader* asset_manager::get_loader_for_descriptor_type(const char* type)
+{
+    std::scoped_lock lock(m_loaders_mutex);
+
+    auto iter = std::find_if(m_loaders.begin(), m_loaders.end(), [type](const registered_loader& handle){
+        return strcmp(handle.loader->get_descriptor_type(), type) == 0;
+    });
+
+    if (iter != m_loaders.end())
+    {
+        return iter->loader.get();
+    }
+
+    return nullptr;
+}
+
 void asset_manager::drain_queue()
 {
     std::unique_lock lock(m_states_mutex);
@@ -227,8 +253,9 @@ void asset_manager::drain_queue()
 }
 
 void asset_manager::increment_ref(asset_state* state, bool state_lock_held)
-{
+{  
     size_t result = state->references.fetch_add(1);
+
     if (result == 0)
     {
         if (state_lock_held)
@@ -238,13 +265,14 @@ void asset_manager::increment_ref(asset_state* state, bool state_lock_held)
         else
         {
             request_load(state);
-        }
+        } 
     }
 }
 
 void asset_manager::decrement_ref(asset_state* state, bool state_lock_held)
 {
     size_t result = state->references.fetch_sub(1);
+
     if (result == 1)
     {
         if (state_lock_held)
@@ -597,7 +625,7 @@ void asset_manager::begin_unload(asset_state* state)
                     db_assert(iter != dependent->depended_on_by.end());
 
                     // Release the ref the parent gained on the child in create_asset_state.
-                    decrement_ref(*iter, true);
+                    decrement_ref(dependent, true);
 
                     dependent->depended_on_by.erase(iter);
                 }

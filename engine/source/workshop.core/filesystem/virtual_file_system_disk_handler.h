@@ -25,6 +25,7 @@ public:
     virtual_file_system_disk_handler* m_handler;
     callback_t m_callback;
     std::string m_path;
+    bool m_is_directory = false;
 
 };
 

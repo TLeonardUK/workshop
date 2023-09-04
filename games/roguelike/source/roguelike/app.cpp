@@ -136,7 +136,7 @@ ws::result<void> rl_game_app::start()
     obj_manager.add_component<bounds_component>(mesh_object);
     obj_manager.add_component<static_mesh_component>(mesh_object);
     static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/sponza/sponza.yaml", 0));
-
+    
     mesh_object = obj_manager.create_object("sponza curtains");
     obj_manager.add_component<transform_component>(mesh_object);
     obj_manager.add_component<bounds_component>(mesh_object);
@@ -155,29 +155,11 @@ ws::result<void> rl_game_app::start()
     //obj_manager.add_component<static_mesh_component>(mesh_object);
     //static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/sponza_trees/sponza_trees.yaml", 0));
 
-    mesh_object = obj_manager.create_object("cerberus");
-    obj_manager.add_component<transform_component>(mesh_object);
-    obj_manager.add_component<bounds_component>(mesh_object);
-    obj_manager.add_component<static_mesh_component>(mesh_object);
-    static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));
-
-    // Testing for the editor.
-    object test = obj_manager.create_object("root-test");
-
-
-    object parent = obj_manager.create_object("parent");
-    obj_manager.add_component<transform_component>(parent);
-
-        object child1 = obj_manager.create_object("child 1");
-        obj_manager.add_component<transform_component>(child1);
-        obj_manager.add_component<bounds_component>(child1);
-        transform_sys->set_parent(child1, parent);
-
-        object child2 = obj_manager.create_object("child 2");
-        obj_manager.add_component<transform_component>(child2);
-        obj_manager.add_component<bounds_component>(child2);
-        transform_sys->set_parent(child2, child1);
-        
+    //object mesh_object = obj_manager.create_object("cerberus");
+    //obj_manager.add_component<transform_component>(mesh_object);
+    //obj_manager.add_component<bounds_component>(mesh_object);
+    //obj_manager.add_component<static_mesh_component>(mesh_object);
+    //static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));        
 
 #else
     // Create the scene
