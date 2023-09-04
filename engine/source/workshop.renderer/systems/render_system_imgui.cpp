@@ -48,7 +48,7 @@ void render_system_imgui::build_graph(render_graph& graph, const render_world_st
     pass->system = this;
     pass->technique = m_renderer.get_effect_manager().get_technique("render_imgui", {});
     pass->output = m_renderer.get_swapchain_output();
-    pass->default_texture = m_textures[m_default_texture].get();
+    pass->default_texture = m_default_texture.get();
     pass->vertex_buffer = m_vertex_buffer.get();
     pass->index_buffer = m_index_buffer.get();
     pass->draw_commands = m_draw_commands;
@@ -107,26 +107,9 @@ void render_system_imgui::step(const render_world_state& state)
     m_index_buffer->unmap(index_ptr);
 }
 
-render_system_imgui::texture_id render_system_imgui::register_texture(std::unique_ptr<ri_texture> texture, bool default_texture)
+void render_system_imgui::set_default_texture(std::unique_ptr<ri_texture> texture)
 {
-    texture_id id = m_next_texture_id++;
-    m_textures[id] = std::move(texture);
-
-    if (default_texture)
-    {
-        m_default_texture = id;
-    }
-
-    return id;
-}
-
-void render_system_imgui::unregister_texture(texture_id id)
-{
-    auto iter = m_textures.find(id);
-    if (iter != m_textures.end())
-    {
-        m_textures.erase(iter);
-    }
+    m_default_texture = std::move(texture);
 }
 
 void render_system_imgui::update_draw_data(const std::vector<draw_command>& commands, const std::vector<vertex>& vertices, const std::vector<uint16_t>& indices)

@@ -46,15 +46,17 @@ void editor_loading_window::draw()
             */
 
             ImGui::BeginChild("OutputTableView");
-            if (ImGui::BeginTable("OutputTable", 4, ImGuiTableFlags_Resizable))
+            if (ImGui::BeginTable("OutputTable", 5, ImGuiTableFlags_Resizable))
             {
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
-                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.7f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.1f);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 0.6f);
 
                 ImGui::TableNextColumn(); ImGui::TableHeader("State");
                 ImGui::TableNextColumn(); ImGui::TableHeader("Priority");
+                ImGui::TableNextColumn(); ImGui::TableHeader("References");
                 ImGui::TableNextColumn(); ImGui::TableHeader("Time");
                 ImGui::TableNextColumn(); ImGui::TableHeader("Asset");
 
@@ -73,6 +75,9 @@ void editor_loading_window::draw()
 
                     ImGui::TableNextColumn();
                     ImGui::Text("%i", state->priority);
+
+                    ImGui::TableNextColumn();
+                    ImGui::Text("%zi", state->references.load());
 
                     ImGui::TableNextColumn(); 
                     ImGui::Text("%.1f ms", state->load_timer.get_elapsed_ms());

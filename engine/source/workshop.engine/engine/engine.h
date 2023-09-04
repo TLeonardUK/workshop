@@ -218,6 +218,7 @@ protected:
     std::filesystem::path m_engine_asset_dir;
     std::filesystem::path m_game_asset_dir;
     std::filesystem::path m_asset_cache_dir;
+    std::filesystem::path m_thumbnail_asset_cache_dir;
 
     statistics_channel* m_stats_frame_time_game;
     statistics_channel* m_stats_frame_rate;

@@ -69,6 +69,11 @@ const std::type_info& material_loader::get_type()
     return typeid(material);
 }
 
+const char* material_loader::get_descriptor_type()
+{
+    return k_asset_descriptor_type;
+}
+
 asset* material_loader::get_default_asset()
 {
     return nullptr;
@@ -349,6 +354,48 @@ bool material_loader::compile(const char* input_path, const char* output_path, p
     }
 
     return true;
+}
+
+std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, size_t size)
+{
+    material asset(m_ri_interface, m_renderer, m_asset_manager);
+
+    // Parse the source YAML file that defines the shader.
+    if (!parse_file(path, asset))
+    {
+        return nullptr;
+    }
+
+    asset_loader* texture_asset_loader = m_asset_manager.get_loader_for_descriptor_type("texture");
+    if (!texture_asset_loader)
+    {
+        return nullptr;
+    }
+
+    // For simplicity, we just grab the albedo texture for the materials thumbnail.
+    // TODO: In future we should probably render an object with the full material applied.
+    std::string texture_path;
+    for (material::texture_info& info : asset.textures)
+    {
+        if (info.name.find("albedo") != std::string::npos)
+        {
+            texture_path = info.path;
+            break;
+        }
+    }
+
+    // If no albedo texture, just grab the first texture.
+    if (texture_path.empty() && !asset.textures.empty())
+    {
+        texture_path = asset.textures[0].path;
+    }
+
+    if (texture_path.empty())
+    {
+        return nullptr;
+    }
+
+    return texture_asset_loader->generate_thumbnail(texture_path.c_str(), size);
 }
 
 void material_loader::hot_reload(asset* instance, asset* new_instance)

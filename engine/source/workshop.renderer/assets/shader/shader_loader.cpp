@@ -118,6 +118,11 @@ const std::type_info& shader_loader::get_type()
     return typeid(shader);
 }
 
+const char* shader_loader::get_descriptor_type()
+{
+    return k_asset_descriptor_type;
+}
+
 asset* shader_loader::get_default_asset()
 {
     return nullptr;

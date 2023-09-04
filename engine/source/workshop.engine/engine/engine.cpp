@@ -89,6 +89,9 @@ void engine::step()
         m_renderer->resume();
     }
 
+    // Clean up any old cached asset database info.
+    m_asset_database->clean_cache();
+
     frame_timer.stop();
     m_stats_frame_time_game->submit(frame_timer.get_elapsed_seconds());
     m_stats_frame_rate->submit(1.0 / m_frame_time.delta_seconds);
@@ -327,6 +330,7 @@ result<void> engine::create_filesystem(init_list& list)
         m_engine_asset_dir = root_dir / "engine" / "assets";
         m_game_asset_dir = root_dir / "games" / app::instance().get_name() / "assets";
         m_asset_cache_dir = root_dir / "intermediate" / "cache";
+        m_thumbnail_asset_cache_dir = root_dir / "intermediate" / "thumbnails";
          
         if (std::filesystem::exists(m_engine_asset_dir) && 
             std::filesystem::exists(m_game_asset_dir))
@@ -355,6 +359,14 @@ result<void> engine::create_filesystem(init_list& list)
             return false;
         }
     }
+    if (!std::filesystem::exists(m_thumbnail_asset_cache_dir))
+    {
+        if (!std::filesystem::create_directories(m_thumbnail_asset_cache_dir))
+        {
+            db_fatal(engine, "Failed to create thumbnail asset cache directory: %s", m_thumbnail_asset_cache_dir.string().c_str());
+            return false;
+        }
+    }
 
     db_log(engine, "Engine asset directory: %s", m_engine_asset_dir.string().c_str());
     db_log(engine, "Game asset directory: %s", m_game_asset_dir.string().c_str());
@@ -367,6 +379,9 @@ result<void> engine::create_filesystem(init_list& list)
 
     // Points to the local asset cache disk folder.
     m_filesystem->register_handler("local-cache", 0, std::make_unique<virtual_file_system_disk_handler>(get_asset_cache_dir().string().c_str(), false));
+
+    // Points to the cache directory we store thumbnails of assets inside of.
+    m_filesystem->register_handler("thumbnail-cache", 0, std::make_unique<virtual_file_system_disk_handler>(m_thumbnail_asset_cache_dir.string().c_str(), false));
 
     // The cache protocol redirects "clean" paths like cache:shaders/common.yaml to complex storage
     // locations, eg. local-cache:windows/1/4/6/1/146123421341_geometry_yaml.compiled
@@ -414,7 +429,7 @@ result<void> engine::create_asset_manager(init_list& list)
     m_asset_manager = std::make_unique<asset_manager>(get_platform(), get_config());
     m_asset_manager->register_cache(std::make_unique<asset_cache_disk>("local-cache", "cache", false));
 
-    m_asset_database = std::make_unique<asset_database>();
+    m_asset_database = std::make_unique<asset_database>(m_asset_manager.get());
 
     return true;
 }
@@ -526,6 +541,8 @@ result<void> engine::create_render_interface(init_list& list)
             return standard_errors::no_implementation;
         }
     }
+
+    m_asset_database->set_render_interface(m_render_interface.get());
 
     return true;
 }

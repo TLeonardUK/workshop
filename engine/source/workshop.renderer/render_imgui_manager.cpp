@@ -131,7 +131,7 @@ void render_imgui_manager::step(frame_time& time)
                 const ImDrawCmd& cmd = cmd_list->CmdBuffer[static_cast<int>(cmd_index)];
 
                 render_system_imgui::draw_command& render_cmd = commands.emplace_back();
-                render_cmd.texture = reinterpret_cast<render_system_imgui::texture_id>(cmd.TextureId);
+                render_cmd.texture = cmd.TextureId;
                 render_cmd.offset = index_offset;
                 render_cmd.count = cmd.ElemCount;
                 render_cmd.display_size = vector2(data->DisplaySize.x, data->DisplaySize.y);
@@ -382,7 +382,7 @@ void render_imgui_manager::create_font_resources()
         params.data = data;
 
         std::unique_ptr<ri_texture> texture = ri.create_texture(params, "ImGui Font");
-        imgui->register_texture(std::move(texture), true);
+        imgui->set_default_texture(std::move(texture));
 
     });
 }

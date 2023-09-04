@@ -244,6 +244,15 @@ public:
     // Finds and returns the first registered importer that supports the given extension.
     asset_importer* get_importer_for_extension(const char* extension);
 
+    // Gets the loader from the descriptor type stored in the corresponding asset files.
+    asset_loader* get_loader_for_descriptor_type(const char* type);
+
+    // Gets the platform this asset manager is loading/compiling assets for.
+    platform_type get_asset_platform();
+
+    // Gets the config this asset manager is loading/compiling assets for.
+    config_type get_asset_config();
+
 protected:
     template <typename asset_type>
     friend class asset_ptr;

@@ -71,6 +71,11 @@ const std::type_info& model_loader::get_type()
     return typeid(model);
 }
 
+const char* model_loader::get_descriptor_type()
+{
+    return k_asset_descriptor_type;
+}
+
 asset* model_loader::get_default_asset()
 {
     return nullptr;

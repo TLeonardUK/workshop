@@ -73,12 +73,14 @@ void editor_assets_window::draw_asset_list()
     asset_database_entry* entry = m_asset_database->get(m_selected_path.c_str());
     if (entry)
     {
-        constexpr float k_item_size = 96;
+        constexpr float k_item_width = 96;
+        constexpr float k_item_height = 164;
         constexpr float k_item_padding = 10.0f;
+        constexpr float k_preview_padding = 2.0f;
 
         ImVec2 region = ImGui::GetContentRegionAvail();
 
-        size_t items_per_row = std::max(1, static_cast<int>(region.x / (k_item_size + k_item_padding)));
+        size_t items_per_row = std::max(1, static_cast<int>(region.x / (k_item_width + k_item_padding)));
 
         ImColor frame_color = ImGui::GetStyleColorVec4(ImGuiCol_Border);
 
@@ -91,6 +93,8 @@ void editor_assets_window::draw_asset_list()
             asset_database_entry* entry = *iter;
             std::string extension = virtual_file_system::get().get_extension(entry->get_name());
 
+            bool include = true;
+
             bool metadata_valid = entry->has_metadata();
             if (metadata_valid)
             {
@@ -99,7 +103,7 @@ void editor_assets_window::draw_asset_list()
                 {
                     if (meta->descriptor_type != m_filter_types[m_current_filter_type])
                     {
-                        metadata_valid = false;
+                        include = false;
                     }
                 }
 
@@ -107,12 +111,12 @@ void editor_assets_window::draw_asset_list()
                 {
                     if (strstr(entry->get_filter_key(), lowercase_filter.c_str()) == nullptr)
                     {
-                        metadata_valid = false;
+                        include = false;
                     }
                 }
             }
 
-            if (extension == asset_manager::k_asset_extension && metadata_valid)
+            if (extension == asset_manager::k_asset_extension && include)
             {
                 iter++;
             }
@@ -130,12 +134,12 @@ void editor_assets_window::draw_asset_list()
             asset_database_entry* file = files[i];
 
             ImVec2 item_min = ImVec2(
-                static_cast<float>(k_item_padding + ((i % items_per_row) * (k_item_size + k_item_padding))),
-                static_cast<float>(k_item_padding + ((i / items_per_row) * (k_item_size + k_item_padding)))
+                static_cast<float>(k_item_padding + ((i % items_per_row) * (k_item_width + k_item_padding))),
+                static_cast<float>(k_item_padding + ((i / items_per_row) * (k_item_height + k_item_padding)))
             );
             ImVec2 item_max = ImVec2(
-                item_min.x + k_item_size,
-                item_min.y + k_item_size
+                item_min.x + k_item_width,
+                item_min.y + k_item_height
             );
             ImVec2 screen_item_min = ImVec2(
                 screen_base_pos.x + item_min.x,
@@ -152,9 +156,16 @@ void editor_assets_window::draw_asset_list()
             ImGui::SetCursorScreenPos(screen_item_min);
 
             bool selected = (_stricmp(file->get_path(), m_selected_file.c_str()) == 0);
-            if (ImGui::Selectable("", &selected, ImGuiSelectableFlags_None, ImVec2(k_item_size, k_item_size)))
+            if (ImGui::Selectable("", &selected, ImGuiSelectableFlags_None, ImVec2(k_item_width, k_item_height)))
             {
                 m_selected_file = file->get_path();
+            }
+
+            // Skip any drawing if offscreen.
+            if (!ImGui::IsItemVisible())
+            {
+                ImGui::PopID();
+                continue;
             }
 
             bool is_dragging = ImGui::BeginDragDropSource(ImGuiDragDropFlags_None);
@@ -166,19 +177,37 @@ void editor_assets_window::draw_asset_list()
 
                 // Reset item bounds as we are now drawing inside the drag tooltip.
                 screen_item_min = ImGui::GetCursorScreenPos();
-                screen_item_max.x = screen_item_min.x + k_item_size;
-                screen_item_max.y = screen_item_min.y + k_item_size;
+                screen_item_max.x = screen_item_min.x + k_item_width;
+                screen_item_max.y = screen_item_min.y + k_item_height;
                 item_min = ImVec2(0.0f, 0.0f);
-                item_max = ImVec2(k_item_size, k_item_size);
+                item_max = ImVec2(k_item_width, k_item_height);
                 item_bb = ImRect(item_min, item_max);
 
                 // Ensure tooltip is the correct size.
-                ImGui::Dummy(ImVec2(k_item_size, k_item_size));
+                ImGui::Dummy(ImVec2(k_item_width, k_item_height));
+            }
+            
+            ImVec2 preview_min = screen_item_min;
+            preview_min.x += k_preview_padding;
+            preview_min.y += k_preview_padding;
+
+            ImVec2 preview_max = ImVec2(screen_item_min.x + k_item_width, screen_item_min.y + k_item_width);
+            preview_max.x -= k_preview_padding;
+            preview_max.y -= k_preview_padding;
+
+            asset_database_metadata* meta = file->get_metadata();
+            asset_database::thumbnail* thumb = m_asset_database->get_thumbnail(file);
+            if (thumb)
+            {
+                ImTextureID texture = thumb->thumbnail_texture.get();
+                ImGui::GetWindowDrawList()->AddImage(texture, preview_min, preview_max, ImVec2(0, 0), ImVec2(1, 1), ImColor(1.0f, 1.0f, 1.0f, 0.5f));
             }
             else
             {
-                ImGui::GetWindowDrawList()->AddRect(screen_item_min, screen_item_max, frame_color);
+                ImGui::GetWindowDrawList()->AddRectFilled(preview_min, preview_max, ImColor(0.0f, 0.0f, 0.0f, 0.5f));
             }
+
+            ImGui::GetWindowDrawList()->AddRect(screen_item_min, screen_item_max, frame_color);
 
             // Strip extension of name, provides not benefit.
             std::string label = file->get_name();
@@ -187,7 +216,7 @@ void editor_assets_window::draw_asset_list()
                 label = label.substr(0, extension_pos);
             }            
 
-            ImVec2 label_size = ImGui::CalcTextSize(label.c_str(), nullptr, false, k_item_size - (k_item_padding * 2));
+            ImVec2 label_size = ImGui::CalcTextSize(label.c_str(), nullptr, false, k_item_width - (k_item_padding * 2));
             ImVec2 text_pos = ImVec2(item_min.x + (item_bb.GetWidth() * 0.5f) - (label_size.x * 0.5f), item_min.y + item_bb.GetHeight() - label_size.y - k_item_padding);
 
             ImGui::SetCursorPos(text_pos);

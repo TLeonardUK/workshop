@@ -232,6 +232,16 @@ std::unique_ptr<virtual_file_system_watcher> virtual_file_system_disk_handler::w
     result->m_callback = callback;
     result->m_path = virtual_file_system::normalize(path);
     result->m_handler = this;
+    result->m_is_directory = false;
+
+    try
+    {
+        result->m_is_directory = std::filesystem::is_directory(m_root + "/" + result->m_path);
+    }
+    catch (std::filesystem::filesystem_error)
+    {
+        // Doesn't exist yet perhaps?
+    }
 
     m_registered_watchers.push_back(result.get());
 
@@ -256,7 +266,20 @@ void virtual_file_system_disk_handler::raise_watch_events()
 
             for (virtual_file_system_disk_watcher* watcher : m_registered_watchers)
             {
-                if (watcher->m_path == relative_path)
+                bool matches = false;
+
+                // If directory match anything below it.
+                if (watcher->m_is_directory && relative_path.starts_with(watcher->m_path))
+                {
+                    matches = true;
+                }
+                // Match path exactly.
+                else if (watcher->m_path == relative_path)
+                {
+                    matches = true;
+                }
+
+                if (matches)
                 {
                     watcher->m_callback(relative_path.c_str());
                 }

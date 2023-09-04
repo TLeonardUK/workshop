@@ -9,6 +9,7 @@
 #include "workshop.core/platform/platform.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.core/utils/traits.h"
+#include "workshop.core/drawing/pixmap.h"
 
 #include "workshop.assets/asset_cache.h"
 
@@ -46,6 +47,14 @@ public:
 
     // Gets the type of class its capable of loading.
     virtual const std::type_info& get_type() = 0;
+
+    // Gets the descriptor type the class can load. The descriptor type is the 
+    // string name of the asset type as stored in the "type" header of the asset
+    // yaml file.
+    virtual const char* get_descriptor_type() = 0;
+
+    // Generates a thumbnail preview of the asset.
+    virtual std::unique_ptr<pixmap> generate_thumbnail(const char* path, size_t size) { return nullptr; };
 
     // Loads an asset from the given path.
     virtual asset* load(const char* path) = 0;

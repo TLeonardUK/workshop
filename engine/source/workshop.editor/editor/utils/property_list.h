@@ -17,6 +17,8 @@
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/material/material.h"
 
+#include "workshop.engine/assets/asset_database.h"
+
 #include <functional>
 
 namespace ws {
@@ -31,7 +33,7 @@ class property_list
 {
 public:
 
-    property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager);
+    property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager, asset_database& ass_database);
 
     void draw();
     
@@ -48,11 +50,21 @@ protected:
     bool draw_edit(reflect_field* field, std::string& value);
     bool draw_edit(reflect_field* field, asset_ptr<model>& value);
 
+    void draw_preview(const char* path);
+
 private:
     
+    // When drawing an asset preview next to an editable field, what size should it be.
+    static inline constexpr float k_preview_size = 64;
+
+    // Padding around the inside of the asset preview and thumbnail.
+    static inline constexpr float k_preview_padding = 2.0f;
+
     void* m_context;
     reflect_class* m_class;
     asset_manager* m_asset_manager;
+
+    asset_database& m_asset_database;
 
 };
 

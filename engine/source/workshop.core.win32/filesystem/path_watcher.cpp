@@ -108,7 +108,11 @@ void win32_path_watcher::poll_changes()
         FILE_NOTIFY_INFORMATION* info = (FILE_NOTIFY_INFORMATION*)m_buffer.data();
         while (true)
         {
-            if (info->Action == FILE_ACTION_MODIFIED)
+            if (info->Action == FILE_ACTION_MODIFIED || 
+                info->Action == FILE_ACTION_REMOVED ||
+                info->Action == FILE_ACTION_ADDED ||
+                info->Action == FILE_ACTION_RENAMED_OLD_NAME ||
+                info->Action == FILE_ACTION_RENAMED_NEW_NAME)
             {
                 DWORD name_len = info->FileNameLength / sizeof(wchar_t);
                 std::wstring relative_filename(info->FileName, name_len);
@@ -116,12 +120,9 @@ void win32_path_watcher::poll_changes()
 
                 try
                 {
-                    if (std::filesystem::is_regular_file(path))
-                    {
-                        event& evt = m_pending_events.emplace_back();
-                        evt.type = event_type::modified;
-                        evt.path = path;
-                    }
+                    event& evt = m_pending_events.emplace_back();
+                    evt.type = event_type::modified;
+                    evt.path = path;
                 }
                 catch (std::filesystem::filesystem_error)
                 {

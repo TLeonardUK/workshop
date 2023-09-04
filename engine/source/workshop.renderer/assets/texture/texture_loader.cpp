@@ -46,6 +46,11 @@ const std::type_info& texture_loader::get_type()
     return typeid(texture);
 }
 
+const char* texture_loader::get_descriptor_type()
+{
+    return k_asset_descriptor_type;
+}
+
 asset* texture_loader::get_default_asset()
 {
     return nullptr;
@@ -647,6 +652,23 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
     }
 
     return true;
+}
+
+std::unique_ptr<pixmap> texture_loader::generate_thumbnail(const char* path, size_t size)
+{
+    texture asset(m_ri_interface, m_renderer);
+
+    if (!parse_file(path, asset))
+    {
+        return nullptr;
+    }
+
+    if (!asset.faces.empty() && !asset.faces[0].mips.empty())
+    {
+        return asset.faces[0].mips[0]->resize(size, size, pixmap_filter::nearest_neighbour)->convert(pixmap_format::R8G8B8A8);
+    }
+
+    return nullptr;
 }
 
 void texture_loader::hot_reload(asset* instance, asset* new_instance)

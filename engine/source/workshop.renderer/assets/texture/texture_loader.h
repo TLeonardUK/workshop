@@ -24,6 +24,8 @@ public:
     texture_loader(ri_interface& instance, renderer& renderer);
 
     virtual const std::type_info& get_type() override;
+    virtual const char* get_descriptor_type() override;
+    virtual std::unique_ptr<pixmap> generate_thumbnail(const char* path, size_t size) override;
     virtual asset* get_default_asset() override;
     virtual asset* load(const char* path) override;
     virtual void unload(asset* instance) override;
