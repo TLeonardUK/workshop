@@ -22,6 +22,7 @@
 namespace ws {
 
 class reflect_class;
+class asset_manager;
 
 // ================================================================================================
 //  Draws a list of editable properties for the given object.
@@ -30,7 +31,7 @@ class property_list
 {
 public:
 
-    property_list(void* obj, reflect_class* reflection_class);
+    property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager);
 
     void draw();
     
@@ -51,6 +52,7 @@ private:
     
     void* m_context;
     reflect_class* m_class;
+    asset_manager* m_asset_manager;
 
 };
 

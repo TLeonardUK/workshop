@@ -165,7 +165,7 @@ asset_importer* asset_manager::get_importer_for_extension(const char* extension)
     for (auto& ptr : m_importers)
     {
         std::vector<std::string> extensions = ptr.importer->get_supported_extensions();
-        if (std::find(extensions.begin(), extensions.end(), extension) != extensions.end())
+        if (std::find_if(extensions.begin(), extensions.end(), [extension](const std::string& val) { return _stricmp(extension, val.c_str()) == 0; }) != extensions.end())
         {
             return ptr.importer.get();
         }

@@ -43,7 +43,7 @@ void editor_properties_window::set_context(object obj)
 
             component_info& info = m_component_info.emplace_back();
             info.name = comp_class->get_display_name();
-            info.property_list = std::make_unique<property_list>(comp, comp_class);
+            info.property_list = std::make_unique<property_list>(comp, comp_class, &m_world->get_engine().get_asset_manager());
             info.component = comp;
             info.on_modified_delegate = info.property_list->on_modified.add_shared([this, &obj_manager, comp](reflect_field* field) {
                 obj_manager.component_edited(m_context, comp);

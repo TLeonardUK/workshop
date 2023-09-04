@@ -264,8 +264,6 @@ void editor_assets_window::draw()
 { 
     if (m_open)
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
-
         if (ImGui::Begin(get_window_id(), &m_open))
         {
             ImGui::SetNextItemWidth(200.0f);
@@ -289,6 +287,8 @@ void editor_assets_window::draw()
             ImGui::PushID("AssetType");
             ImGui::Combo("", &m_current_filter_type, m_filter_types, k_filter_type_count);
             ImGui::PopID();
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
 
             ImGui::BeginChild("AssetView");
 
@@ -325,10 +325,10 @@ void editor_assets_window::draw()
                 ImGui::End();
 
             ImGui::EndChild();
+
+            ImGui::PopStyleVar(1);
         }
         ImGui::End();
-
-        ImGui::PopStyleVar(1);
     }
 }
 

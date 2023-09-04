@@ -10,9 +10,10 @@
 
 namespace ws {
 
-property_list::property_list(void* obj, reflect_class* reflection_class)
+property_list::property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager)
     : m_context(obj)
     , m_class(reflection_class)
+    , m_asset_manager(ass_manager)
 {
 }
 
@@ -137,8 +138,7 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
         {
             std::string asset_path((const char*)payload->Data, payload->DataSize);
 
-            asset_manager* manager = value.get_asset_manager();
-            value = manager->request_asset<model>(asset_path.c_str(), 0);
+            value = m_asset_manager->request_asset<model>(asset_path.c_str(), 0);
 
             ret = true;
         }

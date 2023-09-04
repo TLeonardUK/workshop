@@ -76,6 +76,25 @@ result<void> editor::create_main_menu(init_list& list)
 {
     m_main_menu = std::make_unique<editor_main_menu>();
     
+    // File Settings
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/New Scene", [this]() { 
+        // TODO
+    }));
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Open Scene...", [this]() { 
+        // TODO
+    }));
+    m_main_menu_options.push_back(m_main_menu->add_menu_seperator("File"));
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene", [this]() { 
+        // TODO
+    }));
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene As...", [this]() { 
+        // TODO
+    }));
+    m_main_menu_options.push_back(m_main_menu->add_menu_seperator("File"));
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Exit", [this]() { 
+        // TODO
+    }));
+
     // Build Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("Build/Regenerate Diffuse Probes", [this]() { 
         m_engine.get_renderer().get_command_queue().regenerate_diffuse_probes();
