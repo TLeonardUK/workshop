@@ -105,7 +105,7 @@ void render_batch_manager::unregister_instance(const render_batch_instance& inst
         auto iter = m_batches.find(instance.key);
         if (iter != m_batches.end())
         {
-            m_batches.clear();
+            m_batches.erase(iter);
         }
     }
 }
