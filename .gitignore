@@ -1,3 +1,6 @@
+# Prevent uploading non-redistributable assets
+noredist/
+
 # Ignore intermediate folders.
 /bin/
 /intermediate/

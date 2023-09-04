@@ -1,0 +1,68 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/kits/main_ops_base/main_ops_base.fbx
+
+scale: [ 1.0, 1.0, 1.0 ]
+
+materials:
+  "KB3D_FTW_MetalPanelsWornYellowA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelswornyellowa.yaml"
+  "KB3D_FTW_MetallicDarkGrayB": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicdarkgrayb.yaml"
+  "KB3D_FTW_MetallicDarkGrayTrimB": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicdarkgraytrimb.yaml"
+  "KB3D_FTW_MetallicLightGrayB": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalliclightgrayb.yaml"
+  "KB3D_FTW_MetallicDBlueA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicdbluea.yaml"
+  "KB3D_FTW_MetalRustA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalrusta.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornGreenA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelsworngreena.yaml"
+  "KB3D_FTW_TrimMetalElementsWornA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalelementsworna.yaml"
+  "KB3D_FTW_MetalRoughA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalrougha.yaml"
+  "KB3D_FTW_MetallicPWhiteA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpwhitea.yaml"
+  "KB3D_FTW_AtlasGraphicsBuildingScreens": "data:models/kits/main_ops_base/materials/kb3d_ftw_atlasgraphicsbuildingscreens.yaml"
+  "KB3D_FTW_MetallicPRedA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpreda.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornYellowA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelswornyellowa.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornGrayA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelsworngraya.yaml"
+  "KB3D_FTW_PaintLines": "data:models/kits/main_ops_base/materials/kb3d_ftw_paintlines.yaml"
+  "KB3D_FTW_TrimMetalPanelsRustedDark": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelsrusteddark.yaml"
+  "KB3D_FTW_MetalPanelWornGreenA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelworngreena.yaml"
+  "KB3D_FTW_GlassTechOrange": "data:models/kits/main_ops_base/materials/kb3d_ftw_glasstechorange.yaml"
+  "KB3D_FTW_MetalPanelWornGrayA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelworngraya.yaml"
+  "KB3D_FTW_MetallicPBlackA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpblacka.yaml"
+  "KB3D_FTW_MetalPanelWornLightGrayA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelwornlightgraya.yaml"
+  "KB3D_FTW_MetalPanelGrayTrimA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelgraytrima.yaml"
+  "KB3D_FTW_MetallicDarkGrayTrimA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicdarkgraytrima.yaml"
+  "KB3D_FTW_ConcreteRoughPanelBright": "data:models/kits/main_ops_base/materials/kb3d_ftw_concreteroughpanelbright.yaml"
+  "KB3D_FTW_MetalGratingWorn": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalgratingworn.yaml"
+  "KB3D_FTW_MetallicDarkGrayA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicdarkgraya.yaml"
+  "KB3D_FTW_GlassA": "data:models/kits/main_ops_base/materials/kb3d_ftw_glassa.yaml"
+  "KB3D_FTW_MetallicLightGrayA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalliclightgraya.yaml"
+  "KB3D_FTW_MetallicPBeigeA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpbeigea.yaml"
+  "KB3D_FTW_ConcreteRoughPanelDark": "data:models/kits/main_ops_base/materials/kb3d_ftw_concreteroughpaneldark.yaml"
+  "KB3D_FTW_MetalPanelWornWhiteA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelwornwhitea.yaml"
+  "KB3D_FTW_MetallicPYellowA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpyellowa.yaml"
+  "KB3D_FTW_TrimRubberPanelA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimrubberpanela.yaml"
+  "KB3D_FTW_EmissiveAtlas": "data:models/kits/main_ops_base/materials/kb3d_ftw_emissiveatlas.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornDOrangeA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelsworndorangea.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornBlueA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelswornbluea.yaml"
+  "KB3D_FTW_AtlasGraphicsBuildingsA": "data:models/kits/main_ops_base/materials/kb3d_ftw_atlasgraphicsbuildingsa.yaml"
+  "KB3D_FTW_MetallicPYellowB": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpyellowb.yaml"
+  "KB3D_FTW_MetallicPGreenA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metallicpgreena.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornLightGrayA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelswornlightgraya.yaml"
+  "KB3D_FTW_MetalPanelShinyA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalpanelshinya.yaml"
+  "KB3D_FTW_ConcreteMetalPanels": "data:models/kits/main_ops_base/materials/kb3d_ftw_concretemetalpanels.yaml"
+  "KB3D_FTW_TrimMetalPanelsWornKhakiA": "data:models/kits/main_ops_base/materials/kb3d_ftw_trimmetalpanelswornkhakia.yaml"
+  "KB3D_FTW_GlassFField": "data:models/kits/main_ops_base/materials/kb3d_ftw_glassffield.yaml"
+  "KB3D_FTW_MetalGridA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalgrida.yaml"
+  "KB3D_FTW_RubberA": "data:models/kits/main_ops_base/materials/kb3d_ftw_rubbera.yaml"
+  "KB3D_FTW_TarpGreen": "data:models/kits/main_ops_base/materials/kb3d_ftw_tarpgreen.yaml"
+  "KB3D_FTW_ConcretesMetalStripes": "data:models/kits/main_ops_base/materials/kb3d_ftw_concretesmetalstripes.yaml"
+  "KB3D_FTW_AtlasGraphicsProps": "data:models/kits/main_ops_base/materials/kb3d_ftw_atlasgraphicsprops.yaml"
+  "KB3D_FTW_SolarPanel": "data:models/kits/main_ops_base/materials/kb3d_ftw_solarpanel.yaml"
+  "KB3D_FTW_MetallicCamouflage": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalliccamouflage.yaml"
+  "KB3D_FTW_AtlasFlags": "data:models/kits/main_ops_base/materials/kb3d_ftw_atlasflags.yaml"
+  "KB3D_FTW_MetallicLightGrayTrimA": "data:models/kits/main_ops_base/materials/kb3d_ftw_metalliclightgraytrima.yaml"
+  "KB3D_FTW_AtlasDetailsProps": "data:models/kits/main_ops_base/materials/kb3d_ftw_atlasdetailsprops.yaml"
+  "KB3D_FTW_AtlasDecalsProps": "data:models/kits/main_ops_base/materials/kb3d_ftw_atlasdecalsprops.yaml"
+  "KB3D_FTW_PlasticBlackA": "data:models/kits/main_ops_base/materials/kb3d_ftw_plasticblacka.yaml"

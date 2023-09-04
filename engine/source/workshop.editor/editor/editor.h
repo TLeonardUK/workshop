@@ -93,6 +93,10 @@ protected:
 
     void reset_dockspace_layout();
 
+    void new_scene();
+    void open_scene();
+    void save_scene(bool ask_for_filename);
+
 protected:
 
     engine& m_engine;

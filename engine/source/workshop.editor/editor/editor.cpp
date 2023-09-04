@@ -78,21 +78,21 @@ result<void> editor::create_main_menu(init_list& list)
     
     // File Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("File/New Scene", [this]() { 
-        // TODO
+        new_scene();
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Open Scene...", [this]() { 
-        // TODO
+        open_scene();
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_seperator("File"));
     m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene", [this]() { 
-        // TODO
+        save_scene(false);
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene As...", [this]() { 
-        // TODO
+        save_scene(true);
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_seperator("File"));
     m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Exit", [this]() { 
-        // TODO
+        app::instance().quit();
     }));
 
     // Build Settings
@@ -178,6 +178,18 @@ result<void> editor::destroy_windows()
     m_windows.clear();
 
     return true;
+}
+
+void editor::new_scene()
+{
+}
+
+void editor::open_scene()
+{
+}
+
+void editor::save_scene(bool ask_for_filename)
+{
 }
 
 void editor::step(const frame_time& time)

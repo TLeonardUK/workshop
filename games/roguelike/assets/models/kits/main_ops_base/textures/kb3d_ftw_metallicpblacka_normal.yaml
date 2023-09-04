@@ -1,0 +1,12 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+type: texture
+version: 1
+
+group: world
+usage: normal
+
+faces:
+  - data:models/kits/main_ops_base/textures/kb3d_ftw_metallicpblacka_normal.png

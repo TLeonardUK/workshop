@@ -1,0 +1,14 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: opaque
+
+textures:
+  albedo_texture: "data:models/kits/main_ops_base/textures/kb3d_ftw_metalgratingworn_basecolor.yaml"
+  normal_texture: "data:models/kits/main_ops_base/textures/kb3d_ftw_metalgratingworn_normal.yaml"
+  metallic_texture: "data:models/kits/main_ops_base/textures/kb3d_ftw_metalgratingworn_metallic.yaml"
+  roughness_texture: "data:models/kits/main_ops_base/textures/kb3d_ftw_metalgratingworn_roughness.yaml"
