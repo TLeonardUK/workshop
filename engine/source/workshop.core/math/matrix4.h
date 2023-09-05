@@ -371,8 +371,6 @@ inline base_matrix4<T> base_matrix4<T>::inverse() const
 	return inverse * one_over_determinant;
 }
 
-#pragma optimize("", off)
-
 template <typename T>
 base_matrix4<T> base_matrix4<T>::normalize() const
 {

@@ -78,6 +78,9 @@ public:
     // Gets the current version of the compiled asset format.
     virtual size_t get_compiled_version() = 0;
 
+    // Saves an asset to a raw uncompiled yaml file.
+    virtual bool save_uncompiled(const char* path, asset& instance) { return false; };
+
 public:
 
     // Tries to calculate the cache key used for a given asset.

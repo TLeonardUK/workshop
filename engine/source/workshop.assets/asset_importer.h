@@ -38,6 +38,10 @@ public:
     // Gets the source file extensions that can be imported as this asset type.
     virtual std::vector<std::string> get_supported_extensions() = 0;
 
+    // Gets the name of the file type being imported. This is used as a description 
+    // in file dialogs. eg. "Image Files"
+    virtual std::string get_file_type_description() = 0;
+
     // Imports a source file for this asset types and sets up its yaml asset file.
     // source_path is the actual source file (fbx/png/etc).
     // output_path is the directory in the virtual file system we want to place the imported asset files in.

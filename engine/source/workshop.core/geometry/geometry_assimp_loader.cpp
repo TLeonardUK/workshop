@@ -178,8 +178,6 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
     return true;
 }
 
-#pragma optimize("", off)
-
 // Imports a material node in the assimp scene.
 bool process_material(aiMaterial* node, const aiScene* scene, import_context& output)
 {

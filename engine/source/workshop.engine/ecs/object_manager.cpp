@@ -20,9 +20,47 @@ object_manager::object_manager(world& world)
     db_assert(index == 0);
 }
 
+object_manager::~object_manager()
+{
+    // Make sure to destroy all objects so systems have a chance to remove anything 
+    // outside of the object system (render objects, etc).
+
+    // This is a shit way to do this, we need to store all active objects in a better way.
+    for (size_t i = 1; i < m_objects.capacity(); i++)
+    {
+        if (m_objects.is_valid(i))
+        {
+            destroy_object(i);
+        }
+    }
+
+    // Flush all systems command queues to drain out any defered deletions.
+    std::scoped_lock lock(m_system_mutex);
+    for (size_t i = 0; i < m_systems.size(); i++)
+    {
+        auto& system = m_systems[i];
+        system->flush_command_queue();
+    }
+}
+
 world& object_manager::get_world()
 {
     return m_world;
+}
+
+std::vector<object> object_manager::get_objects()
+{
+    std::vector<object> result;
+
+    for (size_t i = 1; i < m_objects.capacity(); i++)
+    {
+        if (m_objects.is_valid(i))
+        {
+            result.push_back(i);
+        }
+    }
+
+    return result;
 }
 
 system* object_manager::get_system(const std::type_index& type_info)

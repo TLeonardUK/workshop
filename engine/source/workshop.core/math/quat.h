@@ -6,6 +6,7 @@
 
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/math/vector4.h"
+#include "workshop.core/utils/yaml.h"
 
 namespace ws {
 
@@ -388,6 +389,29 @@ template <typename element_type>
 inline bool operator!=(const base_vector3<element_type>& first, const base_quat<element_type>& second)
 {
 	return !(first == second);
+}
+
+template<>
+inline void stream_serialize(stream& out, quat& v)
+{
+	stream_serialize(out, v.x);
+	stream_serialize(out, v.y);
+	stream_serialize(out, v.z);
+	stream_serialize(out, v.w);
+}
+
+template<>
+inline void yaml_serialize(YAML::Node& out, bool is_loading, quat& value)
+{
+	YAML::Node x = out["x"];
+	YAML::Node y = out["y"];
+	YAML::Node z = out["z"];
+	YAML::Node w = out["w"];
+
+	yaml_serialize(x, is_loading, value.x);
+	yaml_serialize(y, is_loading, value.y);
+	yaml_serialize(z, is_loading, value.z);
+	yaml_serialize(w, is_loading, value.w);
 }
 
 }; // namespace ws

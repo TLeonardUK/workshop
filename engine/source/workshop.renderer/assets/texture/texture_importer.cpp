@@ -25,6 +25,11 @@ std::vector<std::string> texture_importer::get_supported_extensions()
     };
 }
 
+std::string texture_importer::get_file_type_description()
+{
+    return "Texture Files";
+}
+
 bool texture_importer::import(const char* in_source_path, const char* in_output_path)
 {
     db_log(engine, "Importing Texture: %s", in_source_path);

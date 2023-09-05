@@ -51,6 +51,8 @@ public:
 public:
 
     BEGIN_REFLECT(transform_component, "Transform", component, reflect_class_flags::none)
+        REFLECT_FIELD_REF(parent,        "Parent",         "Parent transform component that defines this components local space. If not set our local space is equivilent to world space.")
+
         REFLECT_FIELD(local_rotation,   "Rotation",       "Rotation releative to parent.")
         REFLECT_FIELD(local_location,   "Location",       "Local releative to parent.")
         REFLECT_FIELD(local_scale,      "Scale",          "Scale releative to parent.")

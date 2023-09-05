@@ -87,6 +87,9 @@ protected:
     result<void> create_windows(init_list& list);
     result<void> destroy_windows();
 
+    result<void> create_world(init_list& list);
+    result<void> destroy_world();
+
     void draw_selection();
 
     void draw_dockspace();
@@ -123,6 +126,8 @@ protected:
     bool m_set_default_dock_space = false;
 
     ImGuizmo::OPERATION m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
+
+    std::string m_current_scene_path = "";
 
 };
 

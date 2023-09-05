@@ -10,6 +10,7 @@
 #include "workshop.core/reflection/reflect_class.h"
 #include "workshop.core/reflection/reflect_field.h"
 
+#include <type_traits>
 #include <typeindex>
 
 namespace ws {
@@ -29,6 +30,9 @@ reflect_class* get_reflect_class(object_type* type)
 {
     return get_reflect_class(typeid(*type));
 }
+
+// Gets a reflect_class base on its name.
+reflect_class* get_reflect_class(const char* name);
 
 // Gets all reflect classes that derives from the given type.
 std::vector<reflect_class*> get_reflect_derived_classes(std::type_index parent);
@@ -52,24 +56,27 @@ void unregister_reflect_class(reflect_class* object);
 // Handy class for just passing into the parent argument if no parent needs to be set.
 class reflect_no_parent { };
 
-#define BEGIN_REFLECT(name, display_name, parent, flags)                                    \
-    class reflection : public reflect_class                                                 \
-    {                                                                                       \
-    public:                                                                                 \
-        using class_t = name;                                                               \
-        reflection()                                                                        \
-            : reflect_class(#name, typeid(name), typeid(parent), flags, display_name)       \
+#define BEGIN_REFLECT(name, display_name, parent, flags)                                                                \
+    class reflection : public reflect_class                                                                             \
+    {                                                                                                                   \
+    public:                                                                                                             \
+        using class_t = name;                                                                                           \
+        reflection()                                                                                                    \
+            : reflect_class(#name, typeid(name), typeid(parent), flags, display_name, []() { return new name(); })      \
         {
 
-#define REFLECT_FIELD(name, display_name, description)                                      \
-            add_field(#name, offsetof(class_t, class_t::name), typeid(decltype(class_t::name)), display_name, description); 
+#define REFLECT_FIELD(name, display_name, description)                                                                  \
+            add_field(#name, offsetof(class_t, class_t::name), typeid(decltype(class_t::name)), typeid(void), display_name, description); 
 
-#define REFLECT_CONSTRAINT_RANGE(name, min_val, max_val)                                      \
+#define REFLECT_FIELD_REF(name, display_name, description)                                                              \
+            add_field(#name, offsetof(class_t, class_t::name), typeid(decltype(class_t::name)), typeid(decltype(class_t::name)::super_type_t), display_name, description); 
+
+#define REFLECT_CONSTRAINT_RANGE(name, min_val, max_val)                                                                \
             add_constraint(#name, static_cast<float>(min_val), static_cast<float>(max_val)); 
 
-#define END_REFLECT()                                                                           \
-        }                                                                                       \
-    };                                                                                          \
+#define END_REFLECT()                                                                                                   \
+        }                                                                                                               \
+    };                                                                                                                  \
     inline static reflection self_class;
 
 }; 

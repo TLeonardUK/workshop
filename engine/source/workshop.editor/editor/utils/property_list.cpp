@@ -6,8 +6,6 @@
 
 #include "thirdparty/imgui/imgui.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 property_list::property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager, asset_database& ass_database)
@@ -141,17 +139,17 @@ void property_list::draw_preview(const char* asset_path)
     );
 
     ImGui::Dummy(ImVec2(k_preview_size, k_preview_size));
+    ImGui::GetWindowDrawList()->AddRectFilled(thumbnail_min, thumbnail_max, ImColor(0.0f, 0.0f, 0.0f, 0.5f));
 
     asset_database_entry* entry = m_asset_database.get(asset_path);
-    asset_database::thumbnail* thumb = m_asset_database.get_thumbnail(entry);
-    if (thumb)
+    if (entry)
     {
-        ImTextureID texture = thumb->thumbnail_texture.get();
-        ImGui::GetWindowDrawList()->AddImage(texture, thumbnail_min, thumbnail_max, ImVec2(0, 0), ImVec2(1, 1), ImColor(1.0f, 1.0f, 1.0f, 0.5f));
-    }
-    else
-    {
-        ImGui::GetWindowDrawList()->AddRectFilled(thumbnail_min, thumbnail_max, ImColor(0.0f, 0.0f, 0.0f, 0.5f));
+        asset_database::thumbnail* thumb = m_asset_database.get_thumbnail(entry);
+        if (thumb)
+        {
+            ImTextureID texture = thumb->thumbnail_texture.get();
+            ImGui::GetWindowDrawList()->AddImage(texture, thumbnail_min, thumbnail_max, ImVec2(0, 0), ImVec2(1, 1), ImColor(1.0f, 1.0f, 1.0f, 0.5f));
+        }
     }
 
     ImGui::GetWindowDrawList()->AddRect(preview_min, preview_max, frame_color);
@@ -188,16 +186,7 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
 
 void property_list::draw()
 {
-    std::vector<reflect_field*> fields;
-
-    // Grab the fields from the class and all its parents.
-    reflect_class* collect_class = m_class;
-    while (collect_class)
-    {
-        std::vector<reflect_field*> class_fields = collect_class->get_fields();
-        fields.insert(fields.end(), class_fields.begin(), class_fields.end());
-        collect_class = collect_class->get_parent();
-    }
+    std::vector<reflect_field*> fields = m_class->get_fields(true);
 
     if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_Resizable| ImGuiTableFlags_BordersInnerV))
     {

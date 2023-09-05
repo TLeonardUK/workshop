@@ -9,8 +9,6 @@
 
 #include "thirdparty/imgui/imgui.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 editor_loading_window::editor_loading_window(asset_manager* ass_manager)

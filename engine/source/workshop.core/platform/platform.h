@@ -63,4 +63,19 @@ enum class message_dialog_type
 // Shows a message to the user with the native message dialog.
 void message_dialog(const char* text, message_dialog_type type);
 
+// Represents an individual file filter used with one of the below file dialog functions.
+struct file_dialog_filter
+{
+    std::string name;
+    std::vector<std::string> extensions;
+};
+
+// Shows a native open-file dialog.
+// If a file is selected the path will be returned, otherwise an empty string.
+std::string open_file_dialog(const char* title, const std::vector<file_dialog_filter>& filters);
+
+// Shows a native save-file dialog.
+// If a file is selected the path will be returned, otherwise an empty string.
+std::string save_file_dialog(const char* title, const std::vector<file_dialog_filter>& filters);
+
 }; // namespace ws::math

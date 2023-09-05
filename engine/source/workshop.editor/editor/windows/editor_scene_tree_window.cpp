@@ -19,15 +19,15 @@
 
 namespace ws {
 
-editor_scene_tree_window::editor_scene_tree_window(editor* in_editor, world* in_world)
-    : m_world(in_world)
+editor_scene_tree_window::editor_scene_tree_window(editor* in_editor, engine* in_engine)
+    : m_engine(in_engine)
     , m_editor(in_editor)
 {
 }
 
 void editor_scene_tree_window::draw_object_node(object obj, transform_component* transform, size_t depth)
 {
-    object_manager& obj_manager = m_world->get_object_manager();
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
     std::vector<object> selected_objects = m_editor->get_selected_objects();
 
     bool has_children = (transform != nullptr && !transform->children.empty());
@@ -149,7 +149,7 @@ void editor_scene_tree_window::draw_object_node(object obj, transform_component*
 
 void editor_scene_tree_window::add_new_object()
 {
-    object_manager& obj_manager = m_world->get_object_manager();
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
     transform_system* transform_sys = obj_manager.get_system<transform_system>();
 
     std::vector<object> selected_objects = m_editor->get_selected_objects();
@@ -191,7 +191,7 @@ void editor_scene_tree_window::draw()
     {
         if (ImGui::Begin(get_window_id(), &m_open))
         {
-            object_manager& obj_manager = m_world->get_object_manager();
+            object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
 
             component_filter<const transform_component> transform_filter(obj_manager);
             component_filter<excludes<const transform_component>> no_transform_filter(obj_manager);

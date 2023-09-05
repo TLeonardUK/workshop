@@ -33,6 +33,9 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 
 # Link appropriate implementation libraries.
+target_link_libraries(${PROJECT_NAME} 
+    workshop.core)
+
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} workshop.render_interface.dx12)
 endif()

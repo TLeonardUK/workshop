@@ -17,8 +17,6 @@
 
 namespace ws {
 
-#pragma optimize("", off)
-
 bounds_system::bounds_system(object_manager& manager)
     : system(manager, "bounds system")
 {

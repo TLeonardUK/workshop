@@ -15,12 +15,27 @@ virtual_file_system_disk_handler::virtual_file_system_disk_handler(const std::st
     : m_root(root)
     , m_read_only(read_only)
 {
-    m_path_watcher = watch_path(root);
+    if (m_root.empty())
+    {
+        m_path_watcher = watch_path(root);
+    }
+}
+
+std::filesystem::path virtual_file_system_disk_handler::resolve_path(const char* path)
+{
+    if (m_root.empty())
+    {
+        return path;
+    }
+    else
+    {
+        return m_root + "/" + path;
+    }
 }
 
 std::unique_ptr<stream> virtual_file_system_disk_handler::open(const char* path, bool for_writing)
 {
-    std::filesystem::path fspath(m_root + "/" + path);
+    std::filesystem::path fspath = resolve_path(path);
 
     if (for_writing)
     {
@@ -58,7 +73,7 @@ std::unique_ptr<stream> virtual_file_system_disk_handler::open(const char* path,
 
 virtual_file_system_path_type virtual_file_system_disk_handler::type(const char* path)
 {
-    std::filesystem::path fspath(m_root + "/" + path);
+    std::filesystem::path fspath = resolve_path(path);
 
     std::filesystem::file_status status = std::filesystem::status(fspath);
     if (status.type() == std::filesystem::file_type::directory ||
@@ -82,7 +97,7 @@ bool virtual_file_system_disk_handler::remove(const char* path)
         return false;
     }
 
-    std::filesystem::path fspath(m_root + "/" + path);
+    std::filesystem::path fspath = resolve_path(path);
     try
     {
         std::filesystem::remove(fspath);
@@ -102,8 +117,8 @@ bool virtual_file_system_disk_handler::rename(const char* source, const char* de
         return false;
     }
 
-    std::filesystem::path source_fspath(m_root + "/" + source);
-    std::filesystem::path dest_fspath(m_root + "/" + destination);
+    std::filesystem::path source_fspath = resolve_path(source);
+    std::filesystem::path dest_fspath = resolve_path(destination);
 
     if ( std::filesystem::exists(source_fspath) &&
         !std::filesystem::exists(dest_fspath))
@@ -129,7 +144,7 @@ bool virtual_file_system_disk_handler::create_directory(const char* path)
         return false;
     }
 
-    std::filesystem::path fspath(m_root + "/" + path);
+    std::filesystem::path fspath = resolve_path(path);
     if (!std::filesystem::exists(fspath))
     {        
         try
@@ -146,13 +161,14 @@ bool virtual_file_system_disk_handler::create_directory(const char* path)
 
 bool virtual_file_system_disk_handler::get_disk_location(const char* path, std::string& output_path)
 {
-    output_path = (m_root + "/" + path);
+    output_path = resolve_path(path).string().c_str();
     return true;
 }
 
 bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_file_system_time_point& timepoint)
 {
-    std::filesystem::path fspath(m_root + "/" + path);
+    std::filesystem::path fspath = resolve_path(path);
+
     if (std::filesystem::exists(fspath))
     {
         std::filesystem::file_time_type time = std::filesystem::last_write_time(fspath);
@@ -168,7 +184,7 @@ std::vector<std::string> virtual_file_system_disk_handler::list(const char* path
 {
     std::vector<std::string> result;
 
-    std::filesystem::path fspath(m_root + "/" + path);
+    std::filesystem::path fspath = resolve_path(path);
 
     if (std::filesystem::is_directory(fspath))
     {
@@ -236,7 +252,8 @@ std::unique_ptr<virtual_file_system_watcher> virtual_file_system_disk_handler::w
 
     try
     {
-        result->m_is_directory = std::filesystem::is_directory(m_root + "/" + result->m_path);
+        std::filesystem::path fspath = resolve_path(result->m_path.c_str());
+        result->m_is_directory = std::filesystem::is_directory(fspath);
     }
     catch (std::filesystem::filesystem_error)
     {

@@ -6,6 +6,7 @@
 
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/filesystem/stream.h"
+#include "workshop.core/utils/yaml.h"
 
 #include <vector>
 
@@ -175,6 +176,16 @@ inline void stream_serialize(stream& out, aabb& v)
 {
 	stream_serialize(out, v.min);
 	stream_serialize(out, v.max);
+}
+
+template<>
+inline void yaml_serialize(YAML::Node& out, bool is_loading, aabb& value)
+{
+	YAML::Node min = out["min"];
+	YAML::Node max = out["max"];
+
+	yaml_serialize(min, is_loading, value.min);
+	yaml_serialize(max, is_loading, value.max);
 }
 
 }; // namespace ws

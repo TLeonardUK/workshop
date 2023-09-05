@@ -87,6 +87,7 @@ public:
     static inline constexpr size_t k_max_components = 1'000'000;
 
     object_manager(world& world);
+    ~object_manager();
 
     // Called once each frame, steps all the systems.
     void step(const frame_time& time);
@@ -149,6 +150,12 @@ public:
     // in the editor. User code should send messages to systems for them to modify a component, not
     // do it directly.
     void component_edited(object obj, component* comp);
+
+    // Gets a list of all alive objects.
+    //
+    // This is very expensive to generate, and outside of serialization this is a very suspicious function
+    // to be calling. Consider if the best option over using a filter.
+    std::vector<object> get_objects();
 
 private:    
 

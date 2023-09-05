@@ -9,16 +9,15 @@
 
 #include <algorithm>
 
-#pragma optimize("", off)
-
 namespace ws {
 
-reflect_class::reflect_class(const char* name, std::type_index index, std::type_index parent, reflect_class_flags flags, const char* display_name)
+reflect_class::reflect_class(const char* name, std::type_index index, std::type_index parent, reflect_class_flags flags, const char* display_name, instance_create_t create_function)
     : m_name(name)
     , m_type_index(index)
     , m_parent_type_index(parent)
     , m_display_name(display_name)
     , m_flags(flags)
+    , m_create_function(create_function)
 {
     register_reflect_class(this);
 }
@@ -48,7 +47,7 @@ std::type_index reflect_class::get_type_index()
     return m_type_index;
 }
 
-reflect_field* reflect_class::find_field(const char* name)
+reflect_field* reflect_class::find_field(const char* name, bool recursive)
 {
     auto iter = std::find_if(m_fields.begin(), m_fields.end(), [name](auto& field) {
         return strcmp(field->get_name(), name) == 0;
@@ -59,22 +58,45 @@ reflect_field* reflect_class::find_field(const char* name)
         return iter->get();
     }
 
-    return nullptr;
+    reflect_class* parent = get_parent();
+    if (parent)
+    {
+        return parent->find_field(name, recursive);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
-std::vector<reflect_field*> reflect_class::get_fields()
+std::vector<reflect_field*> reflect_class::get_fields(bool include_base_classes)
 {
     std::vector<reflect_field*> ret;
-    for (auto& ptr : m_fields)
+
+    if (include_base_classes)
     {
-        ret.push_back(ptr.get());
+        reflect_class* collect_class = this;
+        while (collect_class)
+        {
+            std::vector<reflect_field*> class_fields = collect_class->get_fields(false);
+            ret.insert(ret.end(), class_fields.begin(), class_fields.end());
+            collect_class = collect_class->get_parent();
+        }
     }
+    else
+    {
+        for (auto& ptr : m_fields)
+        {
+            ret.push_back(ptr.get());
+        }
+    }
+
     return ret;
 }
 
-void reflect_class::add_field(const char* name, size_t offset, std::type_index type, const char* display_name, const char* description)
+void reflect_class::add_field(const char* name, size_t offset, std::type_index type, std::type_index super_type,const char* display_name, const char* description)
 {
-    std::unique_ptr<reflect_field> field = std::make_unique<reflect_field>(name, offset, type, display_name, description);
+    std::unique_ptr<reflect_field> field = std::make_unique<reflect_field>(name, offset, type, super_type, display_name, description);
     m_fields.push_back(std::move(field));
 }
 
@@ -104,6 +126,11 @@ bool reflect_class::is_derived_from(reflect_class* parent)
 reflect_class* reflect_class::get_parent()
 {
     return get_reflect_class(m_parent_type_index);;
+}
+
+void* reflect_class::create_instance()
+{
+    return m_create_function();
 }
 
 }; // namespace workshop

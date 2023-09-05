@@ -29,6 +29,11 @@ std::vector<std::string> model_importer::get_supported_extensions()
     };
 }
 
+std::string model_importer::get_file_type_description()
+{
+    return "Model Files";
+}
+
 bool model_importer::import(const char* in_source_path, const char* in_output_path)
 {
     db_log(engine, "Importing model: %s", in_source_path);

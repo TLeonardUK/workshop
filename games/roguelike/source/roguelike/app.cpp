@@ -77,32 +77,11 @@ ws::result<void> rl_game_app::start()
 {
     auto& ass_manager = get_engine().get_asset_manager();
     auto& obj_manager = get_engine().get_default_world().get_object_manager();
-    register_default_systems(obj_manager);
 
     transform_system* transform_sys = obj_manager.get_system<transform_system>();
     directional_light_system* direction_light_sys = obj_manager.get_system<directional_light_system>();
     light_probe_grid_system* light_probe_grid_sys = obj_manager.get_system<light_probe_grid_system>();
     static_mesh_system* static_mesh_sys = obj_manager.get_system<static_mesh_system>();
-
-    // Add the main camera!
-    m_camera_object = obj_manager.create_object("main camera");
-    obj_manager.add_component<transform_component>(m_camera_object);
-    obj_manager.add_component<bounds_component>(m_camera_object);
-    obj_manager.add_component<camera_component>(m_camera_object);
-    obj_manager.add_component<fly_camera_movement_component>(m_camera_object);
-    transform_sys->set_local_transform(m_camera_object, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
-
-    // Add a directional light for the scene.
-    object sun_object = obj_manager.create_object("sun light");
-    obj_manager.add_component<transform_component>(sun_object);
-    obj_manager.add_component<bounds_component>(sun_object);
-    obj_manager.add_component<directional_light_component>(sun_object);
-    direction_light_sys->set_light_shadow_casting(sun_object, true);
-    direction_light_sys->set_light_shadow_map_size(sun_object, 2048);
-    direction_light_sys->set_light_shadow_max_distance(sun_object, 10000.0f);
-    direction_light_sys->set_light_shadow_cascade_exponent(sun_object, 0.6f);
-    direction_light_sys->set_light_intensity(sun_object, 5.0f);
-    transform_sys->set_local_transform(sun_object, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 
     // Add a skybox.
     object mesh_object = obj_manager.create_object("skybox");

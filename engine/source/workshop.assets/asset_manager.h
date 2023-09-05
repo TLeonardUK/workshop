@@ -18,6 +18,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
+#include <typeindex>
 
 namespace ws {
 
@@ -90,15 +91,11 @@ struct asset_state
 // 
 //  This class is thread safe.
 // ================================================================================================
-template <typename asset_type>
-class asset_ptr
+class asset_ptr_base
 {
 public:
-    asset_ptr();
-    asset_ptr(asset_manager* manager, asset_state* state);
-    asset_ptr(const asset_ptr& other);
-    asset_ptr(asset_ptr&& other);
-    ~asset_ptr();
+    asset_ptr_base();
+    asset_ptr_base(asset_manager* manager, asset_state* state);
 
     // Gets the path to the asset being loaded.
     std::string get_path();
@@ -108,7 +105,7 @@ public:
 
     // If the asset has been loaded.
     bool is_loaded();
-    
+
     // Gets the version of the asset. Each time the asset changes the version is bumped.
     size_t get_version();
 
@@ -128,14 +125,33 @@ public:
     // Gets the manager that handles this assets loading.
     asset_manager* get_asset_manager();
 
-    // Gets the asset or asserts if not loaded.
-    asset_type* get();
-
     // Registers a callback for when the state of the asset changes.
     event<>::key_t register_changed_callback(std::function<void()> callback);
 
     // Unregisters a callback previously registered by register_changed_callback
     void unregister_changed_callback(event<>::key_t key);
+
+protected:
+    asset_manager* m_asset_manager = nullptr;
+    asset_state* m_state = nullptr;
+
+};
+
+template <typename asset_type>
+class asset_ptr : public asset_ptr_base
+{
+public:
+    // This is used for reflection when using REFLECT_FIELD_REF
+    using super_type_t = asset_ptr_base;
+
+    asset_ptr();
+    asset_ptr(asset_manager* manager, asset_state* state);
+    asset_ptr(const asset_ptr& other);
+    asset_ptr(asset_ptr&& other);
+    ~asset_ptr();
+
+    // Gets the asset or asserts if not loaded.
+    asset_type* get();
 
     // Operator overloads for all the standard ptr behaviour.
     asset_type& operator*();
@@ -146,10 +162,6 @@ public:
 
     bool operator==(asset_ptr const& other) const;
     bool operator!=(asset_ptr const& other) const;
-
-private:
-    asset_manager* m_asset_manager = nullptr;
-    asset_state* m_state = nullptr;
 
 };
 
@@ -253,7 +265,18 @@ public:
     // Gets the config this asset manager is loading/compiling assets for.
     config_type get_asset_config();
 
+    // Gets the loader that uses the handles the given asset type.
+    asset_loader* get_loader_for_type(std::type_index type);
+
+    template <typename asset_type>
+    asset_loader* get_loader_for_type()
+    {
+        return get_loader_for_type(typeid(asset_type));
+    }
+
 protected:
+    friend class asset_ptr_base;
+    
     template <typename asset_type>
     friend class asset_ptr;
 
@@ -448,18 +471,85 @@ private:
 
 };
 
+inline std::string asset_ptr_base::get_path()
+{
+    if (m_state)
+    {
+        return m_state->path;
+    }
+    return "";
+}
 
-template <typename asset_type>
-inline asset_ptr<asset_type>::asset_ptr()
+inline bool asset_ptr_base::is_valid()
+{
+    return m_state != nullptr;
+}
+
+inline bool asset_ptr_base::is_loaded()
+{
+    return m_state != nullptr && m_state->loading_state == asset_loading_state::loaded;
+}
+
+inline size_t asset_ptr_base::get_version()
+{
+    return m_state != nullptr ? m_state->version.load() : 0llu;
+}
+
+inline asset_loading_state asset_ptr_base::get_state()
+{
+    return m_state->loading_state;
+}
+
+inline void asset_ptr_base::wait_for_load()
+{
+    return m_asset_manager->wait_for_load(m_state);
+}
+
+inline event<>::key_t asset_ptr_base::register_changed_callback(std::function<void()> callback)
+{
+    return m_state->on_change_callback.add(callback);
+}
+
+inline void asset_ptr_base::unregister_changed_callback(event<>::key_t key)
+{
+    m_state->on_change_callback.remove(key);
+}
+
+inline size_t asset_ptr_base::get_hash() const
+{
+    size_t hash = 0;
+    ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_state));
+    ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_asset_manager));
+    return hash;
+}
+
+inline asset_manager* asset_ptr_base::get_asset_manager()
+{
+    return m_asset_manager;
+}
+
+inline asset_ptr_base::asset_ptr_base()
     : m_asset_manager(nullptr)
     , m_state(nullptr)
 {
 }
 
-template <typename asset_type>
-inline asset_ptr<asset_type>::asset_ptr(asset_manager* manager, asset_state* state)
+inline asset_ptr_base::asset_ptr_base(asset_manager* manager, asset_state* state)
     : m_asset_manager(manager)
     , m_state(state)
+{
+}
+
+
+template <typename asset_type>
+inline asset_ptr<asset_type>::asset_ptr()
+    : asset_ptr_base(nullptr, nullptr)
+{
+}
+
+template <typename asset_type>
+inline asset_ptr<asset_type>::asset_ptr(asset_manager* manager, asset_state* state)
+    : asset_ptr_base(manager, state)
 {
     // Note: No ref increase is required, create_asset_state has already done this before returning.
     //       To avoid anything being nuked between the state being created and the asset_ptr 
@@ -468,9 +558,10 @@ inline asset_ptr<asset_type>::asset_ptr(asset_manager* manager, asset_state* sta
 
 template <typename asset_type>
 inline asset_ptr<asset_type>::asset_ptr(const asset_ptr& other)
-    : m_asset_manager(other.m_asset_manager)
-    , m_state(other.m_state)
 {
+    m_asset_manager = other.m_asset_manager;
+    m_state = other.m_state;
+
     if (m_state)
     {
        m_asset_manager->increment_ref(m_state);
@@ -479,9 +570,10 @@ inline asset_ptr<asset_type>::asset_ptr(const asset_ptr& other)
 
 template <typename asset_type>
 inline asset_ptr<asset_type>::asset_ptr(asset_ptr&& other)
-    : m_asset_manager(other.m_asset_manager)
-    , m_state(other.m_state)
 {
+    m_asset_manager = other.m_asset_manager;
+    m_state = other.m_state;
+        
     // Reference doesn't need changing move doesn't effect it.
     other.m_state = nullptr;
 }
@@ -493,67 +585,6 @@ inline asset_ptr<asset_type>::~asset_ptr()
     {
         m_asset_manager->decrement_ref(m_state);
     }
-}
-
-template <typename asset_type>
-inline std::string asset_ptr<asset_type>::get_path()
-{
-    if (m_state)
-    {
-        return m_state->path;
-    }
-    return "";
-}
-
-template <typename asset_type>
-inline bool asset_ptr<asset_type>::is_valid()
-{
-    return m_state != nullptr;
-}
-
-template <typename asset_type>
-inline bool asset_ptr<asset_type>::is_loaded()
-{
-    return m_state != nullptr && m_state->loading_state == asset_loading_state::loaded;
-}
-
-template <typename asset_type>
-inline size_t asset_ptr<asset_type>::get_version()
-{
-    return m_state != nullptr ? m_state->version.load() : 0llu;
-}
-
-template <typename asset_type>
-inline asset_loading_state asset_ptr<asset_type>::get_state()
-{
-    return m_state->loading_state;
-}
-
-template <typename asset_type>
-inline void asset_ptr<asset_type>::wait_for_load()
-{
-    return m_asset_manager->wait_for_load(m_state);
-}
-
-/*
-template <typename asset_type>
-inline void asset_ptr<asset_type>::reload()
-{
-    return m_asset_manager->request_reload(m_state);
-}
-*/
-
-
-template <typename asset_type>
-event<>::key_t asset_ptr<asset_type>::register_changed_callback(std::function<void()> callback)
-{
-    return m_state->on_change_callback.add(callback);
-}
-
-template <typename asset_type>
-void asset_ptr<asset_type>::unregister_changed_callback(event<>::key_t key)
-{
-    m_state->on_change_callback.remove(key);
 }
 
 template <typename asset_type>
@@ -615,21 +646,6 @@ inline asset_ptr<asset_type>& asset_ptr<asset_type>::operator=(asset_ptr<asset_t
     // Reference doesn't need changing move doesn't effect it.
 
     return *this;
-}
-
-template <typename asset_type>
-inline size_t asset_ptr<asset_type>::get_hash() const
-{
-    size_t hash = 0;
-    ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_state));
-    ws::hash_combine(hash, *reinterpret_cast<const size_t*>(&m_asset_manager));
-    return hash;
-}
-
-template <typename asset_type>
-inline asset_manager* asset_ptr<asset_type>::get_asset_manager()
-{
-    return m_asset_manager;
 }
 
 template <typename asset_type>

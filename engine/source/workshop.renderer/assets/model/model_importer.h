@@ -25,6 +25,7 @@ public:
     model_importer(ri_interface& instance, renderer& renderer, asset_manager& ass_manager);
 
     virtual std::vector<std::string> get_supported_extensions() override;
+    virtual std::string get_file_type_description() override;
     virtual bool import(const char* source_path, const char* output_path) override;
 
 private:

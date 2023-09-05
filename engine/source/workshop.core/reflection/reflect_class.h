@@ -8,6 +8,7 @@
 #include "workshop.core/math/math.h"
 #include "workshop.core/utils/traits.h"
 
+#include <functional>
 #include <typeindex>
 
 namespace ws {
@@ -30,7 +31,9 @@ DEFINE_ENUM_FLAGS(reflect_class_flags);
 class reflect_class
 {
 public:
-    reflect_class(const char* name, std::type_index index, std::type_index parent, reflect_class_flags flags, const char* display_name);
+    using instance_create_t = std::function<void*()>;
+
+    reflect_class(const char* name, std::type_index index, std::type_index parent, reflect_class_flags flags, const char* display_name, instance_create_t create_callback);
     virtual ~reflect_class();
 
     // Gets the name of this class.
@@ -43,10 +46,10 @@ public:
     bool has_flag(reflect_class_flags flag);
 
     // Gets a field with the same name provided.
-    reflect_field* find_field(const char* name);
+    reflect_field* find_field(const char* name, bool recursive = false);
 
     // Gets a list of all exposed fields in the class.
-    std::vector<reflect_field*> get_fields();
+    std::vector<reflect_field*> get_fields(bool include_base_classes = false);
 
     // Gets the type index of the class being described.
     std::type_index get_type_index();
@@ -57,8 +60,11 @@ public:
     // Gets the parent class of this class.
     reflect_class* get_parent();
 
+    // Creates an instance of this class.
+    void* create_instance();
+
 protected:
-    void add_field(const char* name, size_t offset, std::type_index type, const char* display_name, const char* description);
+    void add_field(const char* name, size_t offset, std::type_index type, std::type_index super_type, const char* display_name, const char* description);
     void add_constraint(const char* name, float min_value, float max_value);
 
 private:
@@ -68,6 +74,8 @@ private:
     std::type_index m_type_index;
     std::type_index m_parent_type_index;
     reflect_class_flags m_flags;
+    instance_create_t m_create_function;
+
 
 };
 

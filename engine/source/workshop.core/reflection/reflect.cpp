@@ -29,6 +29,19 @@ reflect_class* get_reflect_class(std::type_index index)
     return nullptr;
 }
 
+reflect_class* get_reflect_class(const char* name)
+{
+    std::unordered_map<std::type_index, reflect_class*>& map = get_reflect_map();
+    for (auto& [index, cls] : map)
+    {
+        if (strcmp(cls->get_name(), name) == 0)
+        {
+            return cls;
+        }
+    }
+    return nullptr;
+}
+
 std::vector<reflect_class*> get_reflect_derived_classes(std::type_index parent)
 {
     std::vector<reflect_class*> ret;

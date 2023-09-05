@@ -86,6 +86,8 @@ SET(SOURCES
     "utils/time.cpp"
     "utils/time.h"
     "utils/string_formatter.h"
+    "utils/yaml.cpp"
+    "utils/yaml.h"
     
     "math/math.h"
     "math/math.cpp"
@@ -160,5 +162,6 @@ target_link_libraries(${PROJECT_NAME}
     stb
     CMP_Core
     nativefiledialog
+    yamlcpp
     ${PLATFORM_LIB}
 )

@@ -4,6 +4,8 @@
 // ================================================================================================
 #include "workshop.core/platform/platform.h"
 
+#include "thirdparty/nativefiledialog/src/include/nfd.h"
+
 #include <Windows.h>
 #include <psapi.h>
 
@@ -69,6 +71,68 @@ void message_dialog(const char* text, message_dialog_type type)
     }
 
     MessageBoxA(nullptr, text, caption.c_str(), native_type);
+}
+
+std::string open_file_dialog(const char* text, const std::vector<file_dialog_filter>& filters)
+{
+    std::vector<nfdu8filteritem_t> nfd_filters;
+    std::vector<std::string> nfd_specs;
+
+    nfd_filters.reserve(filters.size());
+    nfd_specs.reserve(filters.size());
+
+    for (const file_dialog_filter& filter : filters)
+    {
+        std::string& spec = nfd_specs.emplace_back();
+        spec = string_join(filter.extensions, ",");
+
+        nfdu8filteritem_t& item = nfd_filters.emplace_back();
+        item.name = filter.name.c_str();
+        item.spec = spec.data();
+    }
+
+    std::string result = "";
+
+    nfdchar_t* path;
+    nfdresult_t dialog_result = NFD_OpenDialog(&path, nfd_filters.data(), static_cast<nfdfiltersize_t>(nfd_filters.size()), nullptr);
+    if (dialog_result == NFD_OKAY)
+    {
+        result = path;
+        free(path);
+    }
+
+    return result;
+}
+
+std::string save_file_dialog(const char* text, const std::vector<file_dialog_filter>& filters)
+{
+    std::vector<nfdu8filteritem_t> nfd_filters;
+    std::vector<std::string> nfd_specs;
+
+    nfd_filters.reserve(filters.size());
+    nfd_specs.reserve(filters.size());
+
+    for (const file_dialog_filter& filter : filters)
+    {
+        std::string& spec = nfd_specs.emplace_back();
+        spec = string_join(filter.extensions, ",");
+
+        nfdu8filteritem_t& item = nfd_filters.emplace_back();
+        item.name = filter.name.c_str();
+        item.spec = spec.data();
+    }
+
+    std::string result = "";
+
+    nfdchar_t* path;
+    nfdresult_t dialog_result = NFD_SaveDialog(&path, nfd_filters.data(), static_cast<nfdfiltersize_t>(nfd_filters.size()), nullptr, nullptr);
+    if (dialog_result == NFD_OKAY)
+    {
+        result = path;
+        free(path);
+    }
+
+    return result;
 }
 
 }; // namespace workshop

@@ -5,6 +5,7 @@
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/assets/asset_database.h"
+#include "workshop.engine/assets/scene/scene_loader.h"
 
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/perf/profile.h"
@@ -126,6 +127,11 @@ void engine::register_init(init_list& list)
         "Asset Manager",
         [this, &list]() -> result<void> { return create_asset_manager(list); },
         [this, &list]() -> result<void> { return destroy_asset_manager(); }
+    );
+    list.add_step(
+        "Register Engine Asset Loaders",
+        [this, &list]() -> result<void> { return register_asset_loaders(list); },
+        [this, &list]() -> result<void> { return unregister_asset_loaders(); }
     );
     list.add_step(
         "Platform Interface",
@@ -281,6 +287,19 @@ void engine::set_window_mode(const std::string& title, size_t width, size_t heig
     }
 }
 
+
+result<void> engine::register_asset_loaders(init_list& list)
+{
+    m_asset_manager->register_loader(std::make_unique<scene_loader>(*m_asset_manager, this));
+
+    return true;
+}
+
+result<void> engine::unregister_asset_loaders()
+{
+    return true;
+}
+
 result<void> engine::create_memory_tracker(init_list& list)
 {
     m_memory_tracker = std::make_unique<memory_tracker>();
@@ -396,6 +415,9 @@ result<void> engine::create_filesystem(init_list& list)
 
     // The temporary mount is just a location on disk we can store temporary files in.
     m_filesystem->register_handler("temp", 0, std::make_unique<virtual_file_system_disk_handler>(std::filesystem::temp_directory_path().string().c_str(), false));
+
+    // This handler is used to directly access the host file system.
+    m_filesystem->register_handler("host", 0, std::make_unique<virtual_file_system_disk_handler>("", false));
 
     return true;
 }
@@ -602,6 +624,15 @@ result<void> engine::destroy_default_world()
 {
     destroy_world(m_default_world);
     return true;
+}
+
+void engine::set_default_world(world* new_world)
+{
+    if (m_default_world)
+    {
+        destroy_world(m_default_world);
+    }
+    m_default_world = new_world;
 }
 
 result<void> engine::create_presenter(init_list& list)

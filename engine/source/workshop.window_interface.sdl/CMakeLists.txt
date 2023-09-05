@@ -17,5 +17,6 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/window")
 
 target_link_libraries(${PROJECT_NAME} 
+    workshop.core
     sdl2
 )

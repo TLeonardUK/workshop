@@ -18,7 +18,7 @@ namespace ws {
 class reflect_field
 {
 public:
-    reflect_field(const char* name, size_t offset, std::type_index type, const char* display_name, const char* description);
+    reflect_field(const char* name, size_t offset, std::type_index type, std::type_index super_type, const char* display_name, const char* description);
 
     // Gets the name of this class.
     const char* get_name();
@@ -34,6 +34,9 @@ public:
 
     // Gets the type of this field.
     std::type_index get_type_index();
+
+    // Gets the super type of the type.
+    std::type_index get_super_type_index();
 
     // Adds a constraint to this field.
     void add_constraint(std::unique_ptr<reflect_constraint> constraint);
@@ -60,6 +63,7 @@ private:
 
     size_t m_offset;
     std::type_index m_type;
+    std::type_index m_super_type;
 
     std::vector<std::unique_ptr<reflect_constraint>> m_constraints;
 

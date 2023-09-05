@@ -10,23 +10,35 @@
 #include "workshop.editor/editor/windows/editor_scene_tree_window.h"
 #include "workshop.editor/editor/windows/editor_properties_window.h"
 #include "workshop.editor/editor/windows/editor_assets_window.h"
+
 #include "workshop.engine/engine/world.h"
-#include "workshop.renderer/renderer.h"
-#include "workshop.renderer/render_imgui_manager.h"
+#include "workshop.engine/assets/scene/scene.h"
+#include "workshop.engine/assets/scene/scene_loader.h"
 #include "workshop.engine/ecs/object_manager.h"
 #include "workshop.engine/ecs/component.h"
 #include "workshop.engine/ecs/component_filter.h"
+
+#include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_imgui_manager.h"
+
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
+#include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
 #include "workshop.game_framework/systems/transform/bounds_system.h"
+#include "workshop.game_framework/components/lighting/directional_light_component.h"
+
+#include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
+#include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.game_framework/systems/lighting/directional_light_system.h"
+
+#include "workshop.core/platform/platform.h"
 
 #include "thirdparty/imgui/imgui.h"
 #include "thirdparty/imgui/imgui_internal.h"
 #include "thirdparty/ImGuizmo/ImGuizmo.h"
-
-#pragma optimize("", off)
 
 namespace ws {
 
@@ -48,6 +60,11 @@ void editor::register_init(init_list& list)
         "Editor Windows",
         [this, &list]() -> result<void> { return create_windows(list); },
         [this, &list]() -> result<void> { return destroy_windows(); }
+    );
+    list.add_step(
+        "Editor World",
+        [this, &list]() -> result<void> { return create_world(list); },
+        [this, &list]() -> result<void> { return destroy_world(); }
     );
 }
 
@@ -163,8 +180,8 @@ result<void> editor::destroy_main_menu()
 
 result<void> editor::create_windows(init_list& list)
 {
-    create_window<editor_properties_window>(this, &m_engine.get_default_world());
-    create_window<editor_scene_tree_window>(this, &m_engine.get_default_world());
+    create_window<editor_properties_window>(this, &m_engine);
+    create_window<editor_scene_tree_window>(this, &m_engine);
     create_window<editor_loading_window>(&m_engine.get_asset_manager());
     create_window<editor_assets_window>(&m_engine.get_asset_manager(), &m_engine.get_asset_database());
     create_window<editor_log_window>();
@@ -180,16 +197,118 @@ result<void> editor::destroy_windows()
     return true;
 }
 
+
+result<void> editor::create_world(init_list& list)
+{
+    new_scene();
+    return true;
+}
+
+result<void> editor::destroy_world()
+{
+    // Nothing to do here, the original world created may have been destroyed
+    // or swapped for another by this point. Destroying it is handled by the engine.
+    return true;
+}
+
 void editor::new_scene()
 {
+    world* new_world = m_engine.create_world("Default World");
+
+    auto& obj_manager = new_world->get_object_manager();
+    register_default_systems(obj_manager);
+
+    transform_system* transform_sys = obj_manager.get_system<transform_system>();
+    directional_light_system* direction_light_sys = obj_manager.get_system<directional_light_system>();
+
+    // Add a movement camera.
+    object obj = obj_manager.create_object("main camera");
+    obj_manager.add_component<transform_component>(obj);
+    obj_manager.add_component<bounds_component>(obj);
+    obj_manager.add_component<camera_component>(obj);
+    obj_manager.add_component<fly_camera_movement_component>(obj);
+    transform_sys->set_local_transform(obj, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
+
+    // Add a directional light.
+    obj = obj_manager.create_object("sun light");
+    obj_manager.add_component<transform_component>(obj);
+    obj_manager.add_component<bounds_component>(obj);
+    obj_manager.add_component<directional_light_component>(obj);
+    direction_light_sys->set_light_shadow_casting(obj, true);
+    direction_light_sys->set_light_shadow_map_size(obj, 2048);
+    direction_light_sys->set_light_shadow_max_distance(obj, 10000.0f);
+    direction_light_sys->set_light_shadow_cascade_exponent(obj, 0.6f);
+    direction_light_sys->set_light_intensity(obj, 5.0f);
+    transform_sys->set_local_transform(obj, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
+
+    // Switch to the new default world.
+    m_engine.set_default_world(new_world);
+
+    // Clear out any state from the old world.
+    m_selected_objects.clear();
+    m_selected_object_states.clear();
 }
 
 void editor::open_scene()
 {
+    std::vector<file_dialog_filter> filter;
+    filter.push_back({ "Scene Asset", { "yaml" }});
+
+    if (std::string path = open_file_dialog("Open Scene", filter); !path.empty())
+    {
+        // Use the host protocol to just read/write direct to disk location.
+        asset_ptr<scene> instance = m_engine.get_asset_manager().request_asset<scene>(("host:" + path).c_str(), 0);
+
+        // TODO: Make this async and show a progress bar.
+        instance.wait_for_load();
+
+        if (instance.is_loaded())
+        {
+            m_engine.set_default_world(instance->world);
+
+            // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
+            instance->world = nullptr;
+
+            m_current_scene_path = path;
+        }
+        else
+        {
+            message_dialog("Failed to load scene asset. See log for more details.", message_dialog_type::error);
+        }
+    }
 }
 
 void editor::save_scene(bool ask_for_filename)
 {
+    std::string path = m_current_scene_path;
+
+    if (path.empty() || ask_for_filename)
+    {
+        std::vector<file_dialog_filter> filter;
+        filter.push_back({ "Scene Asset", { "yaml" } });
+
+        if (path = save_file_dialog("Open Scene", filter); path.empty())
+        {
+            return;
+        }
+    }
+
+    scene saved_scene(m_engine.get_asset_manager(), &m_engine);
+    saved_scene.world = &m_engine.get_default_world();
+
+    // Use the host protocol to just read/write direct to disk location.
+    asset_loader* loader = m_engine.get_asset_manager().get_loader_for_type<scene>();
+
+    // TODO: Make this async and show a progress bar.
+    if (!loader->save_uncompiled(("host:" + path).c_str(), saved_scene))
+    {
+        message_dialog("Failed to save scene asset. See log for more details.", message_dialog_type::error);
+    }
+
+    // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
+    saved_scene.world = nullptr;
+    
+    m_current_scene_path = path;
 }
 
 void editor::step(const frame_time& time)

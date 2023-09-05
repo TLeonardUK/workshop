@@ -142,6 +142,7 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 
 target_link_libraries(${PROJECT_NAME} 
+    workshop.core
     workshop.render_interface
     workshop.assets
     imgui

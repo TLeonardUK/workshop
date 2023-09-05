@@ -102,6 +102,22 @@ config_type asset_manager::get_asset_config()
     return m_asset_config;
 }
 
+asset_loader* asset_manager::get_loader_for_type(std::type_index type)
+{
+    std::scoped_lock lock(m_loaders_mutex);
+    
+    auto iter = std::find_if(m_loaders.begin(), m_loaders.end(), [type](const registered_loader& handle){
+        return handle.loader->get_type() == type;
+    });
+
+    if (iter != m_loaders.end())
+    {
+        return iter->loader.get();
+    }
+
+    return nullptr;
+}
+
 asset_manager::loader_id asset_manager::register_loader(std::unique_ptr<asset_loader>&& loader)
 {
     std::scoped_lock lock(m_loaders_mutex);
@@ -309,6 +325,13 @@ asset_state* asset_manager::create_asset_state_lockless(const std::type_info& id
         {
             state = *iter;
             state->priority = priority;
+
+            // If we've previously failed to load, try and reload as we are requesting the asset again.
+            if (state->loading_state == asset_loading_state::failed)
+            {
+                state->loading_state = asset_loading_state::unloaded;
+                request_load_lockless(state);
+            }
         }
     }
 

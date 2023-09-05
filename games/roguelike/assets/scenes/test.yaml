@@ -1,0 +1,255 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    1:
+        meta_component:
+            name: main camera
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  0.231435537
+                y:  0.684767485
+                z:  0.245313704
+                w:  0.646028042
+            local_location:
+                x:  631.833618
+                y:  749.860352
+                z:  10.2485294
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        camera_component:
+            fov: 45
+            aspect_ratio: 1.76999998
+            min_depth: 10
+            max_depth: 20000
+        fly_camera_movement_component:
+            sensitivity: 0.00100000005
+            speed: 1500
+            zoom_speed: 50000
+            pan_speed: 50
+            max_vertical_angle: 0.800000012
+    2:
+        meta_component:
+            name: sun light
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  -0.599847794
+                y:  0.153166294
+                z:  0.194290504
+                w:  0.760903299
+            local_location:
+                x:  0
+                y:  300
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        directional_light_component:
+            shadow_cascades: 3
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+            intensity: 5
+            range: 10000
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: true
+            shadow_map_size: 2048
+            shadow_map_distance: 10000
+    3:
+        meta_component:
+            name: skybox
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  10000
+                y:  10000
+                z:  10000
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: test
+    4:
+        meta_component:
+            name: light probe grid
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  200
+                y:  1050
+                z:  -100
+            local_scale:
+                x:  3900
+                y:  2200
+                z:  2200
+        bounds_component:
+            {}
+        light_probe_grid_component:
+            density: 350
+    5:
+        meta_component:
+            name: reflection probe
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  200
+                z:  0
+            local_scale:
+                x:  4000
+                y:  4000
+                z:  4000
+        bounds_component:
+            {}
+        reflection_probe_component:
+            {}
+    6:
+        meta_component:
+            name: sponza
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: test
+    7:
+        meta_component:
+            name: sponza curtains
+        transform_component:
+            parent:
+                id: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: test
+    8:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent:
+                id: 5
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+    9:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent:
+                id: 8
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+    10:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent:
+                id: 2
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}

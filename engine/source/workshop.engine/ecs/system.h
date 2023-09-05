@@ -48,11 +48,15 @@ public:
     // occurs the system should make any changes needed to apply the changes.
     virtual void component_modified(object handle, component* comp) {}
 
-protected:
-
     // Runs all commands currently in the systems command queue. Should be called at least
     // once a frame to avoid it building up.
+    //
+    // This should almost always be called by the system itself, this is public as there are a
+    // couple of niche cases where it needs to be called (during world teardown). Think carefully
+    // before you call this and where you call it from to avoid threading issues.
     void flush_command_queue();
+
+protected:
 
     // Adds a dependency to another system. This system will not be stepped until 
     // all dependencies have completed their stepping.

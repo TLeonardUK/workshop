@@ -17,15 +17,15 @@
 
 namespace ws {
 
-editor_properties_window::editor_properties_window(editor* in_editor, world* in_world)
-    : m_world(in_world)
+editor_properties_window::editor_properties_window(editor* in_editor, engine* in_engine)
+    : m_engine(in_engine)
     , m_editor(in_editor)
 {
 }
 
 void editor_properties_window::set_context(object obj)
 {
-    object_manager& obj_manager = m_world->get_object_manager();
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
 
     m_context = obj;
     m_component_info.clear();
@@ -43,7 +43,7 @@ void editor_properties_window::set_context(object obj)
 
             component_info& info = m_component_info.emplace_back();
             info.name = comp_class->get_display_name();
-            info.property_list = std::make_unique<property_list>(comp, comp_class, &m_world->get_engine().get_asset_manager(), m_world->get_engine().get_asset_database());
+            info.property_list = std::make_unique<property_list>(comp, comp_class, &m_engine->get_default_world().get_engine().get_asset_manager(), m_engine->get_asset_database());
             info.component = comp;
             info.on_modified_delegate = info.property_list->on_modified.add_shared([this, &obj_manager, comp](reflect_field* field) {
                 obj_manager.component_edited(m_context, comp);
@@ -55,7 +55,7 @@ void editor_properties_window::set_context(object obj)
 
 void editor_properties_window::draw_add_component()
 {
-    object_manager& obj_manager = m_world->get_object_manager();
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
 
     std::vector<reflect_class*> existing_components;
     for (component_info& info : m_component_info)
@@ -104,7 +104,7 @@ void editor_properties_window::draw_add_component()
 
 void editor_properties_window::draw()
 {
-    object_manager& obj_manager = m_world->get_object_manager();
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
 
     // Update the current context object we are showing.
     std::vector<object> selected_objects = m_editor->get_selected_objects();

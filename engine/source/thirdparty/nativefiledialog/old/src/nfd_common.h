@@ -18,7 +18,8 @@
 extern "C" {
 #endif
 
-#define NFD_MAX_STRLEN 256
+// WS_CHANGE: Increase string length as some of our filters are fairly lengthy.
+#define NFD_MAX_STRLEN 2048
 #define _NFD_UNUSED(x) ((void)x)
 
 #define NFD_UTF8_BOM "\xEF\xBB\xBF"

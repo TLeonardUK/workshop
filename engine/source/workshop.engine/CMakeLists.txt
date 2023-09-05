@@ -37,8 +37,16 @@ SET(SOURCES
     "assets/asset_database.cpp"
     "assets/asset_database.h"
     
+    "assets/scene/scene.cpp"
+    "assets/scene/scene.h"
+    "assets/scene/scene_loader.cpp"
+    "assets/scene/scene_loader.h"
+    
     "presentation/presenter.cpp"
     "presentation/presenter.h"
+
+    "utils/yaml.cpp"
+    "utils/yaml.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -51,6 +59,7 @@ if (WIN32)
 endif()
 
 target_link_libraries(${PROJECT_NAME} 
+    workshop.core
     workshop.renderer
     workshop.window_interface
     workshop.input_interface
@@ -58,7 +67,6 @@ target_link_libraries(${PROJECT_NAME}
     workshop.editor
     "$<$<CONFIG:Debug>:${NON_RELEASE_LIBS}>"
     "$<$<CONFIG:Profile>:${NON_RELEASE_LIBS}>"
-    yamlcpp
 )
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier2/engine")

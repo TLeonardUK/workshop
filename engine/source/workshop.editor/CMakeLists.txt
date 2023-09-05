@@ -38,7 +38,7 @@ SET(SOURCES
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} 
-    yamlcpp
+    workshop.core
 )
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier2/editor")

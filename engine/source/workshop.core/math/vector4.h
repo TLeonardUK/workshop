@@ -7,6 +7,7 @@
 #include "workshop.core/math/math.h"
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/filesystem/stream.h"
+#include "workshop.core/utils/yaml.h"
 
 namespace ws {
 
@@ -334,6 +335,20 @@ inline void stream_serialize(stream& out, vector4& v)
 	stream_serialize(out, v.y);
 	stream_serialize(out, v.z);
 	stream_serialize(out, v.w);
+}
+
+template<>
+inline void yaml_serialize(YAML::Node& out, bool is_loading, vector4& value)
+{
+	YAML::Node x = out["x"];
+	YAML::Node y = out["y"];
+	YAML::Node z = out["z"];
+	YAML::Node w = out["w"];
+
+	yaml_serialize(x, is_loading, value.x);
+	yaml_serialize(y, is_loading, value.y);
+	yaml_serialize(z, is_loading, value.z);
+	yaml_serialize(w, is_loading, value.w);
 }
 
 }; // namespace ws

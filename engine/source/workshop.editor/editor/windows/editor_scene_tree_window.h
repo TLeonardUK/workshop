@@ -10,7 +10,7 @@
 
 namespace ws {
 
-class world;
+class engine;
 class editor;
 class transform_component;
 
@@ -21,7 +21,7 @@ class editor_scene_tree_window
     : public editor_window
 {
 public:
-    editor_scene_tree_window(editor* in_editor, world* in_world);
+    editor_scene_tree_window(editor* in_editor, engine* in_engine);
 
     virtual void draw() override;
     virtual const char* get_window_id() override;
@@ -33,7 +33,7 @@ protected:
     void add_new_object();
 
 private:
-    world* m_world;
+    engine* m_engine;
     editor* m_editor;
     
     std::vector<object> m_expanded_objects;

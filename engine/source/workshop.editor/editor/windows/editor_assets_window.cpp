@@ -9,11 +9,8 @@
 #include "workshop.core/platform/platform.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 
-#include "thirdparty/nativefiledialog/src/include/nfd.h"
 #include "thirdparty/imgui/imgui.h"
 #include "thirdparty/imgui/imgui_internal.h"
-
-#pragma optimize("", off)
 
 namespace ws {
 
@@ -239,32 +236,31 @@ void editor_assets_window::import_asset()
     std::vector<asset_importer*> loaders = m_asset_manager->get_asset_importers();
 
     // Generate a filter list from all 
-    std::string filter = "";
+    std::vector<file_dialog_filter> filters;
+
     for (asset_importer* loader : loaders)
     {
         std::vector<std::string> extensions = loader->get_supported_extensions();
+
+        file_dialog_filter& filter = filters.emplace_back();
+        filter.name = loader->get_file_type_description();
+
         for (const std::string& ext : extensions)
         {
-            if (!filter.empty())
-            {
-                filter += ",";
-            }
             if (ext[0] == '.')
             {
-                filter += ext.substr(1);
+                filter.extensions.push_back(ext.substr(1));
             }
             else
             {
-                filter += ext;
+                filter.extensions.push_back(ext);
             }
         }
     }
 
-    nfdchar_t* path;
-    nfdresult_t result = NFD_OpenDialog(filter.c_str(), nullptr, &path);
-    if (result == NFD_OKAY)
+    if (std::string path = open_file_dialog("Import File", filters); !path.empty())
     {
-        std::string extension = virtual_file_system::get_extension(path);
+        std::string extension = virtual_file_system::get_extension(path.c_str());
 
         if (asset_importer* importer = m_asset_manager->get_importer_for_extension(extension.c_str()))
         {
@@ -275,7 +271,7 @@ void editor_assets_window::import_asset()
             }
 
             db_log(engine, "Importing '%s' to '%s'.", path, output_path.c_str());
-            if (!importer->import(path, output_path.c_str()))
+            if (!importer->import(path.c_str(), output_path.c_str()))
             {
                 message_dialog("Failed to import asset, view output log for details.", message_dialog_type::error);
             }
@@ -284,8 +280,6 @@ void editor_assets_window::import_asset()
         {
             message_dialog("Failed to find importer that supports this asset extension.", message_dialog_type::error);
         }
-
-        free(path);
     }
 }
 

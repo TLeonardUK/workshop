@@ -129,6 +129,9 @@ public:
     // Destroys a previous world.
     void destroy_world(world* id);
 
+    // Switches the default world. If a default world is already set it will be destroyed.
+    void set_default_world(world* new_world);
+
     // Invoked when the engine is stepped.
     event<frame_time> on_step;
 
@@ -142,6 +145,9 @@ private:
 
     result<void> create_editor(init_list& list);
     result<void> destroy_editor();
+
+    result<void> register_asset_loaders(init_list& list);
+    result<void> unregister_asset_loaders();
 
     result<void> create_memory_tracker(init_list& list);
     result<void> destroy_memory_tracker();

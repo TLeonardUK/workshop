@@ -14,6 +14,7 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 # Link appropriate implementation libraries.
 target_link_libraries(${PROJECT_NAME} 
+    workshop.core
     workshop.input_interface.sdl
 )
 

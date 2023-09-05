@@ -50,6 +50,8 @@ public:
     virtual void raise_watch_events() override;
     virtual bool get_disk_location(const char* path, std::string& output_path) override;
 
+protected:
+    std::filesystem::path resolve_path(const char* path);
 
 private:
     friend class virtual_file_system_disk_watcher;

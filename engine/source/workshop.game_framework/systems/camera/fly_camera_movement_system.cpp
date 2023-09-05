@@ -14,8 +14,6 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 fly_camera_movement_system::fly_camera_movement_system(object_manager& manager)

@@ -8,6 +8,8 @@
 #include "workshop.core/containers/string.h"
 #include "workshop.core/math/math.h"
 #include "workshop.core/math/vector4.h"
+#include "workshop.core/utils/yaml.h"
+#include "workshop.core/filesystem/stream.h"
 
 #include <string>
 #include <array>
@@ -177,5 +179,29 @@ inline const color color::deep_orange   = { 255, 138, 101, 255 };
 inline const color color::brown         = { 161, 136, 127, 255 };
 inline const color color::grey          = { 224, 224, 224, 255 };
 inline const color color::blue_grey     = { 144, 164, 174, 255 };
+
+
+template<>
+inline void stream_serialize(stream& out, color& v)
+{
+    stream_serialize(out, v.r);
+    stream_serialize(out, v.g);
+    stream_serialize(out, v.b);
+    stream_serialize(out, v.a);
+}
+
+template<>
+inline void yaml_serialize(YAML::Node& out, bool is_loading, color& value)
+{
+    YAML::Node r = out["r"];
+    YAML::Node g = out["g"];
+    YAML::Node b = out["b"];
+    YAML::Node a = out["a"];
+
+    yaml_serialize(r, is_loading, value.r);
+    yaml_serialize(g, is_loading, value.g);
+    yaml_serialize(b, is_loading, value.b);
+    yaml_serialize(a, is_loading, value.a);
+}
 
 }; // namespace workshop

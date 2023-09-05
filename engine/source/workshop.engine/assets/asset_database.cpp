@@ -12,8 +12,6 @@
 #include "workshop.assets/asset_manager.h"
 #include "workshop.render_interface/ri_texture_compiler.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 namespace {
 
@@ -356,6 +354,11 @@ asset_database_entry* asset_database::get(asset_database_entry* parent, const ch
 asset_database_entry* asset_database::get(const char* path)
 {
     std::vector<std::string> fragments = string_split(path, "/");
+    if (fragments.empty())
+    {
+        return nullptr;
+    }
+
     return get(&m_root, path, fragments);
 }
 

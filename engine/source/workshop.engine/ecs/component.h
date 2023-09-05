@@ -8,6 +8,8 @@
 #include "workshop.engine/ecs/object_manager.h"
 
 #include "workshop.core/reflection/reflect.h"
+#include "workshop.core/utils/yaml.h"
+#include "workshop.core/filesystem/stream.h"
 
 namespace ws {
 
@@ -32,19 +34,35 @@ public:
 // ================================================================================================
 //  Simple class that wraps a reference to an entities component.
 // ================================================================================================
-template <typename component_type>
-class component_ref
+class component_ref_base
 {
 public:
-    component_ref() = default;
-    component_ref(object handle)
-        : m_object(handle)
+    component_ref_base() = default;
+    component_ref_base(object in_handle)
+        : handle(in_handle)
     {
     }
 
-    object get_object() const
+    object get_object()
     {
-        return m_object;
+        return handle;
+    }
+
+    object handle = null_object;
+
+};
+
+template <typename component_type>
+class component_ref : public component_ref_base
+{
+public:
+    // This is used for reflection when using REFLECT_FIELD_REF
+    using super_type_t = component_ref_base;
+
+    component_ref() = default;
+    component_ref(object handle)
+        : component_ref_base(handle)
+    {
     }
 
     bool is_valid(object_manager* manager)
@@ -54,18 +72,18 @@ public:
 
     component_type* get(object_manager* manager)
     {
-        return manager->get_component<component_type>(m_object);
+        return manager->get_component<component_type>(handle);
     }
 
-    component_ref& operator=(object handle)
+    component_ref& operator=(object in_handle)
     {
-        m_object = handle;
+        handle = in_handle;
         return *this;
     }
 
     bool operator==(component_ref const& other) const
     {
-        return m_object == other.m_object;
+        return handle == other.handle;
     }
 
     bool operator!=(component_ref const& other) const
@@ -75,7 +93,7 @@ public:
 
     bool operator==(object const& other) const
     {
-        return m_object == other;
+        return handle == other;
     }
 
     bool operator!=(object const& other) const
@@ -83,9 +101,20 @@ public:
         return !operator==(other);
     }
 
-private:
-    object m_object = null_object;
-
 };
+
+template<>
+inline void stream_serialize(stream& out, component_ref_base& v)
+{
+    stream_serialize(out, v.handle);
+}
+
+template<>
+inline void yaml_serialize(YAML::Node& out, bool is_loading, component_ref_base& value)
+{
+    YAML::Node id = out["id"];
+
+    yaml_serialize(id, is_loading, value.handle);
+}
 
 }; // namespace ws

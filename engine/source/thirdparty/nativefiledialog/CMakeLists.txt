@@ -5,11 +5,7 @@
 project(nativefiledialog C CXX)
 
 SET(SOURCES
-	"src/common.h"
-	"src/nfd_common.c"
-	"src/nfd_common.h"
 	"src/nfd_win.cpp"
-	"src/simple_exec.h"
 	"src/include/nfd.h"
 )
 
