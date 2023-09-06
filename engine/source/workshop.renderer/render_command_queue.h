@@ -24,6 +24,7 @@ class renderer;
 class model;
 enum class visualization_mode;
 enum class render_flag;
+enum class render_gpu_flags;
 class render_options;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
@@ -97,6 +98,9 @@ public:
 
     // Sets the location and rotation of a render objects.
     void set_object_transform(render_object_id id, const vector3& location, const quat& rotation, const vector3& scale);
+
+    // Sets the flags passed to the gpu to render the object.
+    void set_object_gpu_flags(render_object_id id, render_gpu_flags flags);
 
     // ===========================================================================================
     //  Views

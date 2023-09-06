@@ -12,6 +12,7 @@
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/ecs/component_filter.h"
+#include "workshop.engine/assets/scene/scene.h"
 
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_object.h"
@@ -60,6 +61,7 @@
 //      model thumbnails
 //      asset modification for textures/materials/etc
 //      add "progress dialog" for things that take a while - open/save scenes
+//      proper memory allocation tracking (hook malloc/free)
 
 std::shared_ptr<ws::app> make_app()
 {
@@ -96,6 +98,14 @@ ws::result<void> example_game_app::start()
     light_probe_grid_system* light_probe_grid_sys = obj_manager.get_system<light_probe_grid_system>();
     static_mesh_system* static_mesh_sys = obj_manager.get_system<static_mesh_system>();
 
+    asset_ptr<scene> new_scene = ass_manager.request_asset<scene>("data:scenes/test_scenes/sponza.yaml", 0);
+    new_scene.wait_for_load(); // TODO We should queue loading in future, rather than blocking.
+
+    get_engine().set_default_world(new_scene->world_instance);
+    new_scene->world_instance = nullptr;
+    
+
+#if 0
     // Add a skybox.
     object mesh_object = obj_manager.create_object("skybox");
     obj_manager.add_component<transform_component>(mesh_object);
@@ -104,7 +114,6 @@ ws::result<void> example_game_app::start()
     transform_sys->set_local_transform(mesh_object, vector3(0.0f, 0.0f, 0.0f), quat::identity, vector3(10000.0f, 10000.0f, 10000.0f));
     static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/skyboxs/skybox_3.yaml", 0));
 
-#if 1
     // Create the sponza scene
 
     // Add light probe grid.
@@ -153,7 +162,7 @@ ws::result<void> example_game_app::start()
     //obj_manager.add_component<static_mesh_component>(mesh_object);
     //static_mesh_sys->set_model(mesh_object, ass_manager.request_asset<model>("data:models/test_scenes/cerberus/cerberus.yaml", 0));        
 
-#else
+//#else
     // Create the scene
 
     // Add light probe grid.

@@ -29,6 +29,8 @@ public:
 
     void set_model(object handle, asset_ptr<model> model);
 
+    void set_render_gpu_flags(object handle, render_gpu_flags flags);
+
 };
 
 }; // namespace ws

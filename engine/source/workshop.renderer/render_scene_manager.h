@@ -60,6 +60,9 @@ public:
     // Sets the local-space transform of an object within the render scene.
     void set_object_transform(render_object_id id, const vector3& location, const quat& rotation, const vector3& scale);
 
+    // Sets the flags on an object that defines how it is rendered.
+    void set_object_gpu_flags(render_object_id id, render_gpu_flags flags);
+
     // ===========================================================================================
     //  Views
     // ===========================================================================================

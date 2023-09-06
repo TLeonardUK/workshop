@@ -19,6 +19,7 @@ struct geometry_pinput
     float4 world_normal : TEXCOORD1;
     float4 world_tangent : NORMAL1;
     float4 world_position : TEXCOORD3;
+    uint flags : TEXCOORD2;
 };
 
 struct geometry_poutput
@@ -40,6 +41,7 @@ geometry_pinput vshader(vertex_input input)
     result.world_normal = mul(vi.model_matrix, float4(v.normal, 0.0f));
     result.world_tangent = mul(vi.model_matrix, float4(v.tangent, 0.0f));
     result.world_position = mul(vi.model_matrix, float4(v.position, 1.0f));
+    result.flags = vi.gpu_flags;
 
     return result;
 }
@@ -56,18 +58,14 @@ geometry_poutput pshader(geometry_pinput input)
 
     gbuffer_fragment f;
     f.albedo = albedo.rgb;
-    f.flags = gbuffer_flag::none;
+    f.flags = input.flags;
     f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
     f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
-#if 0
-    f.world_normal = normalize(input.world_normal).xyz,
-#else
     f.world_normal = calculate_world_normal(
         unpack_compressed_normal(normal_texture.Sample(normal_sampler, input.uv0).xy),
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz
     );
-#endif
     f.world_position = input.world_position;
     f.uv = (input.position.xy / view_dimensions.xy) * uv_scale;
 

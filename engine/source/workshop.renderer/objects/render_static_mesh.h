@@ -25,8 +25,9 @@ public:
     asset_ptr<model> get_model();
     void set_model(const asset_ptr<model>& model);
 
-    // Overrides the normal set transform to update instance data when the transform changes.
+    // Overrides the normal functions to update instance data when they change.
     virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
+    virtual void set_render_gpu_flags(render_gpu_flags flags) override;
 
     // Overrides the default bounds to return the obb of the model bounds.
     virtual obb get_bounds() override;

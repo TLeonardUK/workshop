@@ -27,12 +27,14 @@
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
 #include "workshop.game_framework/systems/transform/bounds_system.h"
 #include "workshop.game_framework/components/lighting/directional_light_component.h"
+#include "workshop.game_framework/components/geometry/static_mesh_component.h"
 
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/lighting/directional_light_system.h"
+#include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 
 #include "workshop.core/platform/platform.h"
 
@@ -86,7 +88,34 @@ std::vector<object> editor::get_selected_objects()
 
 void editor::set_selected_objects(std::vector<object>& objects)
 {
+    world& world_instance = m_engine.get_default_world();
+    object_manager& obj_manager = world_instance.get_object_manager();
+    static_mesh_system* static_mesh_sys = obj_manager.get_system<static_mesh_system>();
+
+    // TODO: This isn't very extensible, we should be targetting some kind of base mesh_component instead
+    // of doing static meshes/etc here.
+
+    // Turn off selection flag for all old object meshes.
+    for (object obj : m_selected_objects)
+    {
+        static_mesh_component* mesh = obj_manager.get_component<static_mesh_component>(obj);
+        if (mesh)
+        {
+            static_mesh_sys->set_render_gpu_flags(obj, mesh->render_gpu_flags & ~render_gpu_flags::selected);
+        }
+    }
+
     m_selected_objects = objects;
+
+    // Turn on selection flag for all new object meshes.
+    for (object obj : m_selected_objects)
+    {
+        static_mesh_component* mesh = obj_manager.get_component<static_mesh_component>(obj);
+        if (mesh)
+        {
+            static_mesh_sys->set_render_gpu_flags(obj, mesh->render_gpu_flags | render_gpu_flags::selected);
+        }
+    }
 }
 
 result<void> editor::create_main_menu(init_list& list)

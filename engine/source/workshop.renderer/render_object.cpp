@@ -40,6 +40,16 @@ render_object_id render_object::get_id()
     return m_id;
 }
 
+void render_object::set_render_gpu_flags(render_gpu_flags flags)
+{
+    m_gpu_flags = flags;
+}
+
+render_gpu_flags render_object::get_render_gpu_flags()
+{
+    return m_gpu_flags;
+}
+
 void render_object::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)
 {
     if (location == m_local_location &&

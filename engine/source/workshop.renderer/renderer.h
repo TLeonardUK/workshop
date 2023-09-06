@@ -145,6 +145,20 @@ enum class debug_model
     COUNT
 };
 
+//  Render flags dictate how an object is draw. 
+//  They are passed into shaders and encoded in the gbuffer.
+enum class render_gpu_flags
+{
+    none = 0,
+
+    // Object is rendered fullbright with no lighting calculations being performed on it.
+    unlit = 1,
+
+    // Object is selected and will have an outline drawn around it.
+    selected = 2
+};
+DEFINE_ENUM_FLAGS(render_gpu_flags);
+
 // If defined this adds an extra plane to the gbuffer for writing debug data to.
 //#define GBUFFER_DEBUG_DATA
 

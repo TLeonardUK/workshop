@@ -40,7 +40,7 @@ gbuffer_output_with_depth pshader(geometry_pinput input)
     f.roughness = 0.0f;
     f.world_normal = float3(0.0f, 0.0f, 0.0f);
     f.world_position = float3(0.0f, 0.0f, 0.0f);
-    f.flags = gbuffer_flag::unlit;
+    f.flags = render_gpu_flags::unlit;
     
     gbuffer_output encoded_gbuffer = encode_gbuffer(f);
     gbuffer_output_with_depth output;

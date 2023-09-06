@@ -583,7 +583,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent)
     uint cluster_index = 0;
     uint visible_light_count = 0;
 
-    if ((frag.flags & gbuffer_flag::unlit) == 0)
+    if ((frag.flags & render_gpu_flags::unlit) == 0)
     {
         // Calculate ambient lighting from our light probes.
         ambient_lighting = calculate_ambient_lighting(frag, is_transparent);

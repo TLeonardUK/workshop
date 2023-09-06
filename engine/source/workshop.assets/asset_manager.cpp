@@ -52,15 +52,6 @@ namespace ws {
 
 namespace {
 
-static std::array<const char*, static_cast<int>(asset_loading_state::COUNT)> k_loading_state_strings = {
-    "Unloaded",
-    "Unloading",
-    "Loading",
-    "Waiting For Dependencies",
-    "Loaded",
-    "Failed"
-};
-
 // Holds the current asset being post-loaded on the current thread.
 static thread_local asset_state* g_tls_current_post_load_asset = nullptr;
 
@@ -934,7 +925,7 @@ void asset_manager::do_unload(asset_state* state)
 
 void asset_manager::set_load_state(asset_state* state, asset_loading_state new_state)
 {
-    //db_verbose(asset, "[%s] %s", state->path.c_str(), k_loading_state_strings[static_cast<int>(new_state)]);
+    //db_log(asset, "[%s] %s", state->path.c_str(), asset_loading_state_strings[static_cast<int>(new_state)]);
     asset_loading_state old_state = state->loading_state;
     
     state->loading_state = new_state;

@@ -202,6 +202,7 @@ param_blocks:
     scope: instance
     fields:
       model_matrix: float4x4
+      gpu_flags: uint
   # Geometry batch information
   geometry_info:
     scope: draw

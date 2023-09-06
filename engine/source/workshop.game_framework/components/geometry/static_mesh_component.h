@@ -26,6 +26,9 @@ public:
 	// The model this static mesh should render.
 	asset_ptr<model> model;
 
+	// What gpu flags are used to effect how this component is rendered.
+	render_gpu_flags render_gpu_flags = render_gpu_flags::none;
+
 private:
 
 	friend class static_mesh_system;

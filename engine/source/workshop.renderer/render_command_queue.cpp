@@ -160,6 +160,13 @@ void render_command_queue::set_object_transform(render_object_id id, const vecto
     });
 }
 
+void render_command_queue::set_object_gpu_flags(render_object_id id, render_gpu_flags flags)
+{
+    queue_command("set_object_gpu_flags", [renderer = &m_renderer, id, flags]() {
+        renderer->get_scene_manager().set_object_gpu_flags(id, flags);
+    });
+}
+
 // ================================================================================================
 //  Views
 // ================================================================================================

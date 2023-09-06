@@ -10,15 +10,18 @@
 //#define GBUFFER_DEBUG_DATA 
 
 // Flags describing the state of individual fragments in the gbuffer.
-enum gbuffer_flag
+// This should be kept in sync with render_gpu_flags in cpp.
+enum render_gpu_flags
 {
     none        = 0,
 
     // No lighting calculations will be performed on fragment, it will 
     // be rendered full bright.
     unlit       = 1,
-};
 
+    // Object is selected and will have an outline drawn around it.
+    selected    = 2
+};
 
 // Individual fragment of the gbuffer in decoded format.
 // Use encode_gbuffer / decode_gbuffer to convert to input/output formats.

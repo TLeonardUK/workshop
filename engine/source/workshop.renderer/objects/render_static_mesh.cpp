@@ -47,6 +47,13 @@ void render_static_mesh::set_local_transform(const vector3& location, const quat
     update_render_data();
 }
 
+void render_static_mesh::set_render_gpu_flags(render_gpu_flags flags)
+{
+    render_object::set_render_gpu_flags(flags);
+
+    update_render_data();
+}
+
 void render_static_mesh::register_asset_change_callbacks()
 {
     if (!m_model.is_valid())
@@ -176,6 +183,7 @@ void render_static_mesh::destroy_render_data()
 void render_static_mesh::update_render_data()
 {
     m_geometry_instance_info->set("model_matrix", get_transform());
+    m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
 }
 
 obb render_static_mesh::get_bounds()

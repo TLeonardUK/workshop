@@ -13,7 +13,7 @@ gbuffer_output pshader(fullscreen_pinput input)
     f.roughness = 0.0f;
     f.world_normal = float3(0.0f, 0.0f, 0.0f);
     f.world_position = float3(9999999.0f, 9999999.0f, 9999999.0f);
-    f.flags = gbuffer_flag::none;
+    f.flags = render_gpu_flags::none;
 
     return encode_gbuffer(f);
 }

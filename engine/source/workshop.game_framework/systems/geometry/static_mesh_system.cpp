@@ -11,6 +11,8 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 static_mesh_system::static_mesh_system(object_manager& manager)
@@ -68,6 +70,21 @@ void static_mesh_system::set_model(object handle, asset_ptr<model> model)
     });
 }
 
+void static_mesh_system::set_render_gpu_flags(object handle, render_gpu_flags flags)
+{
+    m_command_queue.queue_command("set_render_gpu_flags", [this, handle, flags]() {
+        static_mesh_component* comp = m_manager.get_component<static_mesh_component>(handle);
+        if (comp)
+        {
+            engine& engine = m_manager.get_world().get_engine();
+            render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+            comp->render_gpu_flags = flags;
+            render_command_queue.set_object_gpu_flags(comp->render_id, flags);
+        }
+    });
+}
+
 void static_mesh_system::step(const frame_time& time)
 {
     engine& engine = m_manager.get_world().get_engine();
@@ -93,6 +110,7 @@ void static_mesh_system::step(const frame_time& time)
         if (light->is_dirty)
         {
             render_command_queue.set_static_mesh_model(light->render_id, light->model);
+            render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
             light->is_dirty = false;
         }
 
