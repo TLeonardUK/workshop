@@ -42,7 +42,7 @@ private:
 public:
 
     BEGIN_REFLECT(static_mesh_component, "Static Mesh", component, reflect_class_flags::none)
-        REFLECT_FIELD(model,        "Model",     "Model asset this component displays.")
+        REFLECT_FIELD_REF(model,        "Model",     "Model asset this component displays.")
     END_REFLECT()
 
 };

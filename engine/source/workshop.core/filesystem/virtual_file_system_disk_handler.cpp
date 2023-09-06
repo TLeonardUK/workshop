@@ -165,6 +165,20 @@ bool virtual_file_system_disk_handler::get_disk_location(const char* path, std::
     return true;
 }
 
+bool virtual_file_system_disk_handler::get_vfs_location(const char* path, std::string& output_path)
+{
+    std::string normalized_path = virtual_file_system::normalize(path);
+    std::string normalized_root = virtual_file_system::normalize(m_root.c_str());
+
+    if (normalized_path.starts_with(normalized_root))
+    {
+        output_path = normalized_path.substr(normalized_root.size() + 1).c_str();
+        return true;
+    }
+
+    return false;
+}
+
 bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_file_system_time_point& timepoint)
 {
     std::filesystem::path fspath = resolve_path(path);

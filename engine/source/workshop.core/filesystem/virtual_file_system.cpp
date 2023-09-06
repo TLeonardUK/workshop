@@ -237,6 +237,23 @@ std::string virtual_file_system::get_disk_location(const char* path)
     return result;
 }
 
+std::string virtual_file_system::get_vfs_location(const char* path)
+{
+    std::scoped_lock lock(m_handlers_mutex);
+
+    std::string result = "";
+    for (auto& handler : m_handlers)
+    {
+        if (handler.handler->get_vfs_location(path, result))
+        {
+            result = handler.protocol + ":" + result;
+            break;
+        }
+    }
+
+    return result;
+}
+
 bool virtual_file_system::rename(const char* source, const char* destination)
 {
     bool result = false;

@@ -101,6 +101,10 @@ public:
     // If no path can be calculated an empty string will be returned.
     std::string get_disk_location(const char* path);
 
+    // Attempts to get a VFS location for a path on the host filesystem.
+    // If no path can be calculated an empty string will be returned.
+    std::string get_vfs_location(const char* path);
+
 public:
 
     // Normalizes a path.

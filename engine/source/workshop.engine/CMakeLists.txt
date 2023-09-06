@@ -44,7 +44,9 @@ SET(SOURCES
     
     "presentation/presenter.cpp"
     "presentation/presenter.h"
-
+    
+    "utils/stream.cpp"
+    "utils/stream.h"
     "utils/yaml.cpp"
     "utils/yaml.h"
 )

@@ -216,7 +216,6 @@ void editor::new_scene()
     world* new_world = m_engine.create_world("Default World");
 
     auto& obj_manager = new_world->get_object_manager();
-    register_default_systems(obj_manager);
 
     transform_system* transform_sys = obj_manager.get_system<transform_system>();
     directional_light_system* direction_light_sys = obj_manager.get_system<directional_light_system>();
@@ -256,24 +255,32 @@ void editor::open_scene()
 
     if (std::string path = open_file_dialog("Open Scene", filter); !path.empty())
     {
-        // Use the host protocol to just read/write direct to disk location.
-        asset_ptr<scene> instance = m_engine.get_asset_manager().request_asset<scene>(("host:" + path).c_str(), 0);
-
-        // TODO: Make this async and show a progress bar.
-        instance.wait_for_load();
-
-        if (instance.is_loaded())
+        std::string vfs_path = virtual_file_system::get().get_vfs_location(path.c_str());
+        if (!vfs_path.empty())
         {
-            m_engine.set_default_world(instance->world);
+            // Use the host protocol to just read/write direct to disk location.
+            asset_ptr<scene> instance = m_engine.get_asset_manager().request_asset<scene>(vfs_path.c_str(), 0);
 
-            // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
-            instance->world = nullptr;
+            // TODO: Make this async and show a progress bar.
+            instance.wait_for_load();
 
-            m_current_scene_path = path;
+            if (instance.is_loaded())
+            {
+                m_engine.set_default_world(instance->world_instance);
+
+                // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
+                instance->world_instance = nullptr;
+
+                m_current_scene_path = path;
+            }
+            else
+            {
+                message_dialog("Failed to load scene asset. See log for more details.", message_dialog_type::error);
+            }
         }
         else
         {
-            message_dialog("Failed to load scene asset. See log for more details.", message_dialog_type::error);
+            message_dialog("Failed to load scene asset. Asset is not stored in the virtual file system, please ensure its in the correct folder.", message_dialog_type::error);
         }
     }
 }
@@ -293,20 +300,27 @@ void editor::save_scene(bool ask_for_filename)
         }
     }
 
+    // TODO: Make this async and show a progress bar.
+    std::string vfs_path = virtual_file_system::get().get_vfs_location(path.c_str());
+    if (vfs_path.empty())
+    {
+        message_dialog("Failed to save scene asset. Asset is not stored in the virtual file system, please ensure its in the correct folder.", message_dialog_type::error);
+        return;
+    }
+
     scene saved_scene(m_engine.get_asset_manager(), &m_engine);
-    saved_scene.world = &m_engine.get_default_world();
+    saved_scene.world_instance = &m_engine.get_default_world();
 
     // Use the host protocol to just read/write direct to disk location.
     asset_loader* loader = m_engine.get_asset_manager().get_loader_for_type<scene>();
 
-    // TODO: Make this async and show a progress bar.
-    if (!loader->save_uncompiled(("host:" + path).c_str(), saved_scene))
+    if (!loader->save_uncompiled(vfs_path.c_str(), saved_scene))
     {
         message_dialog("Failed to save scene asset. See log for more details.", message_dialog_type::error);
     }
 
     // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
-    saved_scene.world = nullptr;
+    saved_scene.world_instance = nullptr;
     
     m_current_scene_path = path;
 }

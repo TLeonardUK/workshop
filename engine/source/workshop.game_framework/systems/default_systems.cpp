@@ -14,7 +14,6 @@
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/transform/bounds_system.h"
 
-
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
@@ -27,12 +26,15 @@
 #include "workshop.game_framework/components/transform/bounds_component.h"
 
 #include "workshop.engine/ecs/object_manager.h"
+#include "workshop.engine/ecs/meta_component.h"
 
 namespace ws {
 
 void register_default_systems(object_manager& manager)
 {
     // Components
+
+    manager.register_component<meta_component>();
 
     manager.register_component<transform_component>();
     manager.register_component<bounds_component>();

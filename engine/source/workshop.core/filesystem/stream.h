@@ -11,6 +11,8 @@
 
 namespace ws {
 
+class reflect_field;
+
 // ================================================================================================
 //  This class is the base class for protocol handlers that can be registered to the 
 //  virtual file system.
@@ -69,6 +71,10 @@ public:
 //  General purpose stream serialization functions.
 //  Add specializations for custom types.
 // ================================================================================================
+
+// Performs serialization of a reflected field to stream.
+// Returns true if the type is supported and was correctly serialized.
+bool stream_serialize_reflect(stream& out, void* context, reflect_field* field);
 
 // Reads or writes the value from the stream depending on 
 // if the stream is opened for writing or not.

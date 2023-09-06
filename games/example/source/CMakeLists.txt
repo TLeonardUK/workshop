@@ -3,8 +3,8 @@
 #  Copyright (C) 2022 Tim Leonard
 # ================================================================================================
 
-include_directories("${ENV_ROOT_PATH}/games/roguelike/source")
+include_directories("${ENV_ROOT_PATH}/games/example/source")
 
-add_subdirectory(roguelike)
+add_subdirectory(example)
 
 

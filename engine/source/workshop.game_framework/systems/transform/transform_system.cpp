@@ -111,6 +111,8 @@ void transform_system::component_removed(object handle, component* comp)
             parent->children.push_back(ref);
         }
     }
+
+    component->old_parent = component->parent;
 }
 
 void transform_system::component_modified(object handle, component* comp)
@@ -119,6 +121,28 @@ void transform_system::component_modified(object handle, component* comp)
     if (!component)
     {
         return;
+    }
+
+    // If parent has changed, perform relinking on the child vector.
+    if (component->parent != component->old_parent)
+    {
+        if (component->old_parent.is_valid(&m_manager))
+        {
+            transform_component* old_parent =  component->old_parent.get(&m_manager);
+
+            auto iter = std::find(old_parent->children.begin(), old_parent->children.end(), handle);
+            db_assert(iter != old_parent->children.end());
+            old_parent->children.erase(iter);
+        }
+
+        if (component->parent.is_valid(&m_manager))
+        {
+            transform_component* parent = component->parent.get(&m_manager);
+
+            parent->children.push_back(handle);
+        }
+
+        component->old_parent = component->parent;
     }
 
     component->is_dirty = true;
@@ -178,7 +202,7 @@ void transform_system::step(const frame_time& time)
 
     m_dirty_roots.resize(split_factor);
     m_dirty_roots_list.resize(split_factor);
-
+    
     // Combine lists together.
     {
         profile_marker(profile_colors::system, "find dirty roots");

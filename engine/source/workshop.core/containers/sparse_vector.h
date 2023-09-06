@@ -34,6 +34,10 @@ public:
     // Inserts the given element into the vector and returns the index it was inserted at.
     size_t insert(const element_type& type);
 
+    // Inserts the given element into the vector at the given index. If the index is already
+    // in use this function will assert.
+    size_t insert(size_t index, const element_type& type);
+
     // Removes the given index in the vector and allows it to be reused.
     void remove(size_t index);
 
@@ -168,6 +172,34 @@ inline size_t sparse_vector<element_type, mem_type>::insert(const element_type& 
 
     size_t index = m_free_indices.back();
     m_free_indices.pop_back();
+    commit_region(index);
+
+    m_active_indices[index] = true;
+
+    element_type* element = reinterpret_cast<element_type*>(m_memory_base + (index * sizeof(element_type)));
+    new(element) element_type();
+    *element = type;
+
+    return index;
+}
+
+template <typename element_type, memory_type mem_type>
+inline size_t sparse_vector<element_type, mem_type>::insert(size_t index, const element_type& type)
+{
+    if (m_free_indices.empty())
+    {
+        db_fatal(core, "Ran out of free indices in sparse_vector.");
+    }
+
+    if (m_active_indices[index])
+    {
+        db_fatal(core, "Attempted to insert element into sparse_vector at index that is not free.");
+    }
+
+    auto iter = std::find(m_free_indices.begin(), m_free_indices.end(), index);
+    db_assert(iter != m_free_indices.begin());
+
+    m_free_indices.erase(iter);
     commit_region(index);
 
     m_active_indices[index] = true;

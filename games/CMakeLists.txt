@@ -5,6 +5,6 @@
 
 include_directories("${ENV_ROOT_PATH}/engine/source")
 
-add_subdirectory(roguelike)
+add_subdirectory(example)
 
 

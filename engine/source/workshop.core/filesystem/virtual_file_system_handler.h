@@ -54,6 +54,9 @@ public:
     // Attempts to get the disk location of the given path, returns true if a disk location was resolved for it.
     virtual bool get_disk_location(const char* path, std::string& output_path) = 0;
 
+    // Attempts to get the vfs location of the given host filesystem path, returns true if a disk location was resolved for it.
+    virtual bool get_vfs_location(const char* path, std::string& output_path) = 0;
+
 
 };
 

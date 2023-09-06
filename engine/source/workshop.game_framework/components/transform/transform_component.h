@@ -41,12 +41,17 @@ public:
     vector3 world_location = vector3::zero;
     vector3 world_scale = vector3::one;
 
+public:
+
     // If the local transform has been modified and the local-to-world
     // needs to be update.d
     bool is_dirty = true;
 
     // Generation increases by one each time the transform has been modified.
     size_t generation = 0;
+
+    // Used to track when the parent has been modified and fix up all references.
+    component_ref<transform_component> old_parent = null_object;
 
 public:
 

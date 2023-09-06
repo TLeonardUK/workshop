@@ -86,6 +86,18 @@ bool virtual_file_system_redirect_handler::get_disk_location(const char* path, s
     return !output_path.empty();
 }
 
+bool virtual_file_system_redirect_handler::get_vfs_location(const char* path, std::string& output_path)
+{
+    std::string target_path;
+    if (!get_target_path(path, target_path))
+    {
+        return false;
+    }
+
+    output_path = virtual_file_system::get().get_vfs_location(target_path.c_str());
+    return !output_path.empty();
+}
+
 bool virtual_file_system_redirect_handler::modified_time(const char* path, virtual_file_system_time_point& timepoint)
 {
     std::string target_path;

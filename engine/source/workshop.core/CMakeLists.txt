@@ -51,6 +51,8 @@ SET(SOURCES
     "filesystem/stream.cpp"
     "filesystem/disk_stream.h"
     "filesystem/disk_stream.cpp"
+    "filesystem/ram_stream.h"
+    "filesystem/ram_stream.cpp"
     "filesystem/virtual_file_system_types.h"
     "filesystem/virtual_file_system.h"
     "filesystem/virtual_file_system.cpp"

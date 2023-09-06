@@ -11,17 +11,16 @@ objects:
         meta_component:
             name: main camera
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
-                x:  0.231435537
-                y:  0.684767485
-                z:  0.245313704
-                w:  0.646028042
+                x:  0.326545507
+                y:  0.654497385
+                z:  -0.375451744
+                w:  -0.569242716
             local_location:
-                x:  631.833618
-                y:  749.860352
-                z:  10.2485294
+                x:  -2699.60327
+                y:  3608.67383
+                z:  -827.501038
             local_scale:
                 x:  1
                 y:  1
@@ -32,7 +31,7 @@ objects:
             fov: 45
             aspect_ratio: 1.76999998
             min_depth: 10
-            max_depth: 20000
+            max_depth: 50000
         fly_camera_movement_component:
             sensitivity: 0.00100000005
             speed: 1500
@@ -43,8 +42,7 @@ objects:
         meta_component:
             name: sun light
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
                 x:  -0.599847794
                 y:  0.153166294
@@ -79,8 +77,7 @@ objects:
         meta_component:
             name: skybox
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
                 x:  0
                 y:  0
@@ -97,26 +94,25 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: test
+            model: data:models/skyboxs/skybox_3.yaml
     4:
         meta_component:
             name: light probe grid
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
                 x:  0
                 y:  0
                 z:  0
                 w:  1
             local_location:
-                x:  200
-                y:  1050
-                z:  -100
+                x:  2193.57959
+                y:  2102.88281
+                z:  2125.82544
             local_scale:
-                x:  3900
-                y:  2200
-                z:  2200
+                x:  21227.7754
+                y:  4365.36279
+                z:  14213.917
         bounds_component:
             {}
         light_probe_grid_component:
@@ -125,131 +121,65 @@ objects:
         meta_component:
             name: reflection probe
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
                 x:  0
                 y:  0
                 z:  0
                 w:  1
             local_location:
-                x:  0
-                y:  200
-                z:  0
+                x:  -607.104675
+                y:  265.957245
+                z:  -1052.90991
             local_scale:
-                x:  4000
-                y:  4000
-                z:  4000
+                x:  3999.99976
+                y:  3999.99976
+                z:  3999.99976
         bounds_component:
             {}
         reflection_probe_component:
             {}
     6:
         meta_component:
-            name: sponza
+            name: bistro interior
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
-                x:  0
-                y:  0
-                z:  0
-                w:  1
+                x:  -0.0024147802
+                y:  -0.331708193
+                z:  -0.00458681025
+                w:  0.943367839
             local_location:
                 x:  0
                 y:  0
                 z:  0
             local_scale:
-                x:  1
-                y:  1
-                z:  1
+                x:  1.00000024
+                y:  0.99999994
+                z:  0.999999642
         bounds_component:
             {}
         static_mesh_component:
-            model: test
+            model: data:models/test_scenes/bistro/bistro_interior.yaml
     7:
         meta_component:
-            name: sponza curtains
+            name: bistro exterior
         transform_component:
-            parent:
-                id: 0
+            parent: 0
             local_rotation:
-                x:  0
-                y:  0
-                z:  0
-                w:  1
+                x:  -0.0024147802
+                y:  -0.331708193
+                z:  -0.00458681025
+                w:  0.943367839
             local_location:
                 x:  0
                 y:  0
                 z:  0
             local_scale:
-                x:  1
-                y:  1
-                z:  1
+                x:  1.00000024
+                y:  0.99999994
+                z:  0.999999642
         bounds_component:
             {}
         static_mesh_component:
-            model: test
-    8:
-        meta_component:
-            name: unnamed object
-        transform_component:
-            parent:
-                id: 5
-            local_rotation:
-                x:  0
-                y:  0
-                z:  0
-                w:  1
-            local_location:
-                x:  0
-                y:  0
-                z:  0
-            local_scale:
-                x:  1
-                y:  1
-                z:  1
-        bounds_component:
-            {}
-    9:
-        meta_component:
-            name: unnamed object
-        transform_component:
-            parent:
-                id: 8
-            local_rotation:
-                x:  0
-                y:  0
-                z:  0
-                w:  1
-            local_location:
-                x:  0
-                y:  0
-                z:  0
-            local_scale:
-                x:  1
-                y:  1
-                z:  1
-        bounds_component:
-            {}
-    10:
-        meta_component:
-            name: unnamed object
-        transform_component:
-            parent:
-                id: 2
-            local_rotation:
-                x:  0
-                y:  0
-                z:  0
-                w:  1
-            local_location:
-                x:  0
-                y:  0
-                z:  0
-            local_scale:
-                x:  1
-                y:  1
-                z:  1
-        bounds_component:
-            {}
+            model: data:models/test_scenes/bistro/bistro_exterior.yaml

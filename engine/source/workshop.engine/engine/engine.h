@@ -34,6 +34,7 @@ class virtual_file_system;
 class statistics_manager;
 class task_scheduler;
 class statistics_channel;
+class object_manager;
 class memory_tracker;
 
 // ================================================================================================
@@ -141,6 +142,12 @@ public:
     bool get_mouse_over_viewport();
     void set_mouse_over_viewport(bool over_viewport);
 
+    // Sets a callback that will be invoked each time a world is created so 
+    // that any systems used by the application can be registered with it.
+    using system_registration_callback_t = std::function<void(object_manager& obj_manager)>;
+
+    void set_system_registration_callback(system_registration_callback_t callback);
+
 private:
 
     result<void> create_editor(init_list& list);
@@ -213,6 +220,8 @@ protected:
     window_interface_type m_window_interface_type = window_interface_type::sdl;
     input_interface_type m_input_interface_type = input_interface_type::sdl;
     platform_interface_type m_platform_interface_type = platform_interface_type::sdl;
+
+    system_registration_callback_t m_system_registration_callback = nullptr;
 
     frame_time m_frame_time = {};
 

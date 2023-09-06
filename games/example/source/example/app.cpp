@@ -2,7 +2,7 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "roguelike/app.h"
+#include "example/app.h"
 
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/utils/frame_time.h"
@@ -45,25 +45,35 @@
 #include <chrono>
 
 // TODO:
-//      render_options to configure pipeline
 //      Anti-Alising
 //      Try and reduce light leakage for probes
 //      Decals
 //      Skinned Meshes
+//      ui for gizmo mode / snap to grid
+//      undo / redo
+//      cut / copy / paste
+//      play button that saves / restores the world
+//      multiple views for wireframe top / bottom / left / right + main 3d view
+//      editor grid
+//      selection picking
+//      editor - only visualizations(light radius / etc)
+//      model thumbnails
+//      asset modification for textures/materials/etc
+//      add "progress dialog" for things that take a while - open/save scenes
 
 std::shared_ptr<ws::app> make_app()
 {
-    return std::make_shared<ws::rl_game_app>();
+    return std::make_shared<ws::example_game_app>();
 }
 
 namespace ws {
 
-std::string rl_game_app::get_name()
+std::string example_game_app::get_name()
 {
-    return "roguelike";
+    return "example";
 }
 
-void rl_game_app::configure_engine(engine& engine)
+void example_game_app::configure_engine(engine& engine)
 {
     // Register default interface configuration.
     engine.set_render_interface_type(ri_interface_type::dx12);
@@ -71,9 +81,12 @@ void rl_game_app::configure_engine(engine& engine)
     engine.set_input_interface_type(input_interface_type::sdl);
     engine.set_platform_interface_type(platform_interface_type::sdl);
     engine.set_window_mode(get_name(), 1920, 1080, ws::window_mode::windowed);
+    engine.set_system_registration_callback([](object_manager& obj_manager) {
+        register_default_systems(obj_manager);
+    });
 }
 
-ws::result<void> rl_game_app::start()
+ws::result<void> example_game_app::start()
 {
     auto& ass_manager = get_engine().get_asset_manager();
     auto& obj_manager = get_engine().get_default_world().get_object_manager();
@@ -176,12 +189,12 @@ ws::result<void> rl_game_app::start()
     return true;
 }
 
-ws::result<void> rl_game_app::stop()
+ws::result<void> example_game_app::stop()
 {
     return true;
 }
 
-void rl_game_app::step(const frame_time& time)
+void example_game_app::step(const frame_time& time)
 {
     render_command_queue& cmd_queue = get_engine().get_renderer().get_command_queue();
 

@@ -112,9 +112,7 @@ inline void stream_serialize(stream& out, component_ref_base& v)
 template<>
 inline void yaml_serialize(YAML::Node& out, bool is_loading, component_ref_base& value)
 {
-    YAML::Node id = out["id"];
-
-    yaml_serialize(id, is_loading, value.handle);
+    yaml_serialize(out, is_loading, value.handle);
 }
 
 }; // namespace ws

@@ -9,6 +9,7 @@
 namespace ws {
 
 class engine;
+class object_manager;
 
 // ================================================================================================
 //  Basic app that hosts an instance of the game engine. All game-style applications should derive

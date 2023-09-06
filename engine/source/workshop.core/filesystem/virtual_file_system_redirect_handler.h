@@ -33,6 +33,7 @@ public:
     virtual std::unique_ptr<virtual_file_system_watcher> watch(const char* path, virtual_file_system_watcher::callback_t callback) override;
     virtual void raise_watch_events() override;
     virtual bool get_disk_location(const char* path, std::string& output_path) override;
+    virtual bool get_vfs_location(const char* path, std::string& output_path) override;
 
     void alias(const char* virtual_path, const char* target_path);
 

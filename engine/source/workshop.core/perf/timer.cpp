@@ -9,8 +9,6 @@ namespace ws {
 
 void timer::start()
 {
-    db_assert(!m_started);
-
     m_start_time = std::chrono::high_resolution_clock::now();
     m_started = true;
 }

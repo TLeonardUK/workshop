@@ -151,6 +151,13 @@ public:
     // do it directly.
     void component_edited(object obj, component* comp);
 
+    // This is equivilent to calling component_edited on every single component that exists. 
+    //
+    // DO NOT CALL THIS.
+    // Its purpose is to force systems to update their view of components after an entire scene has 
+    // been deserialized. It is expensive to perform and unneccessary in mostly any other situation.
+    void all_components_edited();
+
     // Gets a list of all alive objects.
     //
     // This is very expensive to generate, and outside of serialization this is a very suspicious function
@@ -234,6 +241,16 @@ public:
 
     // Creates a new object and returns an opaque reference to it.
     object create_object(const char* name);
+
+    // Creates an object with the specific handle. Will assert if handle
+    // is already allocated.
+    // 
+    // Unlike the standard create_object this function will not create meta
+    // components as these are expected to be created by the caller.
+    // 
+    // This function has a very specific use for deserializing object states, 
+    // it's not generally something that should be used outside of that.
+    object create_object(object handle);
 
     // Destroys an object previously created with create_object.
     void destroy_object(object obj);

@@ -95,6 +95,17 @@ object object_manager::create_object(const char* name)
     return state.handle;
 }
 
+object object_manager::create_object(object handle)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    size_t index = m_objects.insert(handle, {});
+    object_state& state = m_objects[index];
+    state.handle = index;
+
+    return state.handle;
+}
+
 void object_manager::destroy_object(object obj)
 {
     std::scoped_lock lock(m_object_mutex);
@@ -167,6 +178,28 @@ void object_manager::component_edited(object obj, component* comp)
     {
         auto& system = m_systems[i];
         system->component_modified(obj, comp);
+    }
+}
+
+void object_manager::all_components_edited()
+{
+    std::scoped_lock lock(m_system_mutex);
+
+    // TODO: Add a better way to get all alive objects.
+    for (size_t i = 1; i < m_objects.capacity(); i++)
+    {
+        object_manager::object_state* state = get_object_state(i);
+        if (state)
+        {
+            for (component* comp : state->components)
+            {
+                for (size_t j = 0; j < m_systems.size(); j++)
+                {
+                    auto& system = m_systems[j];
+                    system->component_modified(i, comp);
+                }
+            }
+        }
     }
 }
 

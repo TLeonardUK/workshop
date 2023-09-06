@@ -55,5 +55,4 @@ bool stream::at_end()
     return remaining() == 0;
 }
 
-
 }; // namespace workshop

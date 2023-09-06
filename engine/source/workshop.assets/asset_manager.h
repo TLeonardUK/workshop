@@ -7,6 +7,7 @@
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/perf/timer.h"
 #include "workshop.core/utils/event.h"
+#include "workshop.core/utils/singleton.h"
 #include "workshop.assets/asset_loader.h"
 #include "workshop.assets/asset_importer.h"
 #include "workshop.assets/asset_cache.h"
@@ -95,7 +96,7 @@ class asset_ptr_base
 {
 public:
     asset_ptr_base();
-    asset_ptr_base(asset_manager* manager, asset_state* state);
+    asset_ptr_base(asset_manager* manager, asset_state* state, const std::type_info* type);
 
     // Gets the path to the asset being loaded.
     std::string get_path();
@@ -131,9 +132,22 @@ public:
     // Unregisters a callback previously registered by register_changed_callback
     void unregister_changed_callback(event<>::key_t key);
 
+    // Resets the point so it no longer points to anything.
+    void reset();
+
+    // Switches the asset being pointed to and invalidates the current asset held.
+    void set_path(const char* path);
+
 protected:
+
+    // Swaps the state this pointer holds for a different one.
+    void swap_state(asset_state* state);
+
+protected:
+
     asset_manager* m_asset_manager = nullptr;
     asset_state* m_state = nullptr;
+    const std::type_info* m_type;
 
 };
 
@@ -181,7 +195,8 @@ public:
 // 
 //  This class is thread safe.
 // ================================================================================================
-class asset_manager
+class asset_manager 
+    : public singleton<asset_manager>
 {
 public:
 
@@ -279,6 +294,12 @@ protected:
     
     template <typename asset_type>
     friend class asset_ptr;
+
+    template <typename value_type>
+    friend void stream_serialize(stream& out, asset_ptr_base& v);
+
+    template <typename value_type>
+    friend void yaml_serialize(YAML::Node& out, bool is_loading, asset_ptr_base& value);
 
     // Called for assets in waiting_for_depencies state to check if 
     // they can now proceed to the loading state or not.
@@ -528,28 +549,70 @@ inline asset_manager* asset_ptr_base::get_asset_manager()
     return m_asset_manager;
 }
 
+inline void asset_ptr_base::reset()
+{
+    if (m_state)
+    {
+        m_asset_manager->decrement_ref(m_state);
+        m_state = nullptr;
+    }
+}
+
+inline void asset_ptr_base::swap_state(asset_state* state)
+{
+    if (m_state)
+    {
+        m_asset_manager->decrement_ref(m_state);
+        m_state = nullptr;
+    }
+    
+    // NOTE: This is used for states returned by create_asset_state, which should have already
+    //       done in the reference increment, so avoid doing it again here.
+    m_state = state;
+}
+
+inline void asset_ptr_base::set_path(const char* path)
+{
+    if (path[0] == '\0')
+    {
+        reset();
+    }
+    else
+    {
+        if (m_asset_manager == nullptr)
+        {
+            m_asset_manager = &asset_manager::get();
+        }
+
+        asset_state* new_state = m_asset_manager->create_asset_state(*m_type, path, 0, false);
+        swap_state(new_state);
+    }
+}
+
 inline asset_ptr_base::asset_ptr_base()
     : m_asset_manager(nullptr)
     , m_state(nullptr)
+    , m_type(&typeid(void))
 {
 }
 
-inline asset_ptr_base::asset_ptr_base(asset_manager* manager, asset_state* state)
+inline asset_ptr_base::asset_ptr_base(asset_manager* manager, asset_state* state, const std::type_info* type)
     : m_asset_manager(manager)
     , m_state(state)
+    , m_type(type)
 {
 }
 
 
 template <typename asset_type>
 inline asset_ptr<asset_type>::asset_ptr()
-    : asset_ptr_base(nullptr, nullptr)
+    : asset_ptr_base(nullptr, nullptr, &typeid(asset_type))
 {
 }
 
 template <typename asset_type>
 inline asset_ptr<asset_type>::asset_ptr(asset_manager* manager, asset_state* state)
-    : asset_ptr_base(manager, state)
+    : asset_ptr_base(manager, state, &typeid(asset_type))
 {
     // Note: No ref increase is required, create_asset_state has already done this before returning.
     //       To avoid anything being nuked between the state being created and the asset_ptr 
@@ -561,6 +624,7 @@ inline asset_ptr<asset_type>::asset_ptr(const asset_ptr& other)
 {
     m_asset_manager = other.m_asset_manager;
     m_state = other.m_state;
+    m_type = other.m_type;
 
     if (m_state)
     {
@@ -573,7 +637,8 @@ inline asset_ptr<asset_type>::asset_ptr(asset_ptr&& other)
 {
     m_asset_manager = other.m_asset_manager;
     m_state = other.m_state;
-        
+    m_type = other.m_type;
+
     // Reference doesn't need changing move doesn't effect it.
     other.m_state = nullptr;
 }
@@ -584,6 +649,7 @@ inline asset_ptr<asset_type>::~asset_ptr()
     if (m_state)
     {
         m_asset_manager->decrement_ref(m_state);
+        m_state = nullptr;
     }
 }
 
@@ -659,6 +725,31 @@ template <typename asset_type>
 inline bool asset_ptr<asset_type>::operator!=(asset_ptr<asset_type> const& other) const
 {
     return !operator==(other);
+}
+
+template<>
+inline void stream_serialize(stream& out, asset_ptr_base& v)
+{
+    std::string path = v.get_path();
+    stream_serialize(out, path);
+
+    if (!out.can_write())
+    {
+        v.set_path(path.c_str());
+    }
+}
+
+template<>
+inline void yaml_serialize(YAML::Node& out, bool is_loading, asset_ptr_base& v)
+{
+    std::string path = v.get_path();
+
+    yaml_serialize(out, is_loading, path);
+
+    if (is_loading)
+    {
+        v.set_path(path.c_str());
+    }
 }
 
 }; // namespace workshop

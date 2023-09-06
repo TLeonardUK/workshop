@@ -5,7 +5,7 @@
 #pragma once
 
 #include "workshop.assets/asset_loader.h"
-#include "workshop.renderer/assets/material/material.h"
+#include "workshop.engine/assets/scene/scene.h"
 #include "workshop.engine/ecs/object.h"
 
 namespace ws {
@@ -36,25 +36,13 @@ public:
     virtual bool save_uncompiled(const char* path, asset& instance) override;
 
 private:
-    struct component_info
-    {
-        std::string type_name;
-        reflect_class* reflect_type;
-        std::unique_ptr<component> component;
-    };
-
-    struct object_info
-    {
-        size_t handle;
-        std::vector<component_info> components;
-    };
 
     bool serialize(const char* path, scene& asset, bool isSaving);    
     bool save(const char* path, scene& asset);
 
-    bool parse_objects(const char* path, YAML::Node& node, scene& asset, std::vector<object_info>& objects);
-    bool parse_components(const char* path, YAML::Node& node, scene& asset, object_info& obj);
-    bool parse_fields(const char* path, YAML::Node& node, scene& asset, component_info& comp);
+    bool parse_objects(const char* path, YAML::Node& node, scene& asset, std::vector<scene::object_info>& objects);
+    bool parse_components(const char* path, YAML::Node& node, scene& asset, scene::object_info& obj);
+    bool parse_fields(const char* path, YAML::Node& node, scene& asset, scene::component_info& comp, reflect_class* reflect_type, component* deserialize_component);
     bool parse_file(const char* path, scene& asset);
 
 private:        

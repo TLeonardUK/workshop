@@ -687,6 +687,12 @@ world* engine::create_world(const char* name)
     std::unique_ptr<world> new_world = std::make_unique<world>(*this);
     world* result = new_world.get();
     m_worlds.push_back(std::move(new_world));
+
+    if (m_system_registration_callback)
+    {
+        m_system_registration_callback(result->get_object_manager());
+    }
+
     return result;
 }
 
@@ -702,6 +708,11 @@ void engine::destroy_world(world* world)
 
     db_log(engine, "Destroying world: %s", world->get_name());
     m_worlds.erase(iter);
+}
+
+void engine::set_system_registration_callback(system_registration_callback_t callback)
+{
+    m_system_registration_callback = callback;
 }
 
 bool engine::get_mouse_over_viewport()

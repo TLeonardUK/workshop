@@ -9,6 +9,7 @@
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
+#include "workshop.core/filesystem/ram_stream.h"
 
 #include "workshop.engine/ecs/component.h"
 #include "workshop.core/reflection/reflect.h"
@@ -29,9 +30,33 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 2;
+constexpr size_t k_asset_compiled_version = 8;
 
 };
+
+template<>
+inline void stream_serialize(stream& out, scene::component_info& block)
+{
+    stream_serialize(out, block.type_name_index);
+    stream_serialize(out, block.field_offset);
+    stream_serialize(out, block.field_count);
+}
+
+template<>
+inline void stream_serialize(stream& out, scene::field_info& block)
+{
+    stream_serialize(out, block.field_name_index);
+    stream_serialize(out, block.data_offset);
+    stream_serialize(out, block.data_size);
+}
+
+template<>
+inline void stream_serialize(stream& out, scene::object_info& block)
+{
+    stream_serialize(out, block.handle);
+    stream_serialize(out, block.component_offset);
+    stream_serialize(out, block.component_count);
+}
 
 scene_loader::scene_loader(asset_manager& ass_manager, engine* engine)
     : m_asset_manager(ass_manager)
@@ -131,15 +156,16 @@ bool scene_loader::serialize(const char* path, scene& asset, bool isSaving)
         return false;
     }
 
-    //stream_serialize_list(*stream, asset.string_table);
-    //stream_serialize_list(*stream, asset.components);
-
-    // Write all components/fields.
+    stream_serialize_list(*stream, asset.string_table);
+    stream_serialize_list(*stream, asset.objects);
+    stream_serialize_list(*stream, asset.components);
+    stream_serialize_list(*stream, asset.fields);
+    stream_serialize_list(*stream, asset.data);
 
     return true;
 }
 
-bool scene_loader::parse_fields(const char* path, YAML::Node& node, scene& asset, component_info& comp)
+bool scene_loader::parse_fields(const char* path, YAML::Node& node, scene& asset, scene::component_info& comp, reflect_class* reflect_type, component* deserialize_component)
 {
     YAML::Node this_node = node;
 
@@ -154,30 +180,52 @@ bool scene_loader::parse_fields(const char* path, YAML::Node& node, scene& asset
         return false;
     }
 
+    comp.field_offset = asset.fields.size();
+
     for (auto iter = this_node.begin(); iter != this_node.end(); iter++)
     {
         std::string field_name = iter->first.as<std::string>();
         YAML::Node child = iter->second;
 
-        // TODO: Set value in component.
-        reflect_field* field = comp.reflect_type->find_field(field_name.c_str(), true);
+        reflect_field* field = reflect_type->find_field(field_name.c_str(), true);
         if (field == nullptr)
         {
             db_error(asset, "[%s] field node '%s' is unknown.", path, field_name.c_str());
             return false;
         }
 
-        if (!yaml_serialize_reflect(child, true, comp.component.get(), field))
+        comp.field_count++;
+
+        scene::field_info& field_data = asset.fields.emplace_back();
+        field_data.field_name_index = asset.intern_string(field_name.c_str());
+
+        // Serialize the field data to a temporary component.
+        if (!yaml_serialize_reflect(child, true, deserialize_component, field))
         {
-            db_warning(engine, "Failed to load yaml for reflect field '%s::%s'.", comp.reflect_type->get_name(), field->get_name());
+            db_warning(engine, "Failed to load yaml for reflect field '%s::%s'.", reflect_type->get_name(), field->get_name());
             return false;
         }
+
+        // Serialize it to binary and append it into our data array.
+        std::vector<uint8_t> data;
+
+        ram_stream stream(data, true);
+        if (!stream_serialize_reflect(stream, deserialize_component, field))
+        {
+            db_warning(engine, "Failed to serialize reflect field '%s::%s'.", reflect_type->get_name(), field->get_name());
+            return false;
+        }
+
+        // Insert into our assets global field data array.
+        field_data.data_offset = asset.data.size();
+        field_data.data_size = data.size();
+        asset.data.insert(asset.data.end(), data.begin(), data.end());
     }
 
     return true;
 }
 
-bool scene_loader::parse_components(const char* path, YAML::Node& node, scene& asset, object_info& obj)
+bool scene_loader::parse_components(const char* path, YAML::Node& node, scene& asset, scene::object_info& obj)
 {
     YAML::Node this_node = node;
 
@@ -192,6 +240,8 @@ bool scene_loader::parse_components(const char* path, YAML::Node& node, scene& a
         return false;
     }
 
+    obj.component_offset = asset.components.size();
+
     for (auto iter = this_node.begin(); iter != this_node.end(); iter++)
     {
         std::string component_name = iter->first.as<std::string>();
@@ -202,20 +252,22 @@ bool scene_loader::parse_components(const char* path, YAML::Node& node, scene& a
             return false;
         }
 
-        component_info& comp = obj.components.emplace_back();
-        comp.type_name = component_name;
+        obj.component_count++;
+
+        scene::component_info& comp = asset.components.emplace_back();
+        comp.type_name_index = asset.intern_string(component_name.c_str());
         
-        comp.reflect_type = get_reflect_class(component_name.c_str());
-        if (comp.reflect_type == nullptr)
+        reflect_class* reflect_type = get_reflect_class(component_name.c_str());
+        if (reflect_type == nullptr)
         {
             db_error(asset, "[%s] component node '%s' is of an unknown type.", path, component_name.c_str());
             return false;
         }
 
-        comp.component = std::unique_ptr<component>(static_cast<component*>(comp.reflect_type->create_instance()));
+        std::unique_ptr<component> instance = std::unique_ptr<component>(static_cast<component*>(reflect_type->create_instance()));
 
         YAML::Node child = iter->second;
-        if (!parse_fields(path, child, asset, comp))
+        if (!parse_fields(path, child, asset, comp, reflect_type, instance.get()))
         {
             return false;
         }
@@ -224,7 +276,7 @@ bool scene_loader::parse_components(const char* path, YAML::Node& node, scene& a
     return true;
 }
 
-bool scene_loader::parse_objects(const char* path, YAML::Node& node, scene& asset, std::vector<object_info>& objects)
+bool scene_loader::parse_objects(const char* path, YAML::Node& node, scene& asset, std::vector<scene::object_info>& objects)
 {
     YAML::Node this_node = node["objects"];
 
@@ -249,7 +301,7 @@ bool scene_loader::parse_objects(const char* path, YAML::Node& node, scene& asse
             return false;
         }
 
-        object_info& obj = objects.emplace_back();
+        scene::object_info& obj = objects.emplace_back();
         obj.handle = object_id;
 
         YAML::Node child = iter->second;
@@ -272,14 +324,10 @@ bool scene_loader::parse_file(const char* path, scene& asset)
         return false;
     }
 
-    std::vector<object_info> objects;
-    if (!parse_objects(path, node, asset, objects))
+    if (!parse_objects(path, node, asset, asset.objects))
     {
         return false;
     }
-
-    // Generate a string table/data block which we will use for our binary save.
-    // TODO
 
     return true;
 }
@@ -294,7 +342,7 @@ bool scene_loader::save_uncompiled(const char* path, asset& instance)
     }
 
     scene& scene_asset = static_cast<scene&>(instance);
-    object_manager& manager = scene_asset.world->get_object_manager();
+    object_manager& manager = scene_asset.world_instance->get_object_manager();
 
     // Serialize everything to yaml.
     YAML::Emitter emitter;
