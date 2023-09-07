@@ -44,6 +44,18 @@ render_states:
     blend0_alpha_op: add
     blend0_alpha_source_op: zero
     blend0_alpha_destination_op: one
+  # Transparent without depth testing. Useful for blending post-processes.
+  transparent_no_depth_test: 
+    cull_mode: none  
+    depth_test_enabled: false
+    depth_write_enabled: false
+    blend0_enabled: true
+    blend0_op: add
+    blend0_source_op: source_alpha
+    blend0_destination_op: inverse_source_alpha
+    blend0_alpha_op: add
+    blend0_alpha_source_op: zero
+    blend0_alpha_destination_op: one
 
 vertex_layouts:
   # Simple layout that contains only vert position and uv. Useful

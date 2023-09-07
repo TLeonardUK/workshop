@@ -107,7 +107,7 @@ public:
         out_a = a;
     }
 
-    inline vector4 argb() const
+    inline vector4 rgba() const
     {
         return vector4(r, g, b, a);
     }
@@ -152,6 +152,7 @@ public:
     const static color brown;
     const static color grey;
     const static color blue_grey;
+    const static color gold;
 
 };
 
@@ -179,7 +180,7 @@ inline const color color::deep_orange   = { 255, 138, 101, 255 };
 inline const color color::brown         = { 161, 136, 127, 255 };
 inline const color color::grey          = { 224, 224, 224, 255 };
 inline const color color::blue_grey     = { 144, 164, 174, 255 };
-
+inline const color color::gold          = { 0.89f, 0.6f, 0.18f, 1.0f };
 
 template<>
 inline void stream_serialize(stream& out, color& v)

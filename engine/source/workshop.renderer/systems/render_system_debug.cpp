@@ -156,11 +156,11 @@ void render_system_debug::add_cached_shape(const shape& shape, const vector3& of
 
         debug_primitive_vertex& v0 = m_vertices[start_index + i + 0];
         v0.position = p1;
-        v0.color = color.argb();
+        v0.color = color.rgba();
 
         debug_primitive_vertex& v1 = m_vertices[start_index + i + 1];
         v1.position = p2;
-        v1.color = color.argb();
+        v1.color = color.rgba();
     }
 }
 
@@ -177,11 +177,11 @@ void render_system_debug::add_line(const vector3& start, const vector3& end, con
 
     debug_primitive_vertex& v0 = m_vertices[start_index + 0];
     v0.position = start;
-    v0.color = color.argb();
+    v0.color = color.rgba();
 
     debug_primitive_vertex& v1 = m_vertices[start_index + 1];
     v1.position = end;
-    v1.color = color.argb();
+    v1.color = color.rgba();
 }
 
 void render_system_debug::add_aabb(const aabb& bounds, const color& color)

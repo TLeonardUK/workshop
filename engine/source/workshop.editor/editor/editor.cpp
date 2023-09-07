@@ -300,6 +300,10 @@ void editor::open_scene()
                 // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
                 instance->world_instance = nullptr;
 
+                // Clear out any state from the old world.
+                m_selected_objects.clear();
+                m_selected_object_states.clear();
+
                 m_current_scene_path = path;
             }
             else
@@ -542,7 +546,7 @@ void editor::draw_selection()
 
     bool fixed_pivot_point = (ImGuizmo::IsUsingAny() && m_current_gizmo_mode != ImGuizmo::OPERATION::TRANSLATE);
     obb selected_object_bounds = bounds_sys->get_combined_bounds(m_selected_objects, m_pivot_point, fixed_pivot_point);
-    render.get_command_queue().draw_obb(selected_object_bounds, color::cyan);
+    render.get_command_queue().draw_obb(selected_object_bounds, color::gold);
 
     matrix4 view_mat = camera->view_matrix;
     matrix4 proj_mat = camera->projection_matrix;

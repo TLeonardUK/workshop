@@ -111,6 +111,8 @@ SET(SOURCES
     "systems/render_system_debug.cpp"
     "systems/render_system_ssao.h"
     "systems/render_system_ssao.cpp"
+    "systems/render_system_selection_outline.h"
+    "systems/render_system_selection_outline.cpp"
     
     "assets/shader/shader.h"
     "assets/shader/shader.cpp"

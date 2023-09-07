@@ -1,0 +1,36 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect generates a render target outlining a selected item.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  render_selection_outline:
+    techniques:
+      render_selection_outline: {}
+
+param_blocks:
+  selection_outline_parameters:
+    scope: draw
+    fields:
+      uv_step: float2
+      fill_alpha: float
+      outline_color: float4
+
+techniques:
+  render_selection_outline:
+    vertex_shader: 
+      file: data:shaders/source/fullscreen_pass.hlsl
+      entry: fullscreen_vshader
+    pixel_shader: 
+      file: data:shaders/source/selection_outline.hlsl
+      entry: pshader
+    render_state: transparent_no_depth_test
+    vertex_layout: vertex2d_pos_uv
+    output_target: sdr_swapchain_and_depth
+    param_blocks: [ gbuffer, selection_outline_parameters ]
