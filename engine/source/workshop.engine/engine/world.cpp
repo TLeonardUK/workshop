@@ -32,7 +32,19 @@ void world::step(const frame_time& time)
 {
     profile_marker(profile_colors::engine, "world: %s", m_name.c_str());
 
+    // Don't update this world if stepping has been disabled. This can be because
+    // we are in the processing of saving/loading this scene.
+    if (!m_step_enabled)
+    {
+        return;
+    }
+
     m_object_manager->step(time);
+}
+
+void world::set_step_enabled(bool enabled)
+{
+    m_step_enabled = enabled;
 }
 
 }; // namespace ws

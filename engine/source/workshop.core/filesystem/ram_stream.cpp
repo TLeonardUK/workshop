@@ -5,6 +5,13 @@
 #include "workshop.core/filesystem/ram_stream.h"
 
 namespace ws {
+    
+ram_stream::ram_stream(const std::vector<uint8_t>& buffer)
+    // We know we are not going to write to this, so the const cast is safe if ugly.
+    : m_buffer(const_cast<std::vector<uint8_t>&>(buffer)) 
+    , m_can_write(false)
+{
+}
 
 ram_stream::ram_stream(std::vector<uint8_t>& buffer, bool can_write)
     : m_buffer(buffer)

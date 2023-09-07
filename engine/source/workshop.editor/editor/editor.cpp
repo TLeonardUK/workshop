@@ -10,6 +10,9 @@
 #include "workshop.editor/editor/windows/editor_scene_tree_window.h"
 #include "workshop.editor/editor/windows/editor_properties_window.h"
 #include "workshop.editor/editor/windows/editor_assets_window.h"
+#include "workshop.editor/editor/windows/popups/editor_progress_popup.h"
+#include "workshop.editor/editor/transactions/editor_transaction_change_selected_objects.h"
+#include "workshop.editor/editor/transactions/editor_transaction_change_object_transform.h"
 
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/assets/scene/scene.h"
@@ -28,7 +31,6 @@
 #include "workshop.game_framework/systems/transform/bounds_system.h"
 #include "workshop.game_framework/components/lighting/directional_light_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
-
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
@@ -47,6 +49,7 @@ namespace ws {
 editor::editor(engine& in_engine)
 	: m_engine(in_engine)
 {
+    m_undo_stack = std::make_unique<editor_undo_stack>();
 }
 
 editor::~editor() = default;
@@ -82,11 +85,15 @@ editor_main_menu& editor::get_main_menu()
 
 std::vector<object> editor::get_selected_objects()
 {
-    // TODO: Undo/Redo Stack
     return m_selected_objects;
 }
 
-void editor::set_selected_objects(std::vector<object>& objects)
+void editor::set_selected_objects(const std::vector<object>& objects)
+{
+    m_undo_stack->push(std::make_unique<editor_transaction_change_selected_objects>(*this, objects));
+}
+
+void editor::set_selected_objects_untransacted(const std::vector<object>& objects)
 {
     world& world_instance = m_engine.get_default_world();
     object_manager& obj_manager = world_instance.get_object_manager();
@@ -141,6 +148,23 @@ result<void> editor::create_main_menu(init_list& list)
         app::instance().quit();
     }));
 
+    // Edit Settings    
+    m_main_menu_options.push_back(m_main_menu->add_menu_custom("Edit/", [this]() {       
+
+        std::string undo_name = m_undo_stack->get_next_undo_name();
+        if (ImGui::MenuItem(("Undo: " + undo_name).c_str(), nullptr, false, !undo_name.empty()))
+        {
+            m_undo_stack->undo();
+        }
+
+        std::string redo_name = m_undo_stack->get_next_redo_name();
+        if (ImGui::MenuItem(("Redo: " + redo_name).c_str(), nullptr, false, !redo_name.empty()))
+        {
+            m_undo_stack->redo();
+        }
+
+    }));
+
     // Build Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("Build/Regenerate Diffuse Probes", [this]() { 
         m_engine.get_renderer().get_command_queue().regenerate_diffuse_probes();
@@ -184,7 +208,7 @@ result<void> editor::create_main_menu(init_list& list)
         m_set_default_dock_space = false;
     }));    
     m_main_menu_options.push_back(m_main_menu->add_menu_seperator("Window"));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Window/Performance Overlay", [this]() { 
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("Window/Performance", [this]() { 
         m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::draw_performance_overlay);
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_custom("Window/", [this]() {       
@@ -215,6 +239,7 @@ result<void> editor::create_windows(init_list& list)
     create_window<editor_assets_window>(&m_engine.get_asset_manager(), &m_engine.get_asset_database());
     create_window<editor_log_window>();
     create_window<editor_memory_window>();
+    create_window<editor_progress_popup>();
 
     return true;
 }
@@ -225,7 +250,6 @@ result<void> editor::destroy_windows()
 
     return true;
 }
-
 
 result<void> editor::create_world(init_list& list)
 {
@@ -238,6 +262,11 @@ result<void> editor::destroy_world()
     // Nothing to do here, the original world created may have been destroyed
     // or swapped for another by this point. Destroying it is handled by the engine.
     return true;
+}
+
+editor_undo_stack& editor::get_undo_stack()
+{
+    return *m_undo_stack;
 }
 
 void editor::new_scene()
@@ -273,8 +302,14 @@ void editor::new_scene()
     m_engine.set_default_world(new_world);
 
     // Clear out any state from the old world.
+    reset_scene_state();
+}
+
+void editor::reset_scene_state()
+{
     m_selected_objects.clear();
     m_selected_object_states.clear();
+    m_undo_stack->clear();
 }
 
 void editor::open_scene()
@@ -287,34 +322,41 @@ void editor::open_scene()
         std::string vfs_path = virtual_file_system::get().get_vfs_location(path.c_str());
         if (!vfs_path.empty())
         {
-            // Use the host protocol to just read/write direct to disk location.
-            asset_ptr<scene> instance = m_engine.get_asset_manager().request_asset<scene>(vfs_path.c_str(), 0);
+            editor_progress_popup* popup = get_window<editor_progress_popup>();
+            popup->set_title("Loading Scene");
+            popup->set_subtitle(vfs_path.c_str());
+            popup->set_progress(0.5f);
+            popup->open();
 
-            // TODO: Make this async and show a progress bar.
-            instance.wait_for_load();
-
-            if (instance.is_loaded())
-            {
-                m_engine.set_default_world(instance->world_instance);
-
-                // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
-                instance->world_instance = nullptr;
-
-                // Clear out any state from the old world.
-                m_selected_objects.clear();
-                m_selected_object_states.clear();
-
-                m_current_scene_path = path;
-            }
-            else
-            {
-                message_dialog("Failed to load scene asset. See log for more details.", message_dialog_type::error);
-            }
+            m_pending_open_scene = m_engine.get_asset_manager().request_asset<scene>(vfs_path.c_str(), 0);            
         }
         else
         {
             message_dialog("Failed to load scene asset. Asset is not stored in the virtual file system, please ensure its in the correct folder.", message_dialog_type::error);
         }
+    }
+}
+
+void editor::commit_scene_load()
+{
+    if (m_pending_open_scene.is_loaded())
+    {
+        m_engine.set_default_world(m_pending_open_scene->world_instance);
+
+        // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
+        m_pending_open_scene->world_instance = nullptr;
+
+        // Clear out any state from the old world.
+        reset_scene_state();
+
+        // Close the progression popup.
+        get_window<editor_progress_popup>()->close();
+
+        m_current_scene_path = m_pending_open_scene.get_path();
+    }
+    else
+    {
+        message_dialog("Failed to load scene asset. See log for more details.", message_dialog_type::error);
     }
 }
 
@@ -333,7 +375,6 @@ void editor::save_scene(bool ask_for_filename)
         }
     }
 
-    // TODO: Make this async and show a progress bar.
     std::string vfs_path = virtual_file_system::get().get_vfs_location(path.c_str());
     if (vfs_path.empty())
     {
@@ -341,21 +382,73 @@ void editor::save_scene(bool ask_for_filename)
         return;
     }
 
-    scene saved_scene(m_engine.get_asset_manager(), &m_engine);
-    saved_scene.world_instance = &m_engine.get_default_world();
+    // Disable stepping the world while we save.
+    m_engine.get_default_world().set_step_enabled(false);
 
-    // Use the host protocol to just read/write direct to disk location.
-    asset_loader* loader = m_engine.get_asset_manager().get_loader_for_type<scene>();
+    // Show progress dialog
+    editor_progress_popup* popup = get_window<editor_progress_popup>();
+    popup->set_title("Saving Scene");
+    popup->set_subtitle(vfs_path.c_str());
+    popup->set_progress(0.5f);
+    popup->open();
 
-    if (!loader->save_uncompiled(vfs_path.c_str(), saved_scene))
+    // Queue up a save to run in the background.
+    m_pending_save_scene_success = false;
+    m_pending_save_scene = async("Save Scene", task_queue::standard, [this, vfs_path]() {
+
+        scene saved_scene(m_engine.get_asset_manager(), &m_engine);
+        saved_scene.world_instance = &m_engine.get_default_world();
+
+        // Use the host protocol to just read/write direct to disk location.
+        asset_loader* loader = m_engine.get_asset_manager().get_loader_for_type<scene>();
+        if (loader->save_uncompiled(vfs_path.c_str(), saved_scene))
+        {
+            m_current_scene_path = vfs_path;
+            m_pending_save_scene_success = true;
+        }
+
+        // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
+        saved_scene.world_instance = nullptr;
+
+    });
+}
+
+void editor::commit_scene_save()
+{
+    if (!m_pending_save_scene_success)
     {
         message_dialog("Failed to save scene asset. See log for more details.", message_dialog_type::error);
     }
 
-    // Null out the assets world so it won't be unloaded when the scene asset falls out of scope.
-    saved_scene.world_instance = nullptr;
-    
-    m_current_scene_path = path;
+    // Close the progression popup.
+    get_window<editor_progress_popup>()->close();
+
+    // Ree-nable stepping the world.
+    m_engine.get_default_world().set_step_enabled(true);
+}
+
+void editor::process_pending_save_load()
+{
+    if (m_pending_open_scene.is_valid())
+    {
+        if (m_pending_open_scene.get_state() == asset_loading_state::loaded ||
+            m_pending_open_scene.get_state() == asset_loading_state::failed)
+        {
+            commit_scene_load();
+
+            m_pending_open_scene.reset();
+        }
+    }
+
+    if (m_pending_save_scene.is_valid())
+    {
+        if (m_pending_save_scene.is_complete())
+        {
+            commit_scene_save();
+
+            m_pending_save_scene.reset();
+        }
+    }
 }
 
 void editor::step(const frame_time& time)
@@ -365,6 +458,8 @@ void editor::step(const frame_time& time)
 	imgui_scope imgui_scope(m_engine.get_renderer().get_imgui_manager(), "Editor Dock");
 
 	input_interface& input = m_engine.get_input_interface();
+
+    process_pending_save_load();
 
 	// Switch between modes
 	if (input.was_key_pressed(input_key::escape))
@@ -491,6 +586,11 @@ void editor::reset_dockspace_layout()
             {
                 dock_id = dock_id_right;
                 break;
+            }
+        case editor_window_layout::popup:
+            {
+                // We don't want to dock popup windows.
+                continue;
             }
         }        
 
@@ -620,6 +720,28 @@ void editor::draw_selection()
 
     if (!ImGuizmo::IsUsingAny())
     {
+        // Create a transaction for the transformation so we can undo/redo it.
+        if (m_was_transform_objects && m_selected_object_states.size() > 0)
+        {
+            std::unique_ptr<editor_transaction_change_object_transform> transaction = std::make_unique<editor_transaction_change_object_transform>(m_engine, *this);
+
+            for (size_t i = 0; i < m_selected_objects.size(); i++)
+            {
+                object obj = m_selected_objects[i];
+                object_state& state = m_selected_object_states[i];
+                transform_component* comp = obj_manager.get_component<transform_component>(obj);
+
+                transaction->add_object(
+                    obj,
+                    state.original_location, state.original_rotation, state.original_scale,
+                    comp->world_location, comp->world_rotation, comp->world_scale
+                );
+            }
+
+            m_undo_stack->push(std::move(transaction));
+        }
+
+        // Update the selected states to the current transform.
         m_selected_object_states.clear();
         for (size_t i = 0; i < m_selected_objects.size(); i++)
         {
@@ -628,7 +750,15 @@ void editor::draw_selection()
             transform_component* comp = obj_manager.get_component<transform_component>(obj);
 
             state.original_scale = comp->world_scale;
+            state.original_location = comp->world_location;
+            state.original_rotation = comp->world_rotation;
         }
+
+        m_was_transform_objects = false;
+    }
+    else
+    {
+        m_was_transform_objects = true;
     }
 }
 

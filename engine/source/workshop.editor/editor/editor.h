@@ -9,8 +9,12 @@
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/math/obb.h"
+#include "workshop.core/async/async.h"
+#include "workshop.assets/asset_manager.h"
 #include "workshop.engine/engine/engine.h"
+#include "workshop.engine/assets/scene/scene.h"
 #include "workshop.editor/editor/editor_main_menu.h"
+#include "workshop.editor/editor/editor_undo_stack.h"
 #include "workshop.engine/ecs/object.h"
 
 #include "thirdparty/imgui/imgui.h"
@@ -72,14 +76,35 @@ public:
         return result;
     }
 
+    template <typename window_type>
+    window_type* get_window()
+    {
+        for (auto& window : m_windows)
+        {
+            if (window_type* typed = dynamic_cast<window_type*>(window.get()))
+            {
+                return typed;
+            }
+        }
+        return nullptr;
+    }
+
     // Gets or sets the selected objects.
     std::vector<object> get_selected_objects();
-    void set_selected_objects(std::vector<object>& objects);
+    void set_selected_objects(const std::vector<object>& objects);
 
     // Gets the main camera used by the editor.
     camera_component* get_camera();
 
+    // Gets the stack used for tracking undo/redo of transactions. All changes
+    // to the scene from the editor should go through this.
+    editor_undo_stack& get_undo_stack();
+
 protected:
+    friend class editor_transaction_change_selected_objects;
+
+    // Sets the selected objects without creating a transaction to do it.
+    void set_selected_objects_untransacted(const std::vector<object>& object);
 
     result<void> create_main_menu(init_list& list);
     result<void> destroy_main_menu();
@@ -91,14 +116,19 @@ protected:
     result<void> destroy_world();
 
     void draw_selection();
-
     void draw_dockspace();
 
     void reset_dockspace_layout();
 
+    void reset_scene_state();
+
     void new_scene();
     void open_scene();
     void save_scene(bool ask_for_filename);
+
+    void commit_scene_load();
+    void commit_scene_save();
+    void process_pending_save_load();
 
 protected:
 
@@ -106,28 +136,43 @@ protected:
 
     editor_mode m_editor_mode = editor_mode::game;
 
+    // Window State
+
     std::unique_ptr<editor_main_menu> m_main_menu;
-
     std::vector<editor_main_menu::menu_item_handle> m_main_menu_options;
-
     std::vector<std::unique_ptr<editor_window>> m_windows;
+
+    ImGuiID m_dockspace_id;
+    bool m_set_default_dock_space = false;
+
+    // Scene State
 
     struct object_state
     {
         vector3 original_scale;
+        vector3 original_location;
+        quat original_rotation;
     };
 
     std::vector<object> m_selected_objects;
     std::vector<object_state> m_selected_object_states;
 
+    std::unique_ptr<editor_undo_stack> m_undo_stack;
+
+    // Gizmo handling
+
     vector3 m_pivot_point = vector3::zero;
-
-    ImGuiID m_dockspace_id;
-    bool m_set_default_dock_space = false;
-
     ImGuizmo::OPERATION m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
 
+    bool m_was_transform_objects = false;
+
+    // Save / Load
+
     std::string m_current_scene_path = "";
+    asset_ptr<scene> m_pending_open_scene;
+
+    bool m_pending_save_scene_success = false;
+    task_handle m_pending_save_scene;
 
 };
 

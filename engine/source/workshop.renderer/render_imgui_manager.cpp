@@ -132,7 +132,7 @@ void render_imgui_manager::step(frame_time& time)
 
                 render_system_imgui::draw_command& render_cmd = commands.emplace_back();
                 render_cmd.texture = cmd.TextureId;
-                render_cmd.offset = index_offset;
+                render_cmd.offset = index_offset + cmd.IdxOffset;
                 render_cmd.count = cmd.ElemCount;
                 render_cmd.display_size = vector2(data->DisplaySize.x, data->DisplaySize.y);
                 render_cmd.display_pos = vector2(data->DisplayPos.x, data->DisplayPos.y);
@@ -142,8 +142,6 @@ void render_imgui_manager::step(frame_time& time)
                     (cmd.ClipRect.z - cmd.ClipRect.x),
                     (cmd.ClipRect.w - cmd.ClipRect.y)
                 );
-
-                index_offset += cmd.ElemCount;
             }
         }
     }  
@@ -304,7 +302,7 @@ render_imgui_manager::context* render_imgui_manager::create_context(const char* 
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
     style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.0f, 1.0f, 1.0f, 0.699999988079071f);
     style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.800000011920929f, 0.800000011920929f, 0.800000011920929f, 0.2000000029802322f);
-    style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
+    style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.7f);
 
     // Setup input keymap.
     ImGuiIO& io = ImGui::GetIO();

@@ -8,6 +8,7 @@
 #include "workshop.engine/ecs/meta_component.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/perf/profile.h"
+#include "workshop.core/filesystem/ram_stream.h"
 
 namespace ws {
 
@@ -102,6 +103,21 @@ object object_manager::create_object(object handle)
     size_t index = m_objects.insert(handle, {});
     object_state& state = m_objects[index];
     state.handle = index;
+
+    return state.handle;
+}
+
+object object_manager::create_object(const char* name, object handle)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    size_t index = m_objects.insert(handle, {});
+    object_state& state = m_objects[index];
+    state.handle = index;
+
+    // Add the meta component that should always exist.
+    meta_component* meta = add_component<meta_component>(state.handle);
+    meta->name = name;
 
     return state.handle;
 }
@@ -335,11 +351,11 @@ void object_manager::remove_component(object handle, component* component)
 {
     std::scoped_lock lock(m_object_mutex);
 
-    if (dynamic_cast<meta_component*>(component))
+    /*if (dynamic_cast<meta_component*>(component))
     {
         db_assert_message(false, "Attempted to remove meta_component, this is not supported, this component is internal and should not be touched.");
         return;
-    }
+    }*/
 
     if (m_is_system_step_active)
     {
@@ -383,6 +399,152 @@ std::vector<std::type_index> object_manager::get_component_types(object handle)
     }
 
     return component_types;
+}
+
+component* object_manager::get_component(object handle, std::type_index index)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    object_manager::object_state* state = get_object_state(handle);
+    if (!state)
+    {
+        return {};
+    }
+
+    for (component* comp : state->components)
+    {
+        if (index == typeid(*comp))
+        {
+            return comp;
+        }
+    }
+
+    return nullptr;
+}
+
+std::vector<uint8_t> object_manager::serialize_component(object handle, std::type_index component_type)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    std::vector<uint8_t> ret;
+    ram_stream output(ret, true);
+
+    component* comp = get_component(handle, component_type);
+    if (comp == nullptr)
+    {
+        db_error(engine, "Attempt to serialize component that doesn't exist on object. Serialized data will be truncated.");
+        return {};
+    }
+    
+    reflect_class* comp_class = get_reflect_class(component_type);
+    if (comp_class == nullptr)
+    {
+        db_error(engine, "Attempt to serialize component that doesn't have a reflection class. Serialized data will be truncated.");
+        return {};
+    }
+
+    std::string comp_class_name = comp_class->get_name();
+    stream_serialize(output, comp_class_name);
+
+    for (reflect_field* field : comp_class->get_fields(true))
+    {
+        std::string field_name = field->get_name();
+        stream_serialize(output, field_name);
+        stream_serialize_reflect(output, comp, field);
+    }
+
+    return ret;
+}
+
+void object_manager::deserialize_component(object handle, const std::vector<uint8_t>& data, bool mark_as_edited)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    ram_stream output(data);
+
+    std::string comp_class_name;
+    stream_serialize(output, comp_class_name);
+
+    reflect_class* comp_class = get_reflect_class(comp_class_name.c_str());
+    if (comp_class == nullptr)
+    {
+        db_error(engine, "Attempt to deserialize component that doesn't have a reflection class '%s'.", comp_class_name.c_str());
+        return;
+    }
+
+    component* new_component = add_component(handle, comp_class->get_type_index());
+
+    while (!output.at_end())
+    {
+        std::string field_name;
+        stream_serialize(output, field_name);
+
+        reflect_field* field = comp_class->find_field(field_name.c_str(), true);
+        if (field == nullptr)
+        {
+            db_error(engine, "Attempt to deserialize component that doesn't have a reflection field '%s'.", field_name.c_str());
+            return;
+        }
+
+        stream_serialize_reflect(output, new_component, field);
+    }
+
+    if (mark_as_edited)
+    {
+        component_edited(handle, new_component);
+    }
+}
+
+std::vector<uint8_t> object_manager::serialize_object(object handle)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    std::vector<uint8_t> ret;
+    ram_stream output(ret, true);
+
+    std::vector<component*> components = get_components(handle);
+    size_t component_count = components.size();
+
+    stream_serialize(output, component_count);
+    for (component* comp : components)
+    {
+        std::vector<uint8_t> comp_payload = serialize_component(handle, typeid(*comp));
+        stream_serialize_list(output, comp_payload);
+    }
+
+    return ret;
+}
+
+void object_manager::deserialize_object(object handle, const std::vector<uint8_t>& data)
+{
+    std::scoped_lock lock(m_object_mutex);
+
+    ram_stream output(data);
+
+    // Remove all components this object has on it, we will be deserializing them.
+    object_state* obj_state = get_object_state(handle);
+    std::vector<component*> existing_components = obj_state->components;
+    for (component* comp : existing_components)
+    {
+        remove_component(handle, comp);
+    }
+
+    size_t component_count = 0;
+    stream_serialize(output, component_count);
+
+    for (size_t i = 0; i < component_count; i++)
+    {
+        std::vector<uint8_t> comp_payload;
+        stream_serialize_list(output, comp_payload);
+
+        deserialize_component(handle, comp_payload, false);
+    }
+
+    // Mark all objects as edited.
+    for (component* comp : obj_state->components)
+    {
+        component_edited(handle, comp);
+    }
 }
 
 void object_manager::step_systems(const frame_time& time)

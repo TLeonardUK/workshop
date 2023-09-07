@@ -18,7 +18,8 @@ namespace ws {
 class ram_stream : public stream
 {
 public:
-    
+
+    ram_stream(const std::vector<uint8_t>& buffer);
     ram_stream(std::vector<uint8_t>& buffer, bool can_write);
     virtual ~ram_stream();
 

@@ -150,9 +150,13 @@ void editor_properties_window::draw()
                     );
 
                     ImGui::SetCursorPos(button_pos);
-                    if (ImGui::SmallButton("X"))
+                    // Don't allow deleting the meta component as that bad boy is important for the basic functioning of the object system.
+                    if (dynamic_cast<meta_component*>(info.component) == nullptr)
                     {
-                        destroy_component = info.component;
+                        if (ImGui::SmallButton("X"))
+                        {
+                            destroy_component = info.component;
+                        }
                     }
                     ImGui::SetCursorPos(end_cursor_pos);
 

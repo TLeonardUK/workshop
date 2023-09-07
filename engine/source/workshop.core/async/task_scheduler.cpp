@@ -81,7 +81,7 @@ bool task_handle::is_dispatched()
 {
     db_assert(is_valid());
 
-    return m_task_scheduler->get_task_run_state(m_index) == task_scheduler::task_run_state::pending_run;
+    return m_task_scheduler->get_task_run_state(m_index) != task_scheduler::task_run_state::pending_dispatch;
 }
 
 void task_handle::add_dependency(const task_handle& other)

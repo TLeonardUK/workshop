@@ -13,9 +13,7 @@ enum class editor_window_layout
     bottom_left,
     bottom_right,
     left,
-    right,
-    
-    popup
+    right
 };
 
 // ================================================================================================

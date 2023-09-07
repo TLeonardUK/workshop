@@ -252,6 +252,9 @@ public:
     // it's not generally something that should be used outside of that.
     object create_object(object handle);
 
+    // Same as above, but still creates the meta components.
+    object create_object(const char* name, object handle);
+
     // Destroys an object previously created with create_object.
     void destroy_object(object obj);
 
@@ -278,6 +281,8 @@ public:
     template <typename component_type>
     void remove_component(object handle)
     {
+        std::scoped_lock lock(m_object_mutex);
+
         object_state* state = get_object_state(handle);
         if (!state)
         {
@@ -305,10 +310,12 @@ public:
     // Gets all components attached to the given object.
     std::vector<std::type_index> get_component_types(object handle);
     
-    // Removes the first component of the given type from the given object.
+    // Gets the first component of the given type from the given object.
     template <typename component_type>
     component_type* get_component(object handle)
     {
+        std::scoped_lock lock(m_object_mutex);
+
         object_state* state = get_object_state(handle);
         if (!state)
         {
@@ -326,6 +333,26 @@ public:
 
         return nullptr;
     }
+
+    // Gets a component from the given object with the given type.
+    component* get_component(object handle, std::type_index index);
+
+    // Serializes an objects component to binary, the component
+    // is untouched. This can be used to store the state of an component temporarily.
+    std::vector<uint8_t> serialize_component(object handle, std::type_index component_type);
+
+    // Deserializes the state of a component that was serialized by serialize_component.
+    // If a component of the same type on the object exists, it is stomped over.
+    void deserialize_component(object handle, const std::vector<uint8_t>& data, bool mark_as_edited = true);
+
+    // Serializes an object and its components to binary, the object
+    // is untouched. This can be used to store the state of an object temporarily.
+    std::vector<uint8_t> serialize_object(object handle);
+
+    // Deserializes the state of an object that was serialized by serialize_object.
+    // Any components existing on the object that are not in the serialized state
+    // will be removed.
+    void deserialize_object(object handle, const std::vector<uint8_t>& data);
 
 protected:
 

@@ -33,6 +33,10 @@ public:
     // Called once each frame, steps the world.
     void step(const frame_time& time);
 
+    // Enables or disables stepping the worlds scene. This is used mostly if we are in the process
+    // of saving/loading this world and need it to be immutable.
+    void set_step_enabled(bool enabled);
+
     // Gets the engine that owns this world.
     engine& get_engine();
 
@@ -40,6 +44,8 @@ protected:
 
 private:
     std::string m_name;
+
+    bool m_step_enabled = true;
 
     std::unique_ptr<object_manager> m_object_manager;
 
