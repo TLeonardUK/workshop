@@ -11,8 +11,6 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 static_mesh_system::static_mesh_system(object_manager& manager)
