@@ -33,10 +33,15 @@ class property_list
 {
 public:
 
-    property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager, asset_database& ass_database);
+    property_list(asset_manager* ass_manager, asset_database& ass_database);
 
-    void draw();
-    
+    // Draws the property list displaying all fields in the context class.
+    // Returns true if any property is modified.
+    bool draw(void* context, reflect_class* context_class);
+
+    // Fired when a field is about to be modified but before the value has been applied.
+    event<reflect_field*> on_before_modify;
+
     // Fired when a field in the context object has been modified.
     event<reflect_field*> on_modified;
 
@@ -63,7 +68,6 @@ private:
     void* m_context;
     reflect_class* m_class;
     asset_manager* m_asset_manager;
-
     asset_database& m_asset_database;
 
 };

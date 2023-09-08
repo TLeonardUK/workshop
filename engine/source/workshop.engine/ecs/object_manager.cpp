@@ -197,6 +197,27 @@ void object_manager::component_edited(object obj, component* comp)
     }
 }
 
+void object_manager::object_edited(object obj)
+{
+    std::scoped_lock obj_lock(m_object_mutex);
+    std::scoped_lock sys_lock(m_system_mutex);
+
+    object_manager::object_state* state = get_object_state(obj);
+    if (!state)
+    {
+        return;
+    }
+
+    for (component* comp : state->components)
+    {
+        for (size_t i = 0; i < m_systems.size(); i++)
+        {
+            auto& system = m_systems[i];
+            system->component_modified(obj, comp);
+        }
+    }
+}
+
 void object_manager::all_components_edited()
 {
     std::scoped_lock lock(m_system_mutex);
@@ -367,6 +388,11 @@ void object_manager::remove_component(object handle, component* component)
     }
 }
 
+void object_manager::remove_component(object handle, std::type_index index)
+{
+    remove_component(handle, get_component(handle, index));
+}
+
 std::vector<component*> object_manager::get_components(object handle)
 {
     std::scoped_lock lock(m_object_mutex);
@@ -472,7 +498,11 @@ void object_manager::deserialize_component(object handle, const std::vector<uint
         return;
     }
 
-    component* new_component = add_component(handle, comp_class->get_type_index());
+    component* new_component = get_component(handle, comp_class->get_type_index());
+    if (new_component == nullptr)
+    {
+        new_component = add_component(handle, comp_class->get_type_index());
+    }
 
     while (!output.at_end())
     {
@@ -515,7 +545,7 @@ std::vector<uint8_t> object_manager::serialize_object(object handle)
     return ret;
 }
 
-void object_manager::deserialize_object(object handle, const std::vector<uint8_t>& data)
+void object_manager::deserialize_object(object handle, const std::vector<uint8_t>& data, bool mark_as_edited)
 {
     std::scoped_lock lock(m_object_mutex);
 
@@ -541,9 +571,12 @@ void object_manager::deserialize_object(object handle, const std::vector<uint8_t
     }
 
     // Mark all objects as edited.
-    for (component* comp : obj_state->components)
+    if (mark_as_edited)
     {
-        component_edited(handle, comp);
+        for (component* comp : obj_state->components)
+        {
+            component_edited(handle, comp);
+        }
     }
 }
 

@@ -8,6 +8,7 @@
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
+#include "workshop.input_interface/input_interface.h"
 
 namespace ws {
 
@@ -17,6 +18,8 @@ namespace ws {
 class editor_main_menu 
 {
 public:
+
+    editor_main_menu(input_interface& input);
 
     // Draws the main menu via imgui.
     void draw();
@@ -35,13 +38,33 @@ public:
 
     struct menu_item
     {
+    public:
         ~menu_item();
+
+    private:
+        friend class editor_main_menu;
 
         menu_item_type type;
         editor_main_menu* menu;
         std::string path;
         std::vector<std::string> fragments;
         menu_item_callback_t callback;
+        bool enabled = true;
+
+        std::vector<input_key> shortcut_keys;
+        std::string shortcut;
+        bool shortcut_was_down = false;
+
+    public:
+        void set_text(const std::string& name)
+        {
+            fragments.back() = name;
+        }
+
+        void set_enabled(bool in_enabled)
+        {
+            enabled = in_enabled;
+        }
     };
 
     // Handles to an menu item added to the menu.
@@ -54,6 +77,7 @@ public:
     // The handle returned is ref-counted, when the count reduces to zero the
     // option is removed from the menu.
     menu_item_handle add_menu_item(const char* path, menu_item_callback_t callback);
+    menu_item_handle add_menu_item(const char* path, const std::vector<input_key>& shortcut, menu_item_callback_t callback);
 
     // Adds a menu seperator in the parent path
     menu_item_handle add_menu_seperator(const char* path);
@@ -74,9 +98,11 @@ private:
     void rebuild_tree();
 
     void draw_node(node& node);
+    void check_shortcuts(node& base);
 
 private:
     node m_root;
+    input_interface& m_input;
 
     std::vector<menu_item*> m_active_menu_items;
 

@@ -15,6 +15,7 @@
 #include "workshop.engine/assets/scene/scene.h"
 #include "workshop.editor/editor/editor_main_menu.h"
 #include "workshop.editor/editor/editor_undo_stack.h"
+#include "workshop.editor/editor/editor_clipboard.h"
 #include "workshop.engine/ecs/object.h"
 
 #include "thirdparty/imgui/imgui.h"
@@ -109,6 +110,8 @@ protected:
     result<void> create_main_menu(init_list& list);
     result<void> destroy_main_menu();
 
+    void update_main_menu();
+
     result<void> create_windows(init_list& list);
     result<void> destroy_windows();
 
@@ -130,6 +133,15 @@ protected:
     void commit_scene_save();
     void process_pending_save_load();
 
+    void cut();
+    void copy();
+    void paste();
+
+    // Recurses through an object transform tree and adds all objects into the tree into the output vector.
+    void gather_sub_tree(object base, std::vector<object>& output);
+
+    void dump_debug_info(const char* tag);
+
 protected:
 
     engine& m_engine;
@@ -141,6 +153,12 @@ protected:
     std::unique_ptr<editor_main_menu> m_main_menu;
     std::vector<editor_main_menu::menu_item_handle> m_main_menu_options;
     std::vector<std::unique_ptr<editor_window>> m_windows;
+
+    editor_main_menu::menu_item_handle m_undo_menu_item;
+    editor_main_menu::menu_item_handle m_redo_menu_item;
+    editor_main_menu::menu_item_handle m_cut_menu_item;
+    editor_main_menu::menu_item_handle m_copy_menu_item;
+    editor_main_menu::menu_item_handle m_paste_menu_item;
 
     ImGuiID m_dockspace_id;
     bool m_set_default_dock_space = false;
@@ -157,6 +175,7 @@ protected:
     std::vector<object> m_selected_objects;
     std::vector<object_state> m_selected_object_states;
 
+    std::unique_ptr<editor_clipboard> m_clipboard;
     std::unique_ptr<editor_undo_stack> m_undo_stack;
 
     // Gizmo handling

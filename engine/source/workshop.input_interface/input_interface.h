@@ -158,20 +158,153 @@ enum class input_key
     mouse_4,
     mouse_5,
 
-    count
-};
-
-// ================================================================================================
-//  Modifier that changes the behaviour of a given key input
-// ================================================================================================
-enum class input_modifier
-{
+    // Special modifier keys.
     shift,
     ctrl,
     alt,
     gui,
 
     count
+};
+
+static const char* input_key_strings[static_cast<int>(input_key::count)] = {
+    "invalid",
+
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+
+    "numpad 1",
+    "numpad 2",
+    "numpad 3",
+    "numpad 4",
+    "numpad 5",
+    "numpad 6",
+    "numpad 7",
+    "numpad 8",
+    "numpad 9",
+    "numpad 0",
+
+    "enter",
+    "escape",
+    "backspace",
+    "tab",
+    "space",
+    "-",
+    "=",
+    "[",
+    "]",
+    "\\",
+
+    ";",
+    "'",
+    "grave",
+    ",",
+    ".",
+    "slash",
+
+    "capslock",
+
+    "f1",
+    "f2",
+    "f3",
+    "f4",
+    "f5",
+    "f6",
+    "f7",
+    "f8",
+    "f9",
+    "f10",
+    "f11",
+    "f12",
+    "f13",
+    "f14",
+    "f15",
+    "f16",
+    "f17",
+    "f18",
+    "f19",
+    "f20",
+    "f21",
+    "f22",
+    "f23",
+    "f24",
+
+    "print screen",
+    "scroll lock",
+    "pause",
+    "insert",
+    "home",
+    "page up",
+    "delete",
+    "end",
+    "page down",
+
+    "right",
+    "left",
+    "down",
+    "up",
+
+    "keypad /",
+    "keypad *",
+    "keypad -",
+    "keypad +",
+    "keypad enter",
+    "keypad 1",
+    "keypad 2",
+    "keypad 3",
+    "keypad 4",
+    "keypad 5",
+    "keypad 6",
+    "keypad 7",
+    "keypad 8",
+    "keypad 9",
+    "keypad 0",
+    "keypad .",
+
+    "left ctrl",
+    "left shift",
+    "left alt",
+    "left gui",
+    "right ctrl",
+    "right shift",
+    "right alt",
+    "right gui",
+
+    "mouse left",
+    "mouse middle",
+    "mouse right",
+    "mouse 3",
+    "mouse 4",
+    "mouse 5",
+
+    "shift",
+    "ctrl",
+    "alt",
+    "gui"
 };
 
 // ================================================================================================
@@ -215,9 +348,6 @@ public:
     virtual bool is_key_down(input_key key) = 0;
     virtual bool was_key_pressed(input_key key) = 0;
     virtual bool was_key_released(input_key key) = 0;
-
-    // Checks if the given modifier key is active.
-    virtual bool is_modifier_down(input_modifier key) = 0;
 
     // Gets or sets the current clipboard text.
     virtual std::string get_clipboard_text() = 0;

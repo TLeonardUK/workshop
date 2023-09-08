@@ -56,7 +56,7 @@ public:
     std::string get_next_redo_name();
 
 protected:
-    static inline constexpr size_t k_max_stack_size = 1024;
+    static inline constexpr size_t k_max_stack_size = 100;
 
     std::vector<std::unique_ptr<editor_transaction>> m_undo_stack;
     std::vector<std::unique_ptr<editor_transaction>> m_redo_stack;

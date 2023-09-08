@@ -13,13 +13,13 @@ namespace ws {
 class engine;
 
 // ================================================================================================
-//  Transaction thats created whenever an object is created.
+//  Transaction thats created whenever a component is deleted.
 // ================================================================================================
-class editor_transaction_create_object
+class editor_transaction_delete_component
     : public editor_transaction
 {
 public:
-    editor_transaction_create_object(engine& engine, editor& editor, object handle);
+    editor_transaction_delete_component(engine& engine, editor& editor, object handle, std::type_index component_type);
 
     virtual void execute() override;
     virtual void rollback() override;
@@ -29,7 +29,7 @@ private:
     editor& m_editor;
     engine& m_engine;
     object m_handle = null_object;
-    bool m_alive = false;
+    std::type_index m_component_type;
 
     std::vector<uint8_t> m_serialized;
 

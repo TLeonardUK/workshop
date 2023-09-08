@@ -3,6 +3,9 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.editor/editor/windows/editor_properties_window.h"
+#include "workshop.editor/editor/transactions/editor_transaction_create_component.h"
+#include "workshop.editor/editor/transactions/editor_transaction_delete_component.h"
+#include "workshop.editor/editor/transactions/editor_transaction_modify_component.h"
 #include "workshop.editor/editor/editor.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.assets/asset_manager.h"
@@ -21,46 +24,36 @@ editor_properties_window::editor_properties_window(editor* in_editor, engine* in
     : m_engine(in_engine)
     , m_editor(in_editor)
 {
-}
+    m_property_list = std::make_unique<property_list>(&m_engine->get_asset_manager(), m_engine->get_asset_database());
+    m_property_list->on_before_modify.add([this](reflect_field* field) {
 
-void editor_properties_window::set_context(object obj)
-{
-    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
-
-    m_context = obj;
-    m_component_info.clear();
-
-    if (obj != null_object)
-    {
-        std::vector<component*> components = obj_manager.get_components(obj);
-        for (component* comp : components)
+        if (m_pending_modifications)
         {
-            reflect_class* comp_class = get_reflect_class(comp);
-            if (comp_class == nullptr)
-            {
-                continue;
-            }
-
-            component_info& info = m_component_info.emplace_back();
-            info.name = comp_class->get_display_name();
-            info.property_list = std::make_unique<property_list>(comp, comp_class, &m_engine->get_default_world().get_engine().get_asset_manager(), m_engine->get_asset_database());
-            info.component = comp;
-            info.on_modified_delegate = info.property_list->on_modified.add_shared([this, &obj_manager, comp](reflect_field* field) {
-                obj_manager.component_edited(m_context, comp);
-            });
+            return;
         }
-    }
+
+        // Before we make any modifications, serialize the state of the component so we can undo the changes if needed.
+
+        object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
+        m_before_modification_component = obj_manager.serialize_component(m_property_list_object, typeid(*m_property_list_component));
+        m_pending_modifications = true;
+        m_pending_modifications_object = m_property_list_object;
+        m_pending_modifications_component = m_property_list_component;
+
+    });
 }
 
-
-void editor_properties_window::draw_add_component()
+void editor_properties_window::draw_add_component(object context)
 {
     object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
 
     std::vector<reflect_class*> existing_components;
-    for (component_info& info : m_component_info)
+    if (context != null_object)
     {
-        existing_components.push_back(get_reflect_class(info.component));
+        for (component* comp : obj_manager.get_components(context))
+        {
+            existing_components.push_back(get_reflect_class(typeid(*comp)));
+        }
     }
 
     if (ImGui::Button("Add Component", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
@@ -93,8 +86,8 @@ void editor_properties_window::draw_add_component()
 
             if (ImGui::MenuItem(cls->get_display_name()))
             {
-                obj_manager.add_component(m_context, cls->get_type_index());
-                set_context(m_context);
+                obj_manager.add_component(context, cls->get_type_index());
+                m_editor->get_undo_stack().push(std::make_unique<editor_transaction_create_component>(*m_engine, *m_editor, context, cls->get_type_index()));
             }
         }
 
@@ -108,17 +101,11 @@ void editor_properties_window::draw()
 
     // Update the current context object we are showing.
     std::vector<object> selected_objects = m_editor->get_selected_objects();
+
+    object context = null_object;
     if (selected_objects.size() == 1)
     {
-        object context_object = selected_objects[0];
-        if (context_object != m_context)
-        {
-            set_context(context_object);
-        }
-    }
-    else
-    {
-        set_context(null_object);
+        context = selected_objects[0];
     }
 
     // Draw the property list.
@@ -126,21 +113,25 @@ void editor_properties_window::draw()
     {
         if (ImGui::Begin(get_window_id(), &m_open))
         {
-            if (m_context != null_object)
+            if (context != null_object)
             {
                 // Construct add-component menu.
-                draw_add_component();
+                draw_add_component(context);
 
                 component* destroy_component = nullptr;
 
+                std::vector<component*> components = obj_manager.get_components(context);
+
                 // Draw each components properties.
-                for (component_info& info : m_component_info)
+                for (component* component : components)
                 {
-                    ImGui::PushID(info.component);
+                    ImGui::PushID(component);
+
+                    reflect_class* component_class = get_reflect_class(typeid(*component));
 
                     ImVec2 draw_cursor_pos = ImGui::GetCursorPos();
                     ImVec2 available_space = ImGui::GetContentRegionAvail();
-                    bool is_open = ImGui::CollapsingHeader(info.name.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog | ImGuiTreeNodeFlags_AllowItemOverlap);
+                    bool is_open = ImGui::CollapsingHeader(component_class->get_display_name(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog | ImGuiTreeNodeFlags_AllowItemOverlap);
                     ImVec2 end_cursor_pos = ImGui::GetCursorPos();
                     float header_height = (end_cursor_pos.y - draw_cursor_pos.y);
 
@@ -151,18 +142,24 @@ void editor_properties_window::draw()
 
                     ImGui::SetCursorPos(button_pos);
                     // Don't allow deleting the meta component as that bad boy is important for the basic functioning of the object system.
-                    if (dynamic_cast<meta_component*>(info.component) == nullptr)
+                    if (dynamic_cast<meta_component*>(component) == nullptr)
                     {
                         if (ImGui::SmallButton("X"))
                         {
-                            destroy_component = info.component;
+                            destroy_component = component;
                         }
                     }
                     ImGui::SetCursorPos(end_cursor_pos);
 
                     if (is_open)
                     {
-                        info.property_list->draw();
+                        m_property_list_object = context;
+                        m_property_list_component = component;
+
+                        if (m_property_list->draw(component, component_class))
+                        {
+                            obj_manager.component_edited(context, component);
+                        }
                     }
 
                     ImGui::PopID();
@@ -171,8 +168,30 @@ void editor_properties_window::draw()
                 // Process deferred component deletion.
                 if (destroy_component)
                 {
-                    obj_manager.remove_component(m_context, destroy_component);
-                    set_context(m_context);
+                    m_editor->get_undo_stack().push(std::make_unique<editor_transaction_delete_component>(*m_engine, *m_editor, context, typeid(*destroy_component)));
+                }
+
+                // Wait until active edit item has finished being used and then create a modify transaction
+                // so we can rollback the changes made.
+                if (m_pending_modifications && !ImGui::IsAnyItemActive())
+                {
+                    // Make sure the object and component are still valid before applying the modification, they could have 
+                    // been deleted elsewhere between when the modification started and now.
+                    if (m_pending_modifications_object == context &&
+                        std::find(components.begin(), components.end(), m_pending_modifications_component) != components.end())
+                    {
+                        std::vector<uint8_t> after_changes = obj_manager.serialize_component(m_property_list_object, typeid(*m_property_list_component));
+
+                        m_editor->get_undo_stack().push(std::make_unique<editor_transaction_modify_component>(
+                            *m_engine, 
+                            *m_editor, 
+                            context, 
+                            typeid(*m_pending_modifications_component),
+                            m_before_modification_component,
+                            after_changes
+                        ));
+                    }
+                    m_pending_modifications = false;
                 }
             }
         }

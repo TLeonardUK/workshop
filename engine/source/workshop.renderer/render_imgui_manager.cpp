@@ -415,10 +415,10 @@ void render_imgui_manager::start_context_frame(context* context)
         io.KeysDown[i] = m_input.is_key_down(k);
     }
 
-    io.KeyShift = m_input.is_modifier_down(input_modifier::shift);
-    io.KeyCtrl = m_input.is_modifier_down(input_modifier::ctrl);
-    io.KeyAlt = m_input.is_modifier_down(input_modifier::alt);
-    io.KeySuper = m_input.is_modifier_down(input_modifier::gui);
+    io.KeyShift = m_input.is_key_down(input_key::shift);
+    io.KeyCtrl = m_input.is_key_down(input_key::ctrl);
+    io.KeyAlt = m_input.is_key_down(input_key::alt);
+    io.KeySuper = m_input.is_key_down(input_key::gui);
 
     if ((io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) == 0)
     {

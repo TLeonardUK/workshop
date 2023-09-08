@@ -31,8 +31,6 @@ public:
     virtual bool was_key_pressed(input_key key) override;
     virtual bool was_key_released(input_key key) override;
 
-    virtual bool is_modifier_down(input_modifier key) override;
-
     virtual std::string get_clipboard_text() override;
     virtual void set_clipboard_text(const char* text) override;
 
@@ -59,6 +57,8 @@ protected:
     bool is_window_in_focus();
 
     void handle_event(const SDL_Event* event);
+
+    bool is_modifier_down(input_key key);
 
 private:
 

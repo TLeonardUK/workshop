@@ -151,6 +151,9 @@ public:
     // do it directly.
     void component_edited(object obj, component* comp);
 
+    // Same behaviour as component_editor but applies to all components attached to the given object.
+    void object_edited(object obj);
+
     // This is equivilent to calling component_edited on every single component that exists. 
     //
     // DO NOT CALL THIS.
@@ -304,6 +307,9 @@ public:
     // Removes the specific component from the given object..
     void remove_component(object handle, component* component);
 
+    // Removes a component of the given type to the given object.
+    void remove_component(object handle, std::type_index index);
+
     // Gets all components attached to the given object.
     std::vector<component*> get_components(object handle);
 
@@ -352,7 +358,7 @@ public:
     // Deserializes the state of an object that was serialized by serialize_object.
     // Any components existing on the object that are not in the serialized state
     // will be removed.
-    void deserialize_object(object handle, const std::vector<uint8_t>& data);
+    void deserialize_object(object handle, const std::vector<uint8_t>& data, bool mark_as_edited = true);
 
 protected:
 

@@ -13,6 +13,9 @@
 #include "workshop.editor/editor/windows/popups/editor_progress_popup.h"
 #include "workshop.editor/editor/transactions/editor_transaction_change_selected_objects.h"
 #include "workshop.editor/editor/transactions/editor_transaction_change_object_transform.h"
+#include "workshop.editor/editor/transactions/editor_transaction_create_objects.h"
+#include "workshop.editor/editor/transactions/editor_transaction_delete_objects.h"
+#include "workshop.editor/editor/clipboard/editor_object_clipboard_entry.h"
 
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/assets/scene/scene.h"
@@ -20,6 +23,7 @@
 #include "workshop.engine/ecs/object_manager.h"
 #include "workshop.engine/ecs/component.h"
 #include "workshop.engine/ecs/component_filter.h"
+#include "workshop.engine/ecs/meta_component.h"
 
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_imgui_manager.h"
@@ -50,6 +54,7 @@ editor::editor(engine& in_engine)
 	: m_engine(in_engine)
 {
     m_undo_stack = std::make_unique<editor_undo_stack>();
+    m_clipboard = std::make_unique<editor_clipboard>();
 }
 
 editor::~editor() = default;
@@ -127,20 +132,20 @@ void editor::set_selected_objects_untransacted(const std::vector<object>& object
 
 result<void> editor::create_main_menu(init_list& list)
 {
-    m_main_menu = std::make_unique<editor_main_menu>();
+    m_main_menu = std::make_unique<editor_main_menu>(m_engine.get_input_interface());
     
     // File Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("File/New Scene", [this]() { 
         new_scene();
     }));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Open Scene...", [this]() { 
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Open Scene...", { input_key::ctrl, input_key::o }, [this]() {
         open_scene();
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_seperator("File"));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene", [this]() { 
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene", { input_key::ctrl, input_key::s }, [this]() {
         save_scene(false);
     }));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene As...", [this]() { 
+    m_main_menu_options.push_back(m_main_menu->add_menu_item("File/Save Scene As...", [this]() {
         save_scene(true);
     }));
     m_main_menu_options.push_back(m_main_menu->add_menu_seperator("File"));
@@ -149,21 +154,22 @@ result<void> editor::create_main_menu(init_list& list)
     }));
 
     // Edit Settings    
-    m_main_menu_options.push_back(m_main_menu->add_menu_custom("Edit/", [this]() {       
-
-        std::string undo_name = m_undo_stack->get_next_undo_name();
-        if (ImGui::MenuItem(("Undo: " + undo_name).c_str(), nullptr, false, !undo_name.empty()))
-        {
-            m_undo_stack->undo();
-        }
-
-        std::string redo_name = m_undo_stack->get_next_redo_name();
-        if (ImGui::MenuItem(("Redo: " + redo_name).c_str(), nullptr, false, !redo_name.empty()))
-        {
-            m_undo_stack->redo();
-        }
-
-    }));
+    m_undo_menu_item = m_main_menu->add_menu_item("Edit/Undo", { input_key::ctrl, input_key::z }, [this]() {
+        m_undo_stack->undo();
+    });
+    m_redo_menu_item = m_main_menu->add_menu_item("Edit/Redo", { input_key::ctrl, input_key::y }, [this]() {
+        m_undo_stack->redo();
+    });
+    m_main_menu_options.push_back(m_main_menu->add_menu_seperator("Edit"));
+    m_cut_menu_item = m_main_menu->add_menu_item("Edit/Cut", { input_key::ctrl, input_key::x }, [this]() {
+        cut();
+    });
+    m_copy_menu_item = m_main_menu->add_menu_item("Edit/Copy", { input_key::ctrl, input_key::c }, [this]() {
+        copy();
+    });
+    m_paste_menu_item = m_main_menu->add_menu_item("Edit/Paste", { input_key::ctrl, input_key::v }, [this]() {
+        paste();
+    });
 
     // Build Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("Build/Regenerate Diffuse Probes", [this]() { 
@@ -222,6 +228,22 @@ result<void> editor::create_main_menu(init_list& list)
     }));
 
     return true;
+}
+
+void editor::update_main_menu()
+{
+    std::string undo_name = m_undo_stack->get_next_undo_name();
+    std::string redo_name = m_undo_stack->get_next_redo_name();
+
+    m_undo_menu_item->set_text("Undo: " + undo_name);
+    m_undo_menu_item->set_enabled(!undo_name.empty());
+
+    m_redo_menu_item->set_text("Redo: " + redo_name);
+    m_redo_menu_item->set_enabled(!redo_name.empty());
+
+    m_cut_menu_item->set_enabled(!m_selected_objects.empty());
+    m_copy_menu_item->set_enabled(!m_selected_objects.empty());
+    m_paste_menu_item->set_enabled(!m_clipboard->empty());
 }
 
 result<void> editor::destroy_main_menu()
@@ -451,6 +473,147 @@ void editor::process_pending_save_load()
     }
 }
 
+void editor::gather_sub_tree(object base, std::vector<object>& output)
+{
+    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
+
+    if (std::find(output.begin(), output.end(), base) == output.end())
+    {
+        output.push_back(base);
+    }
+
+    transform_component* transform = obj_manager.get_component<transform_component>(base);
+    if (transform)
+    {
+        for (auto& ref : transform->children)
+        {
+            gather_sub_tree(ref.handle, output);
+        }
+    }
+}
+
+void editor::cut()
+{
+    copy();
+
+    // If we have an object selected we want to make sure we also copy its entire sub-tree.
+    std::vector<object> objects;
+    for (size_t i = 0; i < m_selected_objects.size(); i++)
+    {
+        gather_sub_tree(m_selected_objects[i], objects);
+    }
+
+    // Delete all the objects.
+    set_selected_objects({});
+    m_undo_stack->push(std::make_unique<editor_transaction_delete_objects>(m_engine, *this, objects));
+}
+
+void editor::copy()
+{
+    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
+
+    // If we have an object selected we want to make sure we also copy its entire sub-tree.
+    std::vector<object> objects;
+    for (size_t i = 0; i < m_selected_objects.size(); i++)
+    {
+        gather_sub_tree(m_selected_objects[i], objects);
+    }
+
+    // Generate a serialized data for every selected object and slap it in the clipboard.
+    std::vector<editor_object_clipboard_entry::object_entry> entries;
+    for (size_t i = 0; i < objects.size(); i++)
+    {
+        object obj = objects[i];
+
+        editor_object_clipboard_entry::object_entry& entry = entries.emplace_back();
+        entry.original_handle = obj;
+        entry.serialized = obj_manager.serialize_object(obj);
+    }
+
+    m_clipboard->set(std::make_unique<editor_object_clipboard_entry>(entries));
+}
+
+void editor::paste()
+{
+    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
+
+    std::unique_ptr<editor_clipboard_entry> entry = m_clipboard->remove();
+    if (!entry)
+    {
+        return;
+    }
+
+    editor_object_clipboard_entry* object_entry = dynamic_cast<editor_object_clipboard_entry*>(entry.get());
+    if (!object_entry)
+    {
+        return;
+    }
+
+    object root_parent = null_object;
+    if (m_selected_objects.size() == 1)
+    {
+        root_parent = m_selected_objects[0];
+    }
+
+    // Recreate all the objects.
+    std::vector<object> new_objects;
+    std::unordered_map<object, object> old_to_new_handle;
+
+    for (size_t i = 0; i < object_entry->size(); i++)
+    {
+        const editor_object_clipboard_entry::object_entry& entry = object_entry->get(i);
+        object new_object = obj_manager.create_object("unnamed object");
+        obj_manager.deserialize_object(new_object, entry.serialized, false);
+        new_objects.push_back(new_object);
+
+        old_to_new_handle[entry.original_handle] = new_object;
+    }
+
+    // Patch up object references so they reference the new objects not the old ones.
+    for (size_t i = 0; i < object_entry->size(); i++)
+    {
+        const editor_object_clipboard_entry::object_entry& entry = object_entry->get(i);
+        object new_object = new_objects[i];
+
+        // Go through all reflected fields and patch up any component refs that point to removed
+        std::vector<component*> components = obj_manager.get_components(new_object);
+        for (component* comp : components)
+        {
+            reflect_class* comp_class = get_reflect_class(typeid(*comp));
+            for (reflect_field* field : comp_class->get_fields(true))
+            {
+                if (field->get_super_type_index() == typeid(component_ref_base))
+                {
+                    uint8_t* field_data = reinterpret_cast<uint8_t*>(comp) + field->get_offset();
+                    component_ref_base& ref = *reinterpret_cast<component_ref_base*>(field_data);
+
+                    // If referencing an object inside the block of objects we are pasting then 
+                    // change it to reference the new object. 
+                    // Otherwise leave the reference alone as its referencing something entirely seperate in the scene tree.
+                    if (auto iter = old_to_new_handle.find(ref.handle); iter != old_to_new_handle.end())
+                    {
+                        ref.handle = iter->second;
+                    }
+                }
+            }
+        }
+
+        // Get objects transform, if its parent is not in the new objects, then parent it to our new root.
+        transform_component* transform = obj_manager.get_component<transform_component>(new_object);
+        auto existing_iter = std::find(new_objects.begin(), new_objects.end(), transform->parent.handle);
+        if (existing_iter == new_objects.end() || transform->parent.handle == null_object)
+        {            
+            transform->parent.handle = root_parent;
+        }
+
+        // Mark object as updated.
+        obj_manager.object_edited(new_object);
+    }
+
+    // Push a transaction for all our created objects.
+    m_undo_stack->push(std::make_unique<editor_transaction_create_objects>(m_engine, *this, new_objects));
+}
+
 void editor::step(const frame_time& time)
 {
     profile_marker(profile_colors::engine, "editor");
@@ -460,6 +623,8 @@ void editor::step(const frame_time& time)
 	input_interface& input = m_engine.get_input_interface();
 
     process_pending_save_load();
+
+    update_main_menu();
 
 	// Switch between modes
 	if (input.was_key_pressed(input_key::escape))

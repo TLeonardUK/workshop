@@ -3,8 +3,8 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.editor/editor/windows/editor_scene_tree_window.h"
-#include "workshop.editor/editor/transactions/editor_transaction_create_object.h"
-#include "workshop.editor/editor/transactions/editor_transaction_delete_object.h"
+#include "workshop.editor/editor/transactions/editor_transaction_create_objects.h"
+#include "workshop.editor/editor/transactions/editor_transaction_delete_objects.h"
 #include "workshop.editor/editor/editor.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.assets/asset_manager.h"
@@ -183,7 +183,8 @@ void editor_scene_tree_window::add_new_object()
     obj_manager.add_component<bounds_component>(new_object);
     transform_sys->set_parent(new_object, parent);
 
-    m_editor->get_undo_stack().push(std::make_unique<editor_transaction_create_object>(*m_engine, *m_editor, new_object));
+    std::vector<object> handles = { new_object };
+    m_editor->get_undo_stack().push(std::make_unique<editor_transaction_create_objects>(*m_engine, *m_editor, handles));
 
     selected_objects = { new_object };
     m_editor->set_selected_objects(selected_objects);
@@ -263,7 +264,8 @@ void editor_scene_tree_window::draw()
                 }
 
                 // Add the deletion to the undo stack.
-                m_editor->get_undo_stack().push(std::make_unique<editor_transaction_delete_object>(*m_engine, *m_editor, m_pending_delete));
+                std::vector<object> handles = { m_pending_delete };
+                m_editor->get_undo_stack().push(std::make_unique<editor_transaction_delete_objects>(*m_engine, *m_editor, handles));
                 //obj_manager.destroy_object(m_pending_delete);
             }
         }

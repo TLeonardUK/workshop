@@ -103,10 +103,20 @@ public:
 
 };
 
+#pragma optimize("", off)
+
 template<>
 inline void stream_serialize(stream& out, component_ref_base& v)
 {
     stream_serialize(out, v.handle);
+    if (!out.can_write())
+    {
+        db_log(engine, "Deserialized ref: %zi", v.handle);
+    }
+    else
+    {
+        db_log(engine, "Serialized ref: %zi", v.handle);
+    }
 }
 
 template<>

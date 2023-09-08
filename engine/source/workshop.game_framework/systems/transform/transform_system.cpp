@@ -131,8 +131,10 @@ void transform_system::component_modified(object handle, component* comp)
             transform_component* old_parent =  component->old_parent.get(&m_manager);
 
             auto iter = std::find(old_parent->children.begin(), old_parent->children.end(), handle);
-            db_assert(iter != old_parent->children.end());
-            old_parent->children.erase(iter);
+            if (iter != old_parent->children.end())
+            {
+                old_parent->children.erase(iter);
+            }
         }
 
         if (component->parent.is_valid(&m_manager))
@@ -202,7 +204,7 @@ void transform_system::step(const frame_time& time)
 
     m_dirty_roots.resize(split_factor);
     m_dirty_roots_list.resize(split_factor);
-    
+
     // Combine lists together.
     {
         profile_marker(profile_colors::system, "find dirty roots");

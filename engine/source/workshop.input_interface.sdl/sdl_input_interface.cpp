@@ -272,6 +272,11 @@ void sdl_input_interface::pump_events()
 
         update_key_state((int)i, down);
     }
+
+    update_key_state((int)input_key::shift, is_modifier_down(input_key::shift));
+    update_key_state((int)input_key::ctrl, is_modifier_down(input_key::ctrl));
+    update_key_state((int)input_key::alt, is_modifier_down(input_key::alt));
+    update_key_state((int)input_key::gui, is_modifier_down(input_key::gui));
 }
 
 bool sdl_input_interface::is_key_down(input_key key)
@@ -289,16 +294,16 @@ bool sdl_input_interface::was_key_released(input_key key)
     return (m_key_states[(int)key] & (int)key_state_flags::released) != 0;
 }
 
-bool sdl_input_interface::is_modifier_down(input_modifier key)
+bool sdl_input_interface::is_modifier_down(input_key key)
 {
     int mod = 0;
 
     switch (key)
     {
-    case input_modifier::shift: mod = KMOD_SHIFT;   break;
-    case input_modifier::ctrl:  mod = KMOD_CTRL;    break;
-    case input_modifier::alt:   mod = KMOD_ALT;     break;
-    case input_modifier::gui:   mod = KMOD_GUI;     break;
+    case input_key::shift: mod = KMOD_SHIFT;   break;
+    case input_key::ctrl:  mod = KMOD_CTRL;    break;
+    case input_key::alt:   mod = KMOD_ALT;     break;
+    case input_key::gui:   mod = KMOD_GUI;     break;
     default:                    db_assert(false);   break;
     }
 

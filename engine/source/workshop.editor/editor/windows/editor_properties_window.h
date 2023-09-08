@@ -27,25 +27,22 @@ public:
     virtual const char* get_window_id() override;
     virtual editor_window_layout get_layout() override;
 
-private:
-    void set_context(object obj);
-
-    void draw_add_component();
+private:    
+    void draw_add_component(object context);
 
 private:
     engine* m_engine;
     editor* m_editor;
 
-    struct component_info
-    {
-        std::unique_ptr<property_list> property_list;
-        component* component;
-        std::string name;
-        event<reflect_field*>::delegate_ptr on_modified_delegate;
-    };
+    object m_property_list_object;
+    component* m_property_list_component;
 
-    object m_context;
-    std::vector<component_info> m_component_info;
+    std::vector<uint8_t> m_before_modification_component;
+    object m_pending_modifications_object;
+    component* m_pending_modifications_component;
+    bool m_pending_modifications = false;
+
+    std::unique_ptr<property_list> m_property_list;
 
 };
 

@@ -8,10 +8,8 @@
 
 namespace ws {
 
-property_list::property_list(void* obj, reflect_class* reflection_class, asset_manager* ass_manager, asset_database& ass_database)
-    : m_context(obj)
-    , m_class(reflection_class)
-    , m_asset_manager(ass_manager)
+property_list::property_list(asset_manager* ass_manager, asset_database& ass_database)
+    : m_asset_manager(ass_manager)
     , m_asset_database(ass_database)
 {
 }
@@ -27,7 +25,16 @@ bool property_list::draw_edit(reflect_field* field, int& value, int min_value, i
     }
 
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    return ImGui::DragInt("##", &value, step, min_value, max_value, "%d", flags);
+
+    int edit_value = value;
+    bool modified = ImGui::DragInt("##", &edit_value, step, min_value, max_value, "%d", flags);
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value = edit_value;
+    }
+
+    return modified;
 }
 
 bool property_list::draw_edit(reflect_field* field, float& value, float min_value, float max_value)
@@ -41,7 +48,16 @@ bool property_list::draw_edit(reflect_field* field, float& value, float min_valu
     }
 
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    return ImGui::DragFloat("##", &value, step, min_value, max_value, "%.2f", flags);
+
+    float edit_value = value;
+    bool modified = ImGui::DragFloat("##", &edit_value, step, min_value, max_value, "%.2f", flags);
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value = edit_value;
+    }
+
+    return modified;
 };
 
 bool property_list::draw_edit(reflect_field* field, vector3& value, float min_value, float max_value)
@@ -56,12 +72,16 @@ bool property_list::draw_edit(reflect_field* field, vector3& value, float min_va
 
     float values[3] = { value.x, value.y, value.z };
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    bool ret = ImGui::DragFloat3("##", values, step, min_value, max_value, "%.2f", flags);
-    value.x = values[0];
-    value.y = values[1];
-    value.z = values[2];
-
-    return ret;
+    bool modified = ImGui::DragFloat3("##", values, step, min_value, max_value, "%.2f", flags);
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value.x = values[0];
+        value.y = values[1];
+        value.z = values[2];
+    }
+    
+    return modified;
 }
 
 bool property_list::draw_edit(reflect_field* field, quat& value, float min_value, float max_value)
@@ -77,17 +97,29 @@ bool property_list::draw_edit(reflect_field* field, quat& value, float min_value
     float values[3] = { math::degrees(euler_angle.x), math::degrees(euler_angle.y), math::degrees(euler_angle.z) };
 
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    bool ret = ImGui::DragFloat3("##", values, step, min_value, max_value, "%.2f deg", flags);
+    bool modified = ImGui::DragFloat3("##", values, step, min_value, max_value, "%.2f deg", flags);
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value = quat::euler(vector3(math::radians(values[0]), math::radians(values[1]), math::radians(values[2])));
+    }
 
-    value = quat::euler(vector3(math::radians(values[0]), math::radians(values[1]), math::radians(values[2])));
-
-    return ret;
+    return modified;
 }
 
 bool property_list::draw_edit(reflect_field* field, bool& value)
 {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    return ImGui::Checkbox("", &value);
+
+    bool edit_value = value;
+    bool modified = ImGui::Checkbox("", &edit_value);
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value = edit_value;
+    }
+
+    return modified;
 }
 
 bool property_list::draw_edit(reflect_field* field, color& value)
@@ -96,14 +128,17 @@ bool property_list::draw_edit(reflect_field* field, color& value)
 
     float values[4] = { value.r, value.g, value.b, value.a };
     
-    bool ret = ImGui::ColorEdit4("", values, ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_Float|ImGuiColorEditFlags_AlphaBar|ImGuiColorEditFlags_AlphaPreview);
+    bool modified = ImGui::ColorEdit4("", values, ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_Float|ImGuiColorEditFlags_AlphaBar|ImGuiColorEditFlags_AlphaPreview);
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value.r = values[0];
+        value.g = values[1];
+        value.b = values[2];
+        value.a = values[3];
+    }
 
-    value.r = values[0];
-    value.g = values[1];
-    value.b = values[2];
-    value.a = values[3];
-
-    return ret;
+    return modified;
 }
 
 bool property_list::draw_edit(reflect_field* field, std::string& value)
@@ -113,10 +148,14 @@ bool property_list::draw_edit(reflect_field* field, std::string& value)
     char buffer[2048];
     strncpy(buffer, value.c_str(), sizeof(buffer));
 
-    bool ret = ImGui::InputText("", buffer, sizeof(buffer));
-    value = buffer;
+    bool modified = ImGui::InputText("", buffer, sizeof(buffer));
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+        value = buffer;
+    }
 
-    return ret;
+    return modified;
 }
 
 void property_list::draw_preview(const char* asset_path)
@@ -174,6 +213,8 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
         {
             std::string asset_path((const char*)payload->Data, payload->DataSize);
 
+            on_before_modify.broadcast(field);
+
             value = m_asset_manager->request_asset<model>(asset_path.c_str(), 0);
 
             ret = true;
@@ -184,8 +225,13 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
     return ret;
 }
 
-void property_list::draw()
+bool property_list::draw(void* context, reflect_class* context_class)
 {
+    m_context = context;
+    m_class = context_class;
+
+    bool any_modified = false;
+
     std::vector<reflect_field*> fields = m_class->get_fields(true);
 
     if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_Resizable| ImGuiTableFlags_BordersInnerV))
@@ -218,7 +264,6 @@ void property_list::draw()
                 min_value = range->get_min();
                 max_value = range->get_max();
             }
-
 
             ImGui::PushID(field->get_name());
 
@@ -270,11 +315,15 @@ void property_list::draw()
                 on_modified.broadcast(field);
             }
 
+            any_modified |= modified;
+
             ImGui::PopID();
         }
 
         ImGui::EndTable();
     }
+
+    return any_modified;
 }
 
 }; // namespace ws
