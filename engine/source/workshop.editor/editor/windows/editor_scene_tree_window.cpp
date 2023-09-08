@@ -5,6 +5,7 @@
 #include "workshop.editor/editor/windows/editor_scene_tree_window.h"
 #include "workshop.editor/editor/transactions/editor_transaction_create_objects.h"
 #include "workshop.editor/editor/transactions/editor_transaction_delete_objects.h"
+#include "workshop.editor/editor/transactions/editor_transaction_modify_component.h"
 #include "workshop.editor/editor/editor.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.assets/asset_manager.h"
@@ -81,7 +82,63 @@ void editor_scene_tree_window::draw_object_node(object obj, transform_component*
     ImVec2 draw_cursor_pos = ImGui::GetCursorPos();
     ImGui::Selectable("##Selectable", &selected, ImGuiSelectableFlags_None, ImVec2(0, 0));
     ImVec2 end_cursor_pos = ImGui::GetCursorPos();
-    
+
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+    {
+        ImGui::Text("%s", obj_meta->name.c_str());
+
+        ImGui::SetDragDropPayload("object", &obj, sizeof(obj), ImGuiCond_Always);
+        ImGui::EndDragDropSource();
+    }
+    else if (ImGui::BeginDragDropTarget())
+    {
+        bool valid_payload = true;
+
+        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("object", ImGuiDragDropFlags_AcceptPeekOnly);
+        if (payload)
+        {
+            object handle = *static_cast<const object*>(payload->Data);
+
+            transform_component* transform = obj_manager.get_component<transform_component>(obj);
+            transform_component* new_transform = obj_manager.get_component<transform_component>(handle);
+
+            // Make sure both this component and the target have a transform component.
+            if (transform == nullptr || new_transform == nullptr)
+            {
+                valid_payload = false;
+            }
+            // D not allow setting parent to one of our children.
+            else
+            {
+                if (transform != nullptr && new_transform != nullptr)
+                {
+                    if (transform->is_derived_from(obj_manager, new_transform))
+                    {
+                        valid_payload = false;
+                    }
+                }
+            }
+        }
+
+        if (valid_payload)
+        {
+            const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("object", ImGuiDragDropFlags_None);
+            if (payload)
+            {
+                object handle = *static_cast<const object*>(payload->Data);
+
+                // Reparent the object.
+
+                std::vector<uint8_t> before_state = obj_manager.serialize_component(handle, typeid(transform_component));
+                obj_manager.get_component<transform_component>(handle)->parent = obj;
+                std::vector<uint8_t> after_state = obj_manager.serialize_component(handle, typeid(transform_component));
+
+                m_editor->get_undo_stack().push(std::make_unique<editor_transaction_modify_component>(*m_engine, *m_editor, handle, typeid(transform_component), before_state, after_state));
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     // Draw text over selected region.
     ImGui::SetCursorPos(draw_cursor_pos);
     ImGui::Text("%s", obj_meta->name.c_str());
@@ -205,6 +262,30 @@ void editor_scene_tree_window::draw()
             {
                 add_new_object();
             }
+
+            // We have an option at the top of the table for unparenting if the user is dragging an object.
+            ImGui::Selectable("root", false, ImGuiSelectableFlags_None, ImVec2(ImGui::GetContentRegionAvail().x, 0));
+            if (ImGui::GetDragDropPayload() != nullptr)
+            {
+                if (ImGui::BeginDragDropTarget())
+                {
+                    const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("object", ImGuiDragDropFlags_None);
+                    if (payload)
+                    {
+                        object handle = *static_cast<const object*>(payload->Data);
+
+                        // Unparent the object.
+
+                        std::vector<uint8_t> before_state = obj_manager.serialize_component(handle, typeid(transform_component));
+                        obj_manager.get_component<transform_component>(handle)->parent = null_object;
+                        std::vector<uint8_t> after_state = obj_manager.serialize_component(handle, typeid(transform_component));
+
+                        m_editor->get_undo_stack().push(std::make_unique<editor_transaction_modify_component>(*m_engine, *m_editor, handle, typeid(transform_component), before_state, after_state));
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+            }
+            ImGui::Dummy(ImVec2(0, 1.0f));
 
             ImGui::BeginChild("ObjectTableView");
             if (ImGui::BeginTable("ObjectTable", 2))

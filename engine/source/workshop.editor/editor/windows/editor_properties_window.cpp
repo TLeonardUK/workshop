@@ -24,7 +24,7 @@ editor_properties_window::editor_properties_window(editor* in_editor, engine* in
     : m_engine(in_engine)
     , m_editor(in_editor)
 {
-    m_property_list = std::make_unique<property_list>(&m_engine->get_asset_manager(), m_engine->get_asset_database());
+    m_property_list = std::make_unique<property_list>(&m_engine->get_asset_manager(), m_engine->get_asset_database(), *m_engine);
     m_property_list->on_before_modify.add([this](reflect_field* field) {
 
         if (m_pending_modifications)
@@ -156,7 +156,7 @@ void editor_properties_window::draw()
                         m_property_list_object = context;
                         m_property_list_component = component;
 
-                        if (m_property_list->draw(component, component_class))
+                        if (m_property_list->draw(context, component, component_class))
                         {
                             obj_manager.component_edited(context, component);
                         }

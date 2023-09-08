@@ -826,8 +826,16 @@ void editor::draw_selection()
     model_mat.get_raw(model_mat_raw, false);
 
     matrix4 world_to_pivot = selected_object_bounds.transform.inverse();
+ 
+    bool any_selected_objects_have_transform = false;
+    for (size_t i = 0; i < m_selected_objects.size(); i++)
+    {
+        object obj = m_selected_objects[i];
+        transform_component* comp = obj_manager.get_component<transform_component>(obj);
+        any_selected_objects_have_transform |= (comp != nullptr);
+    }
 
-    if (!m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::LOCAL, model_mat_raw))
+    if (any_selected_objects_have_transform && !m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::LOCAL, model_mat_raw))
     {
         matrix4 model_mat;
         model_mat.set_raw(model_mat_raw, false);
@@ -847,6 +855,10 @@ void editor::draw_selection()
             object obj = m_selected_objects[i];
             object_state& state = m_selected_object_states[i];
             transform_component* comp = obj_manager.get_component<transform_component>(obj);
+            if (comp == nullptr)
+            {
+                continue;
+            }
 
             // move object transform from world space to original bounds space
             matrix4 object_to_world = 
@@ -895,6 +907,10 @@ void editor::draw_selection()
                 object obj = m_selected_objects[i];
                 object_state& state = m_selected_object_states[i];
                 transform_component* comp = obj_manager.get_component<transform_component>(obj);
+                if (comp == nullptr)
+                {
+                    continue;
+                }
 
                 transaction->add_object(
                     obj,
@@ -911,12 +927,15 @@ void editor::draw_selection()
         for (size_t i = 0; i < m_selected_objects.size(); i++)
         {
             object obj = m_selected_objects[i];
-            object_state& state = m_selected_object_states.emplace_back();
             transform_component* comp = obj_manager.get_component<transform_component>(obj);
 
-            state.original_scale = comp->world_scale;
-            state.original_location = comp->world_location;
-            state.original_rotation = comp->world_rotation;
+            object_state& state = m_selected_object_states.emplace_back();
+            if (comp != nullptr)
+            {
+                state.original_scale = comp->world_scale;
+                state.original_location = comp->world_location;
+                state.original_rotation = comp->world_rotation;
+            }
         }
 
         m_was_transform_objects = false;

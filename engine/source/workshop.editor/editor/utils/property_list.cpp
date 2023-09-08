@@ -4,13 +4,20 @@
 // ================================================================================================
 #include "workshop.editor/editor/utils/property_list.h"
 
+#include "workshop.game_framework/components/transform/transform_component.h"
+
+#include "workshop.engine/ecs/meta_component.h"
+#include "workshop.engine/engine/engine.h"
+#include "workshop.engine/engine/world.h"
+
 #include "thirdparty/imgui/imgui.h"
 
 namespace ws {
 
-property_list::property_list(asset_manager* ass_manager, asset_database& ass_database)
+property_list::property_list(asset_manager* ass_manager, asset_database& ass_database, engine& in_engine)
     : m_asset_manager(ass_manager)
     , m_asset_database(ass_database)
+    , m_engine(in_engine)
 {
 }
 
@@ -225,9 +232,87 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
     return ret;
 }
 
-bool property_list::draw(void* context, reflect_class* context_class)
+#pragma optimize("", off)
+
+bool property_list::draw_edit(reflect_field* field, component_ref_base& value)
+{
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
+
+    char buffer[2048] = {};
+    if (value.handle != null_object)
+    {
+        meta_component* meta = obj_manager.get_component<meta_component>(value.handle);
+        if (meta)
+        {
+            strncpy(buffer, meta->name.c_str(), sizeof(buffer));
+        }
+    }
+
+    bool ret = false;
+
+    ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags_ReadOnly);
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        bool valid_payload = true;
+
+        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("object", ImGuiDragDropFlags_AcceptPeekOnly);
+        if (payload)
+        {
+            object handle = *static_cast<object*>(payload->Data);
+
+            // Cannot self-reference.
+            if (handle == m_context_object)
+            {
+                valid_payload = false;
+            }
+            // Make sure target object has a component of the type we want.
+            else if (obj_manager.get_component(handle, value.get_type_index()) == nullptr)
+            {
+                valid_payload = false;
+            }
+            // If transform component, do not allow setting parent to one of our children.
+            else if (value.get_type_index() == typeid(transform_component))
+            {
+                transform_component* transform = obj_manager.get_component<transform_component>(m_context_object);
+                transform_component* new_transform = obj_manager.get_component<transform_component>(handle);
+                if (transform != nullptr && new_transform != nullptr)
+                {
+                    if (new_transform->is_derived_from(obj_manager, transform))
+                    {
+                        valid_payload = false;       
+                    }
+                }
+            }
+        }
+
+        if (valid_payload)
+        {
+            const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("object", ImGuiDragDropFlags_None);
+            if (payload)
+            {
+                object handle = *static_cast<object*>(payload->Data);
+
+                on_before_modify.broadcast(field);
+
+                value.handle = handle;
+
+                ret = true;
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+
+    return ret;
+}
+
+bool property_list::draw(object context_object, void* context, reflect_class* context_class)
 {
     m_context = context;
+    m_context_object = context_object;
     m_class = context_class;
 
     bool any_modified = false;
@@ -304,6 +389,10 @@ bool property_list::draw(void* context, reflect_class* context_class)
             else if (field->get_type_index() == typeid(asset_ptr<model>))
             {
                 modified = draw_edit(field, *reinterpret_cast<asset_ptr<model>*>(field_data));
+            }
+            else if (field->get_super_type_index() == typeid(component_ref_base))
+            {
+                modified = draw_edit(field, *reinterpret_cast<component_ref_base*>(field_data));
             }
             else
             {

@@ -37,9 +37,14 @@ public:
 class component_ref_base
 {
 public:
-    component_ref_base() = default;
-    component_ref_base(object in_handle)
+    component_ref_base(std::type_index type) 
+        : type_index(type)
+    {
+    }
+
+    component_ref_base(object in_handle, std::type_index type)
         : handle(in_handle)
+        , type_index(type)
     {
     }
 
@@ -48,7 +53,13 @@ public:
         return handle;
     }
 
+    std::type_index get_type_index()
+    {
+        return type_index;
+    }
+
     object handle = null_object;
+    std::type_index type_index;
 
 };
 
@@ -59,9 +70,13 @@ public:
     // This is used for reflection when using REFLECT_FIELD_REF
     using super_type_t = component_ref_base;
 
-    component_ref() = default;
+    component_ref()
+        : component_ref_base(typeid(component_type))
+    {
+    }
+
     component_ref(object handle)
-        : component_ref_base(handle)
+        : component_ref_base(handle, typeid(component_type))
     {
     }
 

@@ -25,9 +25,15 @@ public:
     std::vector<component_ref<transform_component>> children;
 
     // Transform relative to the parent.
+    // This is the base transform, the others below are calculated from this.
     quat    local_rotation = quat::identity;
     vector3 local_location = vector3::zero;
     vector3 local_scale = vector3::one;
+
+    // Transform in world space.
+    quat    world_rotation = quat::identity;
+    vector3 world_location = vector3::zero;
+    vector3 world_scale = vector3::one;
 
     // Space transformation
     matrix4 local_to_world = matrix4::identity;
@@ -35,11 +41,6 @@ public:
 
     matrix4 local_transform = matrix4::identity;
     matrix4 inverse_local_transform = matrix4::identity;
-
-    // Transform in world space.
-    quat    world_rotation = quat::identity;
-    vector3 world_location = vector3::zero;
-    vector3 world_scale = vector3::one;
 
 public:
 
@@ -65,6 +66,27 @@ public:
         REFLECT_CONSTRAINT_RANGE(local_rotation, -360.0f, 360.0f)
         REFLECT_CONSTRAINT_RANGE(local_scale, 0.001f,  1000000.0f)
     END_REFLECT()
+
+public:
+
+    // TODO: Move this elsewhere, components should be pure data.
+
+    // Determines if the given needle is anywhere between this transform and the root.
+    bool is_derived_from(object_manager& obj_manager, transform_component* needle)
+    {
+        transform_component* potential = parent.get(&obj_manager);
+        while (potential)
+        {
+            if (potential == needle)
+            {
+                return true;
+            }
+
+            potential = potential->parent.get(&obj_manager);
+        }
+
+        return false;
+    }
 
 };
 
