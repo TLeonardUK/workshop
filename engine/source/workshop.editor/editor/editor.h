@@ -120,6 +120,7 @@ protected:
 
     void draw_selection();
     void draw_dockspace();
+    void draw_viewport_toolbar();
 
     void reset_dockspace_layout();
 
@@ -160,7 +161,7 @@ protected:
     editor_main_menu::menu_item_handle m_copy_menu_item;
     editor_main_menu::menu_item_handle m_paste_menu_item;
 
-    ImGuiID m_dockspace_id;
+    ImGuiID m_dockspace_id = 0;
     bool m_set_default_dock_space = false;
 
     // Scene State
@@ -192,6 +193,44 @@ protected:
 
     bool m_pending_save_scene_success = false;
     task_handle m_pending_save_scene;
+
+    // Snap options.
+    float k_translation_snap_options[8] = {
+        1.0f,
+        10.0f,
+        100.0f,
+        250.0f,
+        500.0f,
+        750.0f,
+        1000.0f,
+        10000.0f
+    };
+
+    float k_rotation_snap_options[8] = {
+        1.0f,
+        10.0f,
+        20.0f,
+        45.0f,
+        60.0f,
+        72.0f,
+        90.0f,
+        120.0f
+    };
+
+    float k_scale_snap_options[8] = {
+        0.001f,
+        0.01f,
+        0.1f,
+        1.0f,
+        2.0f,
+        4.0f,
+        8.0f,
+        16.0f,
+    };
+
+    float m_translate_snap = 100.0f;
+    float m_rotation_snap = 10.0f;
+    float m_scale_snap = 0.1f;
 
 };
 

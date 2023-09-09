@@ -4,16 +4,15 @@
 // ================================================================================================
 #include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/systems/render_system_imgui.h"
+
+#include "workshop.core/perf/profile.h"
+#include "workshop.core/filesystem/virtual_file_system.h"
 
 #include "workshop.input_interface/input_interface.h"
 #include "workshop.render_interface/ri_interface.h"
 
-#include "workshop.renderer/systems/render_system_imgui.h"
-
-#include "workshop.core/perf/profile.h"
-
-#include "thirdparty/imgui/imgui.h"
-#include "thirdparty/ImGuizmo/ImGuizmo.h"
+#include "workshop.core/drawing/imgui.h"
 
 namespace ws {
 
@@ -306,6 +305,9 @@ render_imgui_manager::context* render_imgui_manager::create_context(const char* 
 
     // Setup input keymap.
     ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = "save:imgui.ini";
+    io.LogFilename = "save:imgui.log";
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     io.KeyMap[ImGuiKey_Tab] = (int)input_key::tab;
@@ -357,7 +359,21 @@ void render_imgui_manager::free_context(context* context)
 void render_imgui_manager::create_font_resources()
 {
     ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontDefault();
 
+    // Merge in the font-awesome font.
+    float base_font_size = 11.0f;//13.0f;
+    float icon_font_size = base_font_size;// * 2.0f / 3.0f;
+    
+    static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true;
+    icons_config.PixelSnapH = true;
+    icons_config.GlyphMinAdvanceX = icon_font_size;
+    icons_config.GlyphOffset = ImVec2(1, 1);
+    io.Fonts->AddFontFromFileTTF("data:imgui/fonts/" FONT_ICON_FILE_NAME_FAS, icon_font_size, &icons_config, icons_ranges);
+
+    // Create the actual texture atlas.
     unsigned char* pixels;
     int texture_width;
     int texture_height;

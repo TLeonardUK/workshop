@@ -350,6 +350,7 @@ result<void> engine::create_filesystem(init_list& list)
         m_game_asset_dir = root_dir / "games" / app::instance().get_name() / "assets";
         m_asset_cache_dir = root_dir / "intermediate" / "cache";
         m_thumbnail_asset_cache_dir = root_dir / "intermediate" / "thumbnails";
+        m_saved_asset_cache_dir = root_dir / "intermediate" / "saved";
          
         if (std::filesystem::exists(m_engine_asset_dir) && 
             std::filesystem::exists(m_game_asset_dir))
@@ -386,6 +387,14 @@ result<void> engine::create_filesystem(init_list& list)
             return false;
         }
     }
+    if (!std::filesystem::exists(m_saved_asset_cache_dir))
+    {
+        if (!std::filesystem::create_directories(m_saved_asset_cache_dir))
+        {
+            db_fatal(engine, "Failed to create saved directory: %s", m_saved_asset_cache_dir.string().c_str());
+            return false;
+        }
+    }
 
     db_log(engine, "Engine asset directory: %s", m_engine_asset_dir.string().c_str());
     db_log(engine, "Game asset directory: %s", m_game_asset_dir.string().c_str());
@@ -418,6 +427,9 @@ result<void> engine::create_filesystem(init_list& list)
 
     // This handler is used to directly access the host file system.
     m_filesystem->register_handler("host", 0, std::make_unique<virtual_file_system_disk_handler>("", false));
+
+    // This handler is used to store saved data.
+    m_filesystem->register_handler("save", 0, std::make_unique<virtual_file_system_disk_handler>(m_saved_asset_cache_dir.string().c_str(), false));
 
     return true;
 }

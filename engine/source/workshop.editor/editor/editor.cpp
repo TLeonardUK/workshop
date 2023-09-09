@@ -43,10 +43,12 @@
 #include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 
 #include "workshop.core/platform/platform.h"
+#include "workshop.core/drawing/imgui.h"
 
 #include "thirdparty/imgui/imgui.h"
 #include "thirdparty/imgui/imgui_internal.h"
 #include "thirdparty/ImGuizmo/ImGuizmo.h"
+#include "thirdparty/IconFontCppHeaders/IconsFontAwesome5.h"
 
 namespace ws {
 
@@ -650,7 +652,8 @@ void editor::step(const frame_time& time)
         // Draw selection.
         ImGui::SetNextWindowPos(viewport_rect.Min);
         ImGui::SetNextWindowSize(ImVec2(viewport_rect.Max.x - viewport_rect.Min.x, viewport_rect.Max.y - viewport_rect.Min.y));
-        ImGui::Begin("SelectionView", nullptr, ImGuiWindowFlags_NoBackground|ImGuiWindowFlags_NoDecoration);
+        ImGui::Begin("SelectionView", nullptr, ImGuiWindowFlags_NoBackground|ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoDocking);
+        draw_viewport_toolbar();
         draw_selection();
         ImGui::End();
 	}
@@ -671,7 +674,22 @@ void editor::draw_dockspace()
 		ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
 		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | 
 		ImGuiWindowFlags_NoNavFocus;
-	
+
+    /*
+    // We render the viewport menu first as input seems to get captured by the dockspace if we do it afterwards.
+    if (m_dockspace_id > 0)
+    {
+        ImRect viewport_rect = ImGui::DockBuilderGetCentralNode(m_dockspace_id)->Rect();
+        ImGui::SetNextWindowPos(viewport_rect.Min, ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(viewport_rect.Max.x - viewport_rect.Min.x, viewport_rect.Max.y - viewport_rect.Min.y), ImGuiCond_Always);
+        if (ImGui::Begin("viewport_rect", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking))
+        {
+            draw_viewport_toolbar();
+        }
+        ImGui::End();
+	}*/
+
+    // Draw the main dockspace.
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
 	ImGui::SetNextWindowSize(viewport->Size);
@@ -701,10 +719,48 @@ void editor::draw_dockspace()
         }
 	ImGui::End();
 
+    // Draw all windows that are docked in the new dockspace.
     for (auto& window : m_windows)
     {
         window->draw();
     }    
+}
+
+void editor::draw_viewport_toolbar()
+{
+    if (ImGuiToggleButton(ICON_FA_MOUSE_POINTER, m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE))
+    {
+        m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
+    }
+
+    ImGui::SameLine();
+    if (ImGuiToggleButton(ICON_FA_REDO, m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE))
+    {
+        m_current_gizmo_mode = ImGuizmo::OPERATION::ROTATE;
+    }
+
+    ImGui::SameLine();
+    if (ImGuiToggleButton(ICON_FA_EXPAND, m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE))
+    {
+        m_current_gizmo_mode = ImGuizmo::OPERATION::SCALE;
+    }
+
+    ImGui::SameLine();
+    ImGui::Dummy(ImVec2(5, 0.0f));
+
+    ImGui::SameLine();
+    if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)
+    {
+        m_translate_snap = ImGuiFloatCombo("Snap", m_translate_snap, k_translation_snap_options, sizeof(k_translation_snap_options) / sizeof(*k_translation_snap_options));
+    }
+    else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
+    {
+        m_rotation_snap = ImGuiFloatCombo("Snap", m_rotation_snap, k_rotation_snap_options, sizeof(k_rotation_snap_options) / sizeof(*k_rotation_snap_options));
+    }
+    else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
+    {
+        m_scale_snap = ImGuiFloatCombo("Snap", m_scale_snap, k_scale_snap_options, sizeof(k_scale_snap_options) / sizeof(*k_scale_snap_options));
+    }
 }
 
 void editor::reset_dockspace_layout()
@@ -806,6 +862,20 @@ void editor::draw_selection()
         }
     }
 
+    float snap[3];
+    if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)
+    {
+        snap[0] = snap[1] = snap[2] = m_translate_snap;
+    }
+    else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
+    {
+        snap[0] = snap[1] = snap[2] = m_rotation_snap;// math::radians(m_rotation_snap);
+    }
+    else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
+    {
+        snap[0] = snap[1] = snap[2] = m_scale_snap;
+    }
+
     ImGuizmo::SetDrawlist(nullptr);
     ImGuizmo::SetRect(0, 0, (float)render.get_display_width(), (float)render.get_display_height());
 
@@ -835,7 +905,7 @@ void editor::draw_selection()
         any_selected_objects_have_transform |= (comp != nullptr);
     }
 
-    if (any_selected_objects_have_transform && !m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::LOCAL, model_mat_raw))
+    if (any_selected_objects_have_transform && !m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::WORLD, model_mat_raw, nullptr, snap))
     {
         matrix4 model_mat;
         model_mat.set_raw(model_mat_raw, false);

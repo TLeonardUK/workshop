@@ -118,6 +118,8 @@ SET(SOURCES
     "drawing/pixmap_dds_loader.cpp"
     "drawing/pixmap_stb_loader.h"
     "drawing/pixmap_stb_loader.cpp"
+    "drawing/imgui.h"
+    "drawing/imgui.cpp"
     
     "geometry/geometry.h"
     "geometry/geometry.cpp"

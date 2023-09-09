@@ -8,6 +8,7 @@ SET(SOURCES
 	"imconfig.h"
 	"imgui.cpp"
 	"imgui.h"
+	"imgui_user.h"
 	"imgui_demo.cpp"
 	"imgui_draw.cpp"
 	"imgui_internal.h"
