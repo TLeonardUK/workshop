@@ -29,6 +29,9 @@ public:
 	// What gpu flags are used to effect how this component is rendered.
 	render_gpu_flags render_gpu_flags = render_gpu_flags::none;
 
+    // Material overrides for model. 
+    std::vector<asset_ptr<material>> materials;
+
 private:
 
 	friend class static_mesh_system;
@@ -42,10 +45,14 @@ private:
     // Component is dirty and all settings need to be applied to render object.
     bool is_dirty = false;
 
+    // Keeps track of the last model this mesh had and does processing if its changed.
+    asset_ptr<ws::model> old_model;
+
 public:
 
     BEGIN_REFLECT(static_mesh_component, "Static Mesh", component, reflect_class_flags::none)
-        REFLECT_FIELD_REF(model,        "Model",     "Model asset this component displays.")
+        REFLECT_FIELD_REF(model,             "Model",        "Model asset this component displays.")
+        REFLECT_FIELD_LIST_REF(materials,    "Materials",    "Materials to display on the meshes model.\nIf empty the defaults set in the model are used.")
     END_REFLECT()
 
 };

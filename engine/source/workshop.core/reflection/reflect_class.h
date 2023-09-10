@@ -14,6 +14,8 @@
 namespace ws {
 
 class reflect_field;
+class reflect_field_container_helper;
+enum class reflect_field_container_type;
 
 // Describes various aspects of a class.
 enum class reflect_class_flags
@@ -64,7 +66,17 @@ public:
     void* create_instance();
 
 protected:
-    void add_field(const char* name, size_t offset, std::type_index type, std::type_index super_type, const char* display_name, const char* description);
+    void add_field(
+        const char* name, 
+        size_t offset, 
+        size_t element_size, 
+        std::type_index type, 
+        std::type_index super_type, 
+        const char* display_name, 
+        const char* description, 
+        reflect_field_container_type field_type, 
+        std::unique_ptr<reflect_field_container_helper> container_helper);
+
     void add_constraint(const char* name, float min_value, float max_value);
 
 private:

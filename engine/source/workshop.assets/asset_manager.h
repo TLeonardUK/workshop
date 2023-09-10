@@ -289,6 +289,21 @@ public:
         return get_loader_for_type(typeid(asset_type));
     }
 
+    template <typename importer_type>
+    importer_type* get_importer()
+    {
+        std::scoped_lock lock(m_importers_mutex);
+        for (auto& importer : m_importers)
+        {
+            importer_type* ret = dynamic_cast<importer_type*>(importer.importer.get());
+            if (ret)
+            {
+                return ret;
+            }
+        }
+        return nullptr;
+    }
+
 protected:
     friend class asset_ptr_base;
     

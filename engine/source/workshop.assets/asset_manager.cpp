@@ -293,7 +293,6 @@ void asset_manager::decrement_ref(asset_state* state, bool state_lock_held)
     }
 }
 
-
 asset_state* asset_manager::create_asset_state(const std::type_info& id, const char* path, int32_t priority, bool is_hot_reload)
 {
     std::unique_lock lock(m_states_mutex);
@@ -401,6 +400,8 @@ void asset_manager::request_load_lockless(asset_state* state)
     {
         state->is_pending = true;
 
+        db_log(core, "Queueing load: %s", state->path.c_str());
+
         // Insert into queue in priority order.
         auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
         {
@@ -419,6 +420,8 @@ void asset_manager::request_unload_lockless(asset_state* state)
     if (!state->is_pending)
     {
         state->is_pending = true;
+
+        db_log(core, "Queueing unload: %s", state->path.c_str());
 
         // Insert into queue in priority order.
         auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
@@ -482,10 +485,6 @@ void asset_manager::process_asset(asset_state* state)
             {
                 begin_unload(state);
             }
-            else
-            {
-                // TODO: Handle reloading.
-            }
             break;
         }
     case asset_loading_state::unloaded:
@@ -501,8 +500,6 @@ void asset_manager::process_asset(asset_state* state)
             // We do nothing to failed assets, they sit in
             // this state and return a default asset if available.
 
-            // TODO: Handle reloading.
-
             break;
         }
     case asset_loading_state::waiting_for_dependencies:
@@ -512,7 +509,7 @@ void asset_manager::process_asset(asset_state* state)
         }
     default:
         {
-            db_assert(false);
+//            db_assert(false);
             break;
         }
     }
@@ -878,6 +875,7 @@ void asset_manager::do_load(asset_state* state)
 
         if (!get_asset_compiled_path(loader, state, compiled_path))
         {
+            db_error(asset, "[%s] Failed to determine compiled asset path.", state->path.c_str());
             return;
         }
 
@@ -905,11 +903,19 @@ void asset_manager::do_load(asset_state* state)
 
                 g_tls_current_post_load_asset = old_state;
             }
+            else
+            {
+                db_error(asset, "[%s] Loader failed to load asset.", state->path.c_str());
+            }
         }
         else
         {
             db_error(asset, "[%s] Failed to find compiled data for asset.", state->path.c_str());
         }
+    }
+    else
+    {
+        db_error(asset, "[%s] Failed to find loader for asset type.", state->path.c_str());
     }
 }
 
@@ -959,7 +965,7 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
 
 void asset_manager::visit_assets(visit_callback_t callback)
 {
-    std::scoped_lock lock(m_states_mutex);
+    std::unique_lock lock(m_states_mutex);
 
     for (asset_state* state : m_states)
     {
@@ -969,7 +975,7 @@ void asset_manager::visit_assets(visit_callback_t callback)
 
 void asset_manager::hot_reload(asset_state* state)
 {
-    std::scoped_lock lock(m_states_mutex);
+    std::unique_lock lock(m_states_mutex);
 
     if (state->loading_state != asset_loading_state::loaded)
     {
@@ -1025,7 +1031,7 @@ void asset_manager::stop_watching_for_reload(asset_state* state)
 
 bool asset_manager::has_pending_hot_reloads()
 {
-    std::scoped_lock lock(m_states_mutex);
+    std::unique_lock lock(m_states_mutex);
 
     for (asset_state* state : m_hot_reload_queue)
     {
@@ -1041,7 +1047,7 @@ bool asset_manager::has_pending_hot_reloads()
 
 void asset_manager::apply_hot_reloads()
 {
-    std::scoped_lock lock(m_states_mutex);
+    std::unique_lock lock(m_states_mutex);
 
     for (auto iter = m_hot_reload_queue.begin(); iter != m_hot_reload_queue.end(); /* empty */)
     {

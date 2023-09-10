@@ -95,6 +95,9 @@ public:
     // Sets the model a static mesh is rendering.
     void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
 
+    // Overrides the materials a static mesh renders with.
+    void set_static_mesh_materials(render_object_id id, const std::vector<asset_ptr<material>>& materials);
+
     // Gets a list of all active static meshes.
     std::vector<render_static_mesh*> get_static_meshes();
 

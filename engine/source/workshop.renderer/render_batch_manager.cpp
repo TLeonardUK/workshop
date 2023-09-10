@@ -136,18 +136,12 @@ void render_batch_manager::clear_cached_material_data(material* material)
             continue;
         }
 
-        if (!key.model.is_loaded())
+        if (!key.material.is_loaded())
         {
             continue;
         }
 
-        model::material_info& material_info = key.model->materials[key.material_index];
-        if (!material_info.material.is_loaded())
-        {
-            continue;
-        }
-
-        if (material_info.material.get() == material)
+        if (key.material.get() == material)
         {
             batch->get_resource_cache().clear();
         }

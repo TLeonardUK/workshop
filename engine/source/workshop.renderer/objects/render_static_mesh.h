@@ -25,6 +25,10 @@ public:
     asset_ptr<model> get_model();
     void set_model(const asset_ptr<model>& model);
 
+    // Gets/sets the materials the overridden materials the static mesh renders with.
+    std::vector<asset_ptr<material>> get_materials();
+    void set_materials(const std::vector<asset_ptr<material>>& materials);
+
     // Overrides the normal functions to update instance data when they change.
     virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
     virtual void set_render_gpu_flags(render_gpu_flags flags) override;
@@ -52,6 +56,7 @@ protected:
 
 private:
     asset_ptr<model> m_model;
+    std::vector<asset_ptr<material>> m_override_materials;
 
     std::unique_ptr<ri_param_block> m_geometry_instance_info;
 
@@ -73,7 +78,6 @@ private:
 
     event<>::key_t m_model_change_callback_key = 0;
     std::vector<material_callback> m_material_change_callback_keys;
-
 };
 
 }; // namespace ws

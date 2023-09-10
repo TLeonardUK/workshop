@@ -22,6 +22,7 @@ namespace ws {
 
 class renderer;
 class model;
+class material;
 enum class visualization_mode;
 enum class render_flag;
 enum class render_gpu_flags;
@@ -130,6 +131,9 @@ public:
 
     // Set the model that will be rendered on the static mesh.
     void set_static_mesh_model(render_object_id id, const asset_ptr<model>& model);
+
+    // Overrides the materials of a static mesh.
+    void set_static_mesh_materials(render_object_id id, const std::vector<asset_ptr<material>>& materials);
 
     // ===========================================================================================
     //  Lights

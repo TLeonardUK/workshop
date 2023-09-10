@@ -18,13 +18,31 @@
 
 namespace ws {
 
-bool stream_serialize_reflect(stream& out, void* context, reflect_field* field)
+bool stream_serialize_reflect_internal(stream& out, reflect_field* field, void* field_data, bool container_element)
 {
-    uint8_t* field_data = reinterpret_cast<uint8_t*>(context) + field->get_offset();
-
     // TODO: Argh, this is horrible, we need to figure out a better way to handle this.
 
-    if (field->get_type_index() == typeid(int))
+    if (!container_element && field->get_container_type() == reflect_field_container_type::list)
+    {
+        reflect_field_container_helper* helper = field->get_container_helper();
+        size_t length = helper->size(field_data);
+
+        stream_serialize(out, length);
+
+        if (!out.can_write())
+        {
+            helper->resize(field_data, length);
+        }
+
+        for (size_t i = 0; i < length; i++)
+        {
+            if (!stream_serialize_reflect_internal(out, field, helper->get_data(field_data, i), true))
+            {
+                return false;
+            }
+        }
+    }
+    else if (field->get_type_index() == typeid(int))
     {
         stream_serialize(out, *reinterpret_cast<int*>(field_data));
     }
@@ -82,6 +100,13 @@ bool stream_serialize_reflect(stream& out, void* context, reflect_field* field)
     }
 
     return true;
+}
+
+bool stream_serialize_reflect(stream& out, void* context, reflect_field* field)
+{
+    uint8_t* field_data = reinterpret_cast<uint8_t*>(context) + field->get_offset();
+
+    return stream_serialize_reflect_internal(out, field, field_data, false);
 }
 
 }; // namespace workshop

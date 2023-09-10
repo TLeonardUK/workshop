@@ -41,6 +41,31 @@ std::vector<reflect_class*> get_reflect_derived_classes(std::type_index parent);
 void register_reflect_class(reflect_class* object);
 void unregister_reflect_class(reflect_class* object);
 
+// Class for helping manipulate vector reflection fields.
+template <typename value_type>
+class reflect_field_container_vector_helper 
+    : public reflect_field_container_helper
+{
+    virtual void resize(void* container_ptr, size_t size) override
+    {
+        std::vector<value_type>* container = reinterpret_cast<std::vector<value_type>*>(container_ptr);
+        container->resize(size);
+    }
+
+    virtual size_t size(void* container_ptr) override
+    {
+        std::vector<value_type>* container = reinterpret_cast<std::vector<value_type>*>(container_ptr);
+        return container->size();
+    }
+    
+    virtual void* get_data(void* container_ptr, size_t index) override
+    {
+        std::vector<value_type>* container = reinterpret_cast<std::vector<value_type>*>(container_ptr);
+        return container->data() + index;
+    }
+};
+
+
 // Macros for generating reflection data about a class. These should 
 // be used inside the class like so:
 //
@@ -66,10 +91,16 @@ class reflect_no_parent { };
         {
 
 #define REFLECT_FIELD(name, display_name, description)                                                                  \
-            add_field(#name, offsetof(class_t, class_t::name), typeid(decltype(class_t::name)), typeid(void), display_name, description); 
+            add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)), typeid(decltype(class_t::name)), typeid(void), display_name, description, reflect_field_container_type::scalar, nullptr); 
 
 #define REFLECT_FIELD_REF(name, display_name, description)                                                              \
-            add_field(#name, offsetof(class_t, class_t::name), typeid(decltype(class_t::name)), typeid(decltype(class_t::name)::super_type_t), display_name, description); 
+            add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)), typeid(decltype(class_t::name)), typeid(decltype(class_t::name)::super_type_t), display_name, description, reflect_field_container_type::scalar, nullptr); 
+
+#define REFLECT_FIELD_LIST(name, display_name, description)                                                                  \
+            add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)::value_type), typeid(decltype(class_t::name)::value_type), typeid(void), display_name, description, reflect_field_container_type::list, std::make_unique<reflect_field_container_vector_helper<decltype(class_t::name)::value_type>>()); 
+
+#define REFLECT_FIELD_LIST_REF(name, display_name, description)                                                              \
+            add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)::value_type), typeid(decltype(class_t::name)::value_type), typeid(decltype(class_t::name)::value_type::super_type_t), display_name, description, reflect_field_container_type::list, std::make_unique<reflect_field_container_vector_helper<decltype(class_t::name)::value_type>>()); 
 
 #define REFLECT_CONSTRAINT_RANGE(name, min_val, max_val)                                                                \
             add_constraint(#name, static_cast<float>(min_val), static_cast<float>(max_val)); 

@@ -387,6 +387,7 @@ void editor::commit_scene_load()
 void editor::save_scene(bool ask_for_filename)
 {
     std::string path = m_current_scene_path;
+    std::string vfs_path = path;
 
     if (path.empty() || ask_for_filename)
     {
@@ -397,13 +398,13 @@ void editor::save_scene(bool ask_for_filename)
         {
             return;
         }
-    }
 
-    std::string vfs_path = virtual_file_system::get().get_vfs_location(path.c_str());
-    if (vfs_path.empty())
-    {
-        message_dialog("Failed to save scene asset. Asset is not stored in the virtual file system, please ensure its in the correct folder.", message_dialog_type::error);
-        return;
+        vfs_path = virtual_file_system::get().get_vfs_location(path.c_str());
+        if (vfs_path.empty())
+        {
+            message_dialog("Failed to save scene asset. Asset is not stored in the virtual file system, please ensure its in the correct folder.", message_dialog_type::error);
+            return;
+        }
     }
 
     // Disable stepping the world while we save.
@@ -551,10 +552,29 @@ void editor::paste()
         return;
     }
 
+    // Parent nodes under the currently selected object.
     object root_parent = null_object;
     if (m_selected_objects.size() == 1)
     {
         root_parent = m_selected_objects[0];
+    }
+
+    // If parent is one of the original copied objects then parent under the parent instead. 
+    // This means that quick ctrl+c/ctrl+v doesn't just end up nesting indefinitely but acts more as a duplicate.
+    for (size_t i = 0; i < object_entry->size(); i++)
+    {
+        if (object_entry->get(i).original_handle == root_parent)
+        {
+            transform_component* transform = obj_manager.get_component<transform_component>(root_parent);
+            if (transform != nullptr)
+            {
+                root_parent = transform->parent.get_object();
+            }
+            else
+            {
+                root_parent = null_object;
+            }
+        }
     }
 
     // Recreate all the objects.
@@ -614,6 +634,9 @@ void editor::paste()
 
     // Push a transaction for all our created objects.
     m_undo_stack->push(std::make_unique<editor_transaction_create_objects>(m_engine, *this, new_objects));
+
+    // Select the new objects.
+    set_selected_objects(new_objects);
 }
 
 void editor::step(const frame_time& time)
@@ -728,6 +751,22 @@ void editor::draw_dockspace()
 
 void editor::draw_viewport_toolbar()
 {
+    if (ImGui::IsKeyPressed(ImGuiKey_Space))
+    {
+        if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)
+        {
+            m_current_gizmo_mode = ImGuizmo::OPERATION::ROTATE;
+        }
+        else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
+        {
+            m_current_gizmo_mode = ImGuizmo::OPERATION::SCALE;
+        }
+        else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
+        {
+            m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
+        }
+    }
+
     if (ImGuiToggleButton(ICON_FA_MOUSE_POINTER, m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE))
     {
         m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
@@ -845,22 +884,6 @@ void editor::draw_selection()
     object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
     bounds_system* bounds_sys = obj_manager.get_system<bounds_system>();
     transform_system* transform_sys = obj_manager.get_system<transform_system>();
-
-    if (ImGui::IsKeyPressed(ImGuiKey_Space))
-    {
-        if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)
-        {
-            m_current_gizmo_mode = ImGuizmo::OPERATION::ROTATE;
-        }
-        else if (m_current_gizmo_mode == ImGuizmo::OPERATION::ROTATE)
-        {
-            m_current_gizmo_mode = ImGuizmo::OPERATION::SCALE;
-        }
-        else if (m_current_gizmo_mode == ImGuizmo::OPERATION::SCALE)
-        {
-            m_current_gizmo_mode = ImGuizmo::OPERATION::TRANSLATE;
-        }
-    }
 
     float snap[3];
     if (m_current_gizmo_mode == ImGuizmo::OPERATION::TRANSLATE)

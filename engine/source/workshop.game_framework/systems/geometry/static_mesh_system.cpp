@@ -50,6 +50,10 @@ void static_mesh_system::component_modified(object handle, component* comp)
         return;
     }
 
+    // We don't want to reset materials if we've just modified/deserialzied the object.
+    // so clear out the old model reference.
+    component->old_model = component->model;
+
     component->is_dirty = true;
 }
 
@@ -63,6 +67,9 @@ void static_mesh_system::set_model(object handle, asset_ptr<model> model)
             render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
             comp->model = model;
+            comp->materials.clear();
+            
+            render_command_queue.set_static_mesh_materials(comp->render_id, { });
             render_command_queue.set_static_mesh_model(comp->render_id, model);
         }
     });
@@ -104,14 +111,31 @@ void static_mesh_system::step(const frame_time& time)
             light->is_dirty = true;
         }
 
+        // If materials list is empty fill it out with defaults of the model so the user can modify them.
+        bool model_changed = (light->model != light->old_model);
+        if ((light->materials.empty() || model_changed) && light->model.is_loaded())
+        {
+            light->materials.clear();
+            light->materials.reserve(light->model->materials.size());
+            
+            for (auto& mat_info : light->model->materials)
+            {
+                light->materials.push_back(mat_info.material);
+            }
+            
+            light->is_dirty = true;
+            light->old_model = light->model;
+        }
+
         // Apply changes if dirty.
         if (light->is_dirty)
         {
+            render_command_queue.set_static_mesh_materials(light->render_id, light->materials);
             render_command_queue.set_static_mesh_model(light->render_id, light->model);
             render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
             light->is_dirty = false;
         }
-
+    
         // Apply object transform if its changed.
         if (transform->generation != light->last_transform_generation)
         {

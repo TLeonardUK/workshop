@@ -204,6 +204,20 @@ void render_scene_manager::set_static_mesh_model(render_object_id id, const asse
     }
 }
 
+void render_scene_manager::set_static_mesh_materials(render_object_id id, const std::vector<asset_ptr<material>>& materials)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_static_mesh* object = dynamic_cast<render_static_mesh*>(resolve_id(id)))
+    {
+        object->set_materials(materials);
+    }
+    else
+    {
+        db_warning(renderer, "set_static_mesh_materials called with non-existant id {%zi}.", id);
+    }
+}
+
 std::vector<render_static_mesh*> render_scene_manager::get_static_meshes()
 {
     std::scoped_lock lock(m_mutex);

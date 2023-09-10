@@ -87,7 +87,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             const std::vector<render_batch_instance>& instances = batch->get_instances();
 
             model::mesh_info& mesh_info = key.model->meshes[key.mesh_index];
-            model::material_info& material_info = key.model->materials[key.material_index];
+            asset_ptr<material>& mat = key.material;
 
             profile_gpu_marker(list, profile_colors::gpu_pass, "batch %zi / %zi", i, batches.size());
 
@@ -95,23 +95,23 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             model::vertex_buffer* vertex_buffer = key.model->find_or_create_vertex_buffer(active_technique->pipeline->get_create_params().vertex_layout);
 
             // Generate the geometry_info block for this material.  
-            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), info_param_block_type.c_str(), [&material_info, default_black, default_grey, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
+            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), info_param_block_type.c_str(), [&mat, default_black, default_grey, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
 
                 // TODO: We should make this a callback to wherever is creating this geometry pass.
                 // This is all currently unpleasently hard-coded.
-                param_block.set("albedo_texture", *material_info.material->get_texture("albedo_texture", default_black));
-                param_block.set("opacity_texture", *material_info.material->get_texture("opacity_texture", default_white));
-                param_block.set("metallic_texture", *material_info.material->get_texture("metallic_texture", default_black));
-                param_block.set("roughness_texture", *material_info.material->get_texture("roughness_texture", default_grey));
-                param_block.set("normal_texture", *material_info.material->get_texture("normal_texture", default_normal));
-                param_block.set("skybox_texture", *material_info.material->get_texture("skybox_texture", default_white));
+                param_block.set("albedo_texture", *mat->get_texture("albedo_texture", default_black));
+                param_block.set("opacity_texture", *mat->get_texture("opacity_texture", default_white));
+                param_block.set("metallic_texture", *mat->get_texture("metallic_texture", default_black));
+                param_block.set("roughness_texture", *mat->get_texture("roughness_texture", default_grey));
+                param_block.set("normal_texture", *mat->get_texture("normal_texture", default_normal));
+                param_block.set("skybox_texture", *mat->get_texture("skybox_texture", default_white));
 
-                param_block.set("albedo_sampler", *material_info.material->get_sampler("albedo_sampler", default_sampler_color));
-                param_block.set("opacity_sampler", *material_info.material->get_sampler("opacity_sampler", default_sampler_color));
-                param_block.set("metallic_sampler", *material_info.material->get_sampler("metallic_sampler", default_sampler_color));
-                param_block.set("roughness_sampler", *material_info.material->get_sampler("roughness_sampler", default_sampler_color));
-                param_block.set("normal_sampler", *material_info.material->get_sampler("normal_sampler", default_sampler_normal));
-                param_block.set("skybox_sampler", *material_info.material->get_sampler("skybox_sampler", default_sampler_color));
+                param_block.set("albedo_sampler", *mat->get_sampler("albedo_sampler", default_sampler_color));
+                param_block.set("opacity_sampler", *mat->get_sampler("opacity_sampler", default_sampler_color));
+                param_block.set("metallic_sampler", *mat->get_sampler("metallic_sampler", default_sampler_color));
+                param_block.set("roughness_sampler", *mat->get_sampler("roughness_sampler", default_sampler_color));
+                param_block.set("normal_sampler", *mat->get_sampler("normal_sampler", default_sampler_normal));
+                param_block.set("skybox_sampler", *mat->get_sampler("skybox_sampler", default_sampler_color));
 
             });
 

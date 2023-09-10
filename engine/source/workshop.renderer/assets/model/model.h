@@ -81,6 +81,7 @@ public:
     std::vector<material_info> materials;
     std::vector<mesh_info> meshes;
     std::unique_ptr<geometry> geometry;
+    std::string source_node;
 
 protected:
     virtual bool post_load() override;

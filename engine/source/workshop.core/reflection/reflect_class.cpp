@@ -94,9 +94,28 @@ std::vector<reflect_field*> reflect_class::get_fields(bool include_base_classes)
     return ret;
 }
 
-void reflect_class::add_field(const char* name, size_t offset, std::type_index type, std::type_index super_type,const char* display_name, const char* description)
+void reflect_class::add_field(
+    const char* name, 
+    size_t offset, 
+    size_t element_size, 
+    std::type_index type, 
+    std::type_index super_type,
+    const char* display_name, 
+    const char* description, 
+    reflect_field_container_type field_type, 
+    std::unique_ptr<reflect_field_container_helper> container_helper)
 {
-    std::unique_ptr<reflect_field> field = std::make_unique<reflect_field>(name, offset, type, super_type, display_name, description);
+    std::unique_ptr<reflect_field> field = std::make_unique<reflect_field>(
+        name, 
+        offset, 
+        element_size,
+        type, 
+        super_type, 
+        display_name, 
+        description, 
+        field_type,
+        std::move(container_helper)
+    );
     m_fields.push_back(std::move(field));
 }
 

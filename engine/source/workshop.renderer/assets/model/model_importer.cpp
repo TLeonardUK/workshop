@@ -3,6 +3,8 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.renderer/assets/model/model_importer.h"
+#include "workshop.renderer/assets/texture/texture_importer.h"
+#include "workshop.assets/asset_manager.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/file.h"
 
@@ -102,7 +104,57 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
     std::vector<imported_material> materials;
     std::unordered_map<std::string, imported_texture> textures;
 
-    auto add_texture = [&textures, &output_directory_texture_path, &vfs_output_directory_texture_path, &source_directory](geometry_texture& texture, const char* usage)
+    // Build list of files we can use for file matching.
+    std::vector<std::filesystem::path> file_matching_pool; 
+    try
+    {
+        for (const std::filesystem::directory_entry& dir_entry : std::filesystem::recursive_directory_iterator(source_directory))
+        {
+            if (dir_entry.is_directory())
+            {
+                continue;
+            }
+
+            std::filesystem::path potential_path = dir_entry.path();
+            file_matching_pool.push_back(potential_path);
+        }
+    }
+    catch (std::filesystem::filesystem_error& ex)
+    {
+        db_error(engine, "Failed when building file searching path pool: %s", ex.what());
+        return false;
+    }
+    
+    // TODO: Move these lambdas into actual functions, this is messy.
+    // TODO: Also make these functions less gross, these are brute forced the to extreme.
+
+    texture_importer* tex_importer = m_asset_manager.get_importer<texture_importer>();
+    std::vector<std::string> texture_extensions = tex_importer->get_supported_extensions();
+
+    auto find_texture = [&file_matching_pool, &texture_extensions](const std::vector<const char*>& tags) -> std::string
+    {
+        for (const std::filesystem::path& potential_path : file_matching_pool)
+        {
+            std::string extension = potential_path.extension().string();
+            if (std::find(texture_extensions.begin(), texture_extensions.end(), extension) == texture_extensions.end())
+            {
+                continue;
+            }
+
+            std::string string_path = string_lower(potential_path.string().c_str());
+            for (const char* tag : tags)
+            {
+                if (strstr(string_path.c_str(), tag) != 0)
+                {
+                    return potential_path.string();
+                }
+            }
+        }
+
+        return "";
+    };
+    
+    auto add_texture = [&file_matching_pool, &textures, &output_directory_texture_path, &vfs_output_directory_texture_path, &source_directory](geometry_texture& texture, const char* usage)
     {
         if (texture.path.empty())
         {
@@ -132,27 +184,13 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
         db_log(engine, "Importing texture: %s", tex.output_yaml_path.string().c_str());
         
         // Search in all folders under the folder the model was in for the texture.
-        try
+        for (const std::filesystem::path& potential_path : file_matching_pool)
         {
-            for (const std::filesystem::directory_entry& dir_entry : std::filesystem::recursive_directory_iterator(source_directory))
+            if (potential_path.filename() == filename)
             {
-                if (!dir_entry.is_directory())
-                {
-                    continue;
-                }
-
-                std::filesystem::path potential_path = dir_entry.path() / filename;
-                if (std::filesystem::is_regular_file(potential_path))
-                {
-                    tex.found_path = potential_path;
-                    break;
-                }
+                tex.found_path = potential_path;
+                break;
             }
-        }
-        catch (std::filesystem::filesystem_error& ex)
-        {
-            db_error(engine, "Failed when searching for source texture for: %s: %s", tex.output_raw_path.string().c_str(), ex.what());
-            return false;
         }
 
         if (tex.found_path.empty())
@@ -186,21 +224,45 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
 
         db_log(engine, "Importing material: %s", imported_mat.output_path.string().c_str());
 
+        // Fuzzy match textures if none is set.
+        if (imported_mat.material.albedo_texture.path.empty())
+        {
+            imported_mat.material.albedo_texture.path = find_texture({ "albedo", "basecolor", "diffuse", "color" });
+        }
+        if (imported_mat.material.metallic_texture.path.empty())
+        {
+            imported_mat.material.metallic_texture.path = find_texture({ "metalness", "metallic" });
+        }
+        if (imported_mat.material.normal_texture.path.empty())
+        {
+            imported_mat.material.normal_texture.path = find_texture({ "normal" });
+        }
+        if (imported_mat.material.roughness_texture.path.empty())
+        {
+            imported_mat.material.roughness_texture.path = find_texture({ "roughness" });
+        }
+
         // Figure out any textures required.
-        if (!add_texture(mat.albedo_texture, "color") || 
-            !add_texture(mat.metallic_texture, "metallic") ||
-            !add_texture(mat.normal_texture, "normal") ||
-            !add_texture(mat.roughness_texture, "roughness"))
+        if (!add_texture(imported_mat.material.albedo_texture, "color") || 
+            !add_texture(imported_mat.material.metallic_texture, "metallic") ||
+            !add_texture(imported_mat.material.normal_texture, "normal") ||
+            !add_texture(imported_mat.material.roughness_texture, "roughness"))
         {
             return false;
         }
     }
 
     // Write the model template.
-    if (!write_model_template(output_model_yaml_path.string().c_str(), vfs_output_model_path_normalized.c_str(), materials))
+    for (geometry_mesh& mesh : geometry->get_meshes())
     {
-        db_error(engine, "Failed to write out model asset file: %s", asset_name_with_yaml_extension.string().c_str());
-        return false;
+        std::filesystem::path mesh_name = string_replace(string_lower(mesh.name.c_str()), " ", "_");
+        std::filesystem::path mesh_yaml_path = output_directory_path / mesh_name.replace_extension(".yaml");
+
+        if (!write_model_template(mesh_yaml_path.string().c_str(), vfs_output_model_path_normalized.c_str(), materials, mesh.name.c_str()))
+        {
+            db_error(engine, "Failed to write out model asset file: %s", asset_name_with_yaml_extension.string().c_str());
+            return false;
+        }
     }
 
     // Write all the material templates.
@@ -226,7 +288,7 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
     return true;
 }
 
-bool model_importer::write_model_template(const char* path, const char* vfs_model_path, const std::vector<imported_material>& materials)
+bool model_importer::write_model_template(const char* path, const char* vfs_model_path, const std::vector<imported_material>& materials, const char* source_node_name)
 {
     std::string output = "";
 
@@ -238,6 +300,10 @@ bool model_importer::write_model_template(const char* path, const char* vfs_mode
     output += "version: 1\n";
     output += "\n";
     output += "source: " + std::string(vfs_model_path) + "\n";
+    if (source_node_name[0] != '\0')
+    {
+        output += "source_node: " + std::string(source_node_name) + "\n";
+    }
     output += "\n";
     output += "scale: [ 1.0, 1.0, 1.0 ]\n";
     output += "\n";

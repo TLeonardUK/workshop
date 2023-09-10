@@ -51,7 +51,7 @@ private:
         geometry_material material;
     };
 
-    bool write_model_template(const char* path, const char* vfs_model_path, const std::vector<imported_material>& materials);
+    bool write_model_template(const char* path, const char* vfs_model_path, const std::vector<imported_material>& materials, const char* source_node_name);
     bool write_material_template(imported_material& material, const std::unordered_map<std::string, imported_texture>& textures);
     bool write_texture_template(imported_texture& texture);
 

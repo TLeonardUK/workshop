@@ -203,26 +203,79 @@ void property_list::draw_preview(const char* asset_path)
 
 bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
 {
+    std::string path = value.get_path();
+    if (draw_asset(field, path, "asset_model"))
+    {
+        value = m_asset_manager->request_asset<model>(path.c_str(), 0);
+        return true;
+    }
+    return false;
+}
+
+bool property_list::draw_edit(reflect_field* field, asset_ptr<material>& value)
+{
+    std::string path = value.get_path();
+    if (draw_asset(field, path, "asset_material"))
+    {
+        value = m_asset_manager->request_asset<material>(path.c_str(), 0);
+        return true;
+    }
+    return false;
+}
+
+bool property_list::draw_edit(reflect_field* field, asset_ptr<texture>& value)
+{
+    std::string path = value.get_path();
+    if (draw_asset(field, path, "asset_texture"))
+    {
+        value = m_asset_manager->request_asset<texture>(path.c_str(), 0);
+        return true;
+    }
+    return false;
+}
+
+bool property_list::draw_edit(reflect_field* field, asset_ptr<shader>& value)
+{
+    std::string path = value.get_path();
+    if (draw_asset(field, path, "asset_shader"))
+    {
+        value = m_asset_manager->request_asset<shader>(path.c_str(), 0);
+        return true;
+    }
+    return false;
+}
+
+bool property_list::draw_edit(reflect_field* field, asset_ptr<scene>& value)
+{
+    std::string path = value.get_path();
+    if (draw_asset(field, path, "asset_scene"))
+    {
+        value = m_asset_manager->request_asset<scene>(path.c_str(), 0);
+        return true;
+    }
+    return false;
+}
+
+bool property_list::draw_asset(reflect_field* field, std::string& path, const char* drag_drop_type)
+{
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 
     char buffer[2048];
-    strncpy(buffer, value.get_path().c_str(), sizeof(buffer));
+    strncpy(buffer, path.c_str(), sizeof(buffer));
 
     bool ret = false;
 
     ImGui::InputText("", buffer, sizeof(buffer), ImGuiInputTextFlags_ReadOnly);
-    draw_preview(value.get_path().c_str());
+    draw_preview(path.c_str());
 
     if (ImGui::BeginDragDropTarget())
     {
-        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("asset_model", ImGuiDragDropFlags_None);
+        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(drag_drop_type, ImGuiDragDropFlags_None);
         if (payload)
         {
-            std::string asset_path((const char*)payload->Data, payload->DataSize);
+            path = std::string((const char*)payload->Data, payload->DataSize);
 
             on_before_modify.broadcast(field);
-
-            value = m_asset_manager->request_asset<model>(asset_path.c_str(), 0);
 
             ret = true;
         }
@@ -231,8 +284,6 @@ bool property_list::draw_edit(reflect_field* field, asset_ptr<model>& value)
 
     return ret;
 }
-
-#pragma optimize("", off)
 
 bool property_list::draw_edit(reflect_field* field, component_ref_base& value)
 {
@@ -309,6 +360,99 @@ bool property_list::draw_edit(reflect_field* field, component_ref_base& value)
     return ret;
 }
 
+
+bool property_list::draw_field(reflect_field* field, uint8_t* field_data, bool container_element)
+{
+    bool modified = false;
+
+    float min_value = 0.0f;
+    float max_value = 0.0f;
+    if (reflect_constraint_range* range = field->get_constraint<reflect_constraint_range>())
+    {
+        min_value = range->get_min();
+        max_value = range->get_max();
+    }
+
+    if (!container_element && field->get_container_type() == reflect_field_container_type::list)
+    {
+        // WARNING: This is very unsafe as we are type-punning a template, this is undefined behaviour but
+        //          in general is ~fairly~ safe as most std::vectors are implemented the same way across STL
+        //          implementations.
+        std::vector<uint8_t>& base_vector = *reinterpret_cast<std::vector<uint8_t>*>(field_data);
+        size_t element_size = field->get_element_size();
+        size_t length = std::distance(base_vector.begin(), base_vector.end()) / element_size;
+
+        for (size_t i = 0; i < length; i++)
+        {
+            modified |= draw_field(field, base_vector.data() + (i * element_size), true);
+        }
+    }
+    else if (field->get_type_index() == typeid(int))
+    {
+        modified = draw_edit(field, *reinterpret_cast<int*>(field_data), static_cast<int>(min_value), static_cast<int>(max_value));
+    }
+    else if (field->get_type_index() == typeid(size_t))
+    {
+        int value = (int)*reinterpret_cast<size_t*>(field_data);
+        modified = draw_edit(field, value, static_cast<int>(min_value), static_cast<int>(max_value));
+        *reinterpret_cast<size_t*>(field_data) = value;
+    }
+    else if (field->get_type_index() == typeid(float))
+    {
+        modified = draw_edit(field, *reinterpret_cast<float*>(field_data), min_value, max_value);
+    }
+    else if (field->get_type_index() == typeid(bool))
+    {
+        modified = draw_edit(field, *reinterpret_cast<bool*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(vector3))
+    {
+        modified = draw_edit(field, *reinterpret_cast<vector3*>(field_data), min_value, max_value);
+    }
+    else if (field->get_type_index() == typeid(quat))
+    {
+        modified = draw_edit(field, *reinterpret_cast<quat*>(field_data), min_value, max_value);
+    }
+    else if (field->get_type_index() == typeid(color))
+    {
+        modified = draw_edit(field, *reinterpret_cast<color*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(std::string))
+    {
+        modified = draw_edit(field, *reinterpret_cast<std::string*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(asset_ptr<model>))
+    {
+        modified = draw_edit(field, *reinterpret_cast<asset_ptr<model>*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(asset_ptr<material>))
+    {
+        modified = draw_edit(field, *reinterpret_cast<asset_ptr<material>*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(asset_ptr<texture>))
+    {
+        modified = draw_edit(field, *reinterpret_cast<asset_ptr<texture>*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(asset_ptr<shader>))
+    {
+        modified = draw_edit(field, *reinterpret_cast<asset_ptr<shader>*>(field_data));
+    }
+    else if (field->get_type_index() == typeid(asset_ptr<scene>))
+    {
+        modified = draw_edit(field, *reinterpret_cast<asset_ptr<scene>*>(field_data));
+    }
+    else if (field->get_super_type_index() == typeid(component_ref_base))
+    {
+        modified = draw_edit(field, *reinterpret_cast<component_ref_base*>(field_data));
+    }
+    else
+    {
+        ImGui::Text("Unsupported Edit Type");
+    }
+
+    return modified;
+}
+
 bool property_list::draw(object context_object, void* context, reflect_class* context_class)
 {
     m_context = context;
@@ -338,66 +482,10 @@ bool property_list::draw(object context_object, void* context, reflect_class* co
             ImGui::TableNextColumn();
 
             // All the edit types, we should probably abstract these somewhere.
-            uint8_t* field_data = reinterpret_cast<uint8_t*>(m_context) + field->get_offset();
-
-            bool modified = false;
-
-            float min_value = 0.0f;
-            float max_value = 0.0f;
-            if (reflect_constraint_range* range = field->get_constraint<reflect_constraint_range>())
-            {
-                min_value = range->get_min();
-                max_value = range->get_max();
-            }
-
             ImGui::PushID(field->get_name());
 
-            if (field->get_type_index() == typeid(int))
-            {
-                modified = draw_edit(field, *reinterpret_cast<int*>(field_data), static_cast<int>(min_value), static_cast<int>(max_value));
-            }
-            else if (field->get_type_index() == typeid(size_t))
-            {
-                int value = (int)*reinterpret_cast<size_t*>(field_data);
-                modified = draw_edit(field, value, static_cast<int>(min_value), static_cast<int>(max_value));
-                *reinterpret_cast<size_t*>(field_data) = value;
-            }
-            else if (field->get_type_index() == typeid(float))
-            {
-                modified = draw_edit(field, *reinterpret_cast<float*>(field_data), min_value, max_value);
-            }
-            else if (field->get_type_index() == typeid(bool))
-            {
-                modified = draw_edit(field, *reinterpret_cast<bool*>(field_data));
-            }
-            else if (field->get_type_index() == typeid(vector3))
-            {
-                modified = draw_edit(field, *reinterpret_cast<vector3*>(field_data), min_value, max_value);
-            }
-            else if (field->get_type_index() == typeid(quat))
-            {
-                modified = draw_edit(field, *reinterpret_cast<quat*>(field_data), min_value, max_value);
-            }
-            else if (field->get_type_index() == typeid(color))
-            {
-                modified = draw_edit(field, *reinterpret_cast<color*>(field_data));
-            }
-            else if (field->get_type_index() == typeid(std::string))
-            {
-                modified = draw_edit(field, *reinterpret_cast<std::string*>(field_data));
-            }
-            else if (field->get_type_index() == typeid(asset_ptr<model>))
-            {
-                modified = draw_edit(field, *reinterpret_cast<asset_ptr<model>*>(field_data));
-            }
-            else if (field->get_super_type_index() == typeid(component_ref_base))
-            {
-                modified = draw_edit(field, *reinterpret_cast<component_ref_base*>(field_data));
-            }
-            else
-            {
-                ImGui::Text("Unsupported Edit Type");
-            }
+            uint8_t* field_data = reinterpret_cast<uint8_t*>(m_context) + field->get_offset();
+            bool modified = draw_field(field, field_data, false);
 
             if (modified)
             {

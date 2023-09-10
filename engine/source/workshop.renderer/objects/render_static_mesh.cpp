@@ -40,6 +40,22 @@ void render_static_mesh::set_model(const asset_ptr<model>& model)
     recreate_render_data();
 }
 
+std::vector<asset_ptr<material>> render_static_mesh::get_materials()
+{
+    return m_override_materials;
+}
+
+void render_static_mesh::set_materials(const std::vector<asset_ptr<material>>& materials)
+{
+    unregister_asset_change_callbacks();
+
+    m_override_materials = materials;
+
+    register_asset_change_callbacks();
+
+    recreate_render_data();
+}
+
 void render_static_mesh::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)
 {
     render_object::set_local_transform(location, rotation, scale);
@@ -74,14 +90,18 @@ void render_static_mesh::register_asset_change_callbacks()
         for (size_t i = 0; i < m_model->materials.size(); i++)
         {
             model::material_info& mat_info = m_model->materials[i];
-            if (!mat_info.material.is_loaded())
-            {
-                continue;
-            }
 
             auto callback_key = mat_info.material.register_changed_callback(callback);
             m_material_change_callback_keys.push_back({ mat_info.material, callback_key });
         }    
+    }
+
+    for (size_t i = 0; i < m_override_materials.size(); i++)
+    {
+        auto& mat = m_override_materials[i];
+
+        auto callback_key = mat.register_changed_callback(callback);
+        m_material_change_callback_keys.push_back({ mat, callback_key });
     }
 }
 
@@ -130,8 +150,18 @@ void render_static_mesh::create_render_data()
     for (size_t i = 0; i < m_model->meshes.size(); i++)
     {
         model::mesh_info& mesh_info = m_model->meshes[i];
-
         model::material_info& mat_info = m_model->materials[mesh_info.material_index];
+        
+        asset_ptr<material> mat = mat_info.material;
+        if (mesh_info.material_index < m_override_materials.size())
+        {
+            asset_ptr<material>& override_mat = m_override_materials[mesh_info.material_index];
+            if (override_mat.is_valid())
+            {
+                mat = override_mat;
+            }
+        }
+
         if (!mat_info.material.is_loaded())
         {
             continue;
@@ -146,7 +176,7 @@ void render_static_mesh::create_render_data()
 
         render_batch_key key;
         key.mesh_index = i;
-        key.material_index = mesh_info.material_index;
+        key.material = mat;
         key.model = m_model;
         key.domain = mat_info.material->domain;
         key.usage = render_batch_usage::static_mesh;

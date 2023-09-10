@@ -19,6 +19,8 @@
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/material/material.h"
 
+#include "workshop.engine/assets/scene/scene.h"
+
 #include "workshop.engine/assets/asset_database.h"
 
 #include <functional>
@@ -56,7 +58,15 @@ protected:
     bool draw_edit(reflect_field* field, color& value);
     bool draw_edit(reflect_field* field, std::string& value);
     bool draw_edit(reflect_field* field, asset_ptr<model>& value);
+    bool draw_edit(reflect_field* field, asset_ptr<material>& value);
+    bool draw_edit(reflect_field* field, asset_ptr<texture>& value);
+    bool draw_edit(reflect_field* field, asset_ptr<shader>& value);
+    bool draw_edit(reflect_field* field, asset_ptr<scene>& value);
     bool draw_edit(reflect_field* field, component_ref_base& value);
+
+    bool draw_field(reflect_field* field, uint8_t* field_data, bool container_element = false);
+
+    bool draw_asset(reflect_field* field, std::string& path, const char* drag_drop_type);
 
     void draw_preview(const char* path);
 

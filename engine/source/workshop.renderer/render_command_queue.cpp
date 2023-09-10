@@ -234,6 +234,13 @@ void render_command_queue::set_static_mesh_model(render_object_id id, const asse
     });
 }
 
+void render_command_queue::set_static_mesh_materials(render_object_id id, const std::vector<asset_ptr<material>>& materials)
+{
+    queue_command("set_static_mesh_materials", [renderer = &m_renderer, id, materials]() {
+        renderer->get_scene_manager().set_static_mesh_materials(id, materials);
+    });
+}
+
 // ================================================================================================
 //  Lights
 // ================================================================================================

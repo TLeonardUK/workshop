@@ -16,13 +16,41 @@
 
 namespace ws {
 
-bool yaml_serialize_reflect(YAML::Node& node, bool is_loading, void* context, reflect_field* field)
+bool yaml_serialize_reflect_internal(YAML::Node& node, bool is_loading, void* field_data, reflect_field* field, bool container_element)
 {
-    uint8_t* field_data = reinterpret_cast<uint8_t*>(context) + field->get_offset();
-
     // TODO: Argh, this is horrible, we need to figure out a better way to handle this.
 
-    if (field->get_type_index() == typeid(int))
+    if (!container_element && field->get_container_type() == reflect_field_container_type::list)
+    {
+        reflect_field_container_helper* helper = field->get_container_helper();
+        size_t length = helper->size(field_data);
+
+        if (is_loading)
+        {
+            length = node.size();
+            helper->resize(field_data, length);
+        }
+
+        for (size_t i = 0; i < length; i++)
+        {
+            YAML::Node element_node;
+            if (is_loading)
+            {
+                element_node = node[i];
+            }
+
+            if (!yaml_serialize_reflect_internal(element_node, is_loading, helper->get_data(field_data, i), field, true))
+            {
+                return false;
+            }
+
+            if (!is_loading)
+            {
+                node.push_back(element_node);
+            }
+        }
+    }
+    else if (field->get_type_index() == typeid(int))
     {
         yaml_serialize(node, is_loading, *reinterpret_cast<int*>(field_data));
     }
@@ -80,6 +108,13 @@ bool yaml_serialize_reflect(YAML::Node& node, bool is_loading, void* context, re
     }
 
     return true;
+}
+
+bool yaml_serialize_reflect(YAML::Node& node, bool is_loading, void* context, reflect_field* field)
+{
+    uint8_t* field_data = reinterpret_cast<uint8_t*>(context) + field->get_offset();
+
+    return yaml_serialize_reflect_internal(node, is_loading, field_data, field, false);
 }
 
 }; // namespace workshop

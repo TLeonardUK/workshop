@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 15;
+constexpr size_t k_asset_compiled_version = 30;
 
 };
 
@@ -138,8 +138,13 @@ bool model_loader::serialize(const char* path, model& asset, bool isSaving)
 bool model_loader::parse_properties(const char* path, YAML::Node& node, model& asset)
 {
     std::string source;
-
     if (!parse_property(path, "source", node["source"], source, true))
+    {
+        return false;
+    }
+
+    std::string source_node;
+    if (!parse_property(path, "source_node", node["source_node"], source_node, false))
     {
         return false;
     }
@@ -164,6 +169,7 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
     }
 
     asset.geometry = geometry::load(source.c_str(), scale);
+    asset.source_node = source_node;
     asset.header.add_dependency(source.c_str());
 
     if (!asset.geometry)
@@ -217,7 +223,7 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
                 // Add all the meshes that use this material.
                 for (geometry_mesh& mesh : asset.geometry->get_meshes())
                 {
-                    if (mesh.material_index == geo_mat->index)
+                    if (mesh.material_index == geo_mat->index && (asset.source_node.empty() || asset.source_node == mesh.name))
                     {
                         model::mesh_info& info = asset.meshes.emplace_back();
                         info.name = mesh.name;

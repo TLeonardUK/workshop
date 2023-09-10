@@ -50,7 +50,7 @@ struct import_context
 };
  
 // Imports a mesh node in the assimp scene.
-bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
+bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, matrix4 transform)
 {
     size_t start_vertex_index = output.positions.size();
 
@@ -65,7 +65,8 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
         output.positions.reserve(output.positions.size() + node->mNumVertices);
         for (size_t i = 0; i < node->mNumVertices; i++)
         {
-            output.positions.push_back({ node->mVertices[i].x, node->mVertices[i].y, node->mVertices[i].z });
+            vector3 pos = vector3(node->mVertices[i].x, node->mVertices[i].y, node->mVertices[i].z) * transform;
+            output.positions.push_back(pos);
         }
     }
     else
@@ -79,7 +80,9 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
         output.normals.reserve(output.normals.size() + node->mNumVertices);
         for (size_t i = 0; i < node->mNumVertices; i++)
         {
-            output.normals.push_back({ node->mNormals[i].x, node->mNormals[i].y, node->mNormals[i].z });
+            vector3 normal = transform.transform_direction(vector3(node->mNormals[i].x, node->mNormals[i].y, node->mNormals[i].z));
+
+            output.normals.push_back(normal);
         }
     }
     else
@@ -94,8 +97,11 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output)
         output.bitangents.reserve(output.bitangents.size() + node->mNumVertices);
         for (size_t i = 0; i < node->mNumVertices; i++)
         {
-            output.tangents.push_back({ node->mTangents[i].x, node->mTangents[i].y, node->mTangents[i].z });
-            output.bitangents.push_back({ node->mBitangents[i].x, node->mBitangents[i].y, node->mBitangents[i].z });
+            vector3 tangent = transform.transform_direction(vector3(node->mTangents[i].x, node->mTangents[i].y, node->mTangents[i].z));
+            vector3 bitangent = transform.transform_direction(vector3(node->mBitangents[i].x, node->mBitangents[i].y, node->mBitangents[i].z));
+
+            output.tangents.push_back(tangent);
+            output.bitangents.push_back(bitangent);
         }
     }
     else
@@ -216,12 +222,19 @@ bool process_material(aiMaterial* node, const aiScene* scene, import_context& ou
 }
 
 // Walks the assimp scene to extract our output.
-bool walk_scene(aiNode* node, const aiScene* scene, import_context& output)
+bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matrix4 transform)
 {
+    matrix4 node_transform = matrix4(
+        node->mTransformation.a1, node->mTransformation.a2, node->mTransformation.a3, node->mTransformation.a4,
+        node->mTransformation.b1, node->mTransformation.b2, node->mTransformation.b3, node->mTransformation.b4,
+        node->mTransformation.c1, node->mTransformation.c2, node->mTransformation.c3, node->mTransformation.c4,
+        node->mTransformation.d1, node->mTransformation.d2, node->mTransformation.d3, node->mTransformation.d4
+    ) * transform;
+
     for (size_t i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        if (!process_mesh(mesh, scene, output))
+        if (!process_mesh(mesh, scene, output, node_transform))
         {
             return false;
         }
@@ -229,7 +242,7 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output)
 
     for (size_t i = 0; i < node->mNumChildren; i++)
     {
-        if (!walk_scene(node->mChildren[i], scene, output))
+        if (!walk_scene(node->mChildren[i], scene, output, node_transform))
         {
             return false;
         }
@@ -247,11 +260,11 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     int flags = 0;
     if (high_quality)
     {
-        flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded);
+        flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_ConvertToLeftHanded);
     }
     else
     {
-        flags = (aiProcessPreset_TargetRealtime_Fast | aiProcess_PreTransformVertices | aiProcess_ConvertToLeftHanded);
+        flags = (aiProcessPreset_TargetRealtime_Fast | aiProcess_ConvertToLeftHanded);
     }
 
     flags &= ~aiProcess_RemoveRedundantMaterials;
@@ -281,7 +294,7 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     }
 
     // Import all meshes in scene.
-    if (!walk_scene(scene->mRootNode, scene, context))
+    if (!walk_scene(scene->mRootNode, scene, context, matrix4::identity))
     {
         return nullptr;
     }
