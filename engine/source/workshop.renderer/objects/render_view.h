@@ -55,6 +55,9 @@ enum class render_view_flags
 
     // Applies a constant ambient term rather than calculating it from probes. This is useful when generating light probes.
     constant_ambient_lighting       = 16,
+    
+    // This view is for a probe/scene/etc capture, this forces all parts of the capture to be done this frame (eg. no staggered shadow updates).
+    capture                         = 32,
 };
 DEFINE_ENUM_FLAGS(render_view_flags);
 

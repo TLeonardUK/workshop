@@ -83,7 +83,7 @@ public:
     //
     // 3 for main view plus (6*3) for probe captures, bleh.
     // we need to figure out a better way of handling this for probe captures (one face rendered per frame?)
-	size_t shadows_max_cascade_updates_per_frame = 32; 
+	size_t shadows_max_cascade_updates_per_frame = 1; 
 
 	// ================================================================================================
 	//  Eye Adaption

@@ -149,7 +149,9 @@ void render_system_shadows::step(const render_world_state& state)
     }
 
     // Update all cascades.
-    std::vector<cascade_info*> cascades_needing_render;
+    std::vector<cascade_info*> cascades_can_render;
+    std::vector<cascade_info*> cascades_must_render;
+
     {        
         profile_marker(profile_colors::render, "Step Cascades");
 
@@ -176,54 +178,67 @@ void render_system_shadows::step(const render_world_state& state)
 
                 step_cascade(info, cascade);
 
-                if (cascade.needs_render)
-                {
-                    cascades_needing_render.push_back(&cascade);
-                }
-                else if (cascade.view_id)
+                if (cascade_view)
                 {
                     cascade_view->set_should_render(false);
+                }
+
+                if (cascade.needs_render)
+                {
+                    if (base_view_is_active && (base_view->get_flags() & render_view_flags::capture) != render_view_flags::none)
+                    {
+                        cascades_must_render.push_back(&cascade);
+                    }
+                    else
+                    {
+                        cascades_can_render.push_back(&cascade);
+                    }
+                }
+                else if (cascade_view)
+                {
                     cascade_view->set_active(false);
                 }
             }
         }
     }
 
-    // Grab all cascades that need an update, and sort by last time they updated, then
-    // mark the top x as should update. Spreads out any large updates over a few frames.
-    // TODO: Cubemaps should be updated all at once or we get some really nasty problems.
-
     size_t frame_index = state.time.frame_count;
+
+    // Sort potentially rendered cascades based on how long that have been waiting 
+    // to render so the oldest get priority.
     {
         profile_marker(profile_colors::render, "Cascade Sort");
 
-        std::sort(cascades_needing_render.begin(), cascades_needing_render.end(), [frame_index](const cascade_info* a, const cascade_info* b) {
+        std::sort(cascades_can_render.begin(), cascades_can_render.end(), [frame_index](const cascade_info* a, const cascade_info* b) {
             size_t frames_elapsed_a = (frame_index - a->last_rendered_frame);
             size_t frames_elapsed_b = (frame_index - b->last_rendered_frame);
             return frames_elapsed_b < frames_elapsed_a;
         });
     }
 
+    // Add a fixed amount from the needing render list to the must render list.
+    for (size_t i = 0; i < options.shadows_max_cascade_updates_per_frame && i < cascades_can_render.size(); i++)
+    {
+        cascades_must_render.push_back(cascades_can_render[i]);
+    }
+
+    // Render all the cascades that require rendering.
     {
         profile_marker(profile_colors::render, "Update Cascade Params");
 
-        for (size_t i = 0; i < cascades_needing_render.size(); i++)
+        for (size_t i = 0; i < cascades_must_render.size(); i++)
         {
-            cascade_info* cascade = cascades_needing_render[i];
-            bool should_render = (i < options.shadows_max_cascade_updates_per_frame);
+            cascade_info* cascade = cascades_must_render[i];
 
             if (cascade->view_id)
             {
                 render_view* view = scene_manager.resolve_id_typed<render_view>(cascade->view_id);
-                view->set_should_render(should_render);
+                view->set_should_render(true);
 
-                if (should_render)
-                {
-                    cascade->needs_render = false;
-                    cascade->last_rendered_frame = frame_index;
+                cascade->needs_render = false;
+                cascade->last_rendered_frame = frame_index;
 
-                    update_cascade_param_block(*cascade);
-                }
+                update_cascade_param_block(*cascade);
             }
         }
     }

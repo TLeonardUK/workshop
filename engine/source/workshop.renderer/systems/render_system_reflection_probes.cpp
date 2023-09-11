@@ -97,7 +97,7 @@ result<void> render_system_reflection_probes::create_resources()
             view->set_clip(m_probe_near_z, m_probe_far_z);
             view->set_should_render(false);
             view->set_active(false);
-            view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::constant_ambient_lighting);
+            view->set_flags(render_view_flags::normal | render_view_flags::scene_only | render_view_flags::constant_ambient_lighting | render_view_flags::capture);
 
             view_info info;
             info.id = view_id;
