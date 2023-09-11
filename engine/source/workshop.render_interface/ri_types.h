@@ -128,6 +128,11 @@ enum class ri_data_type
     t_rwbyteaddressbuffer,
     t_rwtexture2d,
 
+    // These are special compressed formats for encoding data to be passed into vertex/etc buffers.
+
+    // Compresses a float3 unit normal into a single float.
+    t_compressed_unit_vector,
+
     COUNT
 };
 
@@ -176,6 +181,8 @@ inline static const char* ri_data_type_strings[static_cast<int>(ri_data_type::CO
     "byteaddressbuffer",
     "rwbyteaddressbuffer",
     "rwtexture2d",
+
+    "compressed_unit_vector",
 };
 
 inline static const char* ri_data_type_hlsl_type[static_cast<int>(ri_data_type::COUNT)] = {
@@ -222,7 +229,58 @@ inline static const char* ri_data_type_hlsl_type[static_cast<int>(ri_data_type::
     "sampler",
     "ByteAddressBuffer",
     "RWByteAddressBuffer",
-    "RWTexture2D"
+    "RWTexture2D",
+
+    "float3",
+};
+
+inline static const char* ri_data_type_compressed_hlsl_type[static_cast<int>(ri_data_type::COUNT)] = {
+    "bool",
+    "int",
+    "uint",
+    "half",
+    "float",
+    "double",
+
+    "bool2",
+    "int2",
+    "uint2",
+    "half2",
+    "float2",
+    "double2",
+
+    "bool3",
+    "int3",
+    "uint3",
+    "half3",
+    "float3",
+    "double3",
+
+    "bool4",
+    "int4",
+    "uint4",
+    "half4",
+    "float4",
+    "double4",
+
+    "float2x2",
+    "double2x2",
+    "float3x3",
+    "double3x3",
+    "float4x4",
+    "double4x4",
+
+    "Texture1D",
+    "Texture2D",
+    "Texture3D",
+    "TextureCube",
+
+    "sampler",
+    "ByteAddressBuffer",
+    "RWByteAddressBuffer",
+    "RWTexture2D",
+
+    "float",
 };
 
 DEFINE_ENUM_TO_STRING(ri_data_type, ri_data_type_strings)

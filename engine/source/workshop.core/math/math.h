@@ -175,4 +175,17 @@ inline float from_float16(uint16_t value)
 			((m << (150 - v)) & 0x007FE000)));												// sign : normalized : denormalized
 }
 
+inline uint8_t float_to_byte(float value)
+{
+	value = (value + 1.0f) * 0.5f;
+	return static_cast<uint8_t>(value * 255.0f);
+}
+
+inline float byte_to_float(uint8_t value)
+{
+	float ret = (value / 255.0f);
+	ret = (ret * 2.0f) - 1.0f;
+	return ret;
+}
+
 }; // namespace ws::math

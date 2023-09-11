@@ -42,7 +42,7 @@ void directional_light_system::component_removed(object handle, component* comp)
     });
 }
 
-void directional_light_system::component_modified(object handle, component* comp)
+void directional_light_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     directional_light_component* component = dynamic_cast<directional_light_component*>(comp);
     if (!component)

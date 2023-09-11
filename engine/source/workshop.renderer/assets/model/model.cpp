@@ -41,19 +41,37 @@ bool model::post_load()
         mesh_info& info = meshes[i];
 
         // Create index buffer for rendering each mesh.
-        // TODO: Use uint16 where possible.
-        std::vector<uint32_t> indices;
-        indices.reserve(info.indices.size());
-        for (size_t index : info.indices)
-        {
-            indices.push_back(static_cast<uint32_t>(index));
-        }
+        std::vector<uint32_t> indices_32;
+        std::vector<uint16_t> indices_16;
 
         ri_buffer::create_params params;
         params.element_count = info.indices.size();
-        params.element_size = sizeof(uint32_t);
         params.usage = ri_buffer_usage::index_buffer;
-        params.linear_data = std::span{ (uint8_t*)indices.data(), indices.size() * sizeof(uint32_t) };
+
+        size_t max_index_value = *std::max_element(info.indices.begin(), info.indices.end());
+
+        if (true)//max_index_value >= std::numeric_limits<uint16_t>::max())
+        {
+            indices_32.reserve(info.indices.size());
+            for (size_t index : info.indices)
+            {
+                indices_32.push_back(static_cast<uint32_t>(index));
+            }
+
+            params.element_size = sizeof(uint32_t);
+            params.linear_data = std::span{ (uint8_t*)indices_32.data(), indices_32.size() * sizeof(uint32_t) };
+        }
+        else
+        {
+            indices_16.reserve(info.indices.size());
+            for (size_t index : info.indices)
+            {
+                indices_16.push_back(static_cast<uint16_t>(index));
+            }
+
+            params.element_size = sizeof(uint16_t);
+            params.linear_data = std::span{ (uint8_t*)indices_16.data(), indices_16.size() * sizeof(uint16_t) };
+        }
 
         std::string index_buffer_name = string_format("Model Index Buffer[%zi]: %s", i, name.c_str());
         info.index_buffer = m_renderer.get_render_interface().create_buffer(params, index_buffer_name.c_str());

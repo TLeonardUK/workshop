@@ -370,4 +370,8 @@ inline void yaml_serialize(YAML::Node& out, bool is_loading, vector3& value)
 	yaml_serialize(z, is_loading, value.z);
 }
 
+// Compresses a unit vector into a single float and back again.
+float compress_unit_vector(const vector3& vec);
+vector3 decompress_unit_vector(float vec);
+
 }; // namespace ws

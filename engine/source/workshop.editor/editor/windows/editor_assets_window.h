@@ -46,13 +46,14 @@ private:
 
     char m_current_filter[256] = {};
 
-    static inline constexpr int k_filter_type_count = 5;
+    static inline constexpr int k_filter_type_count = 6;
     const char* m_filter_types[k_filter_type_count] = {
         "all",
         "model",
         "texture",
         "material",
-        "shader"
+        "shader",
+        "scene"
     };
 
 };

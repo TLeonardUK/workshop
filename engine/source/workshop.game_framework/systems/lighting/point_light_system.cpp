@@ -42,7 +42,7 @@ void point_light_system::component_removed(object handle, component* comp)
     });
 }
 
-void point_light_system::component_modified(object handle, component* comp)
+void point_light_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     point_light_component* component = dynamic_cast<point_light_component*>(comp);
     if (!component)

@@ -147,7 +147,10 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             }
 
             // Generate the vertex info buffer for this batch.
-            ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info", {});
+            std::size_t vertex_info_hash = reinterpret_cast<std::size_t>(get_cache_key(*view));
+            hash_combine(vertex_info_hash, &instance_buffer->get_buffer());
+
+            ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block((void*)vertex_info_hash, "vertex_info", {});
             vertex_info_param_block->set("vertex_buffer", *vertex_buffer->vertex_buffer.get());
             vertex_info_param_block->set("vertex_buffer_offset", 0u);
             vertex_info_param_block->set("instance_buffer", instance_buffer->get_buffer());        

@@ -66,8 +66,8 @@ vertex_layouts:
   # Standard layout for geometry vertices
   geometry_vertex:
     position: float3
-    normal: float3
-    tangent: float3
+    normal: compressed_unit_vector
+    tangent: compressed_unit_vector
     uv0: float2
 
 output_targets:

@@ -19,6 +19,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_ri_layout_factory.h"
 #include "workshop.render_interface.dx12/dx12_ri_query.h"
+#include "workshop.render_interface.dx12/dx12_ri_small_buffer_allocator.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/filesystem/file.h"
@@ -215,6 +216,11 @@ dx12_ri_descriptor_heap& dx12_render_interface::get_rtv_descriptor_heap()
 dx12_ri_descriptor_heap& dx12_render_interface::get_dsv_descriptor_heap()
 {
     return *m_dsv_descriptor_heap;
+}
+
+dx12_ri_small_buffer_allocator& dx12_render_interface::get_small_buffer_allocator()
+{
+    return *m_small_buffer_allocator;
 }
 
 dx12_ri_descriptor_table& dx12_render_interface::get_descriptor_table(ri_descriptor_table table)
@@ -559,6 +565,12 @@ result<void> dx12_render_interface::create_misc()
 
     m_query_manager = std::make_unique<dx12_ri_query_manager>(*this, k_maximum_queries);
     if (!m_query_manager->create_resources())
+    {
+        return false;
+    }
+
+    m_small_buffer_allocator = std::make_unique<dx12_ri_small_buffer_allocator>(*this);
+    if (!m_small_buffer_allocator->create_resources())
     {
         return false;
     }

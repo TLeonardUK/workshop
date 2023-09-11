@@ -27,7 +27,7 @@ render_resource_cache& render_batch::get_resource_cache()
     return *m_resource_cache;
 }
 
-render_batch_key render_batch::get_key()
+const render_batch_key& render_batch::get_key()
 {
     return m_key;
 }
@@ -116,7 +116,7 @@ std::vector<render_batch*> render_batch_manager::get_batches(material_domain dom
 
     for (auto& [key, batch] : m_batches)
     {
-        render_batch_key key = batch->get_key();
+        const render_batch_key& key = batch->get_key();
         if (key.domain == domain && key.usage == usage)
         {
             result.push_back(batch.get());

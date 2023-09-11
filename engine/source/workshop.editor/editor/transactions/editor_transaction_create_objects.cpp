@@ -45,7 +45,7 @@ void editor_transaction_create_objects::execute()
 
 	for (object obj : modified_objects)
 	{
-		object_manager.object_edited(obj);
+		object_manager.object_edited(obj, component_modification_source::serialization);
 	}
 }
 

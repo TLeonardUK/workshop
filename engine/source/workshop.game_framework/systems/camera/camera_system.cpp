@@ -64,7 +64,7 @@ void camera_system::component_removed(object handle, component* comp)
     });
 }
 
-void camera_system::component_modified(object handle, component* comp)
+void camera_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     camera_component* component = dynamic_cast<camera_component*>(comp);
     if (!component)

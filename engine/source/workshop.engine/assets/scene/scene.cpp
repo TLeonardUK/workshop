@@ -100,7 +100,7 @@ bool scene::post_load()
     }
 
     // Mark all objects as modified.
-    obj_manager.all_components_edited();
+    obj_manager.all_components_edited(component_modification_source::serialization);
 
     return true;
 }

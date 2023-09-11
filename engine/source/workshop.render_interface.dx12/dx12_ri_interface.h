@@ -16,6 +16,7 @@ class dx12_ri_command_queue;
 class dx12_ri_upload_manager;
 class dx12_ri_query_manager;
 class dx12_ri_descriptor_table;
+class dx12_ri_small_buffer_allocator;
 
 // ================================================================================================
 //  Implementation of a renderer using DirectX 12.
@@ -87,6 +88,8 @@ public:
     dx12_ri_descriptor_heap& get_rtv_descriptor_heap();
     dx12_ri_descriptor_heap& get_dsv_descriptor_heap();
 
+    dx12_ri_small_buffer_allocator& get_small_buffer_allocator();
+
     dx12_ri_descriptor_table& get_descriptor_table(ri_descriptor_table table);
 
     size_t get_frame_index();
@@ -123,6 +126,8 @@ private:
     std::unique_ptr<dx12_ri_descriptor_heap> m_sampler_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_rtv_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_dsv_descriptor_heap = nullptr;
+
+    std::unique_ptr<dx12_ri_small_buffer_allocator> m_small_buffer_allocator = nullptr;
 
     std::array<std::unique_ptr<dx12_ri_descriptor_table>, static_cast<int>(ri_descriptor_table::COUNT)> m_descriptor_tables;
 

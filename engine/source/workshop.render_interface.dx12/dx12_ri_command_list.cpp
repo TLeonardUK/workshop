@@ -338,7 +338,7 @@ void dx12_ri_command_list::set_index_buffer(ri_buffer& buffer)
     }
 
     D3D12_INDEX_BUFFER_VIEW view;
-    view.BufferLocation = dx12_buffer->get_resource()->GetGPUVirtualAddress();
+    view.BufferLocation = dx12_buffer->get_resource()->GetGPUVirtualAddress() + dx12_buffer->get_buffer_offset();
     view.Format = format;
     view.SizeInBytes = static_cast<UINT>(dx12_buffer->get_element_count() * element_size);
 

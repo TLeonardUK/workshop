@@ -49,7 +49,7 @@ void editor_transaction_delete_objects::rollback()
 	for (auto iter = m_states.rbegin(); iter != m_states.rend(); iter++)
 	{
 		state& s = *iter;
-		object_manager.object_edited(s.handle);
+		object_manager.object_edited(s.handle, component_modification_source::serialization);
 	}
 }
 

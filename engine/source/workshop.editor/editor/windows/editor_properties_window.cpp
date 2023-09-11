@@ -158,7 +158,7 @@ void editor_properties_window::draw()
 
                         if (m_property_list->draw(context, component, component_class))
                         {
-                            obj_manager.component_edited(context, component);
+                            obj_manager.component_edited(context, component, component_modification_source::user);
                         }
                     }
 

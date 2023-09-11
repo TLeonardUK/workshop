@@ -125,20 +125,39 @@ void dx12_ri_layout_factory::add(const char* field_name, const std::span<uint8_t
         field& field = iter->second;
         field.added = true;
 
-        if (type != field.type)
+        if (field.type != ri_data_type::t_compressed_unit_vector)
         {
-            db_fatal(renderer, "Attempted to add incorrect data type '%s' to layout field '%s' that expected '%s' data type.", to_string(type).c_str(), field.name.c_str(), to_string(field.type).c_str());
-        }
-        if (value_size != field.size)
-        {
-            db_fatal(renderer, "Attempted to add data type with incorrect value size '%zi' to layout field '%s'.", value_size, field.name.c_str());
+            if (type != field.type)
+            {
+                db_fatal(renderer, "Attempted to add incorrect data type '%s' to layout field '%s' that expected '%s' data type.", to_string(type).c_str(), field.name.c_str(), to_string(field.type).c_str());
+            }
+            if (value_size != field.size)
+            {
+                db_fatal(renderer, "Attempted to add data type with incorrect value size '%zi' to layout field '%s'.", value_size, field.name.c_str());
+            }
         }
 
         for (size_t i = 0; i < element_count; i++)
         {
             uint8_t* src = values.data() + (i * value_size);
             uint8_t* dst = m_buffer.data() + (i * m_element_size) + field.offset;
-            memcpy(dst, src, value_size);
+
+            // Compress if required.
+            if (field.type == ri_data_type::t_compressed_unit_vector)
+            {
+                if (type != ri_data_type::t_float3)
+                {
+                    db_fatal(renderer, "Attempted to add compressed unit vector to layout field '%s' with invalid source data type.", field.name.c_str());
+                }
+
+                vector3* vec = reinterpret_cast<vector3*>(src);
+                *reinterpret_cast<float*>(dst) = compress_unit_vector(*vec);
+            }
+            // We can just direct copy the geometry data.
+            else
+            {
+                memcpy(dst, src, value_size);
+            }
 
             // We store our matrices as column-major but directx expects them to be in row-major, so transpose them.
             transpose_matrices(dst, type);

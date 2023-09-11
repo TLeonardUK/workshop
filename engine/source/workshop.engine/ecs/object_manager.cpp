@@ -187,17 +187,17 @@ component_filter_archetype* object_manager::get_filter_archetype(const std::vect
     return ret;
 }
 
-void object_manager::component_edited(object obj, component* comp)
+void object_manager::component_edited(object obj, component* comp, component_modification_source source)
 {
     std::scoped_lock lock(m_system_mutex);
     for (size_t i = 0; i < m_systems.size(); i++)
     {
         auto& system = m_systems[i];
-        system->component_modified(obj, comp);
+        system->component_modified(obj, comp, source);
     }
 }
 
-void object_manager::object_edited(object obj)
+void object_manager::object_edited(object obj, component_modification_source source)
 {
     std::scoped_lock obj_lock(m_object_mutex);
     std::scoped_lock sys_lock(m_system_mutex);
@@ -213,12 +213,12 @@ void object_manager::object_edited(object obj)
         for (size_t i = 0; i < m_systems.size(); i++)
         {
             auto& system = m_systems[i];
-            system->component_modified(obj, comp);
+            system->component_modified(obj, comp, source);
         }
     }
 }
 
-void object_manager::all_components_edited()
+void object_manager::all_components_edited(component_modification_source source)
 {
     std::scoped_lock lock(m_system_mutex);
 
@@ -233,7 +233,7 @@ void object_manager::all_components_edited()
                 for (size_t j = 0; j < m_systems.size(); j++)
                 {
                     auto& system = m_systems[j];
-                    system->component_modified(i, comp);
+                    system->component_modified(i, comp, source);
                 }
             }
         }
@@ -521,7 +521,7 @@ void object_manager::deserialize_component(object handle, const std::vector<uint
 
     if (mark_as_edited)
     {
-        component_edited(handle, new_component);
+        component_edited(handle, new_component, component_modification_source::serialization);
     }
 }
 
@@ -575,7 +575,7 @@ void object_manager::deserialize_object(object handle, const std::vector<uint8_t
     {
         for (component* comp : obj_state->components)
         {
-            component_edited(handle, comp);
+            component_edited(handle, comp, component_modification_source::serialization);
         }
     }
 }

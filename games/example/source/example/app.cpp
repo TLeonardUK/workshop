@@ -50,9 +50,6 @@
 //      Try and reduce light leakage for probes
 //      Decals
 //      Skinned Meshes
-//      ui for gizmo mode / snap to grid
-//      undo / redo
-//      cut / copy / paste
 //      play button that saves / restores the world
 //      multiple views for wireframe top / bottom / left / right + main 3d view
 //      editor grid
@@ -60,7 +57,6 @@
 //      editor - only visualizations(light radius / etc)
 //      model thumbnails
 //      asset modification for textures/materials/etc
-//      add "progress dialog" for things that take a while - open/save scenes
 //      proper memory allocation tracking (hook malloc/free)
 
 std::shared_ptr<ws::app> make_app()
@@ -98,12 +94,11 @@ ws::result<void> example_game_app::start()
     light_probe_grid_system* light_probe_grid_sys = obj_manager.get_system<light_probe_grid_system>();
     static_mesh_system* static_mesh_sys = obj_manager.get_system<static_mesh_system>();
 
-    asset_ptr<scene> new_scene = ass_manager.request_asset<scene>("data:scenes/test_scenes/sponza.yaml", 0);
+    asset_ptr<scene> new_scene = ass_manager.request_asset<scene>("data:scenes/sponza.yaml", 0);
     new_scene.wait_for_load(); // TODO We should queue loading in future, rather than blocking.
 
     get_engine().set_default_world(new_scene->world_instance);
     new_scene->world_instance = nullptr;
-    
 
 #if 0
     // Add a skybox.

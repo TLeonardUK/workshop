@@ -107,6 +107,7 @@ SET(SOURCES
     "math/hemisphere.h"
     "math/vector2.h"
     "math/vector3.h"
+    "math/vector3.cpp"
     "math/vector4.h"
     
     "drawing/color.h"

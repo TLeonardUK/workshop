@@ -42,7 +42,7 @@ void static_mesh_system::component_removed(object handle, component* comp)
     });
 }
 
-void static_mesh_system::component_modified(object handle, component* comp)
+void static_mesh_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     static_mesh_component* component = dynamic_cast<static_mesh_component*>(comp);
     if (!component)
@@ -50,9 +50,11 @@ void static_mesh_system::component_modified(object handle, component* comp)
         return;
     }
 
-    // We don't want to reset materials if we've just modified/deserialzied the object.
-    // so clear out the old model reference.
-    component->old_model = component->model;
+    // If user modified the component, mark the materials vector as needing an update.
+    if (source == component_modification_source::user)
+    {
+        component->materials_array_needs_update = true;
+    }
 
     component->is_dirty = true;
 }
@@ -112,8 +114,7 @@ void static_mesh_system::step(const frame_time& time)
         }
 
         // If materials list is empty fill it out with defaults of the model so the user can modify them.
-        bool model_changed = (light->model != light->old_model);
-        if ((light->materials.empty() || model_changed) && light->model.is_loaded())
+        if ((light->materials.empty() || light->materials_array_needs_update) && light->model.is_loaded())
         {
             light->materials.clear();
             light->materials.reserve(light->model->materials.size());
@@ -124,7 +125,7 @@ void static_mesh_system::step(const frame_time& time)
             }
             
             light->is_dirty = true;
-            light->old_model = light->model;
+            light->materials_array_needs_update = false;
         }
 
         // Apply changes if dirty.

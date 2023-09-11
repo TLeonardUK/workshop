@@ -115,7 +115,7 @@ void transform_system::component_removed(object handle, component* comp)
     component->old_parent = component->parent;
 }
 
-void transform_system::component_modified(object handle, component* comp)
+void transform_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     transform_component* component = dynamic_cast<transform_component*>(comp);
     if (!component)

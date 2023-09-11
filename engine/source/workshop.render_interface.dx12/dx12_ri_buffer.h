@@ -7,6 +7,7 @@
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_command_list.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
+#include "workshop.render_interface.dx12/dx12_ri_small_buffer_allocator.h"
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
@@ -38,12 +39,20 @@ public:
     virtual void* map(size_t offset, size_t size) override;
     virtual void unmap(void* pointer) override;
 
+    bool is_small_buffer();
+
+    size_t get_buffer_offset();
 
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
     dx12_ri_descriptor_table::allocation get_uav() const;
 
+    dx12_ri_small_buffer_allocator::handle get_small_buffer_allocation() const;
+
     ID3D12Resource* get_resource();
+
+private:
+    result<void> create_exclusive_buffer();
 
 private:
     dx12_render_interface& m_renderer;
@@ -59,6 +68,9 @@ private:
     dx12_ri_descriptor_table::allocation m_srv;
     dx12_ri_descriptor_table::allocation m_uav;
 
+    bool m_is_small_buffer = false;
+    dx12_ri_small_buffer_allocator::handle m_small_buffer_allocation;
+
     struct mapped_buffer
     {
         size_t offset;
@@ -66,6 +78,7 @@ private:
         std::vector<uint8_t> data;
     };
 
+    std::mutex m_buffers_mutex;
     std::vector<mapped_buffer> m_buffers;
 
 };

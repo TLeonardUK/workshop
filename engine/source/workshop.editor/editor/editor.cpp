@@ -629,7 +629,7 @@ void editor::paste()
         }
 
         // Mark object as updated.
-        obj_manager.object_edited(new_object);
+        obj_manager.object_edited(new_object, component_modification_source::serialization);
     }
 
     // Push a transaction for all our created objects.

@@ -57,7 +57,7 @@ void light_probe_grid_system::component_removed(object handle, component* comp)
     });
 }
 
-void light_probe_grid_system::component_modified(object handle, component* comp)
+void light_probe_grid_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     light_probe_grid_component* component = dynamic_cast<light_probe_grid_component*>(comp);
     if (!component)

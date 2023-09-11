@@ -42,7 +42,7 @@ void spot_light_system::component_removed(object handle, component* comp)
     });
 }
 
-void spot_light_system::component_modified(object handle, component* comp)
+void spot_light_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     spot_light_component* component = dynamic_cast<spot_light_component*>(comp);
     if (!component)

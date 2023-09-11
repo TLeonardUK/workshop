@@ -149,17 +149,17 @@ public:
     // In generaly this SHOULD NEVER be used in user-code, its here to support property-modification
     // in the editor. User code should send messages to systems for them to modify a component, not
     // do it directly.
-    void component_edited(object obj, component* comp);
+    void component_edited(object obj, component* comp, component_modification_source source);
 
     // Same behaviour as component_editor but applies to all components attached to the given object.
-    void object_edited(object obj);
+    void object_edited(object obj, component_modification_source source);
 
     // This is equivilent to calling component_edited on every single component that exists. 
     //
     // DO NOT CALL THIS.
     // Its purpose is to force systems to update their view of components after an entire scene has 
     // been deserialized. It is expensive to perform and unneccessary in mostly any other situation.
-    void all_components_edited();
+    void all_components_edited(component_modification_source source);
 
     // Gets a list of all alive objects.
     //

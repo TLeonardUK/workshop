@@ -45,8 +45,9 @@ private:
     // Component is dirty and all settings need to be applied to render object.
     bool is_dirty = false;
 
-    // Keeps track of the last model this mesh had and does processing if its changed.
-    asset_ptr<ws::model> old_model;
+    // Flag for if the materials array needs to be regenerated. This occurs in situations such as
+    // when the user modifies the model.
+    bool materials_array_needs_update = false;
 
 public:
 

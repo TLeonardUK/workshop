@@ -39,6 +39,9 @@ struct import_context
         std::vector<size_t> indices;
     };
 
+    size_t uv_channel_count = 0;
+    size_t color_channel_count = 0;
+
     std::vector<vector3> positions;
     std::vector<vector3> normals;
     std::vector<vector3> tangents;
@@ -87,8 +90,13 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, ma
     }
     else
     {
-        db_warning(asset, "Mesh contains no normal vertex stream.");
-        return false;
+        db_warning(asset, "Mesh contains no normal vertex stream, using dummy data");
+
+        output.normals.reserve(output.normals.size() + node->mNumVertices);
+        for (size_t i = 0; i < node->mNumVertices; i++)
+        {
+            output.normals.push_back(vector3::up);
+        }
     }
 
     if (node->HasTangentsAndBitangents())
@@ -106,25 +114,14 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, ma
     }
     else
     {
-        db_warning(asset, "Mesh contains no tangent / bitangent vertex stream.");
-        return false;
-    }
-
-    if (node->GetNumUVChannels() > output.uvs.size())
-    {
-        size_t original_size = output.uvs.size();
-
-        output.uvs.resize(node->GetNumUVChannels());
-
-        // Add dummy entries for existing entries.
-        if (original_size != 0)
+        db_warning(asset, "Mesh '%s' contains no tangent / bitangent vertex stream, using dummy data.", node->mName.C_Str());        
+        
+        output.tangents.reserve(output.tangents.size() + node->mNumVertices);
+        output.bitangents.reserve(output.bitangents.size() + node->mNumVertices);
+        for (size_t i = 0; i < node->mNumVertices; i++)
         {
-            size_t original_vert_count = output.uvs[0].size();
-
-            for (size_t i = original_size; i < output.uvs.size(); i++)
-            {
-                output.uvs[i].resize(original_vert_count, { 0.0f, 0.0f });
-            }
+            output.tangents.push_back(vector3::up);
+            output.bitangents.push_back(vector3::up);
         }
     }
 
@@ -139,20 +136,16 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, ma
         }
     }
 
-    if (node->GetNumColorChannels() > output.colors.size())
+    if (node->GetNumUVChannels() < output.uvs.size())
     {
-        size_t original_size = output.colors.size();
-
-        output.colors.resize(node->GetNumColorChannels());
-
-        // Add dummy entries for existing entries.
-        if (original_size != 0)
+        for (size_t j = node->GetNumUVChannels(); j < output.uvs.size(); j++)
         {
-            size_t original_vert_count = output.colors[0].size();
+            std::vector<vector2>& uvs = output.uvs[j];
+            uvs.reserve(uvs.size() + node->mNumVertices);
 
-            for (size_t i = original_size; i < output.colors.size(); i++)
+            for (size_t i = 0; i < node->mNumVertices; i++)
             {
-                output.colors[i].resize(original_vert_count, { 0.0f, 0.0f, 0.0f, 0.0f });
+                uvs.push_back({ 0.0f, 0.0f });
             }
         }
     }
@@ -165,6 +158,20 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, ma
         {
             const aiColor4D& vert = *(node->mColors[j] + i);
             colors.push_back({ vert.r, vert.g, vert.b, vert.a });
+        }
+    }
+
+    if (node->GetNumColorChannels() < output.colors.size())
+    {
+        for (size_t j = node->GetNumColorChannels(); j < output.colors.size(); j++)
+        {
+            std::vector<vector4>& colors = output.colors[j];
+            colors.reserve(colors.size() + node->mNumVertices);
+
+            for (size_t i = 0; i < node->mNumVertices; i++)
+            {
+                colors.push_back({ 1.0f, 1.0f, 1.0f, 1.0f });
+            }
         }
     }
 
@@ -292,6 +299,20 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
             return nullptr;
         }
     }
+
+    // Figure out the max number of uv/color channels in mesh.
+    context.uv_channel_count = 0;
+    context.color_channel_count = 0;
+
+    for (size_t i = 0; i < scene->mNumMeshes; i++)
+    {
+        aiMesh* mesh = scene->mMeshes[i];
+        context.uv_channel_count = std::max(context.uv_channel_count, (size_t)mesh->GetNumUVChannels());
+        context.color_channel_count = std::max(context.color_channel_count, (size_t)mesh->GetNumColorChannels());
+    }
+
+    context.uvs.resize(context.uv_channel_count);
+    context.colors.resize(context.color_channel_count);
 
     // Import all meshes in scene.
     if (!walk_scene(scene->mRootNode, scene, context, matrix4::identity))

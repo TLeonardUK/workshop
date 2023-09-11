@@ -273,7 +273,7 @@ result<void> renderer::destroy_resources()
 
 result<void> renderer::load_debug_models()
 {
-    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/debug/sphere.yaml", 0);
+    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/primitives/sphere.yaml", 0);
 
     for (size_t i = 0; i < m_debug_models.size(); i++)
     {

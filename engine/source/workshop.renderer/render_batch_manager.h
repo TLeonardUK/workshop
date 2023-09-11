@@ -133,7 +133,7 @@ class render_batch
 public:
     render_batch(render_batch_key key, renderer& render);
 
-    render_batch_key get_key();
+    const render_batch_key& get_key();
     const std::vector<render_batch_instance>& get_instances();
 
     void clear();

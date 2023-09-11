@@ -14,6 +14,17 @@ namespace ws {
 class object_manager;
 class component;
 
+// Defines what caused a component to be modified. Systems may wish to treat modifications
+// differently depending on if they are user-initiated or just via something like serialization.
+enum class component_modification_source
+{
+    // Component was modified by the user in the editor.
+    user = 0,
+
+    // Component was modified due to contents being deserialized from an external source.
+    serialization = 1,
+};
+
 // ================================================================================================
 //  Base class for all systems.
 // 
@@ -46,7 +57,7 @@ public:
     // Notifies that a reflected field in the component has been modified. In general 
     // this should only be invoked by the editor when changing reflected fields. When this
     // occurs the system should make any changes needed to apply the changes.
-    virtual void component_modified(object handle, component* comp) {}
+    virtual void component_modified(object handle, component* comp, component_modification_source source) {}
 
     // Runs all commands currently in the systems command queue. Should be called at least
     // once a frame to avoid it building up.

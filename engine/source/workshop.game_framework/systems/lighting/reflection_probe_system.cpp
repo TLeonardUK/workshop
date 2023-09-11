@@ -42,7 +42,7 @@ void reflection_probe_system::component_removed(object handle, component* comp)
     });
 }
 
-void reflection_probe_system::component_modified(object handle, component* comp)
+void reflection_probe_system::component_modified(object handle, component* comp, component_modification_source source)
 {
     reflection_probe_component* component = dynamic_cast<reflection_probe_component*>(comp);
     if (!component)
