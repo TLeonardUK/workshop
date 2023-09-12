@@ -179,6 +179,9 @@ public:
 	// Gets all the vertex streams in this geometry.
 	std::vector<geometry_vertex_stream>& get_vertex_streams();
 
+	// Gets a geometry stream with the given name.
+	geometry_vertex_stream* find_vertex_stream(const char* name);
+
     // Gets all the meshes in this geometry.
     std::vector<geometry_mesh>& get_meshes();
 

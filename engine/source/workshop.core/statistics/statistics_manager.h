@@ -56,6 +56,12 @@ public:
     // Gets the average of all samples in the history.
     double average_value();
 
+    // Gets the minimum value in the sample history.
+    double min_value();
+
+    // Gets the maximum value in the sample history.
+    double max_value();
+
     // Gets the name of this channel.
     const char* get_name();
 

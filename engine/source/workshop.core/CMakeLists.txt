@@ -109,6 +109,8 @@ SET(SOURCES
     "math/vector3.h"
     "math/vector3.cpp"
     "math/vector4.h"
+    "math/ray.h"
+    "math/triangle.h"
     
     "drawing/color.h"
     "drawing/pixmap.h"

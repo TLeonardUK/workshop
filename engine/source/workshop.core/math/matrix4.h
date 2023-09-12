@@ -743,6 +743,18 @@ inline base_vector3<T> operator*(const base_vector3<T>& vec, const base_matrix4<
 }
 
 template <typename T>
+inline base_vector4<T> operator*(const base_vector4<T>& vec, const base_matrix4<T>& mat)
+{
+	base_vector4<T> result(
+		(vec.x * mat.columns[0][0] + vec.y * mat.columns[0][1] + vec.z * mat.columns[0][2] + vec.w * mat.columns[0][3]),
+		(vec.x * mat.columns[1][0] + vec.y * mat.columns[1][1] + vec.z * mat.columns[1][2] + vec.w * mat.columns[1][3]),
+		(vec.x * mat.columns[2][0] + vec.y * mat.columns[2][1] + vec.z * mat.columns[2][2] + vec.w * mat.columns[2][3]),
+		(vec.x * mat.columns[3][0] + vec.y * mat.columns[3][1] + vec.z * mat.columns[3][2] + vec.w * mat.columns[3][3])
+	);
+	return result;
+}
+
+template <typename T>
 inline base_matrix4<T> operator/(const base_matrix4<T>& first, float second)
 {
 	return base_matrix4<T>(first) /= second;

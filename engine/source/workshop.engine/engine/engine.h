@@ -10,6 +10,7 @@
 #include "workshop.input_interface/input_interface.h"
 #include "workshop.platform_interface/platform_interface.h"
 #include "workshop.window_interface/window_interface.h"
+#include "workshop.physics_interface/physics_interface.h"
 #include "workshop.engine/presentation/presenter.h"
 #include "workshop.editor/editor/editor.h"
 #include "workshop.core/utils/frame_time.h"
@@ -67,6 +68,9 @@ public:
     // Gets the input instance.
     input_interface& get_input_interface();
 
+    // Gets the physics instance.
+    physics_interface& get_physics_interface();
+
     // Gets the platform instance.
     platform_interface& get_platform_interface();
 
@@ -111,6 +115,9 @@ public:
 
     // Sets the input system to use, immutable once engine is initialized.
     void set_input_interface_type(input_interface_type type);
+
+    // Sets the physics system to use, immutable once engine is initialized.
+    void set_physics_interface_type(physics_interface_type type);
 
     // Sets the platform system to use, immutable once engine is initialized.
     void set_platform_interface_type(platform_interface_type type);
@@ -174,6 +181,9 @@ private:
     result<void> create_input_interface(init_list& list);
     result<void> destroy_input_interface();
 
+    result<void> create_physics_interface(init_list& list);
+    result<void> destroy_physics_interface();
+
     result<void> create_platform_interface(init_list& list);
     result<void> destroy_platform_interface();
 
@@ -204,6 +214,7 @@ protected:
     std::unique_ptr<ri_interface> m_render_interface;
     std::unique_ptr<input_interface> m_input_interface;
     std::unique_ptr<platform_interface> m_platform_interface;
+    std::unique_ptr<physics_interface> m_physics_interface;
 
     std::unique_ptr<editor> m_editor;
     std::unique_ptr<memory_tracker> m_memory_tracker;
@@ -220,6 +231,7 @@ protected:
     window_interface_type m_window_interface_type = window_interface_type::sdl;
     input_interface_type m_input_interface_type = input_interface_type::sdl;
     platform_interface_type m_platform_interface_type = platform_interface_type::sdl;
+    physics_interface_type m_physics_interface_type = physics_interface_type::jolt;
 
     system_registration_callback_t m_system_registration_callback = nullptr;
 

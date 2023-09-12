@@ -32,6 +32,9 @@ add_subdirectory(workshop.window_interface.sdl)
 add_subdirectory(workshop.input_interface)
 add_subdirectory(workshop.input_interface.sdl)
 
+add_subdirectory(workshop.physics_interface)
+add_subdirectory(workshop.physics_interface.jolt)
+
 # ================================================================================================
 #  Tier 2 - Engine functionality
 # ================================================================================================

@@ -78,6 +78,7 @@ void example_game_app::configure_engine(engine& engine)
     engine.set_window_interface_type(window_interface_type::sdl);
     engine.set_input_interface_type(input_interface_type::sdl);
     engine.set_platform_interface_type(platform_interface_type::sdl);
+    engine.set_physics_interface_type(physics_interface_type::jolt);
     engine.set_window_mode(get_name(), 1920, 1080, ws::window_mode::windowed);
     engine.set_system_registration_callback([](object_manager& obj_manager) {
         register_default_systems(obj_manager);

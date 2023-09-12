@@ -32,9 +32,11 @@
 #include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
-#include "workshop.game_framework/systems/transform/bounds_system.h"
 #include "workshop.game_framework/components/lighting/directional_light_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
+
+#include "workshop.game_framework/systems/transform/bounds_system.h"
+#include "workshop.game_framework/systems/transform/object_pick_system.h"
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
@@ -278,6 +280,10 @@ result<void> editor::destroy_windows()
 result<void> editor::create_world(init_list& list)
 {
     new_scene();
+
+    // Grab some statistics.
+    m_stats_frame_rate = m_engine.get_statistics_manager().find_or_create_channel("frame rate");
+
     return true;
 }
 
@@ -656,7 +662,6 @@ void editor::step(const frame_time& time)
 	{
 		set_editor_mode(m_editor_mode == editor_mode::editor ? editor_mode::game : editor_mode::editor);
 	}
-
 	// Change input state depending on mode.
 	bool needs_input = (m_editor_mode != editor_mode::editor);
 	input.set_mouse_hidden(needs_input);
@@ -685,14 +690,71 @@ void editor::step(const frame_time& time)
     // into the viewport but we don't wish to treat it as though it is.
     viewport_rect.Expand(-10.0f);
 
-    m_engine.set_mouse_over_viewport(
-        ImGui::IsMouseHoveringRect(viewport_rect.Min, viewport_rect.Max, false) && 
-        !ImGuizmo::IsUsingAny() && 
-        !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup));
+    bool mouse_over_viewport =
+        ImGui::IsMouseHoveringRect(viewport_rect.Min, viewport_rect.Max, false) &&
+        !ImGuizmo::IsUsingAny() &&
+        !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup);
+
+    m_engine.set_mouse_over_viewport(mouse_over_viewport);
+
+    update_object_picking(mouse_over_viewport);
+}
+
+void editor::update_object_picking(bool mouse_over_viewport)
+{
+    input_interface& input = m_engine.get_input_interface();
+    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
+    ImGuiIO& imgui_io = ImGui::GetIO();
+
+    // Do select pick if we release mouse over the viewport and no imgui is active.
+    if (input.was_key_hit(input_key::mouse_left) && mouse_over_viewport && !m_pick_object_query.valid())
+    {
+        component_filter<camera_component, const transform_component> filter(obj_manager);
+        if (filter.size() > 0)
+        {
+            vector2 mouse_pos = input.get_mouse_position();
+            vector2 screen_space_pos = vector2(
+                mouse_pos.x / imgui_io.DisplaySize.x,
+                mouse_pos.y / imgui_io.DisplaySize.y
+            );
+
+            object_pick_system& pick_system = *obj_manager.get_system<object_pick_system>();
+            m_pick_object_query = pick_system.pick(filter.get_object(0), screen_space_pos);
+
+            m_pick_object_add_to_selected = input.is_key_down(input_key::shift);
+        }
+    }
+
+    // If we have a pick object query ongoing pick up the result if its finished.
+    if (m_pick_object_query.valid())
+    {
+        if (m_pick_object_query.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+        {
+            object picked_object = m_pick_object_query.get();
+            if (obj_manager.is_object_alive(picked_object))
+            {
+                std::vector<object> new_selection = m_selected_objects;
+
+                if (m_pick_object_add_to_selected)
+                {
+                    new_selection.push_back(picked_object);
+                }
+                else
+                {
+                    new_selection = { picked_object };
+                }
+
+                set_selected_objects(new_selection);
+            }
+            m_pick_object_query = {};
+        }
+    }
 }
 
 void editor::draw_dockspace()
 {
+    ImGuiIO& imgui_io = ImGui::GetIO();
+
 	ImGuiWindowFlags window_flags = 
 		ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
 		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | 
@@ -726,12 +788,23 @@ void editor::draw_dockspace()
 	ImGui::Begin("Dockspace", nullptr, window_flags);
 		ImGui::PopStyleVar(3);
 
-		if (ImGui::BeginMainMenuBar())
+        // Draw main menu.	
+        if (ImGui::BeginMainMenuBar())
 		{
             m_main_menu->draw();
 		}
+
+        // Draw fps stats on right hand side of main menu bar.
+        std::string text = string_format("FPS [%i..%i]", (int)m_stats_frame_rate->min_value(), (int)m_stats_frame_rate->max_value());
+        ImVec2 text_size = ImGui::CalcTextSize(text.c_str());
+        ImVec2 after_menu_cursor = ImGui::GetCursorPos();
+        ImGui::SetCursorPos(ImVec2(imgui_io.DisplaySize.x - text_size.x - 5, 0));
+        ImGui::Text("%s", text.c_str());
+        ImGui::SetCursorPos(after_menu_cursor);
+
 		ImGui::EndMainMenuBar();
 
+        // Draw the main dockspace.
 		m_dockspace_id = ImGui::GetID("MainDockspace");
 		ImGui::DockSpace(m_dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
 

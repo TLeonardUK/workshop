@@ -13,6 +13,7 @@
 #include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/transform/bounds_system.h"
+#include "workshop.game_framework/systems/transform/object_pick_system.h"
 
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
@@ -54,6 +55,7 @@ void register_default_systems(object_manager& manager)
 
     manager.register_system<transform_system>();
     manager.register_system<bounds_system>();
+    manager.register_system<object_pick_system>();
 
     manager.register_system<camera_system>();
     manager.register_system<directional_light_system>();

@@ -19,8 +19,19 @@ namespace ws {
 
 bounds_system::bounds_system(object_manager& manager)
     : system(manager, "bounds system")
+    , m_oct_tree(k_octtree_extents, k_octtree_max_depth)
 {
     add_predecessor<transform_system>();    
+}
+
+void bounds_system::component_removed(object handle, component* comp)
+{
+    bounds_component* bounds = dynamic_cast<bounds_component*>(comp);
+    if (bounds && bounds->octree_token.is_valid())
+    {
+        m_oct_tree.remove(bounds->octree_token);
+        bounds->octree_token = {};
+    }
 }
 
 void bounds_system::step(const frame_time& time)
@@ -29,6 +40,9 @@ void bounds_system::step(const frame_time& time)
     renderer& render = engine.get_renderer();
     render_command_queue& render_command_queue = render.get_command_queue();
 
+    std::vector<std::pair<object, bounds_component*>> modified_bounds;
+
+    // Calculate bounds for any components with static meshes.
     component_filter<transform_component, bounds_component, static_mesh_component> filter(m_manager);
     for (size_t i = 0; i < filter.size(); i++)
     {
@@ -54,6 +68,8 @@ void bounds_system::step(const frame_time& time)
             bounds->last_model_version = mesh->model.get_version();
             bounds->is_valid = true;
             bounds->has_bounds_source = true;
+
+            modified_bounds.push_back({ obj, bounds });
         }
     }
 
@@ -73,6 +89,21 @@ void bounds_system::step(const frame_time& time)
             bounds->local_bounds = obb(unit_bounds, matrix4::identity);
             bounds->world_bounds = obb(unit_bounds, transform->local_to_world);
             bounds->is_valid = true;
+
+            modified_bounds.push_back({ obj, bounds });
+        }
+    }
+
+    // All components that have had their bounds changed need to update their octtree registration.
+    for (auto& [obj, bounds] : modified_bounds)
+    {
+        if (bounds->octree_token.is_valid())
+        {
+            bounds->octree_token = m_oct_tree.modify(bounds->octree_token, bounds->world_bounds.get_aligned_bounds(), obj);
+        }
+        else
+        {
+            bounds->octree_token = m_oct_tree.insert(bounds->world_bounds.get_aligned_bounds(), obj);
         }
     }
 
@@ -144,6 +175,19 @@ obb bounds_system::get_combined_bounds(const std::vector<object>& objects, vecto
     }
 
     return object_bounds;
+}
+
+std::vector<object> bounds_system::intersects(const ray& target_ray)
+{
+    std::vector<object> result;
+
+    oct_tree<object>::intersect_result intersections = m_oct_tree.intersect(target_ray, false, false);
+    for (auto& entry : intersections.entries)
+    {
+        result.push_back(entry->value);
+    }
+
+    return result;
 }
 
 }; // namespace ws

@@ -6,6 +6,7 @@
 
 #include "workshop.engine/ecs/system.h"
 #include "workshop.core/math/vector2.h"
+#include "workshop.core/math/ray.h"
 
 namespace ws {
 
@@ -29,6 +30,12 @@ public:
 
     // Sets the projection settings for a given camera.
     void set_projection(object handle, float fov, float aspect_ratio, float min_depth, float max_depth);
+
+    // Converts an on screen location to a world space position. Screen location is in 0-1 coordinates.
+    vector3 screen_to_world_space(object handle, vector3 screen_space_position);
+
+    // Returns the ray from the cammera, that passes through the given 0-1 coordinates in screen space.
+    ray screen_to_ray(object handle, vector2 screen_space_position);
 
 private:
     vector2 m_last_screen_size;

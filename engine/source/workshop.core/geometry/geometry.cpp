@@ -185,6 +185,18 @@ std::vector<geometry_vertex_stream>& geometry::get_vertex_streams()
     return m_streams;
 }
 
+geometry_vertex_stream* geometry::find_vertex_stream(const char* name)
+{
+    for (geometry_vertex_stream& stream : m_streams)
+    {
+        if (stream.name == name)
+        {
+            return &stream;
+        }
+    }
+    return nullptr;
+}
+
 std::vector<geometry_material>& geometry::get_materials()
 {
     return m_materials;

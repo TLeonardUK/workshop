@@ -406,7 +406,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::albedo;
+    visualization_mode m_visualization_mode = visualization_mode::normal;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

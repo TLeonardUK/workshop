@@ -10,6 +10,7 @@
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/math/obb.h"
 #include "workshop.core/async/async.h"
+#include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.assets/asset_manager.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/assets/scene/scene.h"
@@ -20,6 +21,8 @@
 
 #include "thirdparty/imgui/imgui.h"
 #include "thirdparty/ImGuizmo/ImGuizmo.h"
+
+#include <future>
 
 namespace ws {
 
@@ -122,6 +125,8 @@ protected:
     void draw_dockspace();
     void draw_viewport_toolbar();
 
+    void update_object_picking(bool mouse_over_viewport);
+
     void reset_dockspace_layout();
 
     void reset_scene_state();
@@ -164,6 +169,10 @@ protected:
     ImGuiID m_dockspace_id = 0;
     bool m_set_default_dock_space = false;
 
+    // Object selection
+    std::future<object> m_pick_object_query;
+    bool m_pick_object_add_to_selected = false;
+
     // Scene State
 
     struct object_state
@@ -195,6 +204,7 @@ protected:
     task_handle m_pending_save_scene;
 
     // Snap options.
+
     float k_translation_snap_options[8] = {
         1.0f,
         10.0f,
@@ -231,6 +241,10 @@ protected:
     float m_translate_snap = 100.0f;
     float m_rotation_snap = 10.0f;
     float m_scale_snap = 0.1f;
+
+    // Statistics
+
+    statistics_channel* m_stats_frame_rate;
 
 };
 

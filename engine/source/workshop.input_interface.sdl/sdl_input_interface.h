@@ -30,6 +30,7 @@ public:
     virtual bool is_key_down(input_key key) override;
     virtual bool was_key_pressed(input_key key) override;
     virtual bool was_key_released(input_key key) override;
+    virtual bool was_key_hit(input_key key) override;
 
     virtual std::string get_clipboard_text() override;
     virtual void set_clipboard_text(const char* text) override;
@@ -62,11 +63,15 @@ protected:
 
 private:
 
+    // How quickly (in seconds) we need to press and release a key to be counted as a hit.
+    inline static constexpr float k_hit_interval = 0.3f;
+
     enum class key_state_flags : int
     {
         down = 1,
         pressed = 2,
         released = 4,
+        hit = 8
     };
 
     int m_mouse_x;
@@ -75,6 +80,7 @@ private:
     const Uint8* m_keyboard_state;
 
     std::array<int, (int)input_key::count> m_key_states;
+    std::array<double, (int)input_key::count> m_key_down_start_time;    
 
     std::array<SDL_Cursor*, (int)input_cursor::count> m_mouse_cursors;
 

@@ -7,6 +7,7 @@
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.renderer/render_command_queue.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
@@ -40,6 +41,49 @@ void camera_system::set_projection(object handle, float fov, float aspect_ratio,
             }
         }
     });
+}
+
+vector3 camera_system::screen_to_world_space(object handle, vector3 screen_space_position)
+{
+    camera_component* camera = m_manager.get_component<camera_component>(handle);
+    if (!camera)
+    {
+        return {};
+    }
+
+    vector4 ndc_position;
+    ndc_position.x = screen_space_position.x * 2.0f - 1.0f;
+    ndc_position.y = 1.0f - screen_space_position.y * 2.0f;
+    ndc_position.z = screen_space_position.z * 2.0f  - 1.0f;
+    ndc_position.w = 1.0f;
+
+    // ndc -> view space
+    vector4 eye_coords = ndc_position * camera->projection_matrix.inverse();
+
+    // view space -> world space
+    vector4 world_coords = eye_coords * camera->view_matrix.inverse();
+
+    // Undo perspective divide.
+    if (fabs(0.0f - world_coords.w) > 0.00001f)
+    {
+        world_coords *= 1.0f / world_coords.w;
+    }
+
+    return vector3(world_coords.x, world_coords.y, world_coords.z);    
+}
+
+ray camera_system::screen_to_ray(object handle, vector2 screen_space_position)
+{
+    camera_component* camera = m_manager.get_component<camera_component>(handle);
+    if (!camera)
+    {
+        return {};
+    }
+
+    vector3 near = screen_to_world_space(handle, vector3(screen_space_position.x, screen_space_position.y, 0.0f));
+    vector3 far = screen_to_world_space(handle, vector3(screen_space_position.x, screen_space_position.y, 1.0f));
+
+    return ray(near, far);
 }
 
 void camera_system::component_removed(object handle, component* comp)

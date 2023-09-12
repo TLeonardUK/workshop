@@ -7,6 +7,7 @@
 #include "workshop.core/math/aabb.h"
 #include "workshop.core/math/sphere.h"
 #include "workshop.core/math/frustum.h"
+#include "workshop.core/math/ray.h"
 #include "workshop.core/async/async.h"
 #include "workshop.core/utils/time.h"
 
@@ -125,6 +126,7 @@ public:
     // 
     // If coarse is set then only the aabb of the cell containing the elements
     // is checked, otherwise the bounds of each individual element is checked.
+    intersect_result intersect(const ray& bounds, bool coarse, bool parallel = false) const;
     intersect_result intersect(const sphere& bounds, bool coarse, bool parallel = false) const;
     intersect_result intersect(const aabb& bounds, bool coarse, bool parallel = false) const;
     intersect_result intersect(const frustum& bounds, bool coarse, bool parallel = false) const;
@@ -296,6 +298,20 @@ oct_tree<element_type>::cell_list_t oct_tree<element_type>::get_cells()
     {
         result.push_back(entry.get());
     }
+    return result;
+}
+
+template <typename element_type>
+oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const ray& bounds, bool coarse, bool parallel) const
+{
+    intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
+        return bounds.intersects(cell_bounds);
+    };
+
+    intersect_result result;
+    get_cells(result, get_root(), func);
+    get_elements(result, func, coarse, parallel);
+
     return result;
 }
 

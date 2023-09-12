@@ -66,6 +66,7 @@ target_link_libraries(${PROJECT_NAME}
     workshop.window_interface
     workshop.input_interface
     workshop.platform_interface
+    workshop.physics_interface
     workshop.editor
     "$<$<CONFIG:Debug>:${NON_RELEASE_LIBS}>"
     "$<$<CONFIG:Profile>:${NON_RELEASE_LIBS}>"

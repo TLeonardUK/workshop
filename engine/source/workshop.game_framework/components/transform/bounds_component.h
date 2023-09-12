@@ -10,6 +10,7 @@
 #include "workshop.core/math/vector3.h"
 #include "workshop.core/math/matrix4.h"
 #include "workshop.core/math/obb.h"
+#include "workshop.core/containers/oct_tree.h"
 #include "workshop.core/reflection/reflect.h"
 
 namespace ws {
@@ -44,6 +45,9 @@ protected:
     // True if component has valid components to calculate bounds from. If false, a default
     // bounds will be calculated.
     bool has_bounds_source = false;
+
+    // Represents an entry into the bounds octree.
+    oct_tree<object>::token octree_token;
 
 public:
 

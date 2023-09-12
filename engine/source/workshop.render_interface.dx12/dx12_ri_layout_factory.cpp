@@ -143,6 +143,7 @@ void dx12_ri_layout_factory::add(const char* field_name, const std::span<uint8_t
             uint8_t* dst = m_buffer.data() + (i * m_element_size) + field.offset;
 
             // Compress if required.
+            // TODO: Figure out how to move all of these to happen during asset compilation.
             if (field.type == ri_data_type::t_compressed_unit_vector)
             {
                 if (type != ri_data_type::t_float3)

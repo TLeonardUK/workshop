@@ -30,7 +30,7 @@ private:
 
     // How much we have to move the mouse after first pressing button
     // before capturing the mouse.
-    constexpr inline static float k_movement_capture_threshold = 2.0f;
+    constexpr inline static float k_movement_capture_threshold = 8.0f;
 
 };
 

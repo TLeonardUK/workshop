@@ -113,6 +113,30 @@ void statistics_channel::clear()
     m_aggregate_samples = 0;
 }
 
+double statistics_channel::min_value()
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (m_samples.empty())
+    {
+        return 0.0;
+    }
+
+    return std::min_element(m_samples.begin(), m_samples.end(), [](auto& a, auto& b) { return a.value < b.value;  })->value;
+}
+
+double statistics_channel::max_value()
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (m_samples.empty())
+    {
+        return 0.0;
+    }
+
+    return std::max_element(m_samples.begin(), m_samples.end(), [](auto& a, auto& b) { return a.value < b.value;  })->value;
+}
+
 double statistics_channel::current_value()
 {
     std::scoped_lock lock(m_mutex);

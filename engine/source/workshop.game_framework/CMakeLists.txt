@@ -45,6 +45,8 @@ SET(SOURCES
     "systems/transform/transform_system.cpp"    
     "systems/transform/bounds_system.h"  
     "systems/transform/bounds_system.cpp"    
+    "systems/transform/object_pick_system.h"  
+    "systems/transform/object_pick_system.cpp"    
     
     "systems/default_systems.h"    
     "systems/default_systems.cpp"    

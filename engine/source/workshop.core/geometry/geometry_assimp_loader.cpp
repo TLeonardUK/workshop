@@ -320,6 +320,20 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         return nullptr;
     }
 
+    // Normalize all normal values. Some models have these as non-unit vectors which causes issues elsewhere in the engine.
+    for (vector3& input : context.normals)
+    {
+        input = input.normalize();
+    }
+    for (vector3& input : context.tangents)
+    {
+        input = input.normalize();
+    }
+    for (vector3& input : context.bitangents)
+    {
+        input = input.normalize();
+    }
+
     // Import all skeletons.
     // TODO
 

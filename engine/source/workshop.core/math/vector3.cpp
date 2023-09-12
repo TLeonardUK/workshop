@@ -32,7 +32,7 @@ vector3 decompress_unit_vector(float input)
     ret.y = (ret.y / 255.0f * 2.0f) - 1.0f;
     ret.z = (ret.z / 255.0f * 2.0f) - 1.0f;
 
-    return ret;
+    return ret.normalize();
 }
 
 }; // namespace workshop

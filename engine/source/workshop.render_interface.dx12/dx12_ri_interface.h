@@ -32,15 +32,15 @@ public:
     // Maximum amount of descriptors in each table.
     constexpr static std::array<size_t, static_cast<int>(ri_descriptor_table::COUNT)> k_descriptor_table_sizes = {
         100,    // texture_1d
-        10000,  // texture_2d
+        100000, // texture_2d
         1000,   // texture_3d
         100,    // texture_cube
         100,    // sampler
-        50000,  // buffer
-        50000,  // rwbuffer
-        500,    // rwtexture_2d
-        500,    // render_target
-        100,    // depth_stencil
+        100000, // buffer
+        100000, // rwbuffer
+        1000,   // rwtexture_2d
+        1000,   // render_target
+        1000,   // depth_stencil
     };
 
     // Maximum amount of queries that can be allocated.

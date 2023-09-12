@@ -38,6 +38,9 @@
 #include "workshop.platform_interface/platform_interface.h"
 #include "workshop.platform_interface.sdl/sdl_platform_interface.h"
 
+#include "workshop.physics_interface/physics_interface.h"
+#include "workshop.physics_interface.jolt/jolt_physics_interface.h"
+
 #include "workshop.render_interface/ri_interface.h"
 
 #ifdef WS_WINDOWS
@@ -159,6 +162,11 @@ void engine::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_input_interface(); }
     );
     list.add_step(
+        "Physics Interface",
+        [this, &list]() -> result<void> { return create_physics_interface(list); },
+        [this, &list]() -> result<void> { return destroy_physics_interface(); }
+    );
+    list.add_step(
         "Renderer",
         [this, &list]() -> result<void> { return create_renderer(list); },
         [this, &list]() -> result<void> { return destroy_renderer(); }
@@ -188,6 +196,11 @@ ri_interface& engine::get_render_interface()
 input_interface& engine::get_input_interface()
 {
     return *m_input_interface.get();
+}
+
+physics_interface& engine::get_physics_interface()
+{
+    return *m_physics_interface.get();
 }
 
 platform_interface& engine::get_platform_interface()
@@ -263,6 +276,11 @@ void engine::set_window_interface_type(window_interface_type type)
 void engine::set_input_interface_type(input_interface_type type)
 {
     m_input_interface_type = type;
+}
+
+void engine::set_physics_interface_type(physics_interface_type type)
+{
+    m_physics_interface_type = type;
 }
 
 void engine::set_platform_interface_type(platform_interface_type type)
@@ -530,6 +548,33 @@ result<void> engine::destroy_input_interface()
     return true;
 }
 
+result<void> engine::create_physics_interface(init_list& list)
+{
+    switch (m_physics_interface_type)
+    {
+    case physics_interface_type::jolt:
+        {
+            m_physics_interface = std::make_unique<jolt_physics_interface>();
+            m_physics_interface->register_init(list);
+            break;
+        }
+    default:
+        {
+            db_error(core, "Physics interface type requested is not implemented.");
+            return standard_errors::no_implementation;
+        }
+    }
+
+    return true;
+}
+
+result<void> engine::destroy_physics_interface()
+{
+    m_physics_interface = nullptr;
+
+    return true;
+}
+
 result<void> engine::create_platform_interface(init_list& list)
 {
     switch (m_platform_interface_type)
@@ -624,7 +669,6 @@ result<void> engine::destroy_main_window()
     m_window = nullptr;
     return true;
 }
-
 
 result<void> engine::create_default_world(init_list& list)
 {

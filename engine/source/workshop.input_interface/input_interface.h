@@ -349,6 +349,10 @@ public:
     virtual bool was_key_pressed(input_key key) = 0;
     virtual bool was_key_released(input_key key) = 0;
 
+    // This is true if the key was pressed and released quickly (like a mouse click/etc), long
+    // holds do not trigger this.
+    virtual bool was_key_hit(input_key key) = 0;
+
     // Gets or sets the current clipboard text.
     virtual std::string get_clipboard_text() = 0;
     virtual void set_clipboard_text(const char* text) = 0;

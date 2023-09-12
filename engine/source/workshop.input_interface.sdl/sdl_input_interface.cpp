@@ -8,6 +8,7 @@
 #include "workshop.platform_interface/platform_interface.h"
 #include "workshop.platform_interface.sdl/sdl_platform_interface.h"
 #include "workshop.core/perf/profile.h"
+#include "workshop.core/utils/time.h"
 
 #include "thirdparty/sdl2/include/SDL.h"
 
@@ -218,13 +219,22 @@ void sdl_input_interface::update_key_state(int keyIndex, bool down)
         else
         {
             m_key_states[keyIndex] = (int)key_state_flags::down | (int)key_state_flags::pressed;
+            m_key_down_start_time[keyIndex] = get_seconds();
         }
     }
     else
     {
         if ((m_key_states[keyIndex] & (int)key_state_flags::down) != 0)
         {
-            m_key_states[keyIndex] = (int)key_state_flags::released;
+            double hold_time = (get_seconds() - m_key_down_start_time[keyIndex]);
+            if (hold_time < k_hit_interval)
+            {
+                m_key_states[keyIndex] = (int)key_state_flags::hit | (int)key_state_flags::released;
+            }
+            else
+            {
+                m_key_states[keyIndex] = (int)key_state_flags::released;
+            }
         }
         else
         {
@@ -292,6 +302,11 @@ bool sdl_input_interface::was_key_pressed(input_key key)
 bool sdl_input_interface::was_key_released(input_key key)
 {
     return (m_key_states[(int)key] & (int)key_state_flags::released) != 0;
+}
+
+bool sdl_input_interface::was_key_hit(input_key key)
+{
+    return (m_key_states[(int)key] & (int)key_state_flags::hit) != 0;
 }
 
 bool sdl_input_interface::is_modifier_down(input_key key)
