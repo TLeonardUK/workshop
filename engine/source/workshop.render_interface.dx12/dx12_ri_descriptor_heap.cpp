@@ -61,15 +61,19 @@ dx12_ri_descriptor_heap::allocation dx12_ri_descriptor_heap::allocate(size_t cou
     {
         db_fatal(render_interface, "Descriptor heap ran out of descriptors while trying to allocate %zi.", count);
     }
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE start_cpu;
+    D3D12_GPU_DESCRIPTOR_HANDLE start_gpu;
 
     D3D12_CPU_DESCRIPTOR_HANDLE heap_start_cpu(m_heap->GetCPUDescriptorHandleForHeapStart());
-    D3D12_GPU_DESCRIPTOR_HANDLE heap_start_gpu(m_heap->GetGPUDescriptorHandleForHeapStart());
-
-    D3D12_CPU_DESCRIPTOR_HANDLE start_cpu;
     start_cpu.ptr = reinterpret_cast<SIZE_T>(reinterpret_cast<char*>(heap_start_cpu.ptr) + (start_index * m_descriptor_increment));
 
-    D3D12_GPU_DESCRIPTOR_HANDLE start_gpu;
-    start_gpu.ptr = reinterpret_cast<SIZE_T>(reinterpret_cast<char*>(heap_start_gpu.ptr) + (start_index * m_descriptor_increment));
+    if (m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER ||
+        m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+    {
+        D3D12_GPU_DESCRIPTOR_HANDLE heap_start_gpu(m_heap->GetGPUDescriptorHandleForHeapStart());
+        start_gpu.ptr = reinterpret_cast<SIZE_T>(reinterpret_cast<char*>(heap_start_gpu.ptr) + (start_index * m_descriptor_increment));
+    }
 
     return allocation(start_cpu, start_gpu, start_index, m_descriptor_increment, count);
 }
