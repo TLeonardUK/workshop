@@ -58,6 +58,7 @@ bool win32_path_watcher::init(const std::filesystem::path& path)
 
     if (m_handle == INVALID_HANDLE_VALUE)
     {
+        db_log(core, "Failed to read file changes (GetLastError=0x%08x): %s", GetLastError(), path.string().c_str());
         return false;
     }
 

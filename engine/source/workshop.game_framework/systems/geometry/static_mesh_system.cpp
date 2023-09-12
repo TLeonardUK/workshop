@@ -53,7 +53,10 @@ void static_mesh_system::component_modified(object handle, component* comp, comp
     // If user modified the component, mark the materials vector as needing an update.
     if (source == component_modification_source::user)
     {
-        component->materials_array_needs_update = true;
+        if (component->model != component->last_model)
+        {
+            component->materials_array_needs_update = true;
+        }
     }
 
     component->is_dirty = true;
@@ -143,6 +146,8 @@ void static_mesh_system::step(const frame_time& time)
             light->last_transform_generation = transform->generation;
             render_command_queue.set_object_transform(light->render_id, transform->world_location, transform->world_rotation, transform->world_scale);
         }
+
+        light->last_model = light->model;
     }
 
     // Execute all commands after creating the render objects.

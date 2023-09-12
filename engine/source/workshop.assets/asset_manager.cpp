@@ -400,7 +400,7 @@ void asset_manager::request_load_lockless(asset_state* state)
     {
         state->is_pending = true;
 
-        db_log(core, "Queueing load: %s", state->path.c_str());
+        //db_log(core, "Queueing load: %s", state->path.c_str());
 
         // Insert into queue in priority order.
         auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
@@ -421,7 +421,7 @@ void asset_manager::request_unload_lockless(asset_state* state)
     {
         state->is_pending = true;
 
-        db_log(core, "Queueing unload: %s", state->path.c_str());
+        //db_log(core, "Queueing unload: %s", state->path.c_str());
 
         // Insert into queue in priority order.
         auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)

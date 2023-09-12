@@ -15,7 +15,7 @@ virtual_file_system_disk_handler::virtual_file_system_disk_handler(const std::st
     : m_root(root)
     , m_read_only(read_only)
 {
-    if (m_root.empty())
+    if (!m_root.empty())
     {
         m_path_watcher = watch_path(root);
     }

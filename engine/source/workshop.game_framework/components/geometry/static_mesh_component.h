@@ -49,6 +49,9 @@ private:
     // when the user modifies the model.
     bool materials_array_needs_update = false;
 
+    // Used to track when model has been modified and refresh materials/etc.
+    asset_ptr<ws::model> last_model;
+
 public:
 
     BEGIN_REFLECT(static_mesh_component, "Static Mesh", component, reflect_class_flags::none)

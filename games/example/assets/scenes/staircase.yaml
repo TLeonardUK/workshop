@@ -1,0 +1,3403 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    1:
+        meta_component:
+            name: main camera
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.0919935852
+                y:  -0.158609673
+                z:  0.0148444036
+                w:  0.982934237
+            local_location:
+                x:  -291.904175
+                y:  257.866425
+                z:  -283.403259
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        camera_component:
+            fov: 45
+            aspect_ratio: 1.76999998
+            min_depth: 10
+            max_depth: 20000
+        fly_camera_movement_component:
+            sensitivity: 0.00100000005
+            speed: 1500
+            zoom_speed: 50000
+            pan_speed: 50
+            max_vertical_angle: 0.800000012
+    2:
+        meta_component:
+            name: sun light
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.599847794
+                y:  0.153166294
+                z:  0.194290504
+                w:  0.760903299
+            local_location:
+                x:  0
+                y:  300
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        directional_light_component:
+            shadow_cascades: 3
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+            intensity: 1
+            range: 10000
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: true
+            shadow_map_size: 2048
+            shadow_map_distance: 10000
+    3:
+        meta_component:
+            name: skybox
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  10000
+                y:  10000
+                z:  10000
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/skyboxs/skybox_3.yaml
+            materials:
+                -   data:models/skyboxs/materials/skybox_3.yaml
+    4:
+        meta_component:
+            name: light probe grid
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  150.000244
+                y:  679.999634
+                z:  -130.000092
+            local_scale:
+                x:  2456.99951
+                y:  1693.99951
+                z:  4791.59912
+        bounds_component:
+            {}
+        light_probe_grid_component:
+            density: 150
+    5:
+        meta_component:
+            name: reflection probe
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -200.000046
+                y:  200.000061
+                z:  -20.0000153
+            local_scale:
+                x:  3999.99976
+                y:  3999.99976
+                z:  3999.99976
+        bounds_component:
+            {}
+        reflection_probe_component:
+            {}
+    6:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  600
+                y:  2.99999928
+                z:  200.000015
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    7:
+        meta_component:
+            name: staircase
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+    8:
+        meta_component:
+            name: middle_1
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_04_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    9:
+        meta_component:
+            name: middle_2
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  250
+                y:  150
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_04_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    10:
+        meta_component:
+            name: walls
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+    11:
+        meta_component:
+            name: top
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  500
+                y:  300
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    12:
+        meta_component:
+            name: bottom
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -70
+                y:  3
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    13:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  600
+                y:  2.99999928
+                z:  600
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    14:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  600
+                y:  2.99999928
+                z:  -200
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    15:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.35048136e-17
+                y:  0.000172764063
+                z:  -1.50982456e-11
+                w:  1
+            local_location:
+                x:  200
+                y:  2.99999952
+                z:  600.000366
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    16:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.35370008e-17
+                y:  0.000172764063
+                z:  -1.50984312e-11
+                w:  1
+            local_location:
+                x:  -200
+                y:  2.99999952
+                z:  600.00061
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    17:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.35668587e-17
+                y:  0.000172764063
+                z:  -1.50986047e-11
+                w:  1
+            local_location:
+                x:  -600.000244
+                y:  2.99999952
+                z:  600.000854
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    18:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.000366
+                y:  2.99999714
+                z:  200.001251
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    19:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.000488
+                y:  2.99999666
+                z:  -199.998779
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    20:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.00061
+                y:  2.99999619
+                z:  -599.998901
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    21:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.000854
+                y:  2.99999523
+                z:  -999.999146
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    22:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.000977
+                y:  2.99999475
+                z:  -1399.99915
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    23:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  2.23517489e-08
+            local_location:
+                x:  599.999939
+                y:  3.00000262
+                z:  -599.999939
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    24:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  -1.49011576e-08
+                y:  0.707106829
+                z:  -1.49011683e-08
+                w:  0.707106769
+            local_location:
+                x:  200.000198
+                y:  3.00000548
+                z:  -599.999939
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    25:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109468e-08
+                w:  -0.000172778949
+            local_location:
+                x:  -339.99295
+                y:  2.9998219
+                z:  -1399.99548
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    26:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109468e-08
+                w:  -0.000172778949
+            local_location:
+                x:  330.006927
+                y:  2.99982285
+                z:  -1399.99524
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    27:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  -1.49011594e-08
+                y:  0.707106829
+                z:  -1.49011647e-08
+                w:  0.707106769
+            local_location:
+                x:  200.000259
+                y:  3.00000572
+                z:  -999.999939
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    28:
+        meta_component:
+            name: handrail
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+    29:
+        meta_component:
+            name: bottom
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  3.17864917e-08
+            local_location:
+                x:  630
+                y:  403.000305
+                z:  -400.000122
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    30:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 28
+            local_rotation:
+                x:  1.39698364e-09
+                y:  -0.707106888
+                z:  -1.39698408e-09
+                w:  0.70710665
+            local_location:
+                x:  599.999512
+                y:  402.999664
+                z:  140.000305
+            local_scale:
+                x:  0.999999344
+                y:  1
+                z:  0.999999344
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_handrail_straight_lod0__uifnae2dw/aset_modular__m_uifnae2dw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_handrail_straight_lod0__uifnae2dw/materials/defaultmaterial.yaml
+    31:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400
+                y:  0
+                z:  400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    32:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    33:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  400
+                y:  0
+                z:  400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    34:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  400
+                y:  0
+                z:  0
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    35:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    36:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400
+                y:  0
+                z:  0
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    37:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  400
+                y:  0
+                z:  -400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    38:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.68587491e-07
+                y:  -5.96046448e-08
+                z:  -4.21468975e-08
+                w:  1
+            local_location:
+                x:  -510.000061
+                y:  1.20260163e-10
+                z:  -360.000031
+            local_scale:
+                x:  2
+                y:  2
+                z:  2
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/fireplace_lod0__ujdjcjxga/aset_antique_architecture_m_ujdjcjxga_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/fireplace_lod0__ujdjcjxga/materials/defaultmaterial.yaml
+    39:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400
+                y:  0
+                z:  -400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    40:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400
+                y:  0
+                z:  -800
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    41:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -800
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    42:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400
+                y:  0
+                z:  -1200
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    43:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -1200
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    44:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  399.999939
+                z:  -400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    45:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  399.999939
+                z:  0
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    46:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  399.999939
+                z:  400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    47:
+        meta_component:
+            name: top
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  3.17864917e-08
+            local_location:
+                x:  60.0008545
+                y:  699.995117
+                z:  -399.999451
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    48:
+        meta_component:
+            name: middle_2
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  3.17864917e-08
+            local_location:
+                x:  309.999756
+                y:  549.999878
+                z:  -400
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_04_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    49:
+        meta_component:
+            name: middle_1
+        transform_component:
+            parent: 7
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  3.17864917e-08
+            local_location:
+                x:  559.999817
+                y:  400.000275
+                z:  -400.000061
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/aset_interior_stair_m_wl3ieamdw_04_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_stairs_kit_lod0__wl3ieamdw/materials/matid_1.yaml
+    50:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  -200
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    51:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  200
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_window_wall_lod0__ugztdfmdw/aset_modular_medieval_m_ugztdfmdw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_window_wall_lod0__ugztdfmdw/materials/defaultmaterial.yaml
+    52:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  600
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    53:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  3.7252903e-08
+            local_location:
+                x:  999.999695
+                y:  403.000122
+                z:  -599.999878
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    54:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.3549071e-17
+                y:  0.000172764063
+                z:  -1.50985006e-11
+                w:  1
+            local_location:
+                x:  850.00061
+                y:  403
+                z:  600.00116
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugymbhrdw/aset_modular_medieval_m_ugymbhrdw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugymbhrdw/materials/defaultmaterial.yaml
+    55:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.35079899e-17
+                y:  0.000172764063
+                z:  -1.50982629e-11
+                w:  1
+            local_location:
+                x:  200.000031
+                y:  403
+                z:  600.000488
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    56:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.35399654e-17
+                y:  0.000172764063
+                z:  -1.50984485e-11
+                w:  1
+            local_location:
+                x:  -200
+                y:  403
+                z:  600.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    57:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.35700351e-17
+                y:  0.000172764063
+                z:  -1.5098622e-11
+                w:  1
+            local_location:
+                x:  -600.000916
+                y:  403
+                z:  600.000977
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    58:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.00061
+                y:  403.000061
+                z:  200.001282
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    59:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -599.999878
+                y:  403.000061
+                z:  -199.999176
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    60:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600
+                y:  403.000061
+                z:  -600.000488
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    61:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.000244
+                y:  403.000061
+                z:  -1000.00073
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    62:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.000366
+                y:  403.000061
+                z:  -1399.99915
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    63:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109468e-08
+                w:  -0.000172778949
+            local_location:
+                x:  -200.000427
+                y:  402.999756
+                z:  -1399.99915
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    64:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109468e-08
+                w:  -0.000172778949
+            local_location:
+                x:  200.00679
+                y:  402.999725
+                z:  -1399.99573
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    65:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.49011594e-08
+                y:  0.707106829
+                z:  -1.49011647e-08
+                w:  0.707106769
+            local_location:
+                x:  200.00029
+                y:  403.000061
+                z:  -999.999878
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    66:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.49011594e-08
+                y:  0.707106829
+                z:  -1.49011647e-08
+                w:  0.707106769
+            local_location:
+                x:  200.000259
+                y:  403.000061
+                z:  -599.999878
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    67:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  2.23517489e-08
+            local_location:
+                x:  600.000244
+                y:  403
+                z:  -600.00061
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    68:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_window_wall_lod0__ugztdfmdw/aset_modular_medieval_m_ugztdfmdw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_window_wall_lod0__ugztdfmdw/materials/defaultmaterial.yaml
+    69:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.35346715e-17
+                y:  0.000172764063
+                z:  -1.50984173e-11
+                w:  1
+            local_location:
+                x:  600.000122
+                y:  403
+                z:  600.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_door_lod0__ugywdfqdw/aset_modular_medieval_m_ugywdfqdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_door_lod0__ugywdfqdw/materials/defaultmaterial.yaml
+    70:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  399.999908
+                z:  799.999878
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    71:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  1000
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    72:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  1400
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    73:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  399.999908
+                z:  1199.99927
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    74:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1000
+                y:  403
+                z:  1800
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    75:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  399.999908
+                z:  1599.99817
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    76:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -2.72411853e-08
+                y:  -0.707106471
+                z:  -3.46917659e-08
+                w:  0.707107186
+            local_location:
+                x:  599.999634
+                y:  402.999725
+                z:  1400.00012
+            local_scale:
+                x:  0.999999642
+                y:  1
+                z:  0.999999642
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    77:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -2.72411853e-08
+                y:  -0.707106471
+                z:  -3.46917659e-08
+                w:  0.707107186
+            local_location:
+                x:  599.999634
+                y:  402.999664
+                z:  1000.00189
+            local_scale:
+                x:  0.999999642
+                y:  1
+                z:  0.999999642
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    78:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -2.72411853e-08
+                y:  -0.707106471
+                z:  -3.46917659e-08
+                w:  0.707107186
+            local_location:
+                x:  599.998962
+                y:  402.999756
+                z:  600.005005
+            local_scale:
+                x:  0.999999642
+                y:  1
+                z:  0.999999642
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    79:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.35725762e-17
+                y:  0.000172764063
+                z:  -1.50986376e-11
+                w:  1
+            local_location:
+                x:  330.000183
+                y:  2.99999952
+                z:  0.000671416521
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wcusdcxdw/aset_interior__m_wcusdcxdw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wcusdcxdw/materials/default_material.yaml
+    80:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.36964548e-17
+                y:  0.000172764063
+                z:  -1.50993541e-11
+                w:  1
+            local_location:
+                x:  330.000427
+                y:  2.99999952
+                z:  350.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    81:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.37102191e-17
+                y:  0.000172764063
+                z:  -1.50994339e-11
+                w:  1
+            local_location:
+                x:  330.000427
+                y:  103
+                z:  350.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    82:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.37180541e-17
+                y:  0.000172764063
+                z:  -1.5099479e-11
+                w:  1
+            local_location:
+                x:  330.000427
+                y:  223
+                z:  350.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    83:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.37297008e-17
+                y:  0.000172764063
+                z:  -1.50995466e-11
+                w:  1
+            local_location:
+                x:  330.000427
+                y:  423
+                z:  350.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    84:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.37385947e-17
+                y:  0.000172764063
+                z:  -1.50995987e-11
+                w:  1
+            local_location:
+                x:  330.000427
+                y:  543.005981
+                z:  350.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    85:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.37246186e-17
+                y:  0.000172764063
+                z:  -1.50995171e-11
+                w:  1
+            local_location:
+                x:  -349.999573
+                y:  2.99999952
+                z:  350.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    86:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  2.37771347e-17
+                y:  0.000172764063
+                z:  -1.50998207e-11
+                w:  1
+            local_location:
+                x:  330.000427
+                y:  743.006348
+                z:  350.000671
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_04_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    87:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.37383829e-17
+                y:  0.000172764063
+                z:  -1.50995969e-11
+                w:  1
+            local_location:
+                x:  -349.999573
+                y:  103
+                z:  350.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    88:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  0.000305175781
+                y:  799.999695
+                z:  400
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    89:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.3746218e-17
+                y:  0.000172764063
+                z:  -1.5099642e-11
+                w:  1
+            local_location:
+                x:  -349.999573
+                y:  223
+                z:  350.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    90:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.37578647e-17
+                y:  0.000172764063
+                z:  -1.50997097e-11
+                w:  1
+            local_location:
+                x:  -349.999573
+                y:  423
+                z:  350.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    91:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.37667585e-17
+                y:  0.000172764063
+                z:  -1.50997617e-11
+                w:  1
+            local_location:
+                x:  -349.999573
+                y:  543.01178
+                z:  350.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    92:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.38052985e-17
+                y:  0.000172764063
+                z:  -1.50999838e-11
+                w:  1
+            local_location:
+                x:  -349.999573
+                y:  743.012146
+                z:  350.000732
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/aset_building_pillar_m_wl2maivdw_04_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_pillar_lod0__wl2maivdw/materials/matid_1.yaml
+    93:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.38883077e-17
+                y:  0.000172764063
+                z:  -1.51004625e-11
+                w:  1
+            local_location:
+                x:  886.000977
+                y:  396
+                z:  9.00043869
+            local_scale:
+                x:  2
+                y:  2
+                z:  2
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/wooden_table_lod0__uc1kebzfa/aset_wood_other_m_uc1kebzfa_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/wooden_table_lod0__uc1kebzfa/materials/default_material.yaml
+    94:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -400
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    95:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.68587519e-07
+                y:  -5.96046306e-08
+                z:  -4.2146894e-08
+                w:  1
+            local_location:
+                x:  -350.000214
+                y:  8.45199952e-11
+                z:  -1439.99988
+            local_scale:
+                x:  1
+                y:  1.01999998
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_wooden_door_lod0__ugywcjzdw/aset_modular_medieval_m_ugywcjzdw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_wooden_door_lod0__ugywcjzdw/materials/defaultmaterial.yaml
+    96:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -6.38171373e-12
+                y:  0.422774822
+                z:  -1.36856785e-11
+                w:  0.906234741
+            local_location:
+                x:  886.000732
+                y:  499.000061
+                z:  9.00048065
+            local_scale:
+                x:  2.99999928
+                y:  2.99999905
+                z:  2.99999928
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/female_bust_statuette_lod0__ugsifedhw/aset_antique_sculpture_s_ugsifedhw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/female_bust_statuette_lod0__ugsifedhw/materials/defaultmaterial.yaml
+    97:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.39560704e-17
+                y:  0.000172764063
+                z:  -1.51008546e-11
+                w:  1
+            local_location:
+                x:  912.000977
+                y:  396
+                z:  152.000504
+            local_scale:
+                x:  2
+                y:  2
+                z:  2
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/wooden_chair___wjglai2s/aset_interior__m_wjglai2s_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/wooden_chair___wjglai2s/materials/default_material.yaml
+    98:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979013e-08
+            local_location:
+                x:  -399.999695
+                y:  799.999695
+                z:  400
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    99:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979084e-08
+            local_location:
+                x:  400.000275
+                y:  799.999695
+                z:  400
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    100:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  800.000244
+                y:  799.999695
+                z:  400
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    101:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  800.000244
+                y:  799.999695
+                z:  0
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    102:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979013e-08
+            local_location:
+                x:  400.000275
+                y:  799.999695
+                z:  0
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    103:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  0.000305175781
+                y:  799.999695
+                z:  0
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    104:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979084e-08
+            local_location:
+                x:  -399.999725
+                y:  799.999634
+                z:  0
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    105:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  800.000244
+                y:  799.999695
+                z:  -400
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    106:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  1.26659884e-07
+                z:  0
+                w:  1
+            local_location:
+                x:  199.999786
+                y:  802.999207
+                z:  -169.999847
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    107:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  600
+                y:  803.000427
+                z:  -179.999924
+            local_scale:
+                x:  1.10000002
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    108:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979013e-08
+            local_location:
+                x:  -399.999725
+                y:  799.999756
+                z:  -400
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    109:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  0.000305175781
+                y:  799.999695
+                z:  -800
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    110:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979084e-08
+            local_location:
+                x:  -399.999725
+                y:  799.999634
+                z:  -800
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    111:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979084e-08
+            local_location:
+                x:  0.000305175781
+                y:  799.999695
+                z:  -1200
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    112:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  -399.999725
+                y:  799.999695
+                z:  -1200
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    113:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  800.000244
+                y:  799.999695
+                z:  800
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    114:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979013e-08
+            local_location:
+                x:  800.000244
+                y:  799.999695
+                z:  1200
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    115:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979084e-08
+            local_location:
+                x:  800.000244
+                y:  799.999695
+                z:  1600
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    116:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  1.26659884e-07
+                z:  0
+                w:  1
+            local_location:
+                x:  -200.000183
+                y:  802.999084
+                z:  -169.999878
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    117:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  0
+                y:  1.26659884e-07
+                z:  0
+                w:  1
+            local_location:
+                x:  -590.000183
+                y:  802.99884
+                z:  -169.999939
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    118:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.10735447e-08
+                y:  -9.88413973e-08
+                z:  2.10735056e-08
+                w:  1
+            local_location:
+                x:  -590.000244
+                y:  802.997009
+                z:  -600.000244
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    119:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.10735447e-08
+                y:  -9.88413973e-08
+                z:  2.10735056e-08
+                w:  1
+            local_location:
+                x:  199.997345
+                y:  802.998169
+                z:  -599.998169
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    120:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.10735465e-08
+                y:  -9.88413902e-08
+                z:  2.10735074e-08
+                w:  1
+            local_location:
+                x:  -200.00061
+                y:  802.997498
+                z:  -600.000488
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    121:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  3.34510929e-14
+                y:  2.91047395e-11
+                z:  1
+                w:  0.000172809756
+            local_location:
+                x:  -99.9998016
+                y:  799.998413
+                z:  -399.999207
+            local_scale:
+                x:  195.839905
+                y:  9.99999428
+                z:  399.999695
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    122:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 10
+            local_rotation:
+                x:  1.39698386e-09
+                y:  -0.707106888
+                z:  -1.39698386e-09
+                w:  0.70710665
+            local_location:
+                x:  -600
+                y:  803.000977
+                z:  -619.999939
+            local_scale:
+                x:  1.09999919
+                y:  1
+                z:  0.999999702
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    123:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978871e-08
+            local_location:
+                x:  0.000305175752
+                y:  1209.99976
+                z:  -399.999969
+            local_scale:
+                x:  399.999817
+                y:  10.000001
+                z:  439.999878
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    124:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978871e-08
+            local_location:
+                x:  -399.999878
+                y:  1210.03613
+                z:  -399.999969
+            local_scale:
+                x:  399.999817
+                y:  10.000001
+                z:  439.999878
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    125:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978871e-08
+            local_location:
+                x:  400.000244
+                y:  1209.99927
+                z:  -399.999969
+            local_scale:
+                x:  399.999817
+                y:  10.000001
+                z:  439.999878
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    126:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -4.37932108e-08
+                y:  3.7997961e-07
+                z:  -5.26835642e-09
+                w:  1
+            local_location:
+                x:  599.999695
+                y:  402.999695
+                z:  1800
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    127:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.49011594e-08
+                y:  0.707106829
+                z:  -1.49011647e-08
+                w:  0.707106769
+            local_location:
+                x:  200.00032
+                y:  3.00000668
+                z:  -1800.00024
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    128:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.49011594e-08
+                y:  0.707106829
+                z:  -1.49011647e-08
+                w:  0.707106769
+            local_location:
+                x:  200.000244
+                y:  3.00000644
+                z:  -1399.98999
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    129:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.010437
+                y:  2.99994564
+                z:  -1799.99536
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    130:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.06723519e-11
+                y:  -0.706811905
+                z:  -1.0677681e-11
+                w:  0.707401514
+            local_location:
+                x:  -600.010559
+                y:  2.99994516
+                z:  -2199.99902
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    131:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400.000122
+                y:  -2.43186932e-05
+                z:  -1999.99084
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    132:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -0.00157165516
+                y:  -2.43186932e-05
+                z:  -1999.99084
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    133:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -0.00157165516
+                y:  -2.43186932e-05
+                z:  -1599.99243
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    134:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -400.000122
+                y:  -2.43186932e-05
+                z:  -1599.99243
+            local_scale:
+                x:  400.000031
+                y:  10.0000019
+                z:  400.000031
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
+    135:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54664242e-08
+                y:  -0.99999994
+                z:  7.54664384e-08
+                w:  0.000416868454
+            local_location:
+                x:  -200.010834
+                y:  2.99994731
+                z:  -2199.99561
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    136:
+        meta_component:
+            name: bolttom
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54664242e-08
+                y:  -0.99999994
+                z:  7.54664384e-08
+                w:  0.000416868454
+            local_location:
+                x:  199.996094
+                y:  2.99994659
+                z:  -2199.99561
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/aset_modular_medieval_m_ugylefndw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_interior_wall_lod0__ugylefndw/materials/defaultmaterial.yaml
+    137:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979013e-08
+            local_location:
+                x:  0.000305175723
+                y:  399.999695
+                z:  -2000
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    138:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  -399.999786
+                y:  399.999115
+                z:  -2000
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    139:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54979013e-08
+            local_location:
+                x:  -399.999786
+                y:  399.999115
+                z:  -1599.99854
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    140:
+        meta_component:
+            name: floor
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  1
+                w:  7.54978942e-08
+            local_location:
+                x:  0.000305175898
+                y:  399.999695
+                z:  -1599.99854
+            local_scale:
+                x:  399.999969
+                y:  10.0000029
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
+    141:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -460
+                y:  60
+                z:  -360
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        point_light_component:
+            intensity: 3
+            range: 500
+            importance_range: 5000
+            color:
+                r:  0.591160178
+                g:  0.366269916
+                b:  0.195964694
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
