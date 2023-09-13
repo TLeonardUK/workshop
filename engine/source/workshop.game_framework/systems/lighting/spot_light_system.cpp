@@ -86,7 +86,7 @@ void spot_light_system::step(const frame_time& time)
         // Create render object if it doesn't exist yet.
         if (light->render_id == null_render_object)
         {
-            light->render_id = render_command_queue.create_directional_light("Light");
+            light->render_id = render_command_queue.create_spot_light("Light");
             light->is_dirty = true;
         }
 

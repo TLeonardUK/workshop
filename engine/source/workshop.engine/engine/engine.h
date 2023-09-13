@@ -17,6 +17,7 @@
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/utils/event.h"
 #include "workshop.core/memory/memory_tracker.h"
+#include "workshop.engine/assets/scene/scene.h"
 
 #include <vector>
 #include <memory>

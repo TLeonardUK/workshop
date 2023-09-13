@@ -1,0 +1,11 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: material
+version: 1
+
+domain: opaque 
+
+textures:
+  albedo_texture: data:materials/solid/textures/green.yaml
