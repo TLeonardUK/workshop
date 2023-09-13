@@ -396,12 +396,9 @@ void asset_manager::request_load_lockless(asset_state* state)
 {
     state->should_be_loaded = true;
 
-    if (!state->is_pending)
+    bool expected = false;
+    if (state->is_pending.compare_exchange_weak(expected, true))
     {
-        state->is_pending = true;
-
-        //db_log(core, "Queueing load: %s", state->path.c_str());
-
         // Insert into queue in priority order.
         auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
         {
@@ -417,12 +414,9 @@ void asset_manager::request_unload_lockless(asset_state* state)
 {
     state->should_be_loaded = false;
 
-    if (!state->is_pending)
+    bool expected = false;
+    if (state->is_pending.compare_exchange_weak(expected, true))
     {
-        state->is_pending = true;
-
-        //db_log(core, "Queueing unload: %s", state->path.c_str());
-
         // Insert into queue in priority order.
         auto iter = std::lower_bound(m_pending_queue.begin(), m_pending_queue.end(), state->priority, [](const asset_state* info, size_t value)
         {
@@ -465,7 +459,7 @@ void asset_manager::do_work()
 
                 state->is_pending = false;
 
-                process_asset(state);
+                process_asset(state, false);
 
                 continue;
             }
@@ -475,8 +469,26 @@ void asset_manager::do_work()
     }
 }
 
-void asset_manager::process_asset(asset_state* state)
+void asset_manager::process_asset(asset_state* state, bool release_operation_reference)
 {
+    std::scoped_lock lock(state->process_mutex);
+
+    // If we are at the end of an operation we reduce the operation count here while
+    // under the process_mutex to avoid race conditions.
+    if (release_operation_reference)
+    {
+        state->current_operations.fetch_sub(1);
+        db_verbose(asset, "[%s] Reduced operation count to %zi", state->path.c_str(), state->current_operations.load());
+    }
+
+    // A different thread is already operating on this asset. We don't need to do anything
+    // here as they will handle processing the asset when they finish.
+    if (state->current_operations.load() > 0)
+    {
+        db_verbose(asset, "[%s] Skipping process as operation count is %zi", state->path.c_str(), state->current_operations.load());
+        return;
+    }
+
     switch (state->loading_state)
     {
     case asset_loading_state::loaded:
@@ -509,7 +521,7 @@ void asset_manager::process_asset(asset_state* state)
         }
     default:
         {
-//            db_assert(false);
+            db_assert(false);
             break;
         }
     }
@@ -521,6 +533,8 @@ void asset_manager::begin_load(asset_state* state)
     set_load_state(state, asset_loading_state::loading);
 
     m_outstanding_ops.fetch_add(1);
+
+    state->current_operations.fetch_add(1);
 
     async("Load Asset", task_queue::loading, [this, state]() {
     
@@ -569,7 +583,7 @@ void asset_manager::begin_load(asset_state* state)
 
             // Process the asset again incase the requested state
             // has changed during this process.
-            process_asset(state);
+            process_asset(state, true);
 
             m_outstanding_ops.fetch_sub(1);
             m_states_convar.notify_all();
@@ -606,7 +620,7 @@ void asset_manager::check_dependency_load_state(asset_state* state)
 
         // Process the asset again incase the requested state
         // has changed during this process.
-        process_asset(state);
+        process_asset(state, false);
 
         m_states_convar.notify_all();
     }
@@ -618,6 +632,8 @@ void asset_manager::begin_unload(asset_state* state)
     set_load_state(state, asset_loading_state::unloading);
 
     m_outstanding_ops.fetch_add(1);
+
+    state->current_operations.fetch_add(1);
 
     async("Unload Asset", task_queue::loading, [this, state]() {
     
@@ -652,7 +668,7 @@ void asset_manager::begin_unload(asset_state* state)
 
                 // Process the asset again incase the requested state
                 // has changed during this process.
-                process_asset(state);
+                process_asset(state, true);
             }
 
             m_outstanding_ops.fetch_sub(1);

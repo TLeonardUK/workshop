@@ -210,9 +210,8 @@ bool texture_loader::parse_properties(const char* path, YAML::Node& node, textur
     {
         return false;
     }
-
     swizzle = string_lower(swizzle);
-    
+
     // Convert swizzle to element indices.
     bool swizzle_valid = true;
     if (swizzle.length() == 4)
@@ -250,6 +249,46 @@ bool texture_loader::parse_properties(const char* path, YAML::Node& node, textur
     if (!swizzle_valid)
     {
         db_error(asset, "[%s] swizzle of '%s' is invalid. Swizzle should be 4 characters made up of rgba only.", path, swizzle.c_str());
+        return false;
+    }
+
+    std::string invert_channels = "";
+    if (!parse_property(path, "invert_channels", node["invert_channels"], invert_channels, false))
+    {
+        return false;
+    }
+    invert_channels = string_lower(invert_channels);
+
+    // Convert invert to element indices.
+    bool invert_valid = true;
+    for (size_t i = 0; i < invert_channels.size(); i++)
+    {
+        char c = invert_channels[i];
+        if (c == 'r')
+        {
+            asset.channel_flags[0] = asset.channel_flags[0] | texture_channel_flags::invert;
+        }
+        else if (c == 'g')
+        {
+            asset.channel_flags[1] = asset.channel_flags[1] | texture_channel_flags::invert;
+        }
+        else if (c == 'b')
+        {
+            asset.channel_flags[2] = asset.channel_flags[2] | texture_channel_flags::invert;
+        }
+        else if (c == 'a')
+        {
+            asset.channel_flags[3] = asset.channel_flags[3] | texture_channel_flags::invert;
+        }
+        else
+        {
+            invert_valid = false;
+        }
+    }
+
+    if (!invert_valid)
+    {
+        db_error(asset, "[%s] channel invert of '%s' is invalid. Field can only be made up of the characters rgba only.", path, invert_channels.c_str());
         return false;
     }
 
@@ -446,6 +485,35 @@ bool texture_loader::perform_swizzle(const char* path, texture& asset)
     return true;
 }
 
+bool texture_loader::apply_channel_flags(const char* path, texture& asset)
+{
+    if (asset.channel_flags[0] == texture_channel_flags::none &&
+        asset.channel_flags[1] == texture_channel_flags::none &&
+        asset.channel_flags[2] == texture_channel_flags::none &&
+        asset.channel_flags[3] == texture_channel_flags::none)
+    {
+        return true;
+    }
+
+    // Do channel inversion.
+    for (texture::face& face : asset.faces)
+    {
+        bool invert_r = (asset.channel_flags[0] & texture_channel_flags::invert) != texture_channel_flags::none;
+        bool invert_g = (asset.channel_flags[1] & texture_channel_flags::invert) != texture_channel_flags::none;
+        bool invert_b = (asset.channel_flags[2] & texture_channel_flags::invert) != texture_channel_flags::none;
+        bool invert_a = (asset.channel_flags[3] & texture_channel_flags::invert) != texture_channel_flags::none;
+
+        if (!invert_r && !invert_g && !invert_b && !invert_a)
+        {
+            continue;
+        }
+
+        face.mips[0] = face.mips[0]->invert_channels(invert_r, invert_g, invert_b, invert_a);
+    }
+
+    return true;
+}
+
 bool texture_loader::perform_resize(const char* path, texture& asset)
 {
     for (texture::face& face : asset.faces)
@@ -603,6 +671,12 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
 
     // Swizzle the data if required.
     if (!perform_swizzle(input_path, asset))
+    {
+        return false;
+    }
+
+    // Apply channel flags if needed
+    if (!apply_channel_flags(input_path, asset))
     {
         return false;
     }

@@ -56,6 +56,9 @@ struct asset_state
     std::atomic_size_t references = 0;
     std::atomic_bool is_pending = false;
     std::atomic_bool should_be_loaded = false;
+    
+    std::mutex process_mutex;
+    std::atomic_size_t current_operations = 0;
 
     asset* instance = nullptr;
 
@@ -353,7 +356,7 @@ protected:
 
     // Begins processing the given asset.
     // Called on coordinator or worker threads.
-    void process_asset(asset_state* state);
+    void process_asset(asset_state* state, bool release_operation_reference);
 
     // Begins loading the asset.
     // Called on coordinator thread.

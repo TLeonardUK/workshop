@@ -47,6 +47,18 @@ inline static const char* texture_usage_strings[static_cast<int>(texture_usage::
 DEFINE_ENUM_TO_STRING(texture_usage, texture_usage_strings)
 
 // ================================================================================================
+//  Defines how individual channels in a texture can be modified.
+// ================================================================================================
+enum class texture_channel_flags
+{
+    none    = 0,
+
+    invert  = 1  // Value should be inverted. This is mainly beneficial for normal maps which use the wrong tangent basis.
+};
+
+DEFINE_ENUM_FLAGS(texture_channel_flags)
+
+// ================================================================================================
 //  Texture assets represent a single individual multidimensional texture.
 // ================================================================================================
 class texture : public asset
@@ -81,6 +93,7 @@ public:
 
     // Only used at compile time.
     std::array<size_t, 4> swizzle = { 0, 1, 2, 3 };
+    std::array<texture_channel_flags, 4> channel_flags = { texture_channel_flags::none, texture_channel_flags::none, texture_channel_flags::none, texture_channel_flags::none };
 
     std::unique_ptr<ri_texture> ri_instance;
 

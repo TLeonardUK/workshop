@@ -31,7 +31,7 @@ float3 unpack_compressed_normal(float2 input)
     float2 scaled = (input * 2.0f) - 1.0f;
     float3 reconstructed = float3(
         scaled.x,
-        scaled.y,
+        -scaled.y, // We use opengl format for normals.
         sqrt(saturate(1.0f - dot(scaled, scaled)))
     );
 

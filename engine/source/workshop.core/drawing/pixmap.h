@@ -222,6 +222,9 @@ public:
     // Creates a new pixmap that contains the swizzle version of this pixmap
     std::unique_ptr<pixmap> swizzle(const std::array<size_t, 4>& pattern);
 
+    // Creates a new pixmap with the given channels inverted. 
+    std::unique_ptr<pixmap> invert_channels(bool invert_r, bool invert_g, bool invert_b, bool invert_a);
+
     // Returns true if the pixmap can be modified or read from. The pixmap can only be modified if its in
     // one of the modifiable formats. For things such as compressed formats, the pixmap class
     // acts only as storage, and cannot be modified.

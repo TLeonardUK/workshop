@@ -947,6 +947,28 @@ std::unique_ptr<pixmap> pixmap::swizzle(const std::array<size_t, 4>& pattern)
     return new_pixmap;
 }
 
+std::unique_ptr<pixmap> pixmap::invert_channels(bool invert_r, bool invert_g, bool invert_b, bool invert_a)
+{
+    std::unique_ptr<pixmap> new_pixmap = std::make_unique<pixmap>(m_width, m_height, m_format);
+
+    for (size_t y = 0; y < m_height; y++)
+    {
+        for (size_t x = 0; x < m_width; x++)
+        {
+            color src = get(x, y);
+
+            if (invert_r) src.r = 1.0f - src.r;
+            if (invert_g) src.g = 1.0f - src.g;
+            if (invert_b) src.b = 1.0f - src.b;
+            if (invert_a) src.a = 1.0f - src.a;
+
+            new_pixmap->set(x, y, src);
+        }
+    }
+
+    return new_pixmap;
+}
+
 size_t pixmap::get_width() const
 {
     return m_width;
