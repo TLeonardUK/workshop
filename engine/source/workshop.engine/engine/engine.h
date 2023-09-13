@@ -140,6 +140,12 @@ public:
     // Switches the default world. If a default world is already set it will be destroyed.
     void set_default_world(world* new_world);
 
+    // Helper functions, this will load and swap the default world with it when it finishes loading.
+    void load_world(const char* path);
+
+    // Returns true if a world is currently actively being loaded.
+    bool is_loading_world();
+
     // Invoked when the engine is stepped.
     event<frame_time> on_step;
 
@@ -209,6 +215,9 @@ protected:
 
     std::vector<std::unique_ptr<world>> m_worlds;
     world* m_default_world = nullptr;
+
+    asset_ptr<scene> m_loading_world;
+    double m_loading_world_start_time = 0.0;
 
     std::unique_ptr<window_interface> m_window_interface;
     std::unique_ptr<ri_interface> m_render_interface;

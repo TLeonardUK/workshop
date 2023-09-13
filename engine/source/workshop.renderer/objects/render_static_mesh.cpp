@@ -162,7 +162,7 @@ void render_static_mesh::create_render_data()
             }
         }
 
-        if (!mat_info.material.is_loaded())
+        if (!mat.is_loaded())
         {
             continue;
         }

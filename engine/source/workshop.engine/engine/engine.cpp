@@ -100,6 +100,19 @@ void engine::step()
     m_stats_frame_time_game->submit(frame_timer.get_elapsed_seconds());
     m_stats_frame_rate->submit(1.0 / m_frame_time.delta_seconds);
 
+    // Swap out the current world if its completed loading.
+    if (m_loading_world.is_loaded())
+    {
+        db_log(engine, "World loaded in %.2f ms: %s", (get_seconds() - m_loading_world_start_time) * 1000.0f, m_loading_world.get_path().c_str());
+
+        set_default_world(m_loading_world->world_instance);
+
+        // Null out of the world so its not destroyed when the asset_ptr is reset.
+        m_loading_world->world_instance = nullptr;
+
+        m_loading_world.reset();
+    }
+
     // Commit engine statistics.
     statistics_manager::get().commit(statistics_commit_point::end_of_game);
 }
@@ -689,6 +702,19 @@ void engine::set_default_world(world* new_world)
         destroy_world(m_default_world);
     }
     m_default_world = new_world;
+}
+
+void engine::load_world(const char* path)
+{
+    db_log(engine, "Requesting load of world: %s", path);
+
+    m_loading_world = m_asset_manager->request_asset<scene>(path, 0);
+    m_loading_world_start_time = get_seconds();
+}
+
+bool engine::is_loading_world()
+{
+    return m_loading_world.is_valid();
 }
 
 result<void> engine::create_presenter(init_list& list)

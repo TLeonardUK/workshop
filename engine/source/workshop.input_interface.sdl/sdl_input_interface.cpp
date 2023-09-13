@@ -66,7 +66,6 @@ namespace
         SDL_SCANCODE_LEFTBRACKET,
         SDL_SCANCODE_RIGHTBRACKET,
         SDL_SCANCODE_BACKSLASH,
-        SDL_SCANCODE_NONUSHASH,
 
         SDL_SCANCODE_SEMICOLON,
         SDL_SCANCODE_APOSTROPHE,
@@ -143,11 +142,20 @@ namespace
         SDL_SCANCODE_RALT,
         SDL_SCANCODE_RGUI,
 
+        // mouse 0-5
         0,
+        0,
+        0,
+        0,
+        0,
+        0,
+
+        // modifiers
         0,
         0,
         0,
         0
+
     };
 };
 

@@ -62,7 +62,10 @@ void db_assert_failed(const char* expression, const char* file, size_t line, con
     }
 
     db_break();
+
+#ifdef WS_RELEASE
     db_terminate();
+#endif
 }
 
 }; // namespace workshop

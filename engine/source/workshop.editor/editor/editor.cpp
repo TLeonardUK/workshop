@@ -174,6 +174,13 @@ result<void> editor::create_main_menu(init_list& list)
     m_paste_menu_item = m_main_menu->add_menu_item("Edit/Paste", { input_key::ctrl, input_key::v }, [this]() {
         paste();
     });
+    m_main_menu_options.push_back(m_main_menu->add_menu_seperator("Edit"));
+    m_duplicate_menu_item = m_main_menu->add_menu_item("Edit/Duplicate", { input_key::ctrl, input_key::d }, [this]() {
+        duplicate_selected();
+    });
+    m_delete_menu_item = m_main_menu->add_menu_item("Edit/Delete", { input_key::del }, [this]() {
+        delete_selected();
+    });
 
     // Build Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("Build/Regenerate Diffuse Probes", [this]() { 
@@ -248,6 +255,9 @@ void editor::update_main_menu()
     m_cut_menu_item->set_enabled(!m_selected_objects.empty());
     m_copy_menu_item->set_enabled(!m_selected_objects.empty());
     m_paste_menu_item->set_enabled(!m_clipboard->empty());
+
+    m_duplicate_menu_item->set_enabled(!m_selected_objects.empty());
+    m_delete_menu_item->set_enabled(!m_selected_objects.empty());
 }
 
 result<void> editor::destroy_main_menu()
@@ -643,6 +653,19 @@ void editor::paste()
 
     // Select the new objects.
     set_selected_objects(new_objects);
+}
+
+void editor::duplicate_selected()
+{
+    copy();
+    paste();
+}
+
+void editor::delete_selected()
+{
+    std::vector<object> to_delete = m_selected_objects;
+    set_selected_objects({ });
+    m_undo_stack->push(std::make_unique<editor_transaction_delete_objects>(m_engine, *this, to_delete));
 }
 
 void editor::step(const frame_time& time)

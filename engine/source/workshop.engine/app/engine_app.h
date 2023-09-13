@@ -5,6 +5,8 @@
 #pragma once
 
 #include "workshop.core/app/app.h"
+#include "workshop.core/utils/event.h"
+#include "workshop.core/utils/frame_time.h"
 
 namespace ws {
 
@@ -30,6 +32,9 @@ protected:
     virtual void register_init(init_list& list) override;
     virtual result<void> loop() override;
 
+    // Calleded every time the engine steps the world forwards.
+    virtual void step(const frame_time& time);
+
     // Called just before the engine is initialized, can be used to configure behaviour
     // of the engine, such as its renderer/etc, before its initialized.
     virtual void configure_engine(engine& engine);
@@ -37,6 +42,8 @@ protected:
 private:
 
     std::unique_ptr<engine> m_engine;
+
+    event<frame_time>::delegate_ptr m_on_step_delegate;
 
 };
 

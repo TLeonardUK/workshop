@@ -218,37 +218,68 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
         imported_material& imported_mat = materials.emplace_back();
         imported_mat.name = mat.name;
         imported_mat.formatted_name = string_replace(string_lower(mat.name), " ", "_");
+
+        // If material name has a path in it eg. "/mat/something/bleh.png" then strip all of
+        // that away, our formatted names should be just the base name.
+        size_t slash = imported_mat.formatted_name.find_last_of('/');
+        if (slash != std::string::npos)
+        {
+            imported_mat.formatted_name = imported_mat.formatted_name.substr(slash + 1);
+        }
+
         imported_mat.output_path = output_directory_material_path / (imported_mat.formatted_name + ".yaml");
         imported_mat.vfs_output_path = virtual_file_system::normalize((vfs_output_directory_material_path / (imported_mat.formatted_name + ".yaml")).string().c_str());
         imported_mat.material = mat;
 
         db_log(engine, "Importing material: %s", imported_mat.output_path.string().c_str());
 
-        // Fuzzy match textures if none is set.
-        if (imported_mat.material.albedo_texture.path.empty())
+        // Figure out any textures required.
+        if (!add_texture(imported_mat.material.albedo_texture, "color"))
         {
             imported_mat.material.albedo_texture.path = find_texture({ "albedo", "basecolor", "diffuse", "color" });
-        }
-        if (imported_mat.material.metallic_texture.path.empty())
-        {
-            imported_mat.material.metallic_texture.path = find_texture({ "metalness", "metallic" });
-        }
-        if (imported_mat.material.normal_texture.path.empty())
-        {
-            imported_mat.material.normal_texture.path = find_texture({ "normal" });
-        }
-        if (imported_mat.material.roughness_texture.path.empty())
-        {
-            imported_mat.material.roughness_texture.path = find_texture({ "roughness" });
+            if (!imported_mat.material.albedo_texture.path.empty())
+            {
+                if (!add_texture(imported_mat.material.albedo_texture, "color"))
+                {
+                    return false;
+                }
+            }
         }
 
-        // Figure out any textures required.
-        if (!add_texture(imported_mat.material.albedo_texture, "color") || 
-            !add_texture(imported_mat.material.metallic_texture, "metallic") ||
-            !add_texture(imported_mat.material.normal_texture, "normal") ||
-            !add_texture(imported_mat.material.roughness_texture, "roughness"))
+        if (!add_texture(imported_mat.material.metallic_texture, "metallic"))
         {
-            return false;
+            imported_mat.material.metallic_texture.path = find_texture({ "metalness", "metallic" });
+            if (!imported_mat.material.metallic_texture.path.empty())
+            {
+                if (!add_texture(imported_mat.material.metallic_texture, "metallic"))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!add_texture(imported_mat.material.normal_texture, "normal"))
+        {
+            imported_mat.material.normal_texture.path = find_texture({ "normal" });
+            if (!imported_mat.material.normal_texture.path.empty())
+            {
+                if (!add_texture(imported_mat.material.normal_texture, "normal"))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!add_texture(imported_mat.material.roughness_texture, "roughness"))
+        {
+            imported_mat.material.roughness_texture.path = find_texture({ "roughness" });
+            if (!imported_mat.material.roughness_texture.path.empty())
+            {
+                if (!add_texture(imported_mat.material.roughness_texture, "roughness"))
+                {
+                    return false;
+                }
+            }
         }
     }
 

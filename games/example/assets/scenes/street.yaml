@@ -1,0 +1,4455 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    1:
+        meta_component:
+            name: main camera
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0.0715227276
+                y:  0.67155081
+                z:  -0.0653845742
+                w:  -0.734594405
+            local_location:
+                x:  -360.356873
+                y:  357.627014
+                z:  -627.584473
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        camera_component:
+            fov: 45
+            aspect_ratio: 1.76999998
+            min_depth: 10
+            max_depth: 20000
+        fly_camera_movement_component:
+            sensitivity: 0.00100000005
+            speed: 1500
+            zoom_speed: 50000
+            pan_speed: 50
+            max_vertical_angle: 0.800000012
+    2:
+        meta_component:
+            name: sun light
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.599847794
+                y:  0.153166294
+                z:  0.194290504
+                w:  0.760903299
+            local_location:
+                x:  0
+                y:  300
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        directional_light_component:
+            shadow_cascades: 3
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+            intensity: 1
+            range: 10000
+            importance_range: 50000
+            color:
+                r:  1
+                g:  0.886419833
+                b:  0.662983418
+                a:  1
+            shadow_casting: true
+            shadow_map_size: 2048
+            shadow_map_distance: 10000
+    3:
+        meta_component:
+            name: skybox
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1130
+                y:  0
+                z:  -470
+            local_scale:
+                x:  10000
+                y:  10000
+                z:  10000
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/skyboxs/skybox_3.yaml
+            materials:
+                -   data:models/skyboxs/materials/skybox_3.yaml
+    4:
+        meta_component:
+            name: light probe grid
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  880.000061
+                y:  1049.99976
+                z:  -409.999847
+            local_scale:
+                x:  3899.99976
+                y:  2199.99951
+                z:  2859.99976
+        bounds_component:
+            {}
+        light_probe_grid_component:
+            density: 350
+    5:
+        meta_component:
+            name: reflection probe
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  200
+                z:  0
+            local_scale:
+                x:  4000
+                y:  4000
+                z:  4000
+        bounds_component:
+            {}
+        reflection_probe_component:
+            {}
+    6:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  400
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    7:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    8:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    9:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1200
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    10:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  20.0002441
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    11:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -29.9997559
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    12:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -79.9997559
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    13:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -129.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    14:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -179.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    15:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -229.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    16:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -279.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    17:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -329.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    18:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -379.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    19:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -429.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    20:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -479.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    21:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -529.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    22:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -679.999634
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    23:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -479.999664
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    24:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -729.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    25:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -679.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    26:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -629.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    27:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -579.999756
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    28:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109326e-08
+                w:  -0.000172771513
+            local_location:
+                x:  799.990784
+                y:  -9.27151911e-10
+                z:  -760.000061
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    29:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  -0.707106769
+                z:  0
+                w:  0.707106829
+            local_location:
+                x:  1200.01794
+                y:  1.03690612e-09
+                z:  -1160.27429
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    30:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109326e-08
+                w:  -0.000172771513
+            local_location:
+                x:  1200.04797
+                y:  -5.45606171e-10
+                z:  -760.175598
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    31:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109326e-08
+                w:  -0.000172771513
+            local_location:
+                x:  399.97998
+                y:  6.86356916e-10
+                z:  -759.891235
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    32:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -79.999733
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    33:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -279.999664
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    34:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -679.999512
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    35:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99939
+                y:  0
+                z:  -480.000122
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    36:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99939
+                y:  0
+                z:  -280.003174
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    37:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99939
+                y:  0
+                z:  -80.0038452
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    38:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  899.999207
+                y:  0
+                z:  -679.999512
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    39:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  899.999207
+                y:  0
+                z:  -479.999786
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    40:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  899.999207
+                y:  0
+                z:  -280.003021
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    41:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  899.999268
+                y:  0
+                z:  -80.0040817
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    42:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1099.99634
+                y:  0
+                z:  -679.999512
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    43:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1099.99976
+                y:  0
+                z:  -479.999817
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    44:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1099.99976
+                y:  0
+                z:  -279.999542
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    45:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1099.99976
+                y:  0
+                z:  -80
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    46:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  99.9992065
+                y:  0
+                z:  -679.999451
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    47:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  99.9983215
+                y:  0
+                z:  -479.999786
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    48:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  99.9984665
+                y:  0
+                z:  -280.003235
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    49:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  99.9984894
+                y:  0
+                z:  -80.0131149
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    50:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  299.996368
+                y:  0
+                z:  -679.999512
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    51:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  299.999084
+                y:  0
+                z:  -479.999847
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    52:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  299.999115
+                y:  0
+                z:  -279.999817
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    53:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  299.999237
+                y:  0
+                z:  -80.0090332
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    54:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  499.996033
+                y:  0
+                z:  -679.998962
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    55:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  699.997498
+                y:  0
+                z:  -679.999512
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    56:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  699.997498
+                y:  0
+                z:  -479.999786
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    57:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  499.998627
+                y:  0
+                z:  -480.000244
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    58:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  499.998657
+                y:  0
+                z:  -280.003387
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    59:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  699.997498
+                y:  0
+                z:  -279.999817
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    60:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  699.997559
+                y:  0
+                z:  -80.0087814
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    61:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  499.998932
+                y:  0
+                z:  -80.0128708
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    62:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  400
+                y:  400
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    63:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  400
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    64:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  400
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    65:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1200
+                y:  400
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    66:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -4.87762009e-09
+                y:  0.706934035
+                z:  -5.82622306e-09
+                w:  0.707279444
+            local_location:
+                x:  1579.99988
+                y:  399.999969
+                z:  20.0000935
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    67:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -4.87762009e-09
+                y:  0.706934035
+                z:  -5.82622306e-09
+                w:  0.707279444
+            local_location:
+                x:  1579.99988
+                y:  399.999969
+                z:  -379.999908
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    68:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54979155e-08
+                y:  1
+                z:  -7.54979155e-08
+                w:  7.45058593e-09
+            local_location:
+                x:  -396.999756
+                y:  401.000732
+                z:  -791.001221
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_06_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    69:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  800
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    70:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  670
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    71:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  600
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    72:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1200
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    73:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1270
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    74:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1340
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    75:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1410
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    76:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1480
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    77:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.706934154
+                z:  0
+                w:  0.707279384
+            local_location:
+                x:  1600
+                y:  690
+                z:  -29.999958
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    78:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.706934154
+                z:  0
+                w:  0.707279384
+            local_location:
+                x:  1600
+                y:  690
+                z:  -429.999969
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    79:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -1079.99927
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    80:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -1080.00317
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    81:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -1080.00513
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    82:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -1130.00513
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    83:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -1030.00513
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    84:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -980.005249
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    85:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -4.87762009e-09
+                y:  0.706934035
+                z:  -5.82622306e-09
+                w:  0.707279444
+            local_location:
+                x:  1579.99951
+                y:  399.999969
+                z:  -780.005798
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    86:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -880.003174
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    87:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -879.994202
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    88:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -930.006042
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    89:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -880.006042
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    90:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -830.006042
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    91:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1579.99963
+                y:  0
+                z:  -780.006165
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    92:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -3.19282378e-11
+                y:  0.707318187
+                z:  -3.19282378e-11
+                w:  0.706895292
+            local_location:
+                x:  1599.99951
+                y:  690.000671
+                z:  -969.999268
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_05_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    93:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -4.87762009e-09
+                y:  0.706934035
+                z:  -5.82622306e-09
+                w:  0.707279444
+            local_location:
+                x:  1579.99951
+                y:  399.999969
+                z:  -1180.00586
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    94:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1530.00281
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    95:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1480.00281
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    96:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1430.00281
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    97:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1380.00293
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    98:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1330.00378
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    99:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1280.00378
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    100:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1230.00378
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    101:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1580.00098
+                y:  0
+                z:  -1180.00378
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    102:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.706934154
+                z:  0
+                w:  0.707279384
+            local_location:
+                x:  1600
+                y:  690
+                z:  -830
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    103:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.706934154
+                z:  0
+                w:  0.707279384
+            local_location:
+                x:  1600
+                y:  690
+                z:  -900.000122
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    104:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54503873e-08
+                y:  1
+                z:  -1.94688766e-07
+                w:  0.000244034542
+            local_location:
+                x:  399.99762
+                y:  399.999481
+                z:  -789.999512
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    105:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54503873e-08
+                y:  1
+                z:  -1.94688766e-07
+                w:  0.00024403361
+            local_location:
+                x:  469.997437
+                y:  399.999359
+                z:  -789.999512
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    106:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.92507287e-07
+                y:  -0.707279265
+                z:  1.44667865e-07
+                w:  0.706934273
+            local_location:
+                x:  1179.99805
+                y:  399.999146
+                z:  -1389.99902
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_05_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    107:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54503873e-08
+                y:  1
+                z:  -1.94688766e-07
+                w:  0.00024403313
+            local_location:
+                x:  539.997437
+                y:  399.999298
+                z:  -789.99939
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    108:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54503873e-08
+                y:  1
+                z:  -1.94688766e-07
+                w:  0.000244032926
+            local_location:
+                x:  589.997437
+                y:  399.999237
+                z:  -789.999268
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    109:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  -0.707106769
+                z:  0
+                w:  0.707106829
+            local_location:
+                x:  1200.01794
+                y:  1.03690612e-09
+                z:  -1560.27405
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    110:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -1080.00305
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    111:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -1079.99927
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    112:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -1279.99414
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    113:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -1280.00439
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    114:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1499.99951
+                y:  0
+                z:  -1480.00366
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    115:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -1479.99915
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    116:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  1299.99927
+                y:  0
+                z:  -1479.99915
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    117:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.70440234e-17
+                y:  0.000244066949
+                z:  -2.13483484e-11
+                w:  1
+            local_location:
+                x:  -0.00154114515
+                y:  -9.53674316e-07
+                z:  -90.0131226
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    118:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.70194595e-17
+                y:  0.000244067298
+                z:  -2.13483918e-11
+                w:  1
+            local_location:
+                x:  399.998383
+                y:  -9.53674316e-07
+                z:  -90.0131378
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    119:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.69627083e-17
+                y:  0.000244068142
+                z:  -2.13484942e-11
+                w:  1
+            local_location:
+                x:  1199.99866
+                y:  -9.53674316e-07
+                z:  -90.0131531
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    120:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.69876957e-17
+                y:  0.000244067793
+                z:  -2.13484508e-11
+                w:  1
+            local_location:
+                x:  799.995789
+                y:  -9.53674316e-07
+                z:  -90.0131531
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    121:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.68064307e-17
+                y:  0.000244070514
+                z:  -2.13487769e-11
+                w:  1
+            local_location:
+                x:  -0.00154110789
+                y:  -9.53674316e-07
+                z:  -680.013123
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    122:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.67814432e-17
+                y:  0.000244070863
+                z:  -2.13488203e-11
+                w:  1
+            local_location:
+                x:  399.988983
+                y:  -9.53674032e-07
+                z:  -680.012878
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    123:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.67488325e-17
+                y:  0.000244071358
+                z:  -2.13488793e-11
+                w:  1
+            local_location:
+                x:  799.968506
+                y:  -9.53674146e-07
+                z:  -680.012512
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    124:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1489.99829
+                y:  -9.5367875e-07
+                z:  -190.013245
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    125:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1489.99805
+                y:  -9.5367966e-07
+                z:  -590.013245
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    126:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1489.9978
+                y:  -9.53700578e-07
+                z:  -1390.01318
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    127:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1489.99805
+                y:  -9.53419317e-07
+                z:  -990.012939
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    128:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.67013986e-17
+                y:  0.000244072027
+                z:  -2.13489625e-11
+                w:  1
+            local_location:
+                x:  1199.96875
+                y:  -9.53674146e-07
+                z:  -680.012634
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    129:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1299.9978
+                y:  -9.5371206e-07
+                z:  -770.013733
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    130:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1299.99878
+                y:  -9.51763184e-07
+                z:  -1170.02515
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    131:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.40452245e-08
+                y:  0.707490683
+                z:  2.40452174e-08
+                w:  0.706722677
+            local_location:
+                x:  1299.99902
+                y:  -9.52066273e-07
+                z:  -1570.03418
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/aset_street_sidewalk_s_vcrnffbdw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_concrete_median_kit_lod0__vcrnffbdw/materials/defaultmaterial.yaml
+    132:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.68805461e-17
+                y:  0.000244069262
+                z:  -2.13486364e-11
+                w:  1
+            local_location:
+                x:  199.998108
+                y:  3.00000048
+                z:  -380.013489
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/metal_manhole_cover_lod0__wdlmdgebw/aset_street_sidewalk_s_wdlmdgebw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/metal_manhole_cover_lod0__wdlmdgebw/materials/default_material.yaml
+    133:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.68593703e-17
+                y:  0.000244069553
+                z:  -2.13486728e-11
+                w:  1
+            local_location:
+                x:  699.998291
+                y:  3
+                z:  -380.01355
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/metal_manhole_cover_lod0__wdlmdgebw/aset_street_sidewalk_s_wdlmdgebw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/metal_manhole_cover_lod0__wdlmdgebw/materials/default_material.yaml
+    134:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.68462412e-17
+                y:  0.000244069757
+                z:  -2.13486971e-11
+                w:  1
+            local_location:
+                x:  1239.99829
+                y:  3
+                z:  -380.01355
+            local_scale:
+                x:  1.00000024
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/metal_manhole_cover_lod0__wdlmdgebw/aset_street_sidewalk_s_wdlmdgebw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/metal_manhole_cover_lod0__wdlmdgebw/materials/default_material.yaml
+    135:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -9.27967392e-09
+                y:  -0.765887558
+                z:  9.27967392e-09
+                w:  0.642974555
+            local_location:
+                x:  399.998199
+                y:  10.0000067
+                z:  -80.013237
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/aset_street_props_s_ve2hddjga_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/materials/defaultmaterial.yaml
+    136:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -9.27967392e-09
+                y:  -0.765887558
+                z:  9.27967392e-09
+                w:  0.642974555
+            local_location:
+                x:  339.99826
+                y:  10.0000076
+                z:  -50.013237
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/aset_street_props_s_ve2hddjga_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/materials/defaultmaterial.yaml
+    137:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -6.55864962e-09
+                y:  -0.573376536
+                z:  1.13669927e-08
+                w:  0.819292009
+            local_location:
+                x:  1549.99805
+                y:  10.0000124
+                z:  -60.0133667
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/aset_street_props_s_ve2hddjga_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/materials/defaultmaterial.yaml
+    138:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.129693955
+                y:  -0.836384118
+                z:  0.482886672
+                w:  0.224636689
+            local_location:
+                x:  1498.03088
+                y:  20.0000114
+                z:  -30.0111923
+            local_scale:
+                x:  1.00000012
+                y:  0.999999881
+                z:  0.999999821
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/aset_street_props_s_ve2hddjga_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/materials/defaultmaterial.yaml
+    139:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -6.55864962e-09
+                y:  -0.573376536
+                z:  1.13669927e-08
+                w:  0.819292009
+            local_location:
+                x:  1539.99805
+                y:  30.0000038
+                z:  -30.0133972
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/aset_street_props_s_ve2hddjga_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/trash_bag_pack_lod0__ve2hddjga/materials/defaultmaterial.yaml
+    140:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  370
+                y:  290
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/aset_props_hardware_s_vgyidfpaw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/materials/default_material.yaml
+    141:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 140
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        point_light_component:
+            intensity: 12
+            range: 300
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  0.961325943
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+    142:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  840
+                y:  290
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/aset_props_hardware_s_vgyidfpaw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/materials/default_material.yaml
+    143:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 142
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        point_light_component:
+            intensity: 12
+            range: 300
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+    144:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1150
+                y:  290
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/aset_props_hardware_s_vgyidfpaw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/materials/default_material.yaml
+    145:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 144
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        point_light_component:
+            intensity: 12
+            range: 300
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+    146:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.54979297e-08
+                y:  1
+                z:  7.54979297e-08
+                w:  -1.43545222e-07
+            local_location:
+                x:  450.000061
+                y:  289.999878
+                z:  -759.999268
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/aset_props_hardware_s_vgyidfpaw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/materials/default_material.yaml
+    147:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 146
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  -20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        point_light_component:
+            intensity: 12
+            range: 300
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+    148:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.54979297e-08
+                y:  1
+                z:  7.54979297e-08
+                w:  -1.43545222e-07
+            local_location:
+                x:  1140.00061
+                y:  289.999878
+                z:  -759.998596
+            local_scale:
+                x:  0.999999881
+                y:  1
+                z:  0.999999881
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/aset_props_hardware_s_vgyidfpaw_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/rusty_bulkhead_light_lod0__vgyidfpaw/materials/default_material.yaml
+    149:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 148
+            local_rotation:
+                x:  7.10542736e-14
+                y:  5.54223334e-13
+                z:  -7.10542736e-14
+                w:  1
+            local_location:
+                x:  -0.000122070312
+                y:  0
+                z:  -20.0001831
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        point_light_component:
+            intensity: 12
+            range: 300
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+    150:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.001671
+                y:  0
+                z:  -479.999817
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    151:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.001564
+                y:  0
+                z:  -280.002319
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    152:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.000648
+                y:  0
+                z:  -679.99939
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    153:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.001541
+                y:  0
+                z:  -80.0124969
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    154:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.001678
+                y:  0
+                z:  -479.999786
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    155:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.001648
+                y:  0
+                z:  -280.00235
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    156:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.000641
+                y:  0
+                z:  -679.99939
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    157:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.001617
+                y:  0
+                z:  -80.0131683
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    158:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.001678
+                y:  0
+                z:  320.000153
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    159:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.001648
+                y:  0
+                z:  519.997314
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    160:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.000519
+                y:  0
+                z:  120.000702
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    161:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -300.001617
+                y:  0
+                z:  719.986694
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    162:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.001534
+                y:  0
+                z:  719.987244
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    163:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.001556
+                y:  0
+                z:  519.997559
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    164:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.001671
+                y:  0
+                z:  320.000031
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    165:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0.707106829
+                z:  0
+                w:  0.707106769
+            local_location:
+                x:  -100.000633
+                y:  0
+                z:  120.000641
+            local_scale:
+                x:  200.000015
+                y:  5.00000095
+                z:  200.000015
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/primitives/cube.yaml
+            materials:
+                -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
+    166:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  4.47034836e-08
+                y:  0.707106769
+                z:  -5.96046448e-08
+                w:  0.707106829
+            local_location:
+                x:  1.0943367e-10
+                y:  7.11319545e-11
+                z:  420.004608
+            local_scale:
+                x:  1.00000012
+                y:  1.00000048
+                z:  0.999999464
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    167:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  7.55109468e-08
+                y:  1
+                z:  7.55109326e-08
+                w:  -0.000172771513
+            local_location:
+                x:  -0.0087890327
+                y:  -8.89833984e-10
+                z:  -760.001526
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    168:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.49011612e-07
+                y:  0.707106829
+                z:  -1.63912773e-07
+                w:  0.707106888
+            local_location:
+                x:  -1.51353236e-11
+                y:  -4.23105908e-12
+                z:  819.999695
+            local_scale:
+                x:  1.00000012
+                y:  1.00000048
+                z:  0.999999464
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    169:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  -0.707106769
+                z:  0
+                w:  0.707106829
+            local_location:
+                x:  -380.000183
+                y:  -1.47240081e-10
+                z:  -760.000427
+            local_scale:
+                x:  1.00000036
+                y:  1.0000006
+                z:  0.999999166
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    170:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.49011612e-08
+                y:  -0.707106829
+                z:  -1.49011612e-08
+                w:  0.707106769
+            local_location:
+                x:  -379.998779
+                y:  2.065903e-10
+                z:  -360.00647
+            local_scale:
+                x:  1.00000012
+                y:  1.00000036
+                z:  0.999999583
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    171:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.3930621e-08
+                y:  0.707228839
+                z:  2.39306281e-08
+                w:  0.706984758
+            local_location:
+                x:  1.45513269e-07
+                y:  399.999725
+                z:  420.002594
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    172:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  2.3930621e-08
+                y:  0.707228839
+                z:  2.39306281e-08
+                w:  0.706984758
+            local_location:
+                x:  -1.74081443e-08
+                y:  399.999664
+                z:  819.999695
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/aset_building_combined_l_wdhjehddw_01_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_1st_floor_kit_lod0__wdhjehddw/materials/default_material.yaml
+    173:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  -0.707106769
+                z:  0
+                w:  0.707106829
+            local_location:
+                x:  -380.000122
+                y:  -1.47240081e-10
+                z:  39.9995728
+            local_scale:
+                x:  1.00000036
+                y:  1.0000006
+                z:  0.999999166
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    174:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.49011612e-08
+                y:  -0.707106829
+                z:  -1.49011612e-08
+                w:  0.707106769
+            local_location:
+                x:  -379.998718
+                y:  2.49876564e-10
+                z:  439.991058
+            local_scale:
+                x:  1.00000012
+                y:  1.00000036
+                z:  0.999999583
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/aset_building_combined_l_wdetbjudw_00_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_base_kit_lod0__wdetbjudw/materials/default_material.yaml
+    175:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  1550
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_06_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    176:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -7.54503873e-08
+                y:  1
+                z:  -1.94688766e-07
+                w:  0.000244033567
+            local_location:
+                x:  -0.00238037109
+                y:  399.99942
+                z:  -789.99939
+            local_scale:
+                x:  1.00000012
+                y:  1
+                z:  1.00000012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    177:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.92507287e-07
+                y:  -0.707279265
+                z:  1.44667865e-07
+                w:  0.706934273
+            local_location:
+                x:  -440.002777
+                y:  401.998932
+                z:  -739.999146
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    178:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.92507287e-07
+                y:  -0.707279265
+                z:  1.44667865e-07
+                w:  0.706934273
+            local_location:
+                x:  -440.002777
+                y:  401.998871
+                z:  -339.999146
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    179:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.92507287e-07
+                y:  -0.707279265
+                z:  1.44667865e-07
+                w:  0.706934273
+            local_location:
+                x:  -440.002838
+                y:  401.99881
+                z:  60.0008545
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    180:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  1.92507287e-07
+                y:  -0.707279265
+                z:  1.44667865e-07
+                w:  0.706934273
+            local_location:
+                x:  -440.002899
+                y:  401.998749
+                z:  460.000854
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    181:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -3.19282378e-11
+                y:  0.707318187
+                z:  -3.19282378e-11
+                w:  0.706895292
+            local_location:
+                x:  -0.000488340855
+                y:  690.00116
+                z:  620.000244
+            local_scale:
+                x:  0.99999994
+                y:  1
+                z:  0.99999994
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_05_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    182:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  740
+                y:  690
+                z:  20
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_02_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml
+    183:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -1.84492421e-11
+                y:  0.707228959
+                z:  -1.84492421e-11
+                w:  0.70698458
+            local_location:
+                x:  6.29425049e-05
+                y:  690.000793
+                z:  1020.00018
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/aset_building_combined_l_wdhkcccdw_03_lod0.yaml
+            materials:
+                -   data:models/noredist/quixel/modular_building_roof_kit_lod0__wdhkcccdw/materials/default_material.yaml

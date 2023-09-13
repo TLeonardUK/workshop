@@ -143,6 +143,9 @@ protected:
     void copy();
     void paste();
 
+    void delete_selected();
+    void duplicate_selected();
+
     // Recurses through an object transform tree and adds all objects into the tree into the output vector.
     void gather_sub_tree(object base, std::vector<object>& output);
 
@@ -165,6 +168,8 @@ protected:
     editor_main_menu::menu_item_handle m_cut_menu_item;
     editor_main_menu::menu_item_handle m_copy_menu_item;
     editor_main_menu::menu_item_handle m_paste_menu_item;
+    editor_main_menu::menu_item_handle m_duplicate_menu_item;
+    editor_main_menu::menu_item_handle m_delete_menu_item;
 
     ImGuiID m_dockspace_id = 0;
     bool m_set_default_dock_space = false;

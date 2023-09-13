@@ -5,10 +5,6 @@
 #pragma once
 
 #include "workshop.engine/app/engine_app.h"
-#include "workshop.engine/ecs/object.h"
-#include "workshop.core/utils/frame_time.h"
-#include "workshop.core/utils/event.h"
-#include "workshop.renderer/render_command_queue.h"
 
 namespace ws {
 
@@ -26,10 +22,7 @@ protected:
 
     virtual void configure_engine(engine& engine) override;
 
-    void step(const frame_time& time);
-
-private:
-    event<frame_time>::delegate_ptr m_on_step_delegate;
+    virtual void step(const frame_time& time) override;
 
 };
 

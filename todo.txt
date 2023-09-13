@@ -1,0 +1,13 @@
+
+// TODO:
+//      Anti-Alising
+//      Try and reduce light leakage for probes
+//      Decals
+//      Skinned Meshes
+//      play button that saves / restores the world
+//      multiple views for wireframe top / bottom / left / right + main 3d view
+//      editor grid
+//      editor - only visualizations(light radius / etc)
+//      model thumbnails
+//      asset modification for textures/materials/etc
+//      proper memory allocation tracking (hook malloc/free)

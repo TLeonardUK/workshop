@@ -11,11 +11,15 @@ namespace ws {
 engine_app::engine_app()
     : app()
 {
-    m_engine = std::make_unique<engine>();
+    m_engine = std::make_unique<engine>();    
+    m_on_step_delegate = m_engine->on_step.add_shared([this](const frame_time& time) {
+        step(time);
+    });
 }
 
 engine_app::~engine_app()
 {
+    m_on_step_delegate = nullptr;
     m_engine = nullptr;
 }
 
@@ -52,6 +56,11 @@ result<void> engine_app::loop()
     }
 
     return true;
+}
+
+void engine_app::step(const frame_time& time)
+{
+    // Nothing much to do here, its mainly for derived applications to use.
 }
 
 }; // namespace ws
