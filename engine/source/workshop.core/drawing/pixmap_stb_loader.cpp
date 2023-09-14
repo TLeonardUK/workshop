@@ -29,7 +29,7 @@ std::vector<std::unique_ptr<pixmap>> pixmap_stb_loader::load(const std::vector<c
     }
     else
     {
-        result = std::make_unique<pixmap>(width, height, pixmap_format::R8G8B8A8);
+        result = std::make_unique<pixmap>(width, height, pixmap_format::R8G8B8A8_SRGB);
     }
 
     for (size_t y = 0; y < height; y++)

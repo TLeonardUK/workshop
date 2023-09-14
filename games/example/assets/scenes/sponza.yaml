@@ -13,14 +13,14 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  -0.141003743
-                y:  0.719856918
-                z:  -0.153295532
-                w:  0.662136257
+                x:  -0.338593632
+                y:  0.579294205
+                z:  -0.286879748
+                w:  0.683719695
             local_location:
-                x:  1147.61328
-                y:  2202.56543
-                z:  -100.993591
+                x:  1498.50146
+                y:  3156.14697
+                z:  -300.295197
             local_scale:
                 x:  1
                 y:  1
@@ -63,8 +63,8 @@ objects:
             shadow_cascade_exponent: 0.600000024
             shadow_cascade_blend: 0.100000001
             intensity: 5
-            range: 10000
-            importance_range: 5000
+            range: 1000000
+            importance_range: 1000000
             color:
                 r:  1
                 g:  1
@@ -95,6 +95,8 @@ objects:
             {}
         static_mesh_component:
             model: data:models/skyboxs/skybox_3.yaml
+            materials:
+                -   data:models/skyboxs/materials/skybox_3.yaml
     4:
         meta_component:
             name: light probe grid
@@ -161,6 +163,35 @@ objects:
             {}
         static_mesh_component:
             model: data:models/test_scenes/sponza/sponza.yaml
+            materials:
+                -   data:models/test_scenes/sponza/materials/stone_trims_01.yaml
+                -   data:models/test_scenes/sponza/materials/arch_stone_wall_01.yaml
+                -   data:models/test_scenes/sponza/materials/brickwall_02.yaml
+                -   data:models/test_scenes/sponza/materials/metal_door.yaml
+                -   data:models/test_scenes/sponza/materials/ceiling_plaster_02.yaml
+                -   data:models/test_scenes/sponza/materials/stones_2ndfloor.yaml
+                -   data:models/test_scenes/sponza/materials/stone_trims_02.yaml
+                -   data:models/test_scenes/sponza/materials/stones_01_tile.yaml
+                -   data:models/test_scenes/sponza/materials/window_frame_01.yaml
+                -   data:models/test_scenes/sponza/materials/column_1stfloor.yaml
+                -   data:models/test_scenes/sponza/materials/column_head_1stfloor.yaml
+                -   data:models/test_scenes/sponza/materials/lamp_glass_01.yaml
+                -   data:models/test_scenes/sponza/materials/light_bulb.yaml
+                -   data:models/test_scenes/sponza/materials/door_stoneframe_02.yaml
+                -   data:models/test_scenes/sponza/materials/glass.yaml
+                -   data:models/test_scenes/sponza/materials/door_stoneframe_01.yaml
+                -   data:models/test_scenes/sponza/materials/brickwall_01.yaml
+                -   data:models/test_scenes/sponza/materials/wood_door_01.yaml
+                -   data:models/test_scenes/sponza/materials/wood_01.yaml
+                -   data:models/test_scenes/sponza/materials/floor_01.yaml
+                -   data:models/test_scenes/sponza/materials/ornament_lion.yaml
+                -   data:models/test_scenes/sponza/materials/dirt_decal.yaml
+                -   data:models/test_scenes/sponza/materials/column_head_2ndfloor_02.yaml
+                -   data:models/test_scenes/sponza/materials/column_brickwall_01.yaml
+                -   data:models/test_scenes/sponza/materials/column_head_2ndfloor_03.yaml
+                -   data:models/test_scenes/sponza/materials/ceiling_plaster_01.yaml
+                -   data:models/test_scenes/sponza/materials/roof_tiles_01.yaml
+                -   data:models/test_scenes/sponza/materials/ornament_01.yaml
     7:
         meta_component:
             name: sponza curtains
@@ -183,6 +214,11 @@ objects:
             {}
         static_mesh_component:
             model: data:models/test_scenes/sponza_curtains/sponza_curtains.yaml
+            materials:
+                -   data:models/test_scenes/sponza_curtains/materials/curtain_01.yaml
+                -   data:models/test_scenes/sponza_curtains/materials/curtain_02.yaml
+                -   data:models/test_scenes/sponza_curtains/materials/curtain_03.yaml
+                -   data:models/test_scenes/sponza_curtains/materials/metal_door.yaml
     8:
         meta_component:
             name: sponza ivy
@@ -205,3 +241,6 @@ objects:
             {}
         static_mesh_component:
             model: data:models/test_scenes/sponza_ivy/sponza_ivy.yaml
+            materials:
+                -   data:models/test_scenes/sponza_ivy/materials/ivyleaf.yaml
+                -   data:models/test_scenes/sponza_ivy/materials/bark.yaml

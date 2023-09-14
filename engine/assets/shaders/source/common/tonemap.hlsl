@@ -58,4 +58,14 @@ float3 tonemap_filmic(float3 input)
     return input;//pow(input, tonemap_gamma);
 }
 
+float3 linear_to_srgb(float3 x)
+{
+    return x < 0.0031308 ? 12.92 * x : 1.055 * pow(x, 1.0 / 2.4) - 0.055;
+}
+
+float3 srgb_to_linear(float3 x)
+{
+    return x < 0.04045 ? x / 12.92 : pow( (x + 0.055) / 1.055, 2.4 );
+}
+
 #endif

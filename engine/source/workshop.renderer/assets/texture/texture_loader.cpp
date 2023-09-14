@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 19;
+constexpr size_t k_asset_compiled_version = 23;
 
 };
 
@@ -408,15 +408,15 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
                         }
                     }
                     // If all channels but R are zero, BC4
-                    else if (g_constant && b_constant && a_constant)
-                    {
-                        asset.format = pixmap_format::BC4;
-                    }
+                    //else if (g_constant && b_constant && a_constant)
+                    //{
+                    //    asset.format = pixmap_format::BC4;
+                    //}
                     // If all channels but RG are zero, BC5
-                    else if (b_constant && a_constant)
-                    {
-                        asset.format = pixmap_format::BC5;
-                    }
+                    //else if (b_constant && a_constant)
+                    //{
+                    //    asset.format = pixmap_format::BC5;
+                    //}
                     // If one bit alpha BC1. 
                     // Not sure this is really any better than BC7.
                     //else if (face.is_channel_one_bit(3))
@@ -426,7 +426,14 @@ bool texture_loader::infer_properties(const char* path, texture& asset)
                     // Otherwise BC7.
                     else
                     {
-                        asset.format = pixmap_format::BC7;
+                        if (asset.format == pixmap_format::R8G8B8A8_SRGB)
+                        {
+                            asset.format = pixmap_format::BC7_SRGB;
+                        }
+                        else
+                        {
+                            asset.format = pixmap_format::BC7;
+                        }
                     }
                 }
                 else if (asset.usage == texture_usage::normal)
@@ -739,7 +746,7 @@ std::unique_ptr<pixmap> texture_loader::generate_thumbnail(const char* path, siz
 
     if (!asset.faces.empty() && !asset.faces[0].mips.empty())
     {
-        return asset.faces[0].mips[0]->resize(size, size, pixmap_filter::nearest_neighbour)->convert(pixmap_format::R8G8B8A8);
+        return asset.faces[0].mips[0]->resize(size, size, pixmap_filter::nearest_neighbour)->convert(pixmap_format::R8G8B8A8_SRGB);
     }
 
     return nullptr;

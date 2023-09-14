@@ -1061,6 +1061,13 @@ bool asset_manager::has_pending_hot_reloads()
     return false;
 }
 
+size_t asset_manager::get_queue_size()
+{
+    std::unique_lock lock(m_states_mutex);
+
+    return m_pending_queue.size() + m_outstanding_ops.load();
+}
+
 void asset_manager::apply_hot_reloads()
 {
     std::unique_lock lock(m_states_mutex);

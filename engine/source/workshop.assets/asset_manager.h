@@ -250,6 +250,9 @@ public:
     // Returns true if any hot reloads are pending and apply_hot_reloads is needed.
     bool has_pending_hot_reloads();
 
+    // Gets the number of assets currently in the queue for processing.
+    size_t get_queue_size();
+
     // Performs any needed hot reload swapping. Done explicitly so higher level code
     // can control any syncronisation problems.
     void apply_hot_reloads();

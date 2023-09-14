@@ -13,7 +13,7 @@ struct swapchain_output
 {
     float4 color : SV_Target0;
 };
- 
+
 swapchain_output pshader(fullscreen_pinput input)
 {
     gbuffer_fragment f = read_gbuffer(input.uv * uv_scale);

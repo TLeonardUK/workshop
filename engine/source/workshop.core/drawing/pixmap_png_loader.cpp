@@ -30,7 +30,7 @@ std::vector<std::unique_ptr<pixmap>> pixmap_png_loader::load(const std::vector<c
         return {};
     }
 
-    std::unique_ptr<pixmap> result = std::make_unique<pixmap>(std::span((uint8_t*)image, width * height * 4), width, height, pixmap_format::R8G8B8A8);
+    std::unique_ptr<pixmap> result = std::make_unique<pixmap>(std::span((uint8_t*)image, width * height * 4), width, height, pixmap_format::R8G8B8A8_SRGB);
 
     free(image);
 
@@ -42,13 +42,15 @@ std::vector<std::unique_ptr<pixmap>> pixmap_png_loader::load(const std::vector<c
 
 bool pixmap_png_loader::save(pixmap& input, std::vector<char>& buffer)
 {
-    db_assert_message(input.get_format() == pixmap_format::R8G8B8A8, "Format is not valid for PNG format.");
+    db_assert_message(input.get_format() != pixmap_format::R8G8B8A8_SRGB &&
+                      input.get_format() != pixmap_format::R8G8B8A8, "Format is not valid for PNG format.");
 
     unsigned char* image = nullptr;
     size_t image_size = 0;
     uint32_t error = 0;
 
-    if (input.get_format() == pixmap_format::R8G8B8A8)
+    if (input.get_format() == pixmap_format::R8G8B8A8 ||
+        input.get_format() == pixmap_format::R8G8B8A8_SRGB)
     {
         error = lodepng_encode32(
             &image, 

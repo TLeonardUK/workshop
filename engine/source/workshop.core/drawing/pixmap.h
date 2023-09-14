@@ -49,6 +49,7 @@ enum class pixmap_format
 
     R8G8B8A8_SIGNED,
     R8G8B8A8,
+    R8G8B8A8_SRGB,
 
     R8G8,
     R8G8_SIGNED,
@@ -59,11 +60,13 @@ enum class pixmap_format
     // These formats cannot be manipulated, the pixmap is expected to be just a 
     // constant storage container once the format is converted to one of these.
     BC1,
-    //BC2, // We don't support this, as there is no reason to ever use it over BC3.
+    BC1_SRGB,
     BC3,
+    BC3_SRGB,
     BC4,
     BC5,
     BC7,
+    BC7_SRGB,
 
     BC6H_SF16,
     BC6H_UF16,
@@ -102,6 +105,7 @@ inline static const char* pixmap_format_strings[static_cast<int>(pixmap_format::
     
     "R8G8B8A8_SIGNED",
     "R8G8B8A8",
+    "R8G8B8A8_SRGB",
     
     "R8G8",
     "R8G8_SIGNED",
@@ -110,10 +114,13 @@ inline static const char* pixmap_format_strings[static_cast<int>(pixmap_format::
     "R8_SIGNED",
     
     "BC1",
+    "BC1_SRGB",
     "BC3",
+    "BC3_SRGB",
     "BC4",
     "BC5",
     "BC7",
+    "BC7_SRGB",
 
     "BC6H_SF16",
     "BC6H_UF16"

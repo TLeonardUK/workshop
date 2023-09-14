@@ -365,7 +365,7 @@ void editor::open_scene()
             editor_progress_popup* popup = get_window<editor_progress_popup>();
             popup->set_title("Loading Scene");
             popup->set_subtitle(vfs_path.c_str());
-            popup->set_progress(0.5f);
+            popup->set_progress(0.0f);
             popup->open();
 
             m_pending_open_scene = m_engine.get_asset_manager().request_asset<scene>(vfs_path.c_str(), 0);            
@@ -430,7 +430,7 @@ void editor::save_scene(bool ask_for_filename)
     editor_progress_popup* popup = get_window<editor_progress_popup>();
     popup->set_title("Saving Scene");
     popup->set_subtitle(vfs_path.c_str());
-    popup->set_progress(0.5f);
+    popup->set_progress(0.0f);
     popup->open();
 
     // Queue up a save to run in the background.
@@ -472,6 +472,16 @@ void editor::process_pending_save_load()
 {
     if (m_pending_open_scene.is_valid())
     {
+        asset_manager& ass_manager = m_engine.get_asset_manager();
+
+        editor_progress_popup* popup = get_window<editor_progress_popup>();
+
+        // Very questionable progress calculation, but good enough for now.
+        size_t queue_size = ass_manager.get_queue_size();
+        m_peak_pending_operations = std::max(m_peak_pending_operations, queue_size);
+        size_t completed = m_peak_pending_operations - queue_size;
+        popup->set_progress(static_cast<float>(completed) / std::max(m_peak_pending_operations, 1llu));
+
         if (m_pending_open_scene.get_state() == asset_loading_state::loaded ||
             m_pending_open_scene.get_state() == asset_loading_state::failed)
         {

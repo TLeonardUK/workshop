@@ -129,7 +129,7 @@ result<void> dx12_ri_swapchain::create_render_targets()
         ri_texture::create_params create_params;
         create_params.width = m_window_width;
         create_params.height = m_window_height;
-        create_params.format = ri_texture_format::R8G8B8A8;
+        create_params.format = ri_texture_format::R8G8B8A8_SRGB;
         create_params.is_render_target = true;
 
         std::string buffer_name = string_format("%s[%i]", m_debug_name.c_str(), i);

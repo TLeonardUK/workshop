@@ -204,6 +204,7 @@ protected:
 
     std::string m_current_scene_path = "";
     asset_ptr<scene> m_pending_open_scene;
+    size_t m_peak_pending_operations = 0;
 
     bool m_pending_save_scene_success = false;
     task_handle m_pending_save_scene;

@@ -69,6 +69,7 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1, 2, 3}, .channel_size=1, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },               // R8G8B8A8_SIGNED,
         pixmap_format_metrics { .pixel_size=4, .channels={0, 1, 2, 3}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },             // R8G8B8A8,
+        pixmap_format_metrics { .pixel_size=4, .channels={0, 1, 2, 3}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },             // R8G8B8A8_SRGB,
         
         pixmap_format_metrics { .pixel_size=2, .channels={0, 1}, .channel_size=1, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=true },                     // R8G8,
         pixmap_format_metrics { .pixel_size=2, .channels={0, 1}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },                   // R8G8_SIGNED,
@@ -77,10 +78,13 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         pixmap_format_metrics { .pixel_size=1, .channels={0}, .channel_size=1, .channel_format=pixmap_channel_format::t_unsigned_int, .is_mutable=true },                      // R8_SIGNED,
         
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC1,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC1_SRGB,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC3,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC3_SRGB,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=8 },         // BC4,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC5,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC7,
+        pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC7_SRGB,
         
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC6H_SF16,
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC6H_UF16,
@@ -130,7 +134,8 @@ void pixmap::set(size_t x, size_t y, const color& color)
         memcpy(data, &color.r, 16);
         return;
     }
-    else if (m_format == pixmap_format::R8G8B8A8)
+    else if (m_format == pixmap_format::R8G8B8A8 || 
+             m_format == pixmap_format::R8G8B8A8_SRGB)
     {
         static constexpr float k_conversion_factor = 1.0f / 255.0f;
 
@@ -230,7 +235,7 @@ color pixmap::get(size_t x, size_t y) const
         memcpy(&result.r, data, 16);
         return result;
     }
-    else if (m_format == pixmap_format::R8G8B8A8)
+    else if (m_format == pixmap_format::R8G8B8A8 || m_format == pixmap_format::R8G8B8A8_SRGB)
     {
         static constexpr float k_conversion_factor = 1.0f / 255.0f;
 
@@ -756,11 +761,13 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
     {
         // Conversion to a compressed format.
         case pixmap_format::BC1:
+        case pixmap_format::BC1_SRGB:
         {
             result = encode_bc1(new_format);
             break;
         }
         case pixmap_format::BC3:
+        case pixmap_format::BC3_SRGB:
         {
             result = encode_bc3(new_format);
             break;
@@ -776,6 +783,7 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
             break;
         }
         case pixmap_format::BC7:
+        case pixmap_format::BC7_SRGB:
         {
             result = encode_bc7(new_format, high_quality);
             break;
@@ -798,11 +806,13 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
             {
                 // Convert from a compressed format.
                 case pixmap_format::BC1:
+                case pixmap_format::BC1_SRGB:
                 {
                     result = decode_bc1(new_format);
                     break;
                 }
                 case pixmap_format::BC3:
+                case pixmap_format::BC3_SRGB:
                 {
                     result = decode_bc3(new_format);
                     break;
@@ -818,6 +828,7 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
                     break;
                 }
                 case pixmap_format::BC7:
+                case pixmap_format::BC7_SRGB:
                 {
                     result = decode_bc7(new_format);
                     break;
@@ -833,7 +844,7 @@ std::unique_ptr<pixmap> pixmap::convert(pixmap_format new_format, bool high_qual
                     break;
                 }
 
-                // Conversion from linear to linear, nice and easy.
+                // Conversion from non-compressed to non-compressed, nice and easy.
                 default:
                 {
                     result = std::make_unique<pixmap>(m_width, m_height, new_format);

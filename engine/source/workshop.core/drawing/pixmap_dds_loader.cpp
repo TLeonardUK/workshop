@@ -30,17 +30,17 @@ std::vector<std::unique_ptr<pixmap>> pixmap_dds_loader::load(const std::vector<c
 
     switch (info.format)
     {
-    case DDSKTX_FORMAT_RGBA8: direct_format = pixmap_format::R8G8B8A8; break;
+    case DDSKTX_FORMAT_RGBA8: direct_format = pixmap_format::R8G8B8A8_SRGB; break;
     case DDSKTX_FORMAT_RGBA8S: direct_format = pixmap_format::R8G8B8A8_SIGNED; break;
     case DDSKTX_FORMAT_RG8: direct_format = pixmap_format::R8G8; break;
     case DDSKTX_FORMAT_RG8S: direct_format = pixmap_format::R8G8_SIGNED; break;
     case DDSKTX_FORMAT_R32F: direct_format = pixmap_format::R32_FLOAT; break;
     case DDSKTX_FORMAT_R8: direct_format = pixmap_format::R8; break;
-    case DDSKTX_FORMAT_BC1: direct_format = pixmap_format::BC1; block_size = 4; break;
-    case DDSKTX_FORMAT_BC3: direct_format = pixmap_format::BC3; block_size = 4; break;
+    case DDSKTX_FORMAT_BC1: direct_format = pixmap_format::BC1_SRGB; block_size = 4; break;
+    case DDSKTX_FORMAT_BC3: direct_format = pixmap_format::BC3_SRGB; block_size = 4; break;
     case DDSKTX_FORMAT_BC4: direct_format = pixmap_format::BC4; block_size = 4; break;
     case DDSKTX_FORMAT_BC5: direct_format = pixmap_format::BC5; block_size = 4; break;
-    case DDSKTX_FORMAT_BC7: direct_format = pixmap_format::BC7; block_size = 4; break;
+    case DDSKTX_FORMAT_BC7: direct_format = pixmap_format::BC7_SRGB; block_size = 4; break;
     }
 
     // If we have a direct format we can just return it directly.
@@ -48,12 +48,12 @@ std::vector<std::unique_ptr<pixmap>> pixmap_dds_loader::load(const std::vector<c
     {
         std::unique_ptr<pixmap> result = std::make_unique<pixmap>(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(sub_data.buff), sub_data.size_bytes), sub_data.width, sub_data.height, direct_format);
 
-        result_array.push_back(result->convert(pixmap_format::R8G8B8A8));
+        result_array.push_back(result->convert(pixmap_format::R8G8B8A8_SRGB));
         return result_array;
     }
 
     // Otherwise we need to do some conversions.
-    std::unique_ptr<pixmap> result = std::make_unique<pixmap>(info.width, info.height, pixmap_format::R8G8B8A8);
+    std::unique_ptr<pixmap> result = std::make_unique<pixmap>(info.width, info.height, pixmap_format::R8G8B8A8_SRGB);
 
     for (size_t y = 0; y < info.height; y++)
     {
@@ -99,7 +99,7 @@ std::vector<std::unique_ptr<pixmap>> pixmap_dds_loader::load(const std::vector<c
         }
     }
 
-    result_array.push_back(result->convert(pixmap_format::R8G8B8A8));
+    result_array.push_back(result->convert(pixmap_format::R8G8B8A8_SRGB));
     return result_array;
 }
 

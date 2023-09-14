@@ -334,7 +334,8 @@ ri_texture_format ri_convert_pixmap_format(pixmap_format value)
         ri_texture_format::R16,                 // R16,
         
         ri_texture_format::R8G8B8A8_SNORM,      // R8G8B8A8_SIGNED,
-        ri_texture_format::R8G8B8A8,            // R8G8B8A8,
+        ri_texture_format::R8G8B8A8,            // R8G8B8A8,  
+        ri_texture_format::R8G8B8A8_SRGB,       // R8G8B8A8,            
 
         ri_texture_format::R8G8_SNORM,          // R8G8,
         ri_texture_format::R8G8,                // R8G8_SIGNED,
@@ -343,10 +344,13 @@ ri_texture_format ri_convert_pixmap_format(pixmap_format value)
         ri_texture_format::R8,                  // R8_SIGNED,
         
         ri_texture_format::BC1,                 // BC1,
+        ri_texture_format::BC1_SRGB,            // BC1_SRGB,
         ri_texture_format::BC3,                 // BC3,
+        ri_texture_format::BC3_SRGB,            // BC3_SRGB,
         ri_texture_format::BC4,                 // BC4,
         ri_texture_format::BC5,                 // BC5,
         ri_texture_format::BC7,                 // BC7,
+        ri_texture_format::BC7_SRGB,            // BC7_SRGB,
 
         ri_texture_format::BC6H_SF16,           // BC6_SF16,
         ri_texture_format::BC6H_UF16            // BC6_UF16,
