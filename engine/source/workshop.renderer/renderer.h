@@ -61,9 +61,10 @@ enum class default_texture_type
 // an appropriate one when calling renderer::get_default_sampler.
 enum class default_sampler_type
 {
-    color,      // Configured for sampling color data.
-    normal,     // Configured for sampling normal data.
-    shadow_map, // Configured for sampling shadow maps - clamps edges.
+    color,          // Configured for sampling color data.
+    normal,         // Configured for sampling normal data.
+    shadow_map,     // Configured for sampling shadow maps - clamps edges.
+    color_clamped,  // Configured for sampling shadow maps - clamps edges.
 
     COUNT
 };

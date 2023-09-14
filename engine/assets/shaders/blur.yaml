@@ -33,6 +33,7 @@ param_blocks:
       input_texture: texture2d
       input_texture_sampler: sampler
       input_texture_size: int2
+      input_uv_scale: float2
 
 techniques:
   blur_y_10_f16:

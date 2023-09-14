@@ -27,6 +27,12 @@ public:
     // If set all color targets with be cleared to 0.
     bool clear_color_outputs = false;
 
+    // Overrides the viewport from the view/output dimensions.
+    recti viewport = recti::empty;
+
+    // Overrides the scissor from the viewport.
+    recti scissor = recti::empty;
+
 public:
 
     virtual void generate(renderer& renderer, generated_state& output, render_view* view) override;

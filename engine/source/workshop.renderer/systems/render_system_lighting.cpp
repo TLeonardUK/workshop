@@ -286,9 +286,13 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("reflection_probe_count", (int)visible_reflection_probes.size());
         resolve_param_block->set("reflection_probe_buffer", reflection_probe_instance_buffer->get_buffer());
         resolve_param_block->set("brdf_lut", *m_brdf_lut_texture);
-        resolve_param_block->set("brdf_lut_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));       
-        resolve_param_block->set("ao_texture", *m_renderer.get_system<render_system_ssao>()->get_ssao_mask());
-        resolve_param_block->set("ao_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+        resolve_param_block->set("brdf_lut_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));       
+
+        ri_texture& ao_texture = *m_renderer.get_system<render_system_ssao>()->get_ssao_mask();
+        resolve_param_block->set("ao_texture", ao_texture);
+        resolve_param_block->set("ao_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
+        resolve_param_block->set("ao_direct_light_effect", options.ssao_direct_light_effect);
+        resolve_param_block->set("ao_uv_scale", vector2(options.ssao_resolution_scale, options.ssao_resolution_scale));
     }
 
     // Add pass to run compute shader to generate the clusters.

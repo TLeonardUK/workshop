@@ -82,20 +82,32 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         {
             list.set_pipeline(*technique->pipeline.get());
             list.set_render_targets(output.color_targets, output.depth_target);
+
+            recti use_viewport;
             if (view)
             {
                 list.set_param_blocks(bind_param_blocks(view->get_resource_cache()));
-                list.set_viewport(view->get_viewport());
-                list.set_scissor(view->get_viewport());
+                use_viewport = view->get_viewport();
             }
             else
             {
-                recti viewport = { 0, 0, (int)output.color_targets[0].get_width(), (int)output.color_targets[0].get_height() };
-
                 list.set_param_blocks(param_blocks);
-                list.set_viewport(viewport);
-                list.set_scissor(viewport);
+                use_viewport = { 0, 0, (int)output.color_targets[0].get_width(), (int)output.color_targets[0].get_height() };
             }
+
+            if (viewport != recti::empty)
+            {
+                use_viewport = viewport;
+            }
+
+            recti use_scissor = use_viewport;
+            if (scissor != recti::empty)
+            {
+                use_scissor = scissor;
+            }
+
+            list.set_viewport(use_viewport);
+            list.set_scissor(use_scissor);
             list.set_primitive_topology(ri_primitive::triangle_list);
             list.set_index_buffer(*index_buffer);
             list.draw(6, 1);

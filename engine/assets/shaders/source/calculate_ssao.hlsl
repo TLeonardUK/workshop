@@ -83,6 +83,42 @@ static const float3 k_kernel_samples[64] = {
     float3(0.4173, -0.1548, 0.4625),
     float3(-0.4427, -0.6793, 0.1865)
 };
+#elif 1
+static const int k_kernel_size = 32;
+static const float3 k_kernel_samples[32] = {
+    float3(0.0498, -0.0447, 0.0500),
+    float3(0.0151, 0.0171, 0.0023),
+    float3(-0.0460, -0.0219, 0.0361),
+    float3(0.0178, -0.1182, 0.0528),
+    float3(0.0845, 0.0903, 0.0870),
+    float3(0.1643, 0.0789, 0.0275),
+    float3(-0.0043, -0.1142, 0.1401),
+    float3(-0.0008, -0.0005, 0.0009),
+    float3(0.1426, -0.1329, 0.0723),
+    float3(0.1245, 0.1026, 0.1074),
+    float3(-0.1180, 0.0757, 0.0834),
+    float3(0.2312, -0.1535, 0.2262),
+    float3(0.2642, -0.1038, 0.3479),
+    float3(-0.0814, -0.0191, 0.2808),
+    float3(-0.1381, -0.1369, 0.1376),
+    float3(-0.2009, 0.1275, 0.1515),
+    float3(-0.1122, 0.0921, 0.0342),
+    float3(0.5007, 0.7648, 0.0752),
+    float3(-0.3189, -0.6535, 0.6057),
+    float3(-0.6358, -0.0129, 0.6489),
+    float3(-0.0834, -0.2635, 0.1545),
+    float3(0.0269, -0.0409, 0.0349),
+    float3(-0.0645, -0.5748, 0.5884),
+    float3(0.8532, -0.0725, 1.2992),
+    float3(0.7206, 1.1909, 1.0036),
+    float3(0.0038, 0.0044, 0.0029),
+    float3(-1.0442, 0.6521, 1.0138),
+    float3(-0.0456, -1.2245, 1.6570),
+    float3(-0.7821, 0.3614, 2.3514),
+    float3(-0.0296, 0.0330, 0.0314),
+    float3(-1.1895, 1.5603, 1.8245),
+    float3(0.5241, 1.1586, 0.6660)
+};
 #else
 static const int k_kernel_size = 16;
 static const float3 k_kernel_samples[16] = {
@@ -107,14 +143,14 @@ float3(0.0498, -0.0447, 0.0500),
 
 ssao_output pshader(fullscreen_pinput input)
 {
-    float2 input_uv = input.uv * uv_scale;
+    float2 input_uv = (input.uv * uv_scale);
 
     gbuffer_fragment f = read_gbuffer(input_uv);
 
     float2 noise_scale = float2(view_dimensions.x / 4.0f, view_dimensions.y / 4.0f);
     float3 view_space_normal = normalize(mul(view_matrix, float4(f.world_normal, 0.0f))).xyz;
     float3 view_space_position = mul(view_matrix, float4(f.world_position, 1.0f)).xyz;
-    float3 random_vector = noise_texture.Sample(noise_texture_sampler, input_uv * noise_scale).xyz;
+    float3 random_vector = noise_texture.Sample(noise_texture_sampler, input.uv * noise_scale).xyz;
 
     float3 view_space_tangent = normalize(random_vector - view_space_normal * dot(random_vector, view_space_normal));
     float3 view_space_bitangent = cross(view_space_normal, view_space_tangent);

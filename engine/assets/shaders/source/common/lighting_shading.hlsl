@@ -415,7 +415,7 @@ struct direct_lighting_result
     float2 shadow_attenuation_and_cascade_index;
 };
 
-direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light)
+direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light, bool is_transparent)
 {    
     float3 normal = normalize(frag.world_normal);
     float3 view_direction = normalize(view_world_position - frag.world_position);
@@ -484,8 +484,15 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     float3 specular_brdf = numerator / denominator;
 
     // Total contribution for this light.
+    float ao = 1.0f;
+    if (!is_transparent)
+    {
+        ao = ao_texture.Sample(ao_sampler, frag.uv * ao_uv_scale).r;
+    }
+    float ao_multiplier = lerp(1.0f, ao, ao_direct_light_effect);
+
     float n_dot_l = max(dot(normal, light_frag_direction), 0.0);
-    float3 lighting = (diffuse_brdf + specular_brdf) * radiance * n_dot_l;
+    float3 lighting = (diffuse_brdf + specular_brdf) * radiance * n_dot_l * ao_multiplier;
 
     // Bundle up relevant values and return.
     direct_lighting_result ret;
@@ -537,7 +544,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent)
     float ao = 1.0f;
     if (!is_transparent)
     {
-        ao = ao_texture.Sample(ao_sampler, frag.uv).r;
+        ao = ao_texture.Sample(ao_sampler, frag.uv * ao_uv_scale).r;
     }
 
     float3 ambient = (kD * diffuse + specular) * ao;
@@ -603,7 +610,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent)
             uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
             light_state light = get_light_state(light_index);
             
-            direct_lighting_result result = calculate_direct_lighting(frag, light);
+            direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent);
             direct_lighting += result.lighting;
             max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
         }

@@ -20,7 +20,7 @@ public:
 
 	// How many mips to drop of a texture as its loaded. This can be used to quickly strim down the 
 	// maximum memory being used. In general texture streaming/etc should be used rather than this.
-	size_t textures_dropped_mips = 0;
+	size_t textures_dropped_mips = 2;
 
 	// ================================================================================================
 	//  Light Probes
@@ -106,11 +106,18 @@ public:
 	// ================================================================================================
 
 	// Determines over how large and area we sample texels to determine occlusion.
-	float ssao_sample_radius = 10.0f;
+	float ssao_sample_radius = 15.0f;
 
 	// Determines to what power we raise the output AO, the higher the more contrast 
 	// and stronger the SSAO effect is.
-	float ssao_intensity_power = 5.0f;
+	float ssao_intensity_power = 100.0f;
+
+	// Determines the resolution scale ssao is run on, this can be adjusted to balance between performance and quality.
+	float ssao_resolution_scale = 0.5f;
+
+	// Determines how much effect the ssao has on direct lighting. In theory SSAO should only effect
+	// ambient lighting, but having a small amount added direct lighting avoids things looking flat.
+	float ssao_direct_light_effect = 0.5f;
 
 };
 

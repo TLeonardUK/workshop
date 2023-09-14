@@ -34,6 +34,8 @@ result<void> render_system_ssao::create_resources()
 {
     ri_interface& render_interface = m_renderer.get_render_interface();
 
+    const render_options& options = m_renderer.get_options();
+
     ri_texture::create_params texture_params;
     texture_params.width = m_renderer.get_display_width();
     texture_params.height = m_renderer.get_display_height();
@@ -77,17 +79,17 @@ result<void> render_system_ssao::create_resources()
     std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between [0.0, 1.0]
     std::default_random_engine generator;
     std::vector<vector3> ssaoKernel;
-    for (unsigned int i = 0; i < 16; ++i)
+    for (unsigned int i = 0; i < 32; ++i)
     {
         vector3 sample(
-            randomFloats(generator) * 2.0 - 1.0,
-            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator) * 2.0f - 1.0f,
+            randomFloats(generator) * 2.0f - 1.0f,
             randomFloats(generator)
         );
         sample = sample.normalize();
         sample *= randomFloats(generator);
 
-        float scale = (float)i / 16.0;
+        float scale = (float)i / 16.0f;
         scale = math::lerp(0.1f, 1.0f, scale * scale);
         sample *= scale;
 
@@ -140,6 +142,12 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     std::unique_ptr<render_pass_fullscreen> resolve_pass = std::make_unique<render_pass_fullscreen>();
     resolve_pass->name = "ssao";
     resolve_pass->system = this;
+    resolve_pass->viewport = recti(
+        0, 
+        0,
+        static_cast<size_t>(view.get_viewport().width * options.ssao_resolution_scale),
+        static_cast<size_t>(view.get_viewport().height * options.ssao_resolution_scale)
+    );
     resolve_pass->technique = m_renderer.get_effect_manager().get_technique("calculate_ssao", {});
     resolve_pass->output.color_targets.push_back(m_ssao_texture.get());
     resolve_pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
@@ -149,8 +157,12 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
 
     // Do horizontal blur.
     h_blur_params->set("input_texture", *m_ssao_texture.get());
-    h_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    h_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
     h_blur_params->set("input_texture_size", vector2i((int)m_ssao_texture->get_width(), (int)m_ssao_texture->get_height()));
+    h_blur_params->set("input_uv_scale", vector2(
+        (float)view.get_viewport().width / m_ssao_texture->get_width(),
+        (float)view.get_viewport().height / m_ssao_texture->get_height()
+    ));
 
     std::unique_ptr<render_pass_fullscreen> h_blur_pass = std::make_unique<render_pass_fullscreen>();
     h_blur_pass->name = "ssao horizontal blur";
@@ -160,6 +172,12 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
         { "format", "R16_FLOAT" },
         { "radius", "10" }
     });
+    h_blur_pass->scissor = recti(
+        0,
+        0,
+        static_cast<size_t>(view.get_viewport().width * options.ssao_resolution_scale),
+        static_cast<size_t>(view.get_viewport().height * options.ssao_resolution_scale)
+    );
     h_blur_pass->output.color_targets.push_back(m_ssao_blur_texture.get());
     h_blur_pass->param_blocks.push_back(view.get_view_info_param_block());
     h_blur_pass->param_blocks.push_back(h_blur_params);
@@ -167,8 +185,12 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
 
     // Do vertical blur.
     v_blur_params->set("input_texture", *m_ssao_blur_texture.get());
-    v_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    v_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
     v_blur_params->set("input_texture_size", vector2i((int)m_ssao_blur_texture->get_width(), (int)m_ssao_blur_texture->get_height()));
+    v_blur_params->set("input_uv_scale", vector2(
+        (float)view.get_viewport().width / m_ssao_texture->get_width(),
+        (float)view.get_viewport().height / m_ssao_texture->get_height()
+    ));
 
     std::unique_ptr<render_pass_fullscreen> v_blur_pass = std::make_unique<render_pass_fullscreen>();
     v_blur_pass->name = "ssao vertical blur";
@@ -177,7 +199,13 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
         { "direction", "y" },
         { "format", "R16_FLOAT" },
         { "radius", "10" }
-        });
+    });
+    v_blur_pass->scissor = recti(
+        0,
+        0,
+        static_cast<size_t>(view.get_viewport().width * options.ssao_resolution_scale),
+        static_cast<size_t>(view.get_viewport().height * options.ssao_resolution_scale)
+    );
     v_blur_pass->output.color_targets.push_back(m_ssao_texture.get());
     v_blur_pass->param_blocks.push_back(view.get_view_info_param_block());
     v_blur_pass->param_blocks.push_back(v_blur_params);
@@ -189,5 +217,3 @@ void render_system_ssao::step(const render_world_state& state)
 }
 
 }; // namespace ws
-
-

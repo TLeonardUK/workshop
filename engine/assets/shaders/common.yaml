@@ -191,6 +191,8 @@ param_blocks:
       brdf_lut_sampler: sampler
       ao_texture: texture2d
       ao_sampler: sampler
+      ao_direct_light_effect: float
+      ao_uv_scale: float2
   # Structure describing individual light grids.
   light_probe_grid_state:
     scope: instance
