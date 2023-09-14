@@ -23,6 +23,7 @@ param_blocks:
       noise_texture_sampler: sampler
       ssao_radius: float
       ssao_power: float
+      ssao_resolution_scale: float
 
 techniques:
   calculate_ssao:

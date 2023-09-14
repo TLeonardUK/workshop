@@ -147,10 +147,12 @@ ssao_output pshader(fullscreen_pinput input)
 
     gbuffer_fragment f = read_gbuffer(input_uv);
 
-    float2 noise_scale = float2(view_dimensions.x / 4.0f, view_dimensions.y / 4.0f);
     float3 view_space_normal = normalize(mul(view_matrix, float4(f.world_normal, 0.0f))).xyz;
     float3 view_space_position = mul(view_matrix, float4(f.world_position, 1.0f)).xyz;
-    float3 random_vector = noise_texture.Sample(noise_texture_sampler, input.uv * noise_scale).xyz;
+    
+    float2 noise_scale = (view_dimensions * ssao_resolution_scale) / 4.0f;
+    float2 noise_uv = input.uv * noise_scale;
+    float3 random_vector = noise_texture.Sample(noise_texture_sampler, noise_uv).xyz;
 
     float3 view_space_tangent = normalize(random_vector - view_space_normal * dot(random_vector, view_space_normal));
     float3 view_space_bitangent = cross(view_space_normal, view_space_tangent);
@@ -158,10 +160,10 @@ ssao_output pshader(fullscreen_pinput input)
     float3x3 tbn = float3x3(view_space_tangent, view_space_bitangent, view_space_normal);
 
     const float k_bias = 0.025f;
-    const float k_max_uv_delta = (1.0f / view_dimensions.x) * ssao_radius * 3.0f;
+    const float k_max_uv_delta = (1.0f / view_dimensions.x) * ssao_radius * 10.0f;
 
     float ao = 0.0f;
-    float on_screen_samples = 0.0f;
+    float sample_count = 0.0f;
     for (int i = 0; i < k_kernel_size; i++)
     {
         // Select a view space sample position from the random rotation kernel.
@@ -181,12 +183,8 @@ ssao_output pshader(fullscreen_pinput input)
         float2 uv_offset_direct = (view_uv - input_uv);
         if (length(uv_offset_direct) > k_max_uv_delta)
         {
-            view_uv = input_uv + (normalize(uv_offset_direct) * k_max_uv_delta);
+            continue;
         }
-
-        // If sampling point is offscreen discard this sample otherwise we get halos around
-        // the edge of the screen when getting close to objects.
-        float on_screen_multiplier = (view_uv.x >= 0.0f && view_uv.y >= 0.0f && view_uv.x < 1.0f && view_uv.y < 1.0f);
 
         gbuffer_fragment sample_frag = read_gbuffer(view_uv);
         float sample_depth = mul(view_matrix, float4(sample_frag.world_position, 1.0f)).z;
@@ -195,11 +193,11 @@ ssao_output pshader(fullscreen_pinput input)
         float n_dot_s = max(dot(view_space_normal, sample_dir), 0.0f);
 
         float range_check = smoothstep(0.0f, 1.0f, ssao_radius / abs(view_space_position.z - sample_depth));
-        ao += range_check * (sample_depth + k_bias > sample_pos.z ? 0.0f : 1.0f) * n_dot_s * on_screen_multiplier;
-        on_screen_samples += on_screen_multiplier;
+        ao += range_check * (sample_depth + k_bias > sample_pos.z ? 0.0f : 1.0f) * n_dot_s;
+        sample_count += 1.0f;
     }
 
-    ao = 1.0f - (ao / on_screen_samples);
+    ao = 1.0f - (ao / sample_count);
     ao = saturate(pow(ao, ssao_power));
 
     ssao_output output;

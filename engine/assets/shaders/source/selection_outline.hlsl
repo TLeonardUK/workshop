@@ -48,7 +48,7 @@ swapchain_output pshader(fullscreen_pinput input)
     gbuffer_fragment f = read_gbuffer(input.uv);
 
     swapchain_output output;
-    output.color = outline_color;
+    output.color.rgb = srgb_to_linear(outline_color.rgb);
     output.color.a = calculate_stength(input.uv);
     return output;
 }

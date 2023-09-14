@@ -137,7 +137,8 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     ssao_parameters->set("noise_texture_sampler", *m_noise_texture_sampler);
     ssao_parameters->set("ssao_radius", options.ssao_sample_radius);
     ssao_parameters->set("ssao_power", options.ssao_intensity_power);
-    
+    ssao_parameters->set("ssao_resolution_scale", options.ssao_resolution_scale);
+
     // Composite the transparent geometry onto the light buffer.
     std::unique_ptr<render_pass_fullscreen> resolve_pass = std::make_unique<render_pass_fullscreen>();
     resolve_pass->name = "ssao";
