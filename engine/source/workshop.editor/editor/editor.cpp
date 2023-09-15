@@ -85,6 +85,8 @@ void editor::register_init(init_list& list)
 void editor::set_editor_mode(editor_mode mode)
 {
 	m_editor_mode = mode;
+
+    m_engine.get_renderer().get_command_queue().set_render_flag(render_flag::draw_object_debug, mode == editor_mode::editor);
 }
 
 editor_main_menu& editor::get_main_menu()

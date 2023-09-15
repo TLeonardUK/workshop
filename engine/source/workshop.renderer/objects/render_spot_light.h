@@ -28,6 +28,8 @@ public:
     // Overrides the default bounds to return the obb of the model bounds.
     virtual obb get_bounds() override;
 
+    virtual void debug_draw(render_system_debug& debug) override;
+
 private:
 
     // Updates the light state param block any any other render specific resources.

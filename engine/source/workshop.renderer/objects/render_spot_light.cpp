@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 
 namespace ws {
 
@@ -54,6 +55,29 @@ obb render_spot_light::get_bounds()
     );
 
     return obb(bounds, get_transform());
+}
+
+void render_spot_light::debug_draw(render_system_debug& debug)
+{
+    if (has_render_gpu_flag(render_gpu_flags::selected))
+    {
+        vector3 world_location = m_local_location;
+        vector3 world_direction = vector3::forward * m_local_rotation;
+
+        vector3 world_location_end = world_location + (world_direction * m_range);
+
+        vector3 world_direction_outer = (vector3::forward * quat::angle_axis(m_outer_radius * 2.0f, vector3::up)) * m_local_rotation;
+        vector3 world_location_end_outer = world_location + (world_direction_outer * m_range);
+
+        vector3 world_direction_inner = (vector3::forward * quat::angle_axis(m_inner_radius * 2.0f, vector3::up)) * m_local_rotation;
+        vector3 world_location_end_inner = world_location + (world_direction_inner * m_range);
+
+        float outer_radius = (world_location_end - world_location_end_outer).length();
+        float inner_radius = (world_location_end - world_location_end_inner).length();
+
+        debug.add_cone(world_location_end, world_location, outer_radius, color::white);
+        debug.add_cone(world_location_end, world_location, inner_radius, color::white);
+    }
 }
 
 }; // namespace ws

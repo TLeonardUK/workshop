@@ -142,6 +142,8 @@ void directional_light_system::step(const frame_time& time)
             light->last_transform_generation = transform->generation;
             render_command_queue.set_object_transform(light->render_id, transform->world_location, transform->world_rotation, transform->world_scale);
         }
+
+        // TODO: Do debug draw.
     }
 
     // Execute all commands after creating the render objects.

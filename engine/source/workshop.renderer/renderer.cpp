@@ -548,6 +548,22 @@ void renderer::render_state(render_world_state& state)
             m_visibility_manager->draw_cell_bounds(draw_cell_bounds, draw_object_bounds);
         }
 
+        // Do debug rendering for any render objects that require it.
+        if (get_render_flag(render_flag::draw_object_debug))
+        {
+            render_system_debug* debug_system = get_system<render_system_debug>();
+            if (debug_system)
+            {
+                // TODO: Do proper culling here.
+
+                std::vector<render_object*> objects = m_scene_manager->get_objects();
+                for (render_object* obj : objects)
+                {
+                    obj->debug_draw(*debug_system);
+                }
+            }
+        }
+
         if (get_render_flag(render_flag::draw_performance_overlay))
         {
             draw_debug_overlay();

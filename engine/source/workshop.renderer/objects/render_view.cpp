@@ -6,6 +6,7 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_resource_cache.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 
 namespace ws {
 
@@ -290,6 +291,10 @@ bool render_view::get_active()
 render_visibility_manager::view_id render_view::get_visibility_view_id()
 {
     return m_visibility_view_id;
+}
+
+void render_view::debug_draw(render_system_debug& debug)
+{
 }
 
 }; // namespace ws

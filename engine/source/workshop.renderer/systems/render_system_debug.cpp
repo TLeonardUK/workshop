@@ -22,7 +22,7 @@
 
 namespace {
 
-constexpr int k_tesselation = 7;
+constexpr int k_tesselation = 11;
 constexpr float k_float_tesselation = static_cast<float>(k_tesselation);
 
 };

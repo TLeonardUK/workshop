@@ -35,6 +35,19 @@ render_object* render_scene_manager::resolve_id(render_object_id id)
     return nullptr;
 }
 
+std::vector<render_object*> render_scene_manager::get_objects()
+{
+    std::scoped_lock lock(m_mutex);
+
+    std::vector<render_object*> objects;
+    for (auto& [key, value] : m_objects)
+    {
+        objects.push_back(value.get());
+    }
+
+    return objects;
+}
+
 // ===========================================================================================
 //  Objects
 // ===========================================================================================

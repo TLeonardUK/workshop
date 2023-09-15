@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.render_interface/ri_interface.h"
 
 namespace ws {
@@ -73,6 +74,17 @@ obb render_directional_light::get_bounds()
     );
 
     return obb(bounds, get_transform());
+}
+
+void render_directional_light::debug_draw(render_system_debug& debug)
+{
+    if (has_render_gpu_flag(render_gpu_flags::selected))
+    {
+        vector3 world_location = m_local_location;
+        vector3 world_direction = vector3::forward * m_local_rotation;
+
+        debug.add_arrow(world_location, world_location + (world_direction * 200.0f), color::white);
+    }
 }
 
 }; // namespace ws

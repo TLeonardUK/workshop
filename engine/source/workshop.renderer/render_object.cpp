@@ -50,6 +50,11 @@ render_gpu_flags render_object::get_render_gpu_flags()
     return m_gpu_flags;
 }
 
+bool render_object::has_render_gpu_flag(render_gpu_flags flag)
+{
+    return (m_gpu_flags & flag) != render_gpu_flags::none;
+}
+
 void render_object::set_local_transform(const vector3& location, const quat& rotation, const vector3& scale)
 {
     if (location == m_local_location &&

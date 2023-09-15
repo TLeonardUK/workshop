@@ -19,6 +19,7 @@
 namespace ws {
 
 class render_scene_manager;
+class render_system_debug;
 enum class render_gpu_flags;
 
 // ================================================================================================
@@ -64,6 +65,11 @@ public:
     // Sets the render flags of this object.
     virtual void set_render_gpu_flags(render_gpu_flags flags);
     render_gpu_flags get_render_gpu_flags();
+    bool has_render_gpu_flag(render_gpu_flags flag);
+
+    // Overridable function that allows object to render debugging information.
+    // This is enabled mainly in editor to render things like light bounds/etc.
+    virtual void debug_draw(render_system_debug& debug) {};
 
 protected:
 

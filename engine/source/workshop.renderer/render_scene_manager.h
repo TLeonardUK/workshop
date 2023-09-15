@@ -51,6 +51,10 @@ public:
         return dynamic_cast<T*>(resolve_id(id));
     }
 
+    // Gets a list of all objects. 
+    // This is slow, don't use it for anything but debugging.
+    std::vector<render_object*> get_objects();
+
 public:
 
     // ===========================================================================================

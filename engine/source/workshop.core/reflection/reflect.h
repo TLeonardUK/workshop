@@ -90,18 +90,23 @@ class reflect_no_parent { };
             : reflect_class(#name, typeid(name), typeid(parent), flags, display_name, []() { return new name(); })      \
         {
 
+// Simple reflection of a field.
 #define REFLECT_FIELD(name, display_name, description)                                                                  \
             add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)), typeid(decltype(class_t::name)), typeid(void), display_name, description, reflect_field_container_type::scalar, nullptr); 
 
+// Reflect of a field that contains a reference, each asset_ptr, component_ref.
 #define REFLECT_FIELD_REF(name, display_name, description)                                                              \
             add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)), typeid(decltype(class_t::name)), typeid(decltype(class_t::name)::super_type_t), display_name, description, reflect_field_container_type::scalar, nullptr); 
 
+// Simple reflection of an std::vector that contains data you would normally reflect with REFLECT_FIELD.
 #define REFLECT_FIELD_LIST(name, display_name, description)                                                                  \
             add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)::value_type), typeid(decltype(class_t::name)::value_type), typeid(void), display_name, description, reflect_field_container_type::list, std::make_unique<reflect_field_container_vector_helper<decltype(class_t::name)::value_type>>()); 
 
+// Simple reflection of an std::vector that contains data you would normally reflect with REFLECT_FIELD_REF.
 #define REFLECT_FIELD_LIST_REF(name, display_name, description)                                                              \
             add_field(#name, offsetof(class_t, class_t::name), sizeof(decltype(class_t::name)::value_type), typeid(decltype(class_t::name)::value_type), typeid(decltype(class_t::name)::value_type::super_type_t), display_name, description, reflect_field_container_type::list, std::make_unique<reflect_field_container_vector_helper<decltype(class_t::name)::value_type>>()); 
 
+// Adds a constraint to a field, so that in editor its value cannot be moved out of the min and max range.
 #define REFLECT_CONSTRAINT_RANGE(name, min_val, max_val)                                                                \
             add_constraint(#name, static_cast<float>(min_val), static_cast<float>(max_val)); 
 

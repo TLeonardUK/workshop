@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 
 namespace ws {
 
@@ -37,6 +38,14 @@ obb render_point_light::get_bounds()
     );
 
     return obb(bounds, get_transform());
+}
+
+void render_point_light::debug_draw(render_system_debug& debug)
+{
+    if (has_render_gpu_flag(render_gpu_flags::selected))
+    {
+        debug.add_sphere(sphere(m_local_location, m_range), color::white);
+    }
 }
 
 }; // namespace ws
