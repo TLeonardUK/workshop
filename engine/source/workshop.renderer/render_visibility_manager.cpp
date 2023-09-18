@@ -48,6 +48,7 @@ render_visibility_manager::object_id render_visibility_manager::register_object(
     state.flags = flags;
     state.visibility.reset();
     state.is_dirty = true;
+    state.manual_visibility = true;
     state.oct_tree_entry = m_oct_tree.insert(bounds.get_aligned_bounds(), id);
 
     m_dirty_objects.push_back(id);
@@ -108,6 +109,24 @@ bool render_visibility_manager::is_object_visibile(view_id view_id, object_id ob
     }
 
     return false;
+}
+
+void render_visibility_manager::set_object_manual_visibility(object_id id, bool visible)
+{
+    std::unique_lock lock(m_mutex);
+
+    object_state& state = m_objects[id.index];
+    if (state.id.generation == id.generation && state.manual_visibility != visible)
+    {
+        state.manual_visibility = visible;
+        db_log(core, "set_object_manual_visibility: id=%zi visible=%i", id.index, visible);
+
+        if (!state.is_dirty)
+        {
+            state.is_dirty = true;
+            m_dirty_objects.push_back(id);
+        }
+    }
 }
 
 render_visibility_manager::view_id render_visibility_manager::register_view(const frustum& frustum, render_view* metadata)
@@ -218,6 +237,8 @@ void render_visibility_manager::draw_cell_bounds(bool draw_cell_bounds, bool dra
     }
 }
 
+#pragma optimize("", off)
+
 void render_visibility_manager::update_visibility()
 {
     std::scoped_lock lock(m_mutex);
@@ -273,6 +294,21 @@ void render_visibility_manager::update_visibility()
 
         std::unordered_set<object_id> visible_object_ids;
 
+        // Remove any objects that have been manually made invisible.
+        for (auto iter = visible_objects.elements.begin(); iter != visible_objects.elements.end(); /* empty */)
+        {
+            object_id id = *iter;
+            object_state& obj_state = m_objects[id.index];
+            if (!obj_state.manual_visibility)
+            {
+                iter = visible_objects.elements.erase(iter);
+            }
+            else
+            {
+                iter++;
+            }
+        }
+
         // Go through visible objects and update states based on if they have entered/left/remained in the view.
         for (object_id object_id : visible_objects.elements)
         {
@@ -281,6 +317,8 @@ void render_visibility_manager::update_visibility()
             // Object newly entering view.
             if (!obj_state.visibility[view_index])
             {
+                db_log(core, "visible: id=%zi", object_id.index);
+
                 obj_state.visibility[view_index] = true;
                 
                 // View is not marked as changed if the object has not physical representation.
@@ -320,6 +358,8 @@ void render_visibility_manager::update_visibility()
                 // See if object has been removed.
                 if (visible_object_ids.find(existing_object_id) == visible_object_ids.end())
                 {
+                    db_log(core, "not visible: id=%zi", existing_object_id.index);
+
                     obj_state.visibility[state.id.index] = false;
                     state.has_changed = true;
                 }

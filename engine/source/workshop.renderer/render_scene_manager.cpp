@@ -80,6 +80,20 @@ void render_scene_manager::set_object_gpu_flags(render_object_id id, render_gpu_
     }
 }
 
+void render_scene_manager::set_object_visibility(render_object_id id, bool visibility)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_object* object = resolve_id(id))
+    {
+        object->set_visibility(visibility);
+    }
+    else
+    {
+        db_warning(renderer, "set_object_visibility called with non-existant id {%zi}.", id);
+    }
+}
+
 // ===========================================================================================
 //  Views
 // ===========================================================================================

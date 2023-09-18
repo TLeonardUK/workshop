@@ -110,6 +110,10 @@ class reflect_no_parent { };
 #define REFLECT_CONSTRAINT_RANGE(name, min_val, max_val)                                                                \
             add_constraint(#name, static_cast<float>(min_val), static_cast<float>(max_val)); 
 
+// Adds a dependency to another class. What the dependency means is something thats handled at a higher level.
+#define REFLECT_DEPENDENCY(class_type)                                                                                 \
+            add_dependency(typeid(class_type)); 
+
 #define END_REFLECT()                                                                                                   \
         }                                                                                                               \
     };                                                                                                                  \

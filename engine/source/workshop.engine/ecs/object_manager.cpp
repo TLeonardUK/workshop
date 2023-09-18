@@ -240,6 +240,33 @@ void object_manager::all_components_edited(component_modification_source source)
     }
 }
 
+#pragma optimize("", off)
+
+bool object_manager::has_active_dependencies(object handle, component* comp)
+{
+    reflect_class* comp_class = get_reflect_class(typeid(*comp));
+
+    std::vector<reflect_class*> component_types;
+    for (component* other_comp : get_components(handle))
+    {
+        reflect_class* other_comp_class = get_reflect_class(typeid(*other_comp));
+        component_types.push_back(other_comp_class);
+    }
+
+    for (reflect_class* other_comp_class : component_types)
+    {
+        for (reflect_class* dep : other_comp_class->get_dependencies())
+        {
+            if (dep == comp_class)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void object_manager::commit_destroy_object(object handle)
 {
     object_manager::object_state* state = get_object_state(handle);
@@ -249,9 +276,36 @@ void object_manager::commit_destroy_object(object handle)
     }
 
     std::vector<component*> to_remove = state->components;
-    for (component* comp : to_remove)
+
+    // Remove components that are not dependended on before removing dependent components.
+    // TODO: Do this in a better way. Insertion sorting components in order of dependency is probably the
+    //       way to go rather than doing the heavy lifting here.
+    while (!to_remove.empty())
     {
-        commit_remove_component(handle, comp, false);
+        bool has_removed = false;
+
+        for (auto iter = to_remove.begin(); iter != to_remove.end(); /* empty */)
+        {
+            component* comp = *iter;
+
+            bool can_remove = !has_active_dependencies(handle, comp);
+            if (can_remove)
+            {
+                commit_remove_component(handle, comp, false);
+
+                iter = to_remove.erase(iter);
+                has_removed = true;
+            }
+            else
+            {
+                iter++;
+            }
+        }
+
+        if (!has_removed)
+        {
+            break;
+        }
     }
 
     for (auto& pair : m_component_filter_archetype)
@@ -494,7 +548,7 @@ void object_manager::deserialize_component(object handle, const std::vector<uint
     reflect_class* comp_class = get_reflect_class(comp_class_name.c_str());
     if (comp_class == nullptr)
     {
-        db_error(engine, "Attempt to deserialize component that doesn't have a reflection class '%s'.", comp_class_name.c_str());
+        db_warning(engine, "Attempt to deserialize component that doesn't have a reflection class '%s'.", comp_class_name.c_str());
         return;
     }
 
@@ -510,9 +564,11 @@ void object_manager::deserialize_component(object handle, const std::vector<uint
         stream_serialize(output, field_name);
 
         reflect_field* field = comp_class->find_field(field_name.c_str(), true);
+
+        // TODO: Make this recoverable, save the length of the field data in output.
         if (field == nullptr)
         {
-            db_error(engine, "Attempt to deserialize component that doesn't have a reflection field '%s'.", field_name.c_str());
+            db_warning(engine, "Attempt to deserialize component that doesn't have a reflection field '%s'. Further fields may be invalid.", field_name.c_str());
             return;
         }
 
@@ -545,6 +601,41 @@ std::vector<uint8_t> object_manager::serialize_object(object handle)
     return ret;
 }
 
+void object_manager::ensure_dependent_components_exist(object handle)
+{
+    std::vector<reflect_class*> needed_classes;
+
+    std::vector<component*> components = get_components(handle);
+    std::vector<reflect_class*> component_classes;
+    for (component* comp : components)
+    {
+        reflect_class* comp_class = get_reflect_class(typeid(*comp));
+        component_classes.push_back(comp_class);
+    }
+
+    // Find any missing dependencies.
+    for (component* comp : components)
+    {
+        reflect_class* comp_class = get_reflect_class(typeid(*comp));
+        std::vector<reflect_class*> comp_dependencies = comp_class->get_dependencies();
+
+        for (reflect_class* dependency : comp_dependencies)
+        {
+            if (std::find(component_classes.begin(), component_classes.end(), dependency) == component_classes.end())
+            {
+                component_classes.push_back(dependency);
+                needed_classes.push_back(dependency);
+            }
+        }
+    }
+
+    // Create missing dependencies.
+    for (reflect_class* new_class : needed_classes)
+    {
+        add_component(handle, new_class->get_type_index());
+    }
+}
+
 void object_manager::deserialize_object(object handle, const std::vector<uint8_t>& data, bool mark_as_edited)
 {
     std::scoped_lock lock(m_object_mutex);
@@ -569,6 +660,10 @@ void object_manager::deserialize_object(object handle, const std::vector<uint8_t
 
         deserialize_component(handle, comp_payload, false);
     }
+
+    // Make sure all dependent components exist, we do this step incase dependencies are added after
+    // this object was originally serialized.
+    ensure_dependent_components_exist(handle);
 
     // Mark all objects as edited.
     if (mark_as_edited)

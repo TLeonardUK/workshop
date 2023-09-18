@@ -293,8 +293,4 @@ render_visibility_manager::view_id render_view::get_visibility_view_id()
     return m_visibility_view_id;
 }
 
-void render_view::debug_draw(render_system_debug& debug)
-{
-}
-
 }; // namespace ws

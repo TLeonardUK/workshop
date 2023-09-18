@@ -151,8 +151,6 @@ public:
 
     virtual void bounds_modified() override;
 
-    virtual void debug_draw(render_system_debug& debug) override;
-
 private:
     void update_view_info_param_block();
 

@@ -67,6 +67,9 @@ public:
     // Sets the flags on an object that defines how it is rendered.
     void set_object_gpu_flags(render_object_id id, render_gpu_flags flags);
 
+    // Sets the visibility of the render object.
+    void set_object_visibility(render_object_id id, bool visibility);
+
     // ===========================================================================================
     //  Views
     // ===========================================================================================

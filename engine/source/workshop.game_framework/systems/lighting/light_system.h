@@ -11,14 +11,18 @@
 namespace ws {
 
 // ================================================================================================
-//  Base class for all light-type systems, contains some generic functionality that is common
-//  between all light types.
+//  Updates basic light component work that is shared between all the extension types.
 // ================================================================================================
 class light_system : public system
 {
 public:
 
-    light_system(object_manager& manager, const char* name);
+    light_system(object_manager& manager);
+
+    virtual void step(const frame_time& time) override;
+
+    virtual void component_removed(object handle, component* comp) override;
+    virtual void component_modified(object handle, component* comp, component_modification_source source) override;
 
 public:
 

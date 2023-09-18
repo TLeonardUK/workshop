@@ -67,9 +67,9 @@ public:
     render_gpu_flags get_render_gpu_flags();
     bool has_render_gpu_flag(render_gpu_flags flag);
 
-    // Overridable function that allows object to render debugging information.
-    // This is enabled mainly in editor to render things like light bounds/etc.
-    virtual void debug_draw(render_system_debug& debug) {};
+    // Gets or sets the visibility of the object.
+    void set_visibility(bool flags);
+    bool get_visibility();
 
 protected:
 
@@ -78,6 +78,8 @@ protected:
     render_object_id m_id;
 
     render_gpu_flags m_gpu_flags = (render_gpu_flags)0;
+
+    bool m_visibility = true;
 
     // Visibility manager state.
     render_visibility_manager::object_id m_visibility_id;

@@ -30,7 +30,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 10;
+constexpr size_t k_asset_compiled_version = 11;
 
 };
 
@@ -190,8 +190,8 @@ bool scene_loader::parse_fields(const char* path, YAML::Node& node, scene& asset
         reflect_field* field = reflect_type->find_field(field_name.c_str(), true);
         if (field == nullptr)
         {
-            db_error(asset, "[%s] field node '%s' is unknown.", path, field_name.c_str());
-            return false;
+            db_warning(asset, "[%s] field node '%s' is unknown, skipping.", path, field_name.c_str());
+            continue;
         }
 
         comp.field_count++;

@@ -5,14 +5,13 @@
 #pragma once
 
 #include "workshop.engine/ecs/system.h"
-#include "workshop.game_framework/systems/lighting/light_system.h"
 
 namespace ws {
 
 // ================================================================================================
 //  Responsible for creating and updating render lights for point lights..
 // ================================================================================================
-class point_light_system : public light_system
+class point_light_system : public system
 {
 public:
 

@@ -5,6 +5,7 @@
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
 #include "workshop.game_framework/systems/camera/camera_system.h"
+#include "workshop.game_framework/systems/lighting/light_system.h"
 #include "workshop.game_framework/systems/lighting/directional_light_system.h"
 #include "workshop.game_framework/systems/lighting/point_light_system.h"
 #include "workshop.game_framework/systems/lighting/spot_light_system.h"
@@ -40,11 +41,12 @@ void register_default_systems(object_manager& manager)
     manager.register_component<transform_component>();
     manager.register_component<bounds_component>();
 
+    manager.register_component<light_component>();
     manager.register_component<directional_light_component>();
-    manager.register_component<light_probe_grid_component>();
     manager.register_component<point_light_component>();
-    manager.register_component<reflection_probe_component>();
     manager.register_component<spot_light_component>();
+    manager.register_component<light_probe_grid_component>();
+    manager.register_component<reflection_probe_component>();
 
     manager.register_component<static_mesh_component>();
 
@@ -58,6 +60,7 @@ void register_default_systems(object_manager& manager)
     manager.register_system<object_pick_system>();
 
     manager.register_system<camera_system>();
+    manager.register_system<light_system>();
     manager.register_system<directional_light_system>();
     manager.register_system<point_light_system>();
     manager.register_system<spot_light_system>();;

@@ -35,10 +35,19 @@ bool property_list::draw_edit(reflect_field* field, int& value, int min_value, i
 
     int edit_value = value;
     bool modified = ImGui::DragInt("##", &edit_value, step, min_value, max_value, "%d", flags);
+    edit_value = std::clamp(edit_value, min_value, max_value);
+
+    if (edit_value == value)
+    {
+        modified = false;
+    }
+
     if (modified)
     {
         on_before_modify.broadcast(field);
         value = edit_value;
+
+        db_log(core, "Changed value to: %i", value);
     }
 
     return modified;
@@ -58,6 +67,13 @@ bool property_list::draw_edit(reflect_field* field, float& value, float min_valu
 
     float edit_value = value;
     bool modified = ImGui::DragFloat("##", &edit_value, step, min_value, max_value, "%.2f", flags);
+    edit_value = std::clamp(edit_value, min_value, max_value);
+
+    if (edit_value == value)
+    {
+        modified = false;
+    }
+
     if (modified)
     {
         on_before_modify.broadcast(field);
@@ -375,16 +391,12 @@ bool property_list::draw_field(reflect_field* field, uint8_t* field_data, bool c
 
     if (!container_element && field->get_container_type() == reflect_field_container_type::list)
     {
-        // WARNING: This is very unsafe as we are type-punning a template, this is undefined behaviour but
-        //          in general is ~fairly~ safe as most std::vectors are implemented the same way across STL
-        //          implementations.
-        std::vector<uint8_t>& base_vector = *reinterpret_cast<std::vector<uint8_t>*>(field_data);
-        size_t element_size = field->get_element_size();
-        size_t length = std::distance(base_vector.begin(), base_vector.end()) / element_size;
+        reflect_field_container_helper* helper = field->get_container_helper();
+        size_t length = helper->size(field_data);
 
         for (size_t i = 0; i < length; i++)
         {
-            modified |= draw_field(field, base_vector.data() + (i * element_size), true);
+            modified |= draw_field(field, (uint8_t*)helper->get_data(field_data, i), true);
         }
     }
     else if (field->get_type_index() == typeid(int))
@@ -462,6 +474,13 @@ bool property_list::draw(object context_object, void* context, reflect_class* co
     bool any_modified = false;
 
     std::vector<reflect_field*> fields = m_class->get_fields(true);
+    if (fields.empty())
+    {
+        ImGui::Indent(5.0f);
+        ImGui::TextColored(ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled), "No editable fields.");
+        ImGui::Unindent(5.0f);
+        return false;
+    }
 
     if (ImGui::BeginTable("ObjectTable", 2, ImGuiTableFlags_Resizable| ImGuiTableFlags_BordersInnerV))
     {

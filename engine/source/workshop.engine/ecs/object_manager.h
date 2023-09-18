@@ -360,6 +360,10 @@ public:
     // will be removed.
     void deserialize_object(object handle, const std::vector<uint8_t>& data, bool mark_as_edited = true);
 
+    // Ensures that all component dependencies are fulfilled, if any are not, new components
+    // are created to fulfil them.
+    void ensure_dependent_components_exist(object handle);
+
 protected:
 
     // Commits the creation/destruction of an object. This is either done
@@ -372,6 +376,9 @@ protected:
 
     // Updates which filters/etc this object is registered for.
     void update_object_registration(object_state& state);
+
+    // Returns true if any other components depend on this component.
+    bool has_active_dependencies(object handle, component* comp);
 
     void step_systems(const frame_time& time);
 

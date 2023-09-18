@@ -7,6 +7,7 @@
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/lighting/point_light_component.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.game_framework/systems/lighting/light_system.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
@@ -14,10 +15,13 @@
 namespace ws {
 
 point_light_system::point_light_system(object_manager& manager)
-    : light_system(manager, "ponint light system")
+    : system(manager, "ponint light system")
 {
     // We want the latest transform to apply to the render object.
     add_predecessor<transform_system>();
+
+    // Light system depends on the render ids we create so always run it after.
+    add_successor<light_system>();
 }
 
 void point_light_system::component_removed(object handle, component* comp)
@@ -27,8 +31,14 @@ void point_light_system::component_removed(object handle, component* comp)
     {
         return;
     }
-    
-    render_object_id render_id = component->render_id;
+
+    light_component* light_comp = m_manager.get_component<light_component>(handle);
+    if (!light_comp)
+    {
+        return;
+    }
+
+    render_object_id render_id = light_comp->render_id;
     if (!render_id)
     {
         return;
@@ -44,7 +54,7 @@ void point_light_system::component_removed(object handle, component* comp)
 
 void point_light_system::component_modified(object handle, component* comp, component_modification_source source)
 {
-    point_light_component* component = dynamic_cast<point_light_component*>(comp);
+    light_component* component = dynamic_cast<light_component*>(comp);
     if (!component)
     {
         return;
@@ -59,39 +69,20 @@ void point_light_system::step(const frame_time& time)
     renderer& render = engine.get_renderer();
     render_command_queue& render_command_queue = render.get_command_queue();
 
-    component_filter<point_light_component, const transform_component> filter(m_manager);
+    component_filter<point_light_component, const transform_component, light_component> filter(m_manager);
     for (size_t i = 0; i < filter.size(); i++)
     {
         object obj = filter.get_object(i);
 
+        light_component* light = filter.get_component<light_component>(i);
         const transform_component* transform = filter.get_component<transform_component>(i);
-        point_light_component* light = filter.get_component<point_light_component>(i);
+        point_light_component* point_light = filter.get_component<point_light_component>(i);
 
         // Create render object if it doesn't exist yet.
         if (light->render_id == null_render_object)
         {
             light->render_id = render_command_queue.create_point_light("Light");
             light->is_dirty = true;
-        }
-
-        // Apply changes if dirty.
-        if (light->is_dirty)
-        {
-            render_command_queue.set_light_intensity(light->render_id, light->intensity);
-            render_command_queue.set_light_range(light->render_id, light->range);
-            render_command_queue.set_light_importance_distance(light->render_id, light->importance_range);
-            render_command_queue.set_light_color(light->render_id, light->color);
-            render_command_queue.set_light_shadow_casting(light->render_id, light->shadow_casting);
-            render_command_queue.set_light_shadow_map_size(light->render_id, light->shadow_map_size);
-            render_command_queue.set_light_shadow_max_distance(light->render_id, light->shadow_map_distance);
-            light->is_dirty = false;
-        }
-
-        // Apply object transform if its changed.
-        if (transform->generation != light->last_transform_generation)
-        {
-            light->last_transform_generation = transform->generation;
-            render_command_queue.set_object_transform(light->render_id, transform->world_location, transform->world_rotation, transform->world_scale);
         }
     }
 

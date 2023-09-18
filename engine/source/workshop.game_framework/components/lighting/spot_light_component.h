@@ -19,7 +19,7 @@ namespace ws {
 // ================================================================================================
 //  Represents a spot light in the world.
 // ================================================================================================
-class spot_light_component : public light_component
+class spot_light_component : public component
 {
 public:
 
@@ -35,17 +35,19 @@ protected:
 
 	friend class spot_light_system;
 
-    // Component is dirty and all settings need to be applied to render object.
-    bool is_dirty = false;
+	// Component is dirty and all settings need to be applied to render object.
+	bool is_dirty = false;
 
 public:
 
-    BEGIN_REFLECT(spot_light_component, "Spot Light", light_component, reflect_class_flags::none)
+    BEGIN_REFLECT(spot_light_component, "Spot Light", component, reflect_class_flags::none)
         REFLECT_FIELD(inner_radius, "Inner Radius", "The inner radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
         REFLECT_FIELD(outer_radius, "Outer Radius", "The outer radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
 
         REFLECT_CONSTRAINT_RANGE(inner_radius, 0.0f, math::pi)
-    END_REFLECT()
+
+		REFLECT_DEPENDENCY(light_component)
+	END_REFLECT()
 
 };
 

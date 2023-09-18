@@ -47,6 +47,22 @@ std::type_index reflect_class::get_type_index()
     return m_type_index;
 }
 
+std::vector<reflect_class*> reflect_class::get_dependencies()
+{
+    std::vector<reflect_class*> result;
+    for (std::type_index index : m_dependencies)
+    {
+        reflect_class* dep = get_reflect_class(index);
+        if (dep == nullptr)
+        {
+            db_error(core, "Failed to resolved dependencies for class '%s' one of the type indexes does not resolve to a reflect_class.", m_name.c_str());
+            continue;
+        }
+        result.push_back(dep);
+    }
+    return result;
+}
+
 reflect_field* reflect_class::find_field(const char* name, bool recursive)
 {
     auto iter = std::find_if(m_fields.begin(), m_fields.end(), [name](auto& field) {
@@ -126,6 +142,11 @@ void reflect_class::add_constraint(const char* name, float min_value, float max_
 
     std::unique_ptr<reflect_constraint_range> constraint = std::make_unique<reflect_constraint_range>(min_value, max_value);
     field->add_constraint(std::move(constraint));
+}
+
+void reflect_class::add_dependency(std::type_index type)
+{
+    m_dependencies.push_back(type);
 }
 
 bool reflect_class::is_derived_from(reflect_class* parent)

@@ -30,6 +30,9 @@ public:
 private:    
     void draw_add_component(object context);
 
+    void add_component(object context, reflect_class* component_class);
+    bool can_delete_component(object context, component* comp);
+
 private:
     engine* m_engine;
     editor* m_editor;

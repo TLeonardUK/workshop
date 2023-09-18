@@ -150,6 +150,14 @@ enum class debug_model
     COUNT
 };
 
+// Defines a set of preloaded materals that are commonly used for debugging.
+enum class debug_material
+{
+    transparent_red,
+
+    COUNT
+};
+
 //  Render flags dictate how an object is draw. 
 //  They are passed into shaders and encoded in the gbuffer.
 enum class render_gpu_flags
@@ -290,6 +298,9 @@ public:
     // Gets a pointer to the given debug model.
     asset_ptr<model> get_debug_model(debug_model model);
 
+    // Gets a pointer to the given debug material.
+    asset_ptr<material> get_debug_material(debug_material model);
+
     // Gets the configuration of the rendering pipeline.
     const render_options& get_options();
 
@@ -314,6 +325,9 @@ private:
 
     result<void> load_debug_models();
     result<void> unload_debug_models();
+
+    result<void> load_debug_materials();
+    result<void> unload_debug_materials();
 
     result<void> create_resources();
     result<void> destroy_resources();
@@ -396,6 +410,7 @@ private:
     // Debug models.
 
     std::array<asset_ptr<model>, static_cast<int>(debug_model::COUNT)> m_debug_models;
+    std::array<asset_ptr<material>, static_cast<int>(debug_material::COUNT)> m_debug_materials;
 
     // Fullscreen buffers.
 

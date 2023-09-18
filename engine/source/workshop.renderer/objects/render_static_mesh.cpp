@@ -178,7 +178,7 @@ void render_static_mesh::create_render_data()
         key.mesh_index = i;
         key.material = mat;
         key.model = m_model;
-        key.domain = mat_info.material->domain;
+        key.domain = mat->domain;
         key.usage = render_batch_usage::static_mesh;
 
         render_batch_instance info;

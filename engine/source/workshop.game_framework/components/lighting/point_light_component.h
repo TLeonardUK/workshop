@@ -18,20 +18,12 @@ namespace ws {
 // ================================================================================================
 //  Represents a point light in the world.
 // ================================================================================================
-class point_light_component : public light_component
+class point_light_component : public component
 {
 public:
 
-protected:
-
-	friend class point_light_system;
-
-    // Component is dirty and all settings need to be applied to render object.
-    bool is_dirty = false;
-
-public:
-
-    BEGIN_REFLECT(point_light_component, "Point Light", light_component, reflect_class_flags::none)
+    BEGIN_REFLECT(point_light_component, "Point Light", component, reflect_class_flags::none)
+        REFLECT_DEPENDENCY(light_component)
     END_REFLECT()
 };
 

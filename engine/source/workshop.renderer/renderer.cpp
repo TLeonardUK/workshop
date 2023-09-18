@@ -111,6 +111,11 @@ void renderer::register_init(init_list& list)
         [this, &list]() -> result<void> { return load_debug_models(); },
         [this, &list]() -> result<void> { return unload_debug_models(); }
     );
+    list.add_step(
+        "Renderer Debug Materials",
+        [this, &list]() -> result<void> { return load_debug_materials(); },
+        [this, &list]() -> result<void> { return unload_debug_materials(); }
+    );
 }
 
 result<void> renderer::create_systems(init_list& list)
@@ -275,7 +280,6 @@ result<void> renderer::destroy_resources()
     return true;
 }
 
-
 result<void> renderer::load_debug_models()
 {
     m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/primitives/sphere.yaml", 0);
@@ -299,6 +303,34 @@ result<void> renderer::unload_debug_models()
     for (size_t i = 0; i < m_debug_models.size(); i++)
     {
         m_debug_models[i] = {};
+    }
+
+    return true;
+}
+
+result<void> renderer::load_debug_materials()
+{
+    m_debug_materials[(int)debug_material::transparent_red] = m_asset_manager.request_asset<material>("data:materials/solid/transparent_red.yaml", 0);
+
+    for (size_t i = 0; i < m_debug_materials.size(); i++)
+    {
+        m_debug_materials[i].wait_for_load();
+
+        if (!m_debug_materials[i].is_loaded())
+        {
+            db_error(renderer, "Failed to load debug material: %s", m_debug_materials[i].get_path().c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+result<void> renderer::unload_debug_materials()
+{
+    for (size_t i = 0; i < m_debug_materials.size(); i++)
+    {
+        m_debug_materials[i] = {};
     }
 
     return true;
@@ -546,22 +578,6 @@ void renderer::render_state(render_world_state& state)
         if (draw_cell_bounds || draw_object_bounds)
         {
             m_visibility_manager->draw_cell_bounds(draw_cell_bounds, draw_object_bounds);
-        }
-
-        // Do debug rendering for any render objects that require it.
-        if (get_render_flag(render_flag::draw_object_debug))
-        {
-            render_system_debug* debug_system = get_system<render_system_debug>();
-            if (debug_system)
-            {
-                // TODO: Do proper culling here.
-
-                std::vector<render_object*> objects = m_scene_manager->get_objects();
-                for (render_object* obj : objects)
-                {
-                    obj->debug_draw(*debug_system);
-                }
-            }
         }
 
         if (get_render_flag(render_flag::draw_performance_overlay))
@@ -1072,6 +1088,11 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ver
 asset_ptr<model> renderer::get_debug_model(debug_model model)
 {
     return m_debug_models[(int)model];
+}
+
+asset_ptr<material> renderer::get_debug_material(debug_material model)
+{
+    return m_debug_materials[(int)model];
 }
 
 void renderer::drain()
