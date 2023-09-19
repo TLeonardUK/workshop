@@ -11,6 +11,7 @@
 #include "workshop.core/reflection/reflect.h"
 
 #include "workshop.renderer/render_object.h"
+#include "workshop.renderer/renderer.h"
 
 namespace ws {
 
@@ -36,6 +37,9 @@ public:
     // Matrices calculated by the system.
     matrix4 projection_matrix;
     matrix4 view_matrix;
+
+    // Render flags that dictate what gets drawn to this camera view.
+    render_draw_flags draw_flags = render_draw_flags::geometry;
 
 private:
 

@@ -39,6 +39,9 @@ public:
     // Called when the bounds of an object is modified.
     virtual void bounds_modified() override;
 
+    // Gets or sets the visibility of the object.
+    virtual void set_visibility(bool flags) override;
+
 protected:
 
     // Creates/destroys data required to render this mesh - instance data/etc.

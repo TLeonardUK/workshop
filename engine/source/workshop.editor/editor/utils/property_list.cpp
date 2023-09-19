@@ -12,6 +12,8 @@
 
 #include "thirdparty/imgui/imgui.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 property_list::property_list(asset_manager* ass_manager, asset_database& ass_database, engine& in_engine)
@@ -35,19 +37,20 @@ bool property_list::draw_edit(reflect_field* field, int& value, int min_value, i
 
     int edit_value = value;
     bool modified = ImGui::DragInt("##", &edit_value, step, min_value, max_value, "%d", flags);
-    edit_value = std::clamp(edit_value, min_value, max_value);
 
-    if (edit_value == value)
+    if (min_value != 0 || max_value != 0)
     {
-        modified = false;
+        edit_value = std::clamp(edit_value, min_value, max_value);
+        if (edit_value == value)
+        {
+            modified = false;
+        }
     }
 
     if (modified)
     {
         on_before_modify.broadcast(field);
         value = edit_value;
-
-        db_log(core, "Changed value to: %i", value);
     }
 
     return modified;
@@ -67,11 +70,14 @@ bool property_list::draw_edit(reflect_field* field, float& value, float min_valu
 
     float edit_value = value;
     bool modified = ImGui::DragFloat("##", &edit_value, step, min_value, max_value, "%.2f", flags);
-    edit_value = std::clamp(edit_value, min_value, max_value);
 
-    if (edit_value == value)
+    if (min_value != 0.0f || max_value != 0.0f)
     {
-        modified = false;
+        edit_value = std::clamp(edit_value, min_value, max_value);
+        if (edit_value == value)
+        {
+            modified = false;
+        }
     }
 
     if (modified)

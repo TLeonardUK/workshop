@@ -167,6 +167,13 @@ void render_command_queue::set_object_gpu_flags(render_object_id id, render_gpu_
     });
 }
 
+void render_command_queue::set_object_draw_flags(render_object_id id, render_draw_flags flags)
+{
+    queue_command("set_object_draw_flags", [renderer = &m_renderer, id, flags]() {
+        renderer->get_scene_manager().set_object_draw_flags(id, flags);
+    });
+}
+
 void render_command_queue::set_object_visibility(render_object_id id, bool visibility)
 {
     queue_command("set_object_visibility", [renderer = &m_renderer, id, visibility]() {

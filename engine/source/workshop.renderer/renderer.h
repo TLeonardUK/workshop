@@ -146,6 +146,7 @@ enum class render_flag
 enum class debug_model
 {
     sphere,
+    plane,
 
     COUNT
 };
@@ -171,6 +172,20 @@ enum class render_gpu_flags
     selected = 2
 };
 DEFINE_ENUM_FLAGS(render_gpu_flags);
+
+// Both render object and render views can have these values set. 
+// When a view is rendered it will only render objects that have matching flags.
+enum class render_draw_flags
+{
+    none = 0,
+
+    // Standard geometry is rendered.
+    geometry = 1,
+
+    // Editor-only geometry is rendered.
+    editor = 2
+};
+DEFINE_ENUM_FLAGS(render_draw_flags);
 
 // If defined this adds an extra plane to the gbuffer for writing debug data to.
 //#define GBUFFER_DEBUG_DATA

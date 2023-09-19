@@ -51,7 +51,8 @@ inline bool ray::intersects(const triangle& tri, vector3* intersect_point) const
 	float det = -vector3::dot(direction, n);
 	if (det < k_epsilon)
 	{
-		return false;
+		// Note: We're ok with backface collisions here.
+		//return false;
 	}
 
 	float invdet = 1.0f / det;

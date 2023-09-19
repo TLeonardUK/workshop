@@ -39,6 +39,7 @@
 #include "workshop.game_framework/systems/transform/object_pick_system.h"
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.game_framework/systems/camera/camera_system.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/lighting/directional_light_system.h"
@@ -86,6 +87,29 @@ void editor::register_init(init_list& list)
 void editor::set_editor_mode(editor_mode mode)
 {
 	m_editor_mode = mode;
+
+    // Set all the cameras to no longer draw editor stuff.
+    world& world_instance = m_engine.get_default_world();
+    object_manager& obj_manager = world_instance.get_object_manager();
+    camera_system* camera_sys = obj_manager.get_system<camera_system>();
+
+    component_filter<camera_component> filter(obj_manager);
+    for (size_t i = 0; i < filter.size(); i++)
+    {
+        camera_component* camera = filter.get_component<camera_component>(i);
+
+        render_draw_flags new_flags = camera->draw_flags;
+        if (mode == editor_mode::editor)
+        {
+            new_flags = new_flags | render_draw_flags::editor;
+        }
+        else
+        {
+            new_flags = new_flags & ~render_draw_flags::editor;
+        }
+
+        camera_sys->set_draw_flags(filter.get_object(i), new_flags);
+    }
 }
 
 editor_main_menu& editor::get_main_menu()

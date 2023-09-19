@@ -245,7 +245,7 @@ inline base_quat<T> base_matrix4<T>::extract_rotation() const
     decompose(nullptr, &rotation, nullptr);
     return quat::euler(rotation);
 
-    /*
+	/*
     base_matrix4<T> normalized = *this;
     normalized.set_row(0, normalized.get_row(0).normalize());
     normalized.set_row(1, normalized.get_row(1).normalize());
@@ -256,14 +256,21 @@ inline base_quat<T> base_matrix4<T>::extract_rotation() const
     rotation.y = atan2f(-normalized.columns[0][2], sqrtf(normalized.columns[1][2] * normalized.columns[1][2] + normalized.columns[2][2] * normalized.columns[2][2]));
     rotation.z = atan2f(normalized.columns[0][1], normalized.columns[0][0]);
 
-    //	base_quat<T> q;
-    //  q.w = sqrtf(1 + normalized.columns[0][0] + normalized.columns[1][1] + normalized.columns[2][2]) / 2.0f;
-    //  q.x = (normalized.columns[1][2] - normalized.columns[2][1]) / (4.0f * q.w);
-    //  q.y = (normalized.columns[2][0] - normalized.columns[0][2]) / (4.0f * q.w);
-    //  q.z = (normalized.columns[0][1] - normalized.columns[1][0]) / (4.0f * q.w);
-    
-    return quat::euler(rotation);
+	return quat::euler(rotation);
+	*/
 
+	/**
+	base_matrix4<T> normalized = *this;
+	normalized.set_row(0, normalized.get_row(0).normalize());
+	normalized.set_row(1, normalized.get_row(1).normalize());
+	normalized.set_row(2, normalized.get_row(2).normalize());
+
+    base_quat<T> q;
+    q.w = sqrtf(1 + normalized.columns[0][0] + normalized.columns[1][1] + normalized.columns[2][2]) / 2.0f;
+    q.x = (normalized.columns[1][2] - normalized.columns[2][1]) / (4.0f * q.w);
+    q.y = (normalized.columns[2][0] - normalized.columns[0][2]) / (4.0f * q.w);
+    q.z = (normalized.columns[0][1] - normalized.columns[1][0]) / (4.0f * q.w);
+    
     //q.w = sqrtf(math::max(0.0f, 1 + columns[0][0] + columns[1][1] + columns[2][2])) / 2.0f;
     //q.x = sqrtf(math::max(0.0f, 1 + columns[0][0] - columns[1][1] - columns[2][2])) / 2.0f;
     //q.y = sqrtf(math::max(0.0f, 1 - columns[0][0] + columns[1][1] - columns[2][2])) / 2.0f;
@@ -271,8 +278,8 @@ inline base_quat<T> base_matrix4<T>::extract_rotation() const
     //q.x *= math::sign(q.x * (columns[2][1] - columns[1][2]));
     //q.y *= math::sign(q.y * (columns[0][2] - columns[2][0]));
     //q.z *= math::sign(q.z * (columns[1][0] - columns[0][1]));
-    //return q;
-    */
+    return q;
+	*/
 }
 
 template <typename T>

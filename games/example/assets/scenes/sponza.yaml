@@ -13,14 +13,14 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  -0.338593632
-                y:  0.579294205
-                z:  -0.286879748
-                w:  0.683719695
+                x:  -0.0482960343
+                y:  0.0119858254
+                z:  -0.000579585962
+                w:  0.998760939
             local_location:
-                x:  1498.50146
-                y:  3156.14697
-                z:  -300.295197
+                x:  1.1590333
+                y:  334.831177
+                z:  -232.874573
             local_scale:
                 x:  1
                 y:  1
@@ -62,17 +62,18 @@ objects:
             shadow_cascades: 3
             shadow_cascade_exponent: 0.600000024
             shadow_cascade_blend: 0.100000001
-            intensity: 5
-            range: 1000000
-            importance_range: 1000000
+        light_component:
+            intensity: 1
+            range: 10000
+            importance_range: 5000
             color:
                 r:  1
                 g:  1
                 b:  1
                 a:  1
-            shadow_casting: true
-            shadow_map_size: 2048
-            shadow_map_distance: 10000
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
     3:
         meta_component:
             name: skybox

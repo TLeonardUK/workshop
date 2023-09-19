@@ -79,6 +79,8 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         ri_sampler* default_sampler_color = renderer.get_default_sampler(default_sampler_type::color);
         ri_sampler* default_sampler_normal = renderer.get_default_sampler(default_sampler_type::normal);
 
+        render_draw_flags view_draw_flags = view->get_draw_flags();
+
         // Draw each batch.
         for (size_t i = 0; i < batches.size(); i++)
         {
@@ -125,6 +127,13 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
                 // Skip instance if its not visibile this frame.
                 if (!visibility_manager.is_object_visibile(view->get_visibility_view_id(), instance.visibility_id))
+                {
+                    culled_instances++;
+                    continue;
+                }
+
+                // Check geometry is drawn to this view.
+                if (!instance.object->has_draw_flag(view_draw_flags))
                 {
                     culled_instances++;
                     continue;

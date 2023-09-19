@@ -317,8 +317,6 @@ void render_visibility_manager::update_visibility()
             // Object newly entering view.
             if (!obj_state.visibility[view_index])
             {
-                db_log(core, "visible: id=%zi", object_id.index);
-
                 obj_state.visibility[view_index] = true;
                 
                 // View is not marked as changed if the object has not physical representation.
@@ -358,9 +356,7 @@ void render_visibility_manager::update_visibility()
                 // See if object has been removed.
                 if (visible_object_ids.find(existing_object_id) == visible_object_ids.end())
                 {
-                    db_log(core, "not visible: id=%zi", existing_object_id.index);
-
-                    obj_state.visibility[state.id.index] = false;
+                    obj_state.visibility[view_index] = false;
                     state.has_changed = true;
                 }
             }

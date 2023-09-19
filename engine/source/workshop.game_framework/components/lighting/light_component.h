@@ -58,14 +58,17 @@ protected:
 	// ID of the render object in the renderer.
 	render_object_id render_id = null_render_object;
 
-	// ID of the render object for displaying the range..
+	// ID of the render object for displaying the range.
 	render_object_id range_render_id = null_render_object;
+
+	// ID of the render object for displaying an icon.
+	render_object_id billboard_render_id = null_render_object;
 
 	// Tracks the last transform we applied to the render object.
 	size_t last_transform_generation = 0;
 
 	// Object flags from last frame.
-	object_flags last_flags = object_flags::none;
+	object_flags last_flags = object_flags::unset;
 
 public:
 

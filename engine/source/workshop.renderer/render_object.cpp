@@ -55,6 +55,21 @@ bool render_object::has_render_gpu_flag(render_gpu_flags flag)
     return (m_gpu_flags & flag) != render_gpu_flags::none;
 }
 
+void render_object::set_draw_flags(render_draw_flags flags)
+{
+    m_draw_flags = flags;
+}
+
+render_draw_flags render_object::get_draw_flags()
+{
+    return m_draw_flags;
+}
+
+bool render_object::has_draw_flag(render_draw_flags flag)
+{
+    return (m_draw_flags & flag) != render_draw_flags::none;
+}
+
 void render_object::set_visibility(bool flags)
 {
     m_visibility = flags;

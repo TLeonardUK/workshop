@@ -146,17 +146,17 @@ void light_system::component_removed(object handle, component* comp)
         return;
     }
 
-    render_object_id render_render_id = component->range_render_id;
-    if (!render_render_id)
+    render_object_id range_id = component->range_render_id;
+    if (!range_id)
     {
         return;
     }
 
-    m_command_queue.queue_command("destroy_light", [this, render_render_id]() {
+    m_command_queue.queue_command("destroy_light", [this, range_id]() {
         engine& engine = m_manager.get_world().get_engine();
         render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
-        render_command_queue.destroy_static_mesh(render_render_id);
+        render_command_queue.destroy_static_mesh(range_id);
     });
 }
 
@@ -182,6 +182,7 @@ void light_system::step(const frame_time& time)
             render_command_queue.set_static_mesh_model(light->range_render_id, render.get_debug_model(debug_model::sphere));
             render_command_queue.set_static_mesh_materials(light->range_render_id, { render.get_debug_material(debug_material::transparent_red) });
             render_command_queue.set_object_gpu_flags(light->range_render_id, render_gpu_flags::unlit);
+            render_command_queue.set_object_draw_flags(light->range_render_id, render_draw_flags::editor);
         }
 
         // Apply changes if dirty.
@@ -200,8 +201,7 @@ void light_system::step(const frame_time& time)
         if (transform->generation != light->last_transform_generation || light->is_dirty)
         {
             render_command_queue.set_object_transform(light->render_id, transform->world_location, transform->world_rotation, transform->world_scale);
-            render_command_queue.set_object_transform(light->range_render_id, transform->world_location, transform->world_rotation, vector3(light->range, light->range, light->range));
-
+            render_command_queue.set_object_transform(light->range_render_id, transform->world_location, transform->world_rotation, vector3(light->range, light->range, light->range) * 2.0f);
             light->last_transform_generation = transform->generation;
         }
 

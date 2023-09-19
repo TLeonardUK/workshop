@@ -185,7 +185,7 @@ void render_system_shadows::step(const render_world_state& state)
 
                 if (cascade.needs_render)
                 {
-                    if (base_view_is_active && (base_view->get_flags() & render_view_flags::capture) != render_view_flags::none)
+                    if (base_view_is_active && base_view && (base_view->get_flags() & render_view_flags::capture) != render_view_flags::none)
                     {
                         cascades_must_render.push_back(&cascade);
                     }

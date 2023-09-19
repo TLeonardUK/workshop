@@ -7,15 +7,19 @@
 #include "workshop.game_framework/systems/transform/bounds_system.h"
 #include "workshop.game_framework/systems/camera/camera_system.h"
 #include "workshop.engine/ecs/component_filter.h"
+#include "workshop.engine/ecs/meta_component.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.renderer/assets/model/model.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
+#include "workshop.game_framework/components/geometry/billboard_component.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/async/async.h"
 #include "workshop.core/perf/profile.h"
+
+#pragma optimize("", off)
 
 namespace ws {
 
@@ -116,7 +120,10 @@ void object_pick_system::fine_intersection_test(pick_request* request, std::vect
 
         const transform_component* transform = m_manager.get_component<transform_component>(obj);
         static_mesh_component* mesh = m_manager.get_component<static_mesh_component>(obj);
+        billboard_component* billboard = m_manager.get_component<billboard_component>(obj);
         bounds_component* bounds = m_manager.get_component<bounds_component>(obj);
+
+        meta_component* meta = m_manager.get_component<meta_component>(obj);
 
         if (mesh != nullptr && mesh->model.is_loaded())
         {
@@ -125,6 +132,14 @@ void object_pick_system::fine_intersection_test(pick_request* request, std::vect
             test.handle = obj;
             test.transform = transform->local_to_world;
             test.model = mesh->model;
+        }
+        else if (billboard != nullptr && billboard->model.is_loaded())
+        {
+            intersection_test& test = tests.emplace_back();
+            test.coarse = false;
+            test.handle = obj;
+            test.transform = billboard->transform * transform->local_to_world;
+            test.model = billboard->model;
         }
         else if (bounds != nullptr)
         {

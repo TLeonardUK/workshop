@@ -13,10 +13,14 @@ namespace ws {
 // to make user-level components to handle it.
 enum class object_flags
 {
-    none        = 0,
+    // Used for when flags have not been set yet - as an initial state.
+    unset       = ~0,
+
+    // No flags set.
+    none        =  0,
 
     // Object is selected in the editor.
-    selected    = 1,
+    selected    =  1,
 };
 DEFINE_ENUM_FLAGS(object_flags)
 

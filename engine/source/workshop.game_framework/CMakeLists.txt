@@ -17,6 +17,7 @@ SET(SOURCES
     "components/lighting/light_component.h"         
     "components/lighting/reflection_probe_component.h"         
     "components/geometry/static_mesh_component.h"    
+    "components/geometry/billboard_component.h"    
     "components/transform/transform_component.h"     
     "components/transform/bounds_component.h"    
     
@@ -40,6 +41,8 @@ SET(SOURCES
 
     "systems/geometry/static_mesh_system.h"  
     "systems/geometry/static_mesh_system.cpp"  
+    "systems/geometry/billboard_system.h"  
+    "systems/geometry/billboard_system.cpp"  
 
     "systems/transform/transform_system.h"  
     "systems/transform/transform_system.cpp"    

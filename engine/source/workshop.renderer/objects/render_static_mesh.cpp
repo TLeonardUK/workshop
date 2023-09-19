@@ -131,6 +131,16 @@ void render_static_mesh::recreate_render_data()
     bounds_modified();
 }
 
+void render_static_mesh::set_visibility(bool visible)
+{
+    render_object::set_visibility(visible);
+
+    for (mesh_visibility& visibility : m_mesh_visibility)
+    {
+        m_renderer->get_visibility_manager().set_object_manual_visibility(visibility.id, visible);
+    }
+}
+
 void render_static_mesh::create_render_data()
 {
     if (m_geometry_instance_info)
