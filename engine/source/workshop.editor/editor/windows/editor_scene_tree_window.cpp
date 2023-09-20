@@ -260,7 +260,32 @@ void editor_scene_tree_window::draw()
 
             if (ImGui::Button("Add Object", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
             {
-                add_new_object();
+                ImGui::OpenPopup("AddObjectWindow");
+            }
+            
+            ImVec2 add_min = ImGui::GetItemRectMin();
+            ImVec2 add_max = ImGui::GetItemRectMax();
+
+            ImGui::SetNextWindowPos(ImVec2(add_min.x, add_max.y));
+            ImGui::SetNextWindowSize(ImVec2(add_max.x - add_min.x, 0));
+            if (ImGui::BeginPopup("AddObjectWindow"))
+            {
+                if (ImGui::MenuItem("Empty Object"))
+                {
+                    add_new_object();
+                }
+
+                /*
+                // TODO: Add list of prefabs we can instantiate.
+                ImGui::Separator();
+
+                if (ImGui::MenuItem("Prefab: sponza"))
+                {
+                    // TODO
+                }
+                */
+
+                ImGui::EndPopup();
             }
 
             // We have an option at the top of the table for unparenting if the user is dragging an object.

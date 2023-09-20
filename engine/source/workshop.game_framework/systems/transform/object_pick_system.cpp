@@ -19,8 +19,6 @@
 #include "workshop.core/async/async.h"
 #include "workshop.core/perf/profile.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 object_pick_system::object_pick_system(object_manager& manager)

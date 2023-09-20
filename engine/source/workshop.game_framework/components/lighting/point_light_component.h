@@ -20,11 +20,25 @@ namespace ws {
 // ================================================================================================
 class point_light_component : public component
 {
+protected:
+
+	friend class point_light_system;
+
+	// ID of the range render object in the renderer.
+	render_object_id range_render_id = null_render_object;
+
+	// Tracks the last transform we applied to the render object.
+	size_t last_transform_generation = 0;
+
+	// Object flags from last frame.
+	object_flags last_flags = object_flags::unset;
+
 public:
 
     BEGIN_REFLECT(point_light_component, "Point Light", component, reflect_class_flags::none)
         REFLECT_DEPENDENCY(light_component)
     END_REFLECT()
+
 };
 
 }; // namespace ws

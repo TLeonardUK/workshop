@@ -282,8 +282,11 @@ result<void> renderer::destroy_resources()
 
 result<void> renderer::load_debug_models()
 {
-    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/primitives/sphere.yaml", 0);
-    m_debug_models[(int)debug_model::plane] = m_asset_manager.request_asset<model>("data:models/primitives/plane.yaml", 0);
+    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/core/primitives/sphere.yaml", 0);
+    m_debug_models[(int)debug_model::plane] = m_asset_manager.request_asset<model>("data:models/core/primitives/plane.yaml", 0);
+    m_debug_models[(int)debug_model::cone] = m_asset_manager.request_asset<model>("data:models/core/primitives/cone.yaml", 0);
+    m_debug_models[(int)debug_model::inverted_cone] = m_asset_manager.request_asset<model>("data:models/core/primitives/inverted_cone.yaml", 0);
+    m_debug_models[(int)debug_model::arrow] = m_asset_manager.request_asset<model>("data:models/core/primitives/arrow.yaml", 0);
 
     for (size_t i = 0; i < m_debug_models.size(); i++)
     {
@@ -311,7 +314,7 @@ result<void> renderer::unload_debug_models()
 
 result<void> renderer::load_debug_materials()
 {
-    m_debug_materials[(int)debug_material::transparent_red] = m_asset_manager.request_asset<material>("data:materials/solid/transparent_red.yaml", 0);
+    m_debug_materials[(int)debug_material::transparent_red] = m_asset_manager.request_asset<material>("data:materials/core/solid/transparent_red.yaml", 0);
 
     for (size_t i = 0; i < m_debug_materials.size(); i++)
     {

@@ -23,7 +23,6 @@ public:
 
     virtual void step(const frame_time& time) override;
 
-    virtual void component_removed(object handle, component* comp) override;
     virtual void component_modified(object handle, component* comp, component_modification_source source) override;
 
 public:

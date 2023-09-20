@@ -139,6 +139,7 @@ void static_mesh_system::step(const frame_time& time)
             render_command_queue.set_static_mesh_materials(light->render_id, light->materials);
             render_command_queue.set_static_mesh_model(light->render_id, light->model);
             render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
+            render_command_queue.set_object_draw_flags(light->render_id, light->render_draw_flags);
             light->is_dirty = false;
         }
     

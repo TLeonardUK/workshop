@@ -27,8 +27,7 @@ public:
     // If no model is provided a plane will be used.
 	asset_ptr<model> model;
 
-	// What gpu flags are used to effect how this component is rendered.
-    // TODO: Expose these in properties as list of tick boxes.
+    // What gpu flags are used to effect how this component is rendered.
 	render_draw_flags render_draw_flags = render_draw_flags::geometry;
 
     // What gpu flags are used to effect how this component is rendered.
@@ -66,9 +65,11 @@ private:
 public:
 
     BEGIN_REFLECT(billboard_component, "Billboard", component, reflect_class_flags::none)
-        REFLECT_FIELD_REF(model,             "Model",        "Model asset this component displays, if none is provided a plane will be used.")
-        REFLECT_FIELD_LIST_REF(materials,    "Materials",    "Materials to display on the meshes model.\nIf empty the defaults set in the model are used.")
-        REFLECT_FIELD(size,                  "Size",         "Size that the billboard is displayed at.")
+        REFLECT_FIELD_REF(model,                  "Model",        "Model asset this component displays, if none is provided a plane will be used.")
+        REFLECT_FIELD_LIST_REF(materials,         "Materials",    "Materials to display on the meshes model.\nIf empty the defaults set in the model are used.")
+        REFLECT_FIELD(size,                       "Size",         "Size that the billboard is displayed at.")
+        REFLECT_FIELD_ENUM(render_draw_flags,     "Draw Flags",   "Dictates what camera views the mesh will be rendered in.")
+        REFLECT_FIELD_ENUM(render_gpu_flags,      "GPU Flags",    "Flags passed to the gpu to effect rendering of the mesh.")
     END_REFLECT()
 
 };

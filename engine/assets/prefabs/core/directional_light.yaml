@@ -1,0 +1,52 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    8:
+        meta_component:
+            name: directional light
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        billboard_component:
+            model: data:models/core/primitives/plane.yaml
+            materials:
+                -   data:materials/core/icons/light_icon.yaml
+            size: 32
+            render_draw_flags: 2
+            render_gpu_flags: 3
+        directional_light_component:
+            shadow_cascades: 2
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+        light_component:
+            intensity: 1
+            range: 500000
+            importance_range: 500000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: true
+            shadow_map_size: 512
+            shadow_map_distance: 10000

@@ -38,9 +38,18 @@ public:
 protected:
 
 	friend class directional_light_system;
+	
+	// ID of the render object for displaying the range.
+	render_object_id range_render_id = null_render_object;
+
+	// Tracks the last transform we applied to the render object.
+	size_t last_transform_generation = 0;
 
     // Component is dirty and all settings need to be applied to render object.
     bool is_dirty = false;
+
+	// Object flags from last frame.
+	object_flags last_flags = object_flags::unset;
 
 public:
 

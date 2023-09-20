@@ -119,7 +119,6 @@ void render_visibility_manager::set_object_manual_visibility(object_id id, bool 
     if (state.id.generation == id.generation && state.manual_visibility != visible)
     {
         state.manual_visibility = visible;
-        db_log(core, "set_object_manual_visibility: id=%zi visible=%i", id.index, visible);
 
         if (!state.is_dirty)
         {
@@ -236,8 +235,6 @@ void render_visibility_manager::draw_cell_bounds(bool draw_cell_bounds, bool dra
         }
     }
 }
-
-#pragma optimize("", off)
 
 void render_visibility_manager::update_visibility()
 {

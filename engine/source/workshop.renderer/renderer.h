@@ -7,6 +7,7 @@
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/containers/command_queue.h"
+#include "workshop.core/reflection/reflect.h"
 
 #include "workshop.renderer/render_world_state.h"
 #include "workshop.renderer/render_graph.h"
@@ -147,6 +148,9 @@ enum class debug_model
 {
     sphere,
     plane,
+    cone,
+    inverted_cone,
+    arrow,
 
     COUNT
 };
@@ -173,6 +177,11 @@ enum class render_gpu_flags
 };
 DEFINE_ENUM_FLAGS(render_gpu_flags);
 
+BEGIN_REFLECT_ENUM(render_gpu_flags, "GPU Flags", reflect_enum_flags::flags)
+    REFLECT_ENUM(unlit,    "Unlit",    "Lighting is not applied to this geometry.")
+    REFLECT_ENUM(selected, "Selected", "Geometry is drawn with a selection outline for us in editor.")
+END_REFLECT_ENUM()
+
 // Both render object and render views can have these values set. 
 // When a view is rendered it will only render objects that have matching flags.
 enum class render_draw_flags
@@ -186,6 +195,11 @@ enum class render_draw_flags
     editor = 2
 };
 DEFINE_ENUM_FLAGS(render_draw_flags);
+
+BEGIN_REFLECT_ENUM(render_draw_flags, "Draw Flags", reflect_enum_flags::flags)
+    REFLECT_ENUM(geometry,  "Geometry", "Drawn by views that render the standard geometry passes.")
+    REFLECT_ENUM(editor,    "Editor",   "Drawn only by views that are rendering editor geometry.")
+END_REFLECT_ENUM()
 
 // If defined this adds an extra plane to the gbuffer for writing debug data to.
 //#define GBUFFER_DEBUG_DATA

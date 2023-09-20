@@ -13,7 +13,8 @@ reflect_field::reflect_field(
         size_t offset, 
         size_t element_size, 
         std::type_index type, 
-        std::type_index super_type, 
+        std::type_index super_type,
+        std::type_index enum_type,
         const char* display_name, 
         const char* description, 
         reflect_field_container_type container_type,
@@ -23,6 +24,7 @@ reflect_field::reflect_field(
     , m_element_size(element_size)
     , m_type(type)
     , m_super_type(super_type)
+    , m_enum_type(enum_type)
     , m_display_name(display_name)
     , m_description(description)
     , m_container_type(container_type)
@@ -63,6 +65,11 @@ std::type_index reflect_field::get_type_index()
 std::type_index reflect_field::get_super_type_index()
 {
     return m_super_type;
+}
+
+std::type_index reflect_field::get_enum_type_index()
+{
+    return m_enum_type;
 }
 
 reflect_field_container_type reflect_field::get_container_type()

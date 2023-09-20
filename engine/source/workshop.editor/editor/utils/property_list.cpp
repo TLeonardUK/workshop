@@ -12,8 +12,6 @@
 
 #include "thirdparty/imgui/imgui.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 property_list::property_list(asset_manager* ass_manager, asset_database& ass_database, engine& in_engine)
@@ -382,6 +380,72 @@ bool property_list::draw_edit(reflect_field* field, component_ref_base& value)
     return ret;
 }
 
+bool property_list::draw_edit_enum_flags(reflect_field* field, reflect_enum* enumeration, int64_t& value)
+{
+    std::vector<const reflect_enum::value*> values = enumeration->get_values();
+
+    for (auto& enum_value : values)
+    {
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+
+        bool edit_value = (value & enum_value->value) != 0;
+        bool modified = ImGui::Checkbox(enum_value->display_name.c_str(), &edit_value);
+        if (modified)
+        {
+            on_before_modify.broadcast(field);
+
+            if (edit_value)
+            {
+                value = value | enum_value->value;
+            }
+            else
+            {
+                value = value & ~enum_value->value;
+            }
+        }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("%s", enum_value->description.c_str());
+        }
+    }
+
+    return false;
+}
+
+bool property_list::draw_edit_enum(reflect_field* field, reflect_enum* enumeration, int64_t& value)
+{
+    std::vector<const reflect_enum::value*> values = enumeration->get_values();
+
+    int selected_index = 0;
+    for (size_t i = 0; i < values.size(); i++)
+    {
+        if (values[i]->value == value)
+        {
+            selected_index = (int)i;
+            break;
+        }
+    }
+
+    auto get_data = [](void* data, int idx, const char** out_text) {
+        std::vector<const reflect_enum::value*>& values = *reinterpret_cast<std::vector<const reflect_enum::value*>*>(data);
+        *out_text = values[idx]->display_name.c_str();
+        return true;
+    };
+
+    ImGui::PushID(field->get_name());
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    bool modified = ImGui::Combo("", &selected_index, get_data, &values, (int)values.size());
+    if (modified)
+    {
+        on_before_modify.broadcast(field);
+
+        value = values[selected_index]->value;
+    }
+    ImGui::PopID();
+
+    return modified;
+}
 
 bool property_list::draw_field(reflect_field* field, uint8_t* field_data, bool container_element)
 {
@@ -403,6 +467,33 @@ bool property_list::draw_field(reflect_field* field, uint8_t* field_data, bool c
         for (size_t i = 0; i < length; i++)
         {
             modified |= draw_field(field, (uint8_t*)helper->get_data(field_data, i), true);
+        }
+    }
+    else if (field->get_container_type() == reflect_field_container_type::enumeration)
+    {
+        reflect_enum* enumeration = get_reflect_enum(field->get_enum_type_index());
+        if (enumeration == nullptr)
+        {
+            ImGui::TextDisabled("Unreflected enum for: %s", field->get_name());
+        }
+        else if (field->get_type_index() != typeid(int))
+        {
+            ImGui::TextDisabled("Unsupported underlying type for enum for: %s", field->get_name());
+        }
+        else
+        {
+            int64_t value = static_cast<int64_t>(*reinterpret_cast<int*>(field_data));
+
+            if (enumeration->has_flag(reflect_enum_flags::flags))
+            {
+                modified = draw_edit_enum_flags(field, enumeration, value);
+            }
+            else
+            {
+                modified = draw_edit_enum(field, enumeration, value);
+            }
+
+            *reinterpret_cast<int*>(field_data) = static_cast<int>(value);
         }
     }
     else if (field->get_type_index() == typeid(int))
@@ -465,7 +556,7 @@ bool property_list::draw_field(reflect_field* field, uint8_t* field_data, bool c
     }
     else
     {
-        ImGui::Text("Unsupported Edit Type");
+        ImGui::TextDisabled("Unsupported type for: %s", field->get_name());
     }
 
     return modified;

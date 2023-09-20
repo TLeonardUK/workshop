@@ -240,8 +240,6 @@ void object_manager::all_components_edited(component_modification_source source)
     }
 }
 
-#pragma optimize("", off)
-
 bool object_manager::has_active_dependencies(object handle, component* comp)
 {
     reflect_class* comp_class = get_reflect_class(typeid(*comp));

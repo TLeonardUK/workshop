@@ -25,11 +25,11 @@ public:
 
 	// The inner radius of the spotlight. The intensity is attenuated linearly between the radii.
 	// The range is in radians between [0, pi]
-	float inner_radius = 0.0f;
+	float inner_radius = 0.2f;
 	
 	// The outer radius of the spotlight. The intensity is attenuated linearly between the radii.
 	// The range is in radians between [0, pi]
-	float outer_radius = 0.2f;
+	float outer_radius = 0.3f;
 
 protected:
 
@@ -37,6 +37,15 @@ protected:
 
 	// Component is dirty and all settings need to be applied to render object.
 	bool is_dirty = false;
+
+	// ID of the range render object in the renderer.
+	render_object_id range_render_id = null_render_object;
+
+	// Tracks the last transform we applied to the render object.
+	size_t last_transform_generation = 0;
+
+	// Object flags from last frame.
+	object_flags last_flags = object_flags::unset;
 
 public:
 
