@@ -75,6 +75,10 @@ enum class ri_resource_state
     // For reading in shaders as a UAV.
     unordered_access,
 
+    // Used when a resource is going to be used as a blas/tlas for building or consumption by the
+    // ray tracing pipeline.
+    raytracing_acceleration_structure,
+
     COUNT
 };
 
@@ -127,6 +131,7 @@ enum class ri_data_type
     t_byteaddressbuffer,
     t_rwbyteaddressbuffer,
     t_rwtexture2d,
+    t_tlas,
 
     // These are special compressed formats for encoding data to be passed into vertex/etc buffers.
 
@@ -181,6 +186,7 @@ inline static const char* ri_data_type_strings[static_cast<int>(ri_data_type::CO
     "byteaddressbuffer",
     "rwbyteaddressbuffer",
     "rwtexture2d",
+    "tlas",
 
     "compressed_unit_vector",
 };
@@ -230,6 +236,7 @@ inline static const char* ri_data_type_hlsl_type[static_cast<int>(ri_data_type::
     "ByteAddressBuffer",
     "RWByteAddressBuffer",
     "RWTexture2D",
+    "RaytracingAccelerationStructure",
 
     "float3",
 };
@@ -279,6 +286,7 @@ inline static const char* ri_data_type_compressed_hlsl_type[static_cast<int>(ri_
     "ByteAddressBuffer",
     "RWByteAddressBuffer",
     "RWTexture2D",
+    "RaytracingAccelerationStructure",
 
     "float",
 };
@@ -326,6 +334,7 @@ enum class ri_descriptor_table
     buffer,
     rwbuffer,
     rwtexture_2d,
+    tlas,
 
     render_target,
     depth_stencil,
@@ -343,6 +352,7 @@ inline static const char* ri_descriptor_table_strings[static_cast<int>(ri_descri
     "buffer",
     "rwbuffer",
     "rwtexture_2d",
+    "tlas",
 
     "render_target",
     "depth_stencil"
@@ -593,6 +603,9 @@ struct ri_pipeline_render_state
     ri_stencil_op       stencil_back_face_pass_op;
     ri_compare_op       stencil_back_face_compare_op;
 
+    // Raytracing state
+    uint32_t            max_rt_payload_size;
+
 };
 
 template<> 
@@ -639,6 +652,8 @@ inline void stream_serialize(stream& out, ri_pipeline_render_state& state)
     stream_serialize_enum(out, state.stencil_back_face_depth_fail_op);
     stream_serialize_enum(out, state.stencil_back_face_pass_op);
     stream_serialize_enum(out, state.stencil_back_face_compare_op);
+
+    stream_serialize(out, state.max_rt_payload_size);
 }
 
 // ================================================================================================
@@ -653,6 +668,15 @@ enum class ri_shader_stage
     geometry,
     compute,
 
+    ray_generation,
+    ray_any_hit,
+    ray_closest_hit,
+    ray_miss,
+    ray_intersection,
+
+    rt_start = ray_generation,
+    rt_end = ray_intersection,
+
     COUNT
 };
 
@@ -662,7 +686,13 @@ inline static const char* ri_shader_stage_strings[static_cast<int>(ri_shader_sta
     "domain",
     "hull",
     "geometry",
-    "compute"
+    "compute",
+
+    "ray_generation",
+    "ray_any_hit",
+    "ray_closest_hit",
+    "ray_miss",
+    "ray_intersection",
 };
 
 DEFINE_ENUM_TO_STRING(ri_shader_stage, ri_shader_stage_strings)

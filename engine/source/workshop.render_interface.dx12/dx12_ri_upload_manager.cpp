@@ -165,6 +165,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     upload_state upload = allocate_upload(total_memory, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
     upload.resource = source.get_resource();
     upload.resource_initial_state = source.get_initial_state();
+    upload.name = source.get_debug_name();
 
     // Zero out upload space as parts of it may be padding.
     memset(upload.heap->start_ptr + upload.heap_offset, 0, upload.heap_size);
@@ -285,6 +286,7 @@ void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint
     upload_state upload = allocate_upload(data.size(), source.get_element_size());
     upload.resource = source.get_resource();
     upload.resource_initial_state = source.get_initial_state();
+    upload.name = source.get_debug_name();
 
     memcpy(upload.heap->start_ptr + upload.heap_offset, data.data(), data.size());
 
@@ -331,6 +333,7 @@ dx12_ri_upload_manager::upload_state dx12_ri_upload_manager::allocate_upload(siz
             {
                 heap->last_allocation_frame = m_frame_index;
 
+                state.freed_frame_index = std::numeric_limits<size_t>::max();
                 state.heap_size = size;
                 state.heap = heap.get();
                 break;
@@ -427,6 +430,8 @@ void dx12_ri_upload_manager::free_uploads()
         }
     }
 }
+#pragma optimize("", off)
+
 void dx12_ri_upload_manager::perform_uploads()
 {
     profile_marker(profile_colors::render, "perform uploads");
@@ -447,6 +452,8 @@ void dx12_ri_upload_manager::perform_uploads()
         return;
     }
 
+    //db_log(core, "=== Uploading %zi ====", uploads.size());
+
     // Seperate out all the unique resources for transitions. We have to do this
     // as we can perform multiple uploads to the same resource.
     std::vector<upload_state> unique_resources;
@@ -464,6 +471,68 @@ void dx12_ri_upload_manager::perform_uploads()
     profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "uploads");
     profile_gpu_marker(copy_queue, profile_colors::gpu_transition, "uploads");
 
+#if 1
+    {
+        profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "upload resources");
+
+        // Transition from common to a copy destination.
+        {
+            dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
+            transition_list.open();
+            for (upload_state& state : unique_resources)
+            {
+                transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::initial, ri_resource_state::copy_dest);
+            }
+            transition_list.close();
+
+            profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources to copy destination");
+            graphics_queue.execute(transition_list);
+        }
+
+        // Perform the actual copies.
+        constexpr size_t k_block_size = 32;
+
+        // Split uploads into seperate command lists, driver seems to get grumpy when we uploading huge amounts of data
+        // at once when loading in a single command list.
+        for (size_t i = 0; i < uploads.size(); i += k_block_size)
+        {
+            dx12_ri_command_list& list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
+            list.open();
+
+            for (size_t j = i; j < i + k_block_size && j < uploads.size(); j++)
+            {
+                upload_state& state = uploads[j];
+                
+                //db_log(core, "Uploading %p %zi", state.heap->start_ptr + state.heap_offset, state.heap_size);
+
+                state.build_command_list(list);
+
+                state.freed_frame_index = m_frame_index;
+                m_pending_free.push_back(state);
+
+                total_bytes += state.heap_size;
+            }
+
+            list.close();
+            graphics_queue.execute(list);
+        }
+
+        // Transition back from copy destination to common.
+        {
+            dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
+            transition_list.open();
+            for (upload_state& state : unique_resources)
+            {
+                transition_list.barrier(state.resource, state.resource_initial_state, ri_resource_state::copy_dest, ri_resource_state::initial);
+            }
+            transition_list.close();
+
+            profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources to copy destination");
+            graphics_queue.execute(transition_list);
+        }
+    }
+
+#else
     // Transition all pending resources to common on graphics queue.
     {
         dx12_ri_command_list& transition_list = static_cast<dx12_ri_command_list&>(graphics_queue.alloc_command_list());
@@ -557,6 +626,7 @@ void dx12_ri_upload_manager::perform_uploads()
         profile_gpu_marker(graphics_queue, profile_colors::gpu_transition, "transition resources to initial");
         graphics_queue.execute(transition_list);
     }
+#endif
 
     m_stats_render_bytes_uploaded->submit(static_cast<double>(total_bytes));
 }

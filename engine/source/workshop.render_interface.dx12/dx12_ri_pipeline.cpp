@@ -12,6 +12,8 @@ dx12_ri_pipeline::dx12_ri_pipeline(dx12_render_interface& renderer, const dx12_r
     : m_renderer(renderer)
     , m_create_params(params)
     , m_debug_name(debug_name)
+    , m_is_raytracing(false)
+    , m_is_compute(false)
 {
 }
 
@@ -53,6 +55,7 @@ bool dx12_ri_pipeline::create_root_signature()
         case ri_descriptor_table::texture_3d:
         case ri_descriptor_table::texture_cube:
         case ri_descriptor_table::buffer:
+        case ri_descriptor_table::tlas:
             {
                 range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
                 break;
@@ -142,6 +145,91 @@ bool dx12_ri_pipeline::create_root_signature()
     }
 
     serialized_root_sig->Release();
+    return true;
+}
+
+result<void> dx12_ri_pipeline::create_raytracing_pso()
+{
+    D3D12_GLOBAL_ROOT_SIGNATURE global_root_signature_desc;
+    global_root_signature_desc.pGlobalRootSignature = m_root_signature.Get();
+
+    D3D12_RAYTRACING_SHADER_CONFIG shader_config_desc;
+    shader_config_desc.MaxAttributeSizeInBytes = D3D12_RAYTRACING_MAX_ATTRIBUTE_SIZE_IN_BYTES;
+    shader_config_desc.MaxPayloadSizeInBytes = m_create_params.render_state.max_rt_payload_size;
+
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipeline_config_desc;
+    pipeline_config_desc.MaxTraceRecursionDepth = 1;
+
+    std::vector<std::unique_ptr<D3D12_DXIL_LIBRARY_DESC>> library_descs;
+    std::vector<std::unique_ptr<D3D12_EXPORT_DESC>> export_descs;
+    std::vector<std::unique_ptr<std::wstring>> export_names;
+
+    std::vector<D3D12_STATE_SUBOBJECT> subobjects;
+
+    // Add global root signature.
+    {
+        D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+        sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+        sub_object.pDesc = &global_root_signature_desc;
+    }
+
+    // Add RT config.
+    {
+        D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+        sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+        sub_object.pDesc = &shader_config_desc;
+    }
+    {
+        D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+        sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+        sub_object.pDesc = &pipeline_config_desc;
+    }
+
+    // Add all the RT shaders this pipeline uses.
+    for (size_t i = (int)ri_shader_stage::rt_start; i <= (int)ri_shader_stage::rt_end; i++)
+    {
+        ri_pipeline::create_params::stage& stage_params = m_create_params.stages[i];
+        if (stage_params.bytecode.empty())
+        {
+            continue;
+        }
+
+        std::unique_ptr<std::wstring> export_name = std::make_unique<std::wstring>();
+        *export_name = widen_string(stage_params.entry_point);
+
+        std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
+        export_desc->Name = export_name->c_str();
+        export_desc->Flags = D3D12_EXPORT_FLAG_NONE;
+        export_desc->ExportToRename = nullptr;
+
+        std::unique_ptr<D3D12_DXIL_LIBRARY_DESC> sub_object_desc = std::make_unique<D3D12_DXIL_LIBRARY_DESC>();
+        sub_object_desc->DXILLibrary.pShaderBytecode = stage_params.bytecode.data();
+        sub_object_desc->DXILLibrary.BytecodeLength = stage_params.bytecode.size();
+        sub_object_desc->NumExports = 1;
+        sub_object_desc->pExports = export_desc.get();
+
+        D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+        sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+        sub_object.pDesc = sub_object_desc.get();
+
+        library_descs.push_back(std::move(sub_object_desc));
+        export_descs.push_back(std::move(export_desc));
+        export_names.push_back(std::move(export_name));
+    }
+
+    D3D12_STATE_OBJECT_DESC desc = {};
+    desc.NumSubobjects = (UINT)subobjects.size();
+    desc.pSubobjects = subobjects.data();
+    desc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+
+    HRESULT hr = m_renderer.get_device()->CreateStateObject(&desc, IID_PPV_ARGS(&m_rt_pipeline_state));
+    if (FAILED(hr))
+    {
+        db_error(render_interface, "CreateStateObject failed with error 0x%08x.", hr);
+        return false;
+    }
+
+    m_is_raytracing = true;
     return true;
 }
 
@@ -278,8 +366,6 @@ result<void> dx12_ri_pipeline::create_graphics_pso()
         return false;
     }
 
-    m_is_compute = false;
-
     return true;
 }
 
@@ -331,7 +417,15 @@ result<void> dx12_ri_pipeline::create_resources()
 
     // Generate the PSO based on what pipeline type we are.
     result<void> ret = false;
-    if (!m_create_params.stages[(int)ri_shader_stage::compute].bytecode.empty())
+    if (!m_create_params.stages[(int)ri_shader_stage::ray_generation].bytecode.empty() ||
+        !m_create_params.stages[(int)ri_shader_stage::ray_intersection].bytecode.empty() ||
+        !m_create_params.stages[(int)ri_shader_stage::ray_any_hit].bytecode.empty() ||
+        !m_create_params.stages[(int)ri_shader_stage::ray_closest_hit].bytecode.empty() ||
+        !m_create_params.stages[(int)ri_shader_stage::ray_miss].bytecode.empty())
+    {
+        ret = create_raytracing_pso();
+    }
+    else if (!m_create_params.stages[(int)ri_shader_stage::compute].bytecode.empty())
     {
         ret = create_compute_pso();
     }
@@ -354,9 +448,19 @@ bool dx12_ri_pipeline::is_compute()
     return m_is_compute;   
 }
 
+bool dx12_ri_pipeline::is_raytracing()
+{
+    return m_is_raytracing;
+}
+
 ID3D12PipelineState* dx12_ri_pipeline::get_pipeline_state()
 {
     return m_pipeline_state.Get();
+}
+
+ID3D12StateObject* dx12_ri_pipeline::get_rt_pipeline_state()
+{
+    return m_rt_pipeline_state.Get();
 }
 
 ID3D12RootSignature* dx12_ri_pipeline::get_root_signature()

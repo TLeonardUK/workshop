@@ -219,12 +219,18 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
     bool debug)
 {
     std::array<std::wstring, static_cast<int>(ri_shader_stage::COUNT)> stage_target_profiles = {
-        L"vs_6_2",
-        L"ps_6_2",
-        L"ds_6_2",
-        L"hs_6_2",
-        L"gs_6_2",
-        L"cs_6_2"
+        L"vs_6_3",
+        L"ps_6_3",
+        L"ds_6_3",
+        L"hs_6_3",
+        L"gs_6_3",
+        L"cs_6_3",
+
+        L"lib_6_3",
+        L"lib_6_3",
+        L"lib_6_3",
+        L"lib_6_3",
+        L"lib_6_3",
     };
 
     std::wstring wide_target_profile = stage_target_profiles[static_cast<int>(stage)];
@@ -333,11 +339,11 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
 
         parse_output(output, errors_string);
 
-        //if (FAILED(compileRet))
+        if (FAILED(compileRet))
         {
-            db_log(renderer, "=============== COMPILE RESULT ===============");
-            db_log(renderer, "%s", source);
-            db_log(renderer, "%s", errors_string.c_str());
+            //db_log(renderer, "=============== COMPILE RESULT ===============");
+            //db_log(renderer, "%s", source);
+            //db_log(renderer, "%s", errors_string.c_str());
         }
 
         // If we failed to compile and got no useful error messages out of the output,

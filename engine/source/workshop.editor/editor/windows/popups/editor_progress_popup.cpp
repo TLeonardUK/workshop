@@ -37,7 +37,6 @@ void editor_progress_popup::draw()
         if (!ImGui::IsPopupOpen(get_window_id()))
         {
             ImGui::OpenPopup(get_window_id());
-            db_log(core, "Opened!");
         }
     }
 

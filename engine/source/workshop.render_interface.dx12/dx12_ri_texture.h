@@ -46,6 +46,8 @@ public:
 
     virtual ri_resource_state get_initial_state() override;
 
+    virtual const char* get_debug_name() override;
+
     virtual void swap(ri_texture* other) override;
 
 public:

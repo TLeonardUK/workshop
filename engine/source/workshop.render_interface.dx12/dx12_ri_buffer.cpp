@@ -66,6 +66,13 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     {
         mem_type = memory_type::rendering__vram__vertex_buffer;
         break;
+    }    
+    case ri_buffer_usage::raytracing_as:
+    case ri_buffer_usage::raytracing_as_instance_data:
+    case ri_buffer_usage::raytracing_as_scratch:
+    {
+        mem_type = memory_type::rendering__vram__raytracing_buffer;
+        break;
     }
     case ri_buffer_usage::generic:
     default:
@@ -97,7 +104,10 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
 
-    if (m_create_params.usage == ri_buffer_usage::generic)
+    if (m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::raytracing_as_instance_data ||
+        m_create_params.usage == ri_buffer_usage::raytracing_as_scratch ||
+        m_create_params.usage == ri_buffer_usage::raytracing_as)
     {
         desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -128,6 +138,11 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
 
 result<void> dx12_ri_buffer::create_resources()
 {
+    // Either create an exclusive buffer or sub-allocate into the small buffer allocator.
+    dx12_ri_small_buffer_allocator& small_allocator = m_renderer.get_small_buffer_allocator();
+    size_t total_size = m_create_params.element_size * m_create_params.element_count;
+    m_is_small_buffer = (total_size < small_allocator.get_max_size());
+
     switch (m_create_params.usage)
     {
     case ri_buffer_usage::index_buffer:
@@ -135,8 +150,31 @@ result<void> dx12_ri_buffer::create_resources()
             m_common_state = ri_resource_state::index_buffer;
             break;
         }
+    case ri_buffer_usage::raytracing_as:
+        {
+            m_common_state = ri_resource_state::raytracing_acceleration_structure;
+            break;
+        }
+    case ri_buffer_usage::raytracing_as_instance_data:
+        {
+            m_common_state = ri_resource_state::non_pixel_shader_resource;
+            break;
+        }
+    case ri_buffer_usage::raytracing_as_scratch:
+        {
+            m_common_state = ri_resource_state::unordered_access;
+            break;
+        }
     case ri_buffer_usage::vertex_buffer:
+        {
+            m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
     case ri_buffer_usage::generic:
+        {
+            m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
     default:
         {
             m_common_state = ri_resource_state::pixel_shader_resource;
@@ -144,11 +182,6 @@ result<void> dx12_ri_buffer::create_resources()
         }
     }
 
-    // Either create an exclusive buffer or sub-allocate into the small buffer allocator.
-    dx12_ri_small_buffer_allocator& small_allocator = m_renderer.get_small_buffer_allocator();
-    size_t total_size = m_create_params.element_size * m_create_params.element_count;
-
-    m_is_small_buffer = (total_size < small_allocator.get_max_size());
     if (m_is_small_buffer)
     {
         if (!small_allocator.alloc(total_size, m_create_params.usage, m_small_buffer_allocation))
@@ -211,6 +244,18 @@ result<void> dx12_ri_buffer::create_resources()
     return true;
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS dx12_ri_buffer::get_gpu_address()
+{
+    if (m_is_small_buffer)
+    {
+        return get_resource()->GetGPUVirtualAddress() + m_small_buffer_allocation.offset;
+    }
+    else
+    {
+        return get_resource()->GetGPUVirtualAddress();
+    }
+}
+
 size_t dx12_ri_buffer::get_element_count()
 {
     return m_create_params.element_count;
@@ -262,6 +307,8 @@ void* dx12_ri_buffer::map(size_t offset, size_t size)
 {
     if (m_is_small_buffer)
     {
+        db_assert(offset >= 0 && offset + size <= m_small_buffer_allocation.size);
+
         return static_cast<dx12_ri_buffer*>(m_small_buffer_allocation.buffer)->map(m_small_buffer_allocation.offset + offset, size);
     }
     else

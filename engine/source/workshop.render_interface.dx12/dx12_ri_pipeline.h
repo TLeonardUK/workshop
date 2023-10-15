@@ -27,11 +27,13 @@ public:
     result<void> create_resources();
 
     ID3D12PipelineState* get_pipeline_state();
+    ID3D12StateObject* get_rt_pipeline_state();
     ID3D12RootSignature* get_root_signature();
 
     virtual const create_params& get_create_params() override;
 
     bool is_compute();
+    bool is_raytracing();
 
 protected:
 
@@ -39,6 +41,7 @@ protected:
 
     result<void> create_graphics_pso();
     result<void> create_compute_pso();
+    result<void> create_raytracing_pso();
 
 private:
     dx12_render_interface& m_renderer;
@@ -47,8 +50,10 @@ private:
     ri_pipeline::create_params m_create_params;
 
     bool m_is_compute = false;
+    bool m_is_raytracing = false;
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipeline_state = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12StateObject> m_rt_pipeline_state = nullptr;    
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_root_signature = nullptr;
 };
 

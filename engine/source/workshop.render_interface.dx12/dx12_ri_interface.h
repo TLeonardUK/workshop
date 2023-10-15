@@ -9,6 +9,7 @@
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface/ri_types.h"
 #include <array>
+#include <unordered_set>
 
 namespace ws {
 
@@ -17,6 +18,8 @@ class dx12_ri_upload_manager;
 class dx12_ri_query_manager;
 class dx12_ri_descriptor_table;
 class dx12_ri_small_buffer_allocator;
+class dx12_ri_raytracing_tlas;
+class dx12_ri_raytracing_blas;
 
 // ================================================================================================
 //  Implementation of a renderer using DirectX 12.
@@ -36,9 +39,10 @@ public:
         1000,   // texture_3d
         100,    // texture_cube
         100,    // sampler
-        100000, // buffer
+        300000, // buffer
         100000, // rwbuffer
         1000,   // rwtexture_2d
+        1000,   // tlas
         1000,   // render_target
         1000,   // depth_stencil
     };
@@ -64,6 +68,8 @@ public:
     virtual std::unique_ptr<ri_buffer> create_buffer(const ri_buffer::create_params& params, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_layout_factory> create_layout_factory(ri_data_layout layout, ri_layout_usage usage) override;
     virtual std::unique_ptr<ri_query> create_query(const ri_query::create_params& params, const char* debug_name = nullptr) override;
+    virtual std::unique_ptr<ri_raytracing_blas> create_raytracing_blas(const char* debug_name) override;
+    virtual std::unique_ptr<ri_raytracing_tlas> create_raytracing_tlas(const char* debug_name) override;
     virtual ri_command_queue& get_graphics_queue() override;
     virtual ri_command_queue& get_copy_queue() override;
     virtual size_t get_pipeline_depth() override;
@@ -81,7 +87,7 @@ public:
 
     bool is_tearing_allowed();
     Microsoft::WRL::ComPtr<IDXGIFactory4> get_dxgi_factory();
-    Microsoft::WRL::ComPtr<ID3D12Device> get_device();
+    Microsoft::WRL::ComPtr<ID3D12Device5> get_device();
 
     dx12_ri_descriptor_heap& get_srv_descriptor_heap();
     dx12_ri_descriptor_heap& get_sampler_descriptor_heap();
@@ -93,6 +99,10 @@ public:
     dx12_ri_descriptor_table& get_descriptor_table(ri_descriptor_table table);
 
     size_t get_frame_index();
+
+    // Used to queue a rebuild of a tlas/blas resources.
+    void queue_as_build(dx12_ri_raytracing_tlas* tlas);
+    void queue_as_build(dx12_ri_raytracing_blas* blas);
 
 private:
 
@@ -113,9 +123,12 @@ private:
 
     void process_pending_deletes();
 
+    void process_as_build_requests();
+
 private:
 
     Microsoft::WRL::ComPtr<ID3D12Device> m_device = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Device5> m_device_5 = nullptr;
 
     std::unique_ptr<dx12_ri_command_queue> m_graphics_queue = nullptr;
     std::unique_ptr<dx12_ri_command_queue> m_copy_queue = nullptr;
@@ -138,13 +151,18 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Debug> m_debug_interface = nullptr;
     Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedDataSettings> m_dread_interface = nullptr;
 
-    D3D12_FEATURE_DATA_D3D12_OPTIONS m_options = {};
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 m_options_5 = {};
+    D3D12_FEATURE_DATA_D3D12_OPTIONS  m_options = {};
     bool m_allow_tearing = false;
 
     size_t m_frame_index = 0;
 
     std::mutex m_pending_deletion_mutex;
     std::array<std::vector<deferred_delete_function_t>, k_max_pipeline_depth> m_pending_deletions;
+
+    std::mutex m_pending_as_build_mutex;
+    std::unordered_set<dx12_ri_raytracing_blas*> m_pending_blas_builds;
+    std::unordered_set<dx12_ri_raytracing_tlas*> m_pending_tlas_builds;
 
 };
 

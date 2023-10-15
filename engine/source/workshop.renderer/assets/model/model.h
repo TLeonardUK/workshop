@@ -10,6 +10,7 @@
 #include "workshop.core/math/aabb.h"
 
 #include "workshop.render_interface/ri_types.h"
+#include "workshop.render_interface/ri_raytracing_blas.h"
 
 #include "workshop.renderer/assets/material/material.h"
 
@@ -46,6 +47,7 @@ public:
         std::string name;
         std::vector<size_t> indices;
         std::unique_ptr<ri_buffer> index_buffer;
+        std::unique_ptr<ri_raytracing_blas> blas;
 
         size_t material_index;
         aabb bounds;
@@ -61,6 +63,10 @@ public:
 
     model(ri_interface& ri_interface, renderer& renderer, asset_manager& ass_manager);
     virtual ~model();
+
+    // Finds a previously created bottom level acceleration structure for the given mesh index.
+    // If none has previously been created, one will be created.
+    ri_raytracing_blas* find_or_create_blas(size_t mesh_index);
 
     // Finds a previous created param block of the given type and key, or if none has been created
     // makes a new one and calls the setup_callback function.

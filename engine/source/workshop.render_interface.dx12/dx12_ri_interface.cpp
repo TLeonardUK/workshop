@@ -20,6 +20,8 @@
 #include "workshop.render_interface.dx12/dx12_ri_layout_factory.h"
 #include "workshop.render_interface.dx12/dx12_ri_query.h"
 #include "workshop.render_interface.dx12/dx12_ri_small_buffer_allocator.h"
+#include "workshop.render_interface.dx12/dx12_ri_raytracing_tlas.h"
+#include "workshop.render_interface.dx12/dx12_ri_raytracing_blas.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/filesystem/file.h"
@@ -173,6 +175,28 @@ std::unique_ptr<ri_query> dx12_render_interface::create_query(const ri_query::cr
     return instance;
 }
 
+std::unique_ptr<ri_raytracing_blas> dx12_render_interface::create_raytracing_blas(const char* debug_name)
+{
+    std::unique_ptr<dx12_ri_raytracing_blas> instance = std::make_unique<dx12_ri_raytracing_blas>(*this, debug_name);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
+}
+
+std::unique_ptr<ri_raytracing_tlas> dx12_render_interface::create_raytracing_tlas(const char* debug_name)
+{
+    std::unique_ptr<dx12_ri_raytracing_tlas> instance = std::make_unique<dx12_ri_raytracing_tlas>(*this, debug_name);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
+}
+
 bool dx12_render_interface::is_tearing_allowed()
 {
     return m_allow_tearing;
@@ -193,9 +217,9 @@ ri_command_queue& dx12_render_interface::get_copy_queue()
     return *m_copy_queue;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Device> dx12_render_interface::get_device()
+Microsoft::WRL::ComPtr<ID3D12Device5> dx12_render_interface::get_device()
 {
-    return m_device;
+    return m_device_5;
 }
 
 dx12_ri_descriptor_heap& dx12_render_interface::get_srv_descriptor_heap()
@@ -310,6 +334,13 @@ result<void> dx12_render_interface::create_device()
         return false;
     }
 
+    hr = m_device.As(&m_device_5);
+    if (FAILED(hr))
+    {
+        db_error(render_interface, "Failed to get ID3D12Device5 from device with error 0x%08x.", hr);
+        return false;
+    }
+
     if (result<void> ret = check_feature_support(); !ret)
     {
         return ret;
@@ -346,10 +377,17 @@ result<void> dx12_render_interface::check_feature_support()
 {
     HRESULT hr = 0;
 
+    hr = m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, reinterpret_cast<void*>(&m_options_5), sizeof(m_options_5));
+    if (FAILED(hr))
+    {
+        db_error(render_interface, "CheckFeatureSupport failed with error 0x%08x. GPU likely does not supported the required features.", hr);
+        return false;
+    }
+
     hr = m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, reinterpret_cast<void*>(&m_options), sizeof(m_options));
     if (FAILED(hr))
     {
-        db_error(render_interface, "CheckFeatureSupport failed with error 0x%08x.", hr);
+        db_error(render_interface, "CheckFeatureSupport failed with error 0x%08x. GPU likely does not supported the required features.", hr);
         return false;
     }
 
@@ -371,6 +409,24 @@ result<void> dx12_render_interface::check_feature_support()
         }
 
         m_allow_tearing = (tearingAllowed == TRUE);
+    }
+
+    if (m_options_5.RaytracingTier < D3D12_RAYTRACING_TIER_1_0)
+    {
+        db_error(render_interface, "Required ray tracing not supported on this gpu.", hr);
+        return false;
+    }
+
+    if (m_options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3)
+    {
+        db_error(render_interface, "Required resource binding tier not supported on this gpu.", hr);
+        return false;
+    }
+
+    if (m_options.TiledResourcesTier < D3D12_TILED_RESOURCES_TIER_3)
+    {
+        db_error(render_interface, "Required tiled resource tier not supported on this gpu.", hr);
+        return false;
     }
 
     return true;
@@ -595,6 +651,8 @@ void dx12_render_interface::begin_frame()
     m_graphics_queue->begin_frame();
     m_copy_queue->begin_frame();
     m_query_manager->begin_frame();
+
+    process_as_build_requests();
 }
 
 void dx12_render_interface::end_frame()
@@ -608,6 +666,57 @@ void dx12_render_interface::flush_uploads()
     profile_marker(profile_colors::render, "flush uploads");
 
     m_upload_manager->new_frame(m_frame_index);
+}
+
+void dx12_render_interface::queue_as_build(dx12_ri_raytracing_tlas* tlas)
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+    m_pending_tlas_builds.insert(tlas);
+}
+
+void dx12_render_interface::queue_as_build(dx12_ri_raytracing_blas* blas)
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+    m_pending_blas_builds.insert(blas);
+}
+
+void dx12_render_interface::process_as_build_requests()
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+
+    if (m_pending_blas_builds.empty() && m_pending_tlas_builds.empty())
+    {
+        return;
+    }
+
+    dx12_ri_command_list& build_list = static_cast<dx12_ri_command_list&>(m_graphics_queue->alloc_command_list());
+    build_list.open();
+
+    // Order is important, blas should be built before tlas.
+    db_log(renderer, "Building raytracing AS: Bottom=%zi Top=%zi", m_pending_blas_builds.size(), m_pending_tlas_builds.size());
+
+    for (dx12_ri_raytracing_blas* blas : m_pending_blas_builds)
+    {
+        blas->build(build_list);
+    }
+
+    for (dx12_ri_raytracing_tlas* tlas : m_pending_tlas_builds)
+    {
+        tlas->build(build_list);
+    }
+
+    build_list.close();
+
+    m_pending_tlas_builds.clear();
+    m_pending_blas_builds.clear();
+
+    // We flush uploads here before dispatching the builds as we will likely
+    // have updated various tlas/blas buffers that we want to be reflected on the gpu
+    // when the build occurs.
+    flush_uploads();
+
+    profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "build raytracing structures");
+    m_graphics_queue->execute(build_list);
 }
 
 void dx12_render_interface::drain_deferred()

@@ -171,12 +171,12 @@ void allocation_tree::add_node(node& parent, const char* display_path, const cha
 
     if (fragments.size() == 1)
     {
-        child_node.exclusive_size = used_bytes;
+        child_node.exclusive_size += used_bytes;
         child_node.exclusive_peak_size = std::max(child_node.exclusive_peak_size, child_node.exclusive_size);
 
-        child_node.used_size = used_bytes;
+        child_node.used_size += used_bytes;
         child_node.peak_size = std::max(child_node.peak_size, used_bytes);
-        child_node.allocation_count = allocation_count;
+        child_node.allocation_count += allocation_count;
         child_node.peak_allocation_count = std::max(child_node.peak_allocation_count, allocation_count);
     }
     else

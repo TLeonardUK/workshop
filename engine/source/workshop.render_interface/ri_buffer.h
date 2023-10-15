@@ -16,7 +16,16 @@ enum class ri_buffer_usage
 {
     generic,
     index_buffer,
-    vertex_buffer
+    vertex_buffer,
+
+    // raytracing acceleration structure (either blas or tlas)
+    raytracing_as,
+
+    // raytracing scratch buffer used to generated an acceleration structure.
+    raytracing_as_scratch,
+
+    // raytraching instance-data buffer used to store tlas instance data like the transforms of referenced blas's.
+    raytracing_as_instance_data,
 };
 
 // ================================================================================================

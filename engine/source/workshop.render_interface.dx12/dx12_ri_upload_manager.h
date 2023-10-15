@@ -73,6 +73,8 @@ private:
         ri_resource_state resource_initial_state;
 
         build_command_list_callback_t build_command_list = nullptr;
+
+        const char* name = nullptr;
     };
 
     // Granularity of heap size. The actual heap size is based on the size of the data to be uploaded.

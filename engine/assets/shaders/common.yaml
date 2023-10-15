@@ -237,7 +237,34 @@ param_blocks:
     fields:
       skybox_texture: texturecube
       skybox_sampler: sampler
+      
+  # Information about a material.
+  material_info:
+    scope: draw
+    fields:
+      domain: int
+      albedo_texture: texture2d
+      albedo_sampler: sampler
+      opacity_texture: texture2d
+      opacity_sampler: sampler
+      metallic_texture: texture2d
+      metallic_sampler: sampler
+      roughness_texture: texture2d
+      roughness_sampler: sampler
+      normal_texture: texture2d
+      normal_sampler: sampler   
+      skybox_texture: texturecube
+      skybox_sampler: sampler  
 
+  # Information about a models geometry.
+  model_info:
+    scope: draw
+    fields:
+      position_buffer: int
+      normal_buffer: int
+      tangent_buffer: int
+      bitangent_buffer: int
+      uv0_buffer: int
 
 defines:
   # The size of the grid the frustum is split into for light culling.

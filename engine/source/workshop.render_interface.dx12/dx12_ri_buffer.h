@@ -43,6 +43,8 @@ public:
 
     size_t get_buffer_offset();
 
+    D3D12_GPU_VIRTUAL_ADDRESS get_gpu_address();
+
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
     dx12_ri_descriptor_table::allocation get_uav() const;

@@ -13,20 +13,21 @@ namespace ws {
 D3D12_RESOURCE_STATES ri_to_dx12(ri_resource_state value)
 {
     static std::array<D3D12_RESOURCE_STATES, static_cast<int>(ri_resource_state::COUNT)> conversion = {
-        D3D12_RESOURCE_STATE_COMMON,                    // initial
-        D3D12_RESOURCE_STATE_COMMON,                    // common_state
-        D3D12_RESOURCE_STATE_RENDER_TARGET,             // render_target
-        D3D12_RESOURCE_STATE_PRESENT,                   // present
-        D3D12_RESOURCE_STATE_COPY_DEST,                 // copy_dest
-        D3D12_RESOURCE_STATE_COPY_SOURCE,               // copy_source
-        D3D12_RESOURCE_STATE_RESOLVE_DEST,              // resolve_dest
-        D3D12_RESOURCE_STATE_RESOLVE_SOURCE,            // resolve_source
-        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,     // pixel_shader_resource
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, // non_pixel_shader_resource
-        D3D12_RESOURCE_STATE_DEPTH_WRITE,               // depth_write
-        D3D12_RESOURCE_STATE_DEPTH_READ,                // depth_read
-        D3D12_RESOURCE_STATE_INDEX_BUFFER,              // index_buffer
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS           // unordered_access
+        D3D12_RESOURCE_STATE_COMMON,                            // initial
+        D3D12_RESOURCE_STATE_COMMON,                            // common_state
+        D3D12_RESOURCE_STATE_RENDER_TARGET,                     // render_target
+        D3D12_RESOURCE_STATE_PRESENT,                           // present
+        D3D12_RESOURCE_STATE_COPY_DEST,                         // copy_dest
+        D3D12_RESOURCE_STATE_COPY_SOURCE,                       // copy_source
+        D3D12_RESOURCE_STATE_RESOLVE_DEST,                      // resolve_dest
+        D3D12_RESOURCE_STATE_RESOLVE_SOURCE,                    // resolve_source
+        D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,             // pixel_shader_resource
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,         // non_pixel_shader_resource
+        D3D12_RESOURCE_STATE_DEPTH_WRITE,                       // depth_write
+        D3D12_RESOURCE_STATE_DEPTH_READ,                        // depth_read
+        D3D12_RESOURCE_STATE_INDEX_BUFFER,                      // index_buffer
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,                  // unordered_access
+        D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, // raytracing_acceleration_structure
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

@@ -24,6 +24,7 @@ MEMORY_TYPE(engine__ecs,	                        "engine/ecs")
 
 MEMORY_TYPE(rendering__vram__vertex_buffer,		    "rendering/vram/vertex buffer")
 MEMORY_TYPE(rendering__vram__index_buffer,		    "rendering/vram/index buffer")
+MEMORY_TYPE(rendering__vram__raytracing_buffer,		"rendering/vram/raytracing buffer")
 MEMORY_TYPE(rendering__vram__generic_buffer,	    "rendering/vram/generic buffer")
 MEMORY_TYPE(rendering__vram__texture,			    "rendering/vram/texture")
 MEMORY_TYPE(rendering__vram__render_target_color,	"rendering/vram/render target (color)")

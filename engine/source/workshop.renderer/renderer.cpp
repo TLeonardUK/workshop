@@ -249,6 +249,9 @@ result<void> renderer::create_resources()
     query_params.type = ri_query_type::time;
     m_gpu_time_query = m_render_interface.create_query(query_params, "Gpu time query");
 
+    // Create the TLAS containing the main scene.
+    m_scene_tlas = m_render_interface.create_raytracing_tlas("scene tlas");
+
     return true;
 }
 
@@ -259,6 +262,9 @@ result<void> renderer::destroy_resources()
     {
         m_render_job_task.wait();
     }
+
+    // Nuke raytracing resources.
+    m_scene_tlas = nullptr;
 
     // Nuke all resizable targets.
     m_gbuffer_param_block = nullptr;
@@ -438,6 +444,11 @@ render_imgui_manager& renderer::get_imgui_manager()
 render_command_queue& renderer::get_command_queue()
 {
     return *m_command_queues[m_command_queue_active_index];
+}
+
+ri_raytracing_tlas& renderer::get_scene_tlas()
+{
+    return *m_scene_tlas;
 }
 
 ri_texture* renderer::get_default_texture(default_texture_type type)

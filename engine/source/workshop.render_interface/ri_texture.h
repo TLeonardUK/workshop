@@ -79,6 +79,8 @@ public:
 
     virtual ri_resource_state get_initial_state() = 0;
 
+    virtual const char* get_debug_name() = 0;
+
     virtual void swap(ri_texture* other) = 0;
 
 };

@@ -58,7 +58,9 @@ private:
     static inline constexpr size_t k_buffer_size = 8 * 1024 * 1024;
 
     // Alignment of sub allocations.
-    static inline constexpr size_t k_allocation_alignment = 16;
+    // 256 is a good number for this as its an an alignment that allows raytracing / constant buffer / etc all to 
+    // consume these allocations.
+    static inline constexpr size_t k_allocation_alignment = 256;
 
     struct buffer
     {

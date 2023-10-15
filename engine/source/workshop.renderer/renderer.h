@@ -21,6 +21,7 @@
 #include "workshop.renderer/render_options.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
+#include "workshop.render_interface/ri_raytracing_tlas.h"
 #include "workshop.window_interface/window.h"
 
 #include "workshop.assets/asset_manager.h"
@@ -245,6 +246,9 @@ public:
     // This is only valid for the current frame, do not try to cache this.
     render_command_queue& get_command_queue();
 
+    // Gets the main scene top level acceleration structure for scene geometry.
+    ri_raytracing_tlas& get_scene_tlas();
+
     // Gets the next opaque id of a render object. This is thread safe.
     render_object_id next_render_object_id();
 
@@ -468,6 +472,10 @@ private:
     std::unique_ptr<ri_sampler> m_gbuffer_sampler;
 
     std::unique_ptr<ri_param_block> m_gbuffer_param_block;
+
+    // Raytracing
+
+    std::unique_ptr<ri_raytracing_tlas> m_scene_tlas;
 
     // Callbacks
 

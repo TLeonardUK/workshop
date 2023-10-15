@@ -693,6 +693,11 @@ ri_texture_format dx12_ri_texture::get_format()
     return m_create_params.format;
 }
 
+const char* dx12_ri_texture::get_debug_name()
+{
+    return m_debug_name.c_str();
+}
+
 size_t dx12_ri_texture::get_multisample_count()
 {
     return m_create_params.multisample_count;

@@ -292,4 +292,9 @@ float4x4 extract_rotation_matrix(float4x4 m)
     return m;
 }
 
+float inverse_lerp(float a, float b, float value)
+{
+        return (value - a) / (b - a);
+}
+
 #endif // _MATH_HLSL_

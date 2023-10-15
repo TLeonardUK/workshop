@@ -62,6 +62,8 @@ private:
 
     std::vector<render_batch_instance> m_registered_batches;
 
+    std::vector<ri_raytracing_tlas::instance_id> m_registered_tlas_instances;
+
     struct mesh_visibility
     {
         render_visibility_manager::object_id id;

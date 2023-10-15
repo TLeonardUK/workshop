@@ -34,10 +34,14 @@ dx12_ri_command_list::~dx12_ri_command_list()
 
 result<void> dx12_ri_command_list::create_resources()
 {
+    ID3D12CommandAllocator* allocator = m_queue.get_current_command_allocator().Get();
+
+    //db_log(core, "CreateCommandList thread-id=%u allocator=%zi", std::this_thread::get_id(), allocator); 
+
     HRESULT hr = m_renderer.get_device()->CreateCommandList(
         0, 
         m_queue.get_dx_queue_type(), 
-        m_queue.get_current_command_allocator().Get(), 
+        allocator, 
         nullptr, 
         IID_PPV_ARGS(&m_command_list));
 
@@ -128,6 +132,8 @@ void dx12_ri_command_list::barrier(ID3D12Resource* resource, ri_resource_state r
         return;
     }
 
+    //db_log(core, "barrier: %p : %i -> %i", resource, (int)source_state, (int)destination_state);
+
     D3D12_RESOURCE_BARRIER barrier;
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -136,8 +142,14 @@ void dx12_ri_command_list::barrier(ID3D12Resource* resource, ri_resource_state r
     barrier.Transition.StateAfter = ri_to_dx12(destination_state);
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     m_command_list->ResourceBarrier(1, &barrier);
+}
 
-    //db_log(core, "barrier: %p : %i -> %i", resource, (int)source_state, (int)destination_state);
+void dx12_ri_command_list::barrier_uav(ID3D12Resource* resource)
+{
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.UAV.pResource = resource;
+    m_command_list->ResourceBarrier(1, &barrier);
 }
 
 void dx12_ri_command_list::clear(ri_texture_view resource, const color& destination)
@@ -179,7 +191,7 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
     dx12_ri_pipeline& dx12_pipeline = static_cast<dx12_ri_pipeline&>(pipeline);
     m_active_pipeline = &dx12_pipeline;
 
-    if (dx12_pipeline.is_compute())
+    if (dx12_pipeline.is_compute() || dx12_pipeline.is_raytracing())
     {
         m_command_list->SetComputeRootSignature(dx12_pipeline.get_root_signature());
     }
@@ -188,7 +200,20 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
         m_command_list->SetGraphicsRootSignature(dx12_pipeline.get_root_signature());
     }
 
-    m_command_list->SetPipelineState(dx12_pipeline.get_pipeline_state());
+    if (dx12_pipeline.is_raytracing())
+    {
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> command_list_4;
+        if (FAILED(m_command_list.As(&command_list_4)))
+        {
+            db_fatal(renderer, "Command list does not support raytracing pso's.");
+        }
+
+        command_list_4->SetPipelineState1(dx12_pipeline.get_rt_pipeline_state());
+    }
+    else
+    {
+        m_command_list->SetPipelineState(dx12_pipeline.get_pipeline_state());
+    }
 
     std::array<ID3D12DescriptorHeap*, 2> heaps = {
         m_renderer.get_sampler_descriptor_heap().get_resource(),
@@ -206,7 +231,7 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
 
         dx12_ri_descriptor_table& descriptor_table = m_renderer.get_descriptor_table(table);
 
-        if (dx12_pipeline.is_compute())
+        if (dx12_pipeline.is_compute() || dx12_pipeline.is_raytracing())
         {
             m_command_list->SetComputeRootDescriptorTable(table_index++, descriptor_table.get_base_allocation().gpu_handle);
         }

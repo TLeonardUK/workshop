@@ -51,6 +51,8 @@ result<void> dx12_ri_command_queue::create_resources()
         return false;
     }
 
+    m_queue->SetName(widen_string(m_debug_name).c_str());
+
     return true;
 }
 

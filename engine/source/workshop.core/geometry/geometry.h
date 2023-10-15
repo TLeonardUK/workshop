@@ -60,6 +60,23 @@ enum class geometry_data_type
 	COUNT
 };
 
+// Types of data contained in a given vertex stream.
+enum class geometry_vertex_stream_type
+{
+    position,
+    normal,
+    tangent,
+    bitangent,
+    uv0,
+    uv1,
+    uv2,
+    uv3,
+    color0,
+    color1,
+    color2,
+    color3
+};
+
 // Represents an individual vertex stream held in a geometry instance.
 struct geometry_vertex_stream
 {

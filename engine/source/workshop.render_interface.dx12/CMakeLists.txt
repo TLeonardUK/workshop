@@ -46,6 +46,11 @@ SET(SOURCES
     "dx12_ri_upload_manager.cpp"
     "dx12_ri_small_buffer_allocator.h"
     "dx12_ri_small_buffer_allocator.cpp"
+    
+    "dx12_ri_raytracing_tlas.h"
+    "dx12_ri_raytracing_tlas.cpp"
+    "dx12_ri_raytracing_blas.h"
+    "dx12_ri_raytracing_blas.cpp"
     "dx12_types.h"
     "dx12_types.cpp"
     "dx12_headers.h"

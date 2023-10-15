@@ -21,6 +21,8 @@ SET(SOURCES
     "ri_texture_compiler.h"
     "ri_pipeline.h"
     "ri_query.h"
+    "ri_raytracing_tlas.h"
+    "ri_raytracing_blas.h"
     "ri_param_block.h"
     "ri_param_block.cpp"
     "ri_param_block_archetype.h"

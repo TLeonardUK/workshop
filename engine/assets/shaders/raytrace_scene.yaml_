@@ -1,0 +1,49 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: shader
+version: 1
+
+# This effect does a simple raytrace of the scene and emits the results to
+# a render target. This is mostly here for debugging the raytracing pipeline.
+
+imports: [ data:shaders/common.yaml ]
+
+effects:
+  raytrace_scene:
+    techniques:
+      raytrace_scene: {}
+   
+param_blocks:
+  raytrace_scene_parameters:
+    scope: draw
+    fields:
+      scene_tlas: tlas
+
+ray_hitgroups:
+  main_hitgroup:
+    ray_closest_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_closest_hit
+    ray_any_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_any_hit
+
+render_states:
+  raytrace_scene_render_state:
+    max_rt_payload_size: 32
+
+techniques:
+  raytrace_scene:
+    ray_generation_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_generation
+    ray_miss_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_miss
+    ray_hitgroups: [ main_hitgroup  ]
+    render_state: raytrace_scene_render_state
+    param_blocks: [ raytrace_scene_parameters  ]
+
+  # TODO: add shader to pack to SH probe

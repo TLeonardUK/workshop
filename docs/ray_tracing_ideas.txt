@@ -1,0 +1,15 @@
+ri_command_list
+-> dispatch_rays
+
+ri_shader_state
+-> ray_generation
+-> ray_hit
+-> ray_miss
+
+ri_pipeline
+-> support ray tracing
+
+ri_interface
+-> blas/tlas creation
+
+

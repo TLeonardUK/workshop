@@ -190,6 +190,10 @@ void render_static_mesh::create_render_data()
         m_renderer->get_batch_manager().register_instance(info);
 
         m_registered_batches.push_back(info);
+
+        // Add to scene tlas.
+        ri_raytracing_blas* blas = m_model->find_or_create_blas(i);
+        m_registered_tlas_instances.push_back(m_renderer->get_scene_tlas().add_instance(blas, get_transform()));
     }
 }
 
@@ -207,13 +211,27 @@ void render_static_mesh::destroy_render_data()
     }
     m_registered_batches.clear();
 
+    for (ri_raytracing_tlas::instance_id instance : m_registered_tlas_instances)
+    {
+        m_renderer->get_scene_tlas().remove_instance(instance);
+    }
+    m_registered_tlas_instances.clear();
+
     m_geometry_instance_info = nullptr;
 }
 
 void render_static_mesh::update_render_data()
 {
-    m_geometry_instance_info->set("model_matrix", get_transform());
+    matrix4 transform = get_transform();
+
+    m_geometry_instance_info->set("model_matrix", transform);
     m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
+
+    // Update tlas transform fo all meshes.
+    for (ri_raytracing_tlas::instance_id instance : m_registered_tlas_instances)
+    {
+        m_renderer->get_scene_tlas().update_instance(instance, transform);
+    }
 }
 
 obb render_static_mesh::get_bounds()

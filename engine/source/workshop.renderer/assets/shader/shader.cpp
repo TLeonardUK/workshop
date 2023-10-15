@@ -64,6 +64,7 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
     params.descriptor_tables.push_back(ri_descriptor_table::buffer);
     params.descriptor_tables.push_back(ri_descriptor_table::rwbuffer);
     params.descriptor_tables.push_back(ri_descriptor_table::rwtexture_2d);
+    params.descriptor_tables.push_back(ri_descriptor_table::tlas);
 
     for (size_t block_index : instance.param_block_indices)
     {

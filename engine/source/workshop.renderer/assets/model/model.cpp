@@ -36,6 +36,7 @@ bool model::post_load()
         mat.material = m_asset_manager.request_asset<material>(mat.file.c_str(), 0);
     }
 
+    // Create index buffer for each sub-mesh.
     for (size_t i = 0; i < meshes.size(); i++)
     {
         mesh_info& info = meshes[i];
@@ -50,7 +51,7 @@ bool model::post_load()
 
         size_t max_index_value = *std::max_element(info.indices.begin(), info.indices.end());
 
-        if (true)//max_index_value >= std::numeric_limits<uint16_t>::max())
+        if (max_index_value >= std::numeric_limits<uint16_t>::max())
         {
             indices_32.reserve(info.indices.size());
             for (size_t index : info.indices)
@@ -76,8 +77,40 @@ bool model::post_load()
         std::string index_buffer_name = string_format("Model Index Buffer[%zi]: %s", i, name.c_str());
         info.index_buffer = m_renderer.get_render_interface().create_buffer(params, index_buffer_name.c_str());
     }
+
+    // Create buffer for each vertex stream.
+
     
     return true;
+}
+
+ri_raytracing_blas* model::find_or_create_blas(size_t mesh_index)
+{
+    model::vertex_buffer* buffer = nullptr;
+
+    {
+        ri_data_layout position_only_layout;
+        position_only_layout.fields.push_back({ "position", ri_data_type::t_float3 });
+
+        buffer = find_or_create_vertex_buffer(position_only_layout);
+    }
+
+    {
+        std::scoped_lock lock(m_mutex);
+
+        mesh_info& info = meshes[mesh_index];
+        if (info.blas)
+        {
+            return info.blas.get();
+        }
+
+
+        std::string blas_name = string_format("Model BLAS[%zi]: %s", mesh_index, name.c_str());
+        info.blas = m_renderer.get_render_interface().create_raytracing_blas(blas_name.c_str());
+        info.blas->update(buffer->vertex_buffer.get(), info.index_buffer.get());
+    
+        return info.blas.get();
+    }
 }
 
 ri_param_block* model::find_or_create_param_block(const char* type, size_t key, param_block_setup_callback_t setup_callback)
@@ -104,6 +137,10 @@ ri_param_block* model::find_or_create_param_block(const char* type, size_t key, 
 
 model::vertex_buffer* model::find_or_create_vertex_buffer(const ri_data_layout& layout)
 {
+    // TODO: Get rid of all this stupidity, we want to use non-interleaved vertex buffers ideally to preent duplication
+    //       of data due to different shaders using different layouts, and prevent duplication with raytracing structures.
+    //       Would also allow us to dispose of the source data after creating all vertex stream buffers.
+
     std::scoped_lock lock(m_mutex);
 
     if (auto iter = m_vertex_buffers.find(layout); iter != m_vertex_buffers.end())
