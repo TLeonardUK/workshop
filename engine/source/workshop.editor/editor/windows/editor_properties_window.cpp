@@ -3,7 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.editor/editor/windows/editor_properties_window.h"
-#include "workshop.editor/editor/transactions/editor_transaction_create_component.h"
+#include "workshop.editor/editor/transactions/editor_transaction_create_components.h"
 #include "workshop.editor/editor/transactions/editor_transaction_delete_component.h"
 #include "workshop.editor/editor/transactions/editor_transaction_modify_component.h"
 #include "workshop.editor/editor/editor.h"
@@ -74,7 +74,8 @@ void editor_properties_window::draw_add_component(object context)
 
         for (auto& cls : potential_classes)
         {
-            if (cls->has_flag(reflect_class_flags::abstract))
+            if (cls->has_flag(reflect_class_flags::abstract) ||
+                cls->has_flag(reflect_class_flags::internal_added))
             {
                 continue;
             }
@@ -86,13 +87,61 @@ void editor_properties_window::draw_add_component(object context)
 
             if (ImGui::MenuItem(cls->get_display_name()))
             {
-                obj_manager.add_component(context, cls->get_type_index());
-                m_editor->get_undo_stack().push(std::make_unique<editor_transaction_create_component>(*m_engine, *m_editor, context, cls->get_type_index()));
+                add_component(context, cls);
             }
         }
 
         ImGui::EndPopup();
     }
+}
+
+void editor_properties_window::add_component(object context, reflect_class* component_class)
+{
+    std::vector<std::type_index> added_types;
+
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
+
+    // Add any dependencies of the component if they don't already exist.
+    std::vector<reflect_class*> dependencies = component_class->get_dependencies();
+    for (reflect_class* dep : dependencies)
+    {
+        if (obj_manager.get_component(context, dep->get_type_index()) == nullptr)
+        {
+            obj_manager.add_component(context, dep->get_type_index());
+            added_types.push_back(dep->get_type_index());
+        }
+    }
+
+    // Add requested component.
+    obj_manager.add_component(context, component_class->get_type_index());
+    added_types.push_back(component_class->get_type_index());
+
+    m_editor->get_undo_stack().push(std::make_unique<editor_transaction_create_components>(*m_engine, *m_editor, context, added_types));
+}
+
+// Don't allow deleting the meta component as that bad boy is important for the basic functioning of the object system.
+bool editor_properties_window::can_delete_component(object context, component* comp)
+{
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
+
+    if (dynamic_cast<meta_component*>(comp) != nullptr)
+    {
+        return false;
+    }
+
+    // Go through all objects in the object and ensure non dependent on this component.
+    reflect_class* comp_class = get_reflect_class(typeid(*comp));
+    for (component* other_comp : obj_manager.get_components(context))
+    {
+        reflect_class* other_comp_class = get_reflect_class(typeid(*other_comp));
+        std::vector<reflect_class*> dependencies = other_comp_class->get_dependencies();
+        if (std::find(dependencies.begin(), dependencies.end(), comp_class) != dependencies.end())
+        {
+            return false;
+        }        
+    }
+
+    return true;
 }
 
 void editor_properties_window::draw()
@@ -141,8 +190,7 @@ void editor_properties_window::draw()
                     );
 
                     ImGui::SetCursorPos(button_pos);
-                    // Don't allow deleting the meta component as that bad boy is important for the basic functioning of the object system.
-                    if (dynamic_cast<meta_component*>(component) == nullptr)
+                    if (can_delete_component(context, component))
                     {
                         if (ImGui::SmallButton("X"))
                         {

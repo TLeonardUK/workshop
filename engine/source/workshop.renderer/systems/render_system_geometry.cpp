@@ -60,26 +60,6 @@ void render_system_geometry::build_graph(render_graph& graph, const render_world
         pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
         graph.add_node(std::move(pass));
 
-#if 0
-        // Draw transparent geometry.
-        pass = std::make_unique<render_pass_geometry>();
-        pass->name = "transparent static geometry";
-        pass->system = this;
-        pass->technique = m_renderer.get_effect_manager().get_technique("static_geometry", { 
-            { "domain","transparent"}, 
-            {"wireframe","false"}, 
-            {"depth_only","false"} 
-        });
-        pass->wireframe_technique = m_renderer.get_effect_manager().get_technique("static_geometry", { 
-            {"wireframe","true"}, 
-            {"depth_only","false"} 
-        });
-        pass->domain = material_domain::transparent;
-        pass->output = m_renderer.get_gbuffer_output();
-        pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
-        graph.add_node(std::move(pass));
-#endif
-
         // Draw sky geometry.
         pass = std::make_unique<render_pass_geometry>();
         pass->name = "sky geometry";
@@ -150,8 +130,6 @@ void render_system_geometry::build_graph(render_graph& graph, const render_world
         pass->output = output;
         pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
         graph.add_node(std::move(pass));
-
-        // TODO: Do we want to handle transparent objects here?
     }
 }
 

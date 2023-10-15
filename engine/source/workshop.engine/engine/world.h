@@ -40,6 +40,10 @@ public:
     // Gets the engine that owns this world.
     engine& get_engine();
 
+    // Gets the primary camera in the world. The primary camera is defined as the first camera
+    // in the scene that is enabled and is drawing the full scene and not a depth/etc view.
+    object get_primary_camera();
+
 protected:
 
 private:

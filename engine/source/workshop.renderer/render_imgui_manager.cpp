@@ -371,7 +371,7 @@ void render_imgui_manager::create_font_resources()
     icons_config.PixelSnapH = true;
     icons_config.GlyphMinAdvanceX = icon_font_size;
     icons_config.GlyphOffset = ImVec2(1, 1);
-    io.Fonts->AddFontFromFileTTF("data:imgui/fonts/" FONT_ICON_FILE_NAME_FAS, icon_font_size, &icons_config, icons_ranges);
+    io.Fonts->AddFontFromFileTTF("data:fonts/core/" FONT_ICON_FILE_NAME_FAS, icon_font_size, &icons_config, icons_ranges);
 
     // Create the actual texture atlas.
     unsigned char* pixels;

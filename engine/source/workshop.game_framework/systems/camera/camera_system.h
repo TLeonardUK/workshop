@@ -10,6 +10,8 @@
 
 namespace ws {
 
+enum class render_draw_flags;
+
 // ================================================================================================
 //  Responsible for creating and updating render views from all active camera components.
 // ================================================================================================
@@ -30,6 +32,9 @@ public:
 
     // Sets the projection settings for a given camera.
     void set_projection(object handle, float fov, float aspect_ratio, float min_depth, float max_depth);
+
+    // Sets the draw flags for a given camera.
+    void set_draw_flags(object handle, render_draw_flags flags);
 
     // Converts an on screen location to a world space position. Screen location is in 0-1 coordinates.
     vector3 screen_to_world_space(object handle, vector3 screen_space_position);

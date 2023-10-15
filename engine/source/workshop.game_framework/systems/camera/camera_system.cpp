@@ -43,6 +43,25 @@ void camera_system::set_projection(object handle, float fov, float aspect_ratio,
     });
 }
 
+void camera_system::set_draw_flags(object handle, render_draw_flags flags)
+{
+    m_command_queue.queue_command("set_draw_flags", [this, handle, flags]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->draw_flags = flags;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_object_draw_flags(component->view_id, component->draw_flags);
+            }
+        }
+    });
+}
+
 vector3 camera_system::screen_to_world_space(object handle, vector3 screen_space_position)
 {
     camera_component* camera = m_manager.get_component<camera_component>(handle);
@@ -154,6 +173,7 @@ void camera_system::step(const frame_time& time)
             render_command_queue.set_view_viewport(camera->view_id, recti(0, 0, static_cast<int>(screen_size.x), static_cast<int>(screen_size.y)));
             render_command_queue.set_view_projection(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
+            render_command_queue.set_object_draw_flags(camera->view_id, camera->draw_flags);
             update_matrices = true;
 
             camera->is_dirty = false;

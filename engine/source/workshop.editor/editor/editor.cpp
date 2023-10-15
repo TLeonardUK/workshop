@@ -39,9 +39,11 @@
 #include "workshop.game_framework/systems/transform/object_pick_system.h"
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
+#include "workshop.game_framework/systems/camera/camera_system.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/lighting/directional_light_system.h"
+#include "workshop.game_framework/systems/lighting/light_system.h"
 #include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 
 #include "workshop.core/platform/platform.h"
@@ -85,6 +87,29 @@ void editor::register_init(init_list& list)
 void editor::set_editor_mode(editor_mode mode)
 {
 	m_editor_mode = mode;
+
+    // Set all the cameras to no longer draw editor stuff.
+    world& world_instance = m_engine.get_default_world();
+    object_manager& obj_manager = world_instance.get_object_manager();
+    camera_system* camera_sys = obj_manager.get_system<camera_system>();
+
+    component_filter<camera_component> filter(obj_manager);
+    for (size_t i = 0; i < filter.size(); i++)
+    {
+        camera_component* camera = filter.get_component<camera_component>(i);
+
+        render_draw_flags new_flags = camera->draw_flags;
+        if (mode == editor_mode::editor)
+        {
+            new_flags = new_flags | render_draw_flags::editor;
+        }
+        else
+        {
+            new_flags = new_flags & ~render_draw_flags::editor;
+        }
+
+        camera_sys->set_draw_flags(filter.get_object(i), new_flags);
+    }
 }
 
 editor_main_menu& editor::get_main_menu()
@@ -108,16 +133,13 @@ void editor::set_selected_objects_untransacted(const std::vector<object>& object
     object_manager& obj_manager = world_instance.get_object_manager();
     static_mesh_system* static_mesh_sys = obj_manager.get_system<static_mesh_system>();
 
-    // TODO: This isn't very extensible, we should be targetting some kind of base mesh_component instead
-    // of doing static meshes/etc here.
-
     // Turn off selection flag for all old object meshes.
     for (object obj : m_selected_objects)
     {
-        static_mesh_component* mesh = obj_manager.get_component<static_mesh_component>(obj);
-        if (mesh)
+        meta_component* meta = obj_manager.get_component<meta_component>(obj);
+        if (meta)
         {
-            static_mesh_sys->set_render_gpu_flags(obj, mesh->render_gpu_flags & ~render_gpu_flags::selected);
+            meta->flags = meta->flags & ~object_flags::selected;
         }
     }
 
@@ -126,10 +148,10 @@ void editor::set_selected_objects_untransacted(const std::vector<object>& object
     // Turn on selection flag for all new object meshes.
     for (object obj : m_selected_objects)
     {
-        static_mesh_component* mesh = obj_manager.get_component<static_mesh_component>(obj);
-        if (mesh)
+        meta_component* meta = obj_manager.get_component<meta_component>(obj);
+        if (meta)
         {
-            static_mesh_sys->set_render_gpu_flags(obj, mesh->render_gpu_flags | render_gpu_flags::selected);
+            meta->flags = meta->flags | object_flags::selected;
         }
     }
 }
@@ -231,9 +253,12 @@ result<void> editor::create_main_menu(init_list& list)
     m_main_menu_options.push_back(m_main_menu->add_menu_custom("Window/", [this]() {       
         for (auto& window : m_windows)
         {
-            if (ImGui::MenuItem(window->get_window_id()))
+            if (window->get_layout() != editor_window_layout::popup)
             {
-                window->open();
+                if (ImGui::MenuItem(window->get_window_id()))
+                {
+                    window->open();
+                }
             }
         }
     }));
@@ -317,6 +342,7 @@ void editor::new_scene()
 
     transform_system* transform_sys = obj_manager.get_system<transform_system>();
     directional_light_system* direction_light_sys = obj_manager.get_system<directional_light_system>();
+    light_system* light_sys = obj_manager.get_system<light_system>();
 
     // Add a movement camera.
     object obj = obj_manager.create_object("main camera");
@@ -330,12 +356,13 @@ void editor::new_scene()
     obj = obj_manager.create_object("sun light");
     obj_manager.add_component<transform_component>(obj);
     obj_manager.add_component<bounds_component>(obj);
+    obj_manager.add_component<light_component>(obj);
     obj_manager.add_component<directional_light_component>(obj);
-    direction_light_sys->set_light_shadow_casting(obj, true);
-    direction_light_sys->set_light_shadow_map_size(obj, 2048);
-    direction_light_sys->set_light_shadow_max_distance(obj, 10000.0f);
+    light_sys->set_light_shadow_casting(obj, true);
+    light_sys->set_light_shadow_map_size(obj, 2048);
+    light_sys->set_light_shadow_max_distance(obj, 10000.0f);
+    light_sys->set_light_intensity(obj, 5.0f);
     direction_light_sys->set_light_shadow_cascade_exponent(obj, 0.6f);
-    direction_light_sys->set_light_intensity(obj, 5.0f);
     transform_sys->set_local_transform(obj, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 
     // Switch to the new default world.

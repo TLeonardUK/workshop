@@ -26,7 +26,6 @@
 
 namespace ws {
 
-// TODO: We should probably find somewhere a bit more appropriate for this.
 struct bc7enc_initializer
 {
     bc7enc_initializer()
@@ -455,7 +454,6 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
                 }
             }
 
-            // TODO: Do we need to split into rows for output?
             size_t output_offset = (y * row_output_stride) + (x * output_block_size);
             block_callback(output_data.data() + output_offset, pixels_rgba.data());
         }

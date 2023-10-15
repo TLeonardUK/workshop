@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.engine/ecs/component.h"
+#include "workshop.engine/ecs/meta_component.h"
 
 #include "workshop.core/math/quat.h"
 #include "workshop.core/math/vector3.h"
@@ -47,6 +48,12 @@ public:
 protected:
 
 	friend class light_system;
+	friend class directional_light_system;
+	friend class point_light_system;
+	friend class spot_light_system;
+
+	// Component is dirty and all settings need to be applied to render object.
+	bool is_dirty = false;
 
 	// ID of the render object in the renderer.
 	render_object_id render_id = null_render_object;
@@ -56,7 +63,7 @@ protected:
 
 public:
 
-    BEGIN_REFLECT(light_component, "Light Component", component, reflect_class_flags::abstract)
+    BEGIN_REFLECT(light_component, "Light", component, reflect_class_flags::internal_added)
         REFLECT_FIELD(intensity,            "Intensity",                "Arbitrary scale to the lights radiance.")
         REFLECT_FIELD(range,                "Range",                    "Maximum distance away from light that it attenuates to nothing.")
         REFLECT_FIELD(importance_range,     "Importance Range",         "How far away the view has to be from the light before its faded out.")
@@ -65,11 +72,10 @@ public:
         REFLECT_FIELD(shadow_map_size,      "Shadow Map Size",          "The size of the texture map that is used to render the lights view for shadow casting.")
         REFLECT_FIELD(shadow_map_distance,  "Shadow Map Distance",      "Maximum distance from the light before the shadwo factor is faded out.")
 
-
         REFLECT_CONSTRAINT_RANGE(intensity,             0.01f, 1000000.0f)
         REFLECT_CONSTRAINT_RANGE(range,                 0.01f, 1000000.0f)
         REFLECT_CONSTRAINT_RANGE(importance_range,      0.01f, 1000000.0f)
-        REFLECT_CONSTRAINT_RANGE(shadow_map_size,       64,    16384)
+        REFLECT_CONSTRAINT_RANGE(shadow_map_size,       128,   16384)
         REFLECT_CONSTRAINT_RANGE(shadow_map_distance,   0.01f, 1000000.0f)
     END_REFLECT()
 

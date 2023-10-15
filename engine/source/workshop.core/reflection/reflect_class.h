@@ -23,7 +23,10 @@ enum class reflect_class_flags
     none            = 0,
 
     // The class is abstract and should not be constructed directly.
-    abstract        = 1
+    abstract        = 1,
+
+    // This class is internally added and shouldn't be created manually in the editor.
+    internal_added  = 2
 };
 DEFINE_ENUM_FLAGS(reflect_class_flags);
 
@@ -56,6 +59,9 @@ public:
     // Gets the type index of the class being described.
     std::type_index get_type_index();
 
+    // Gets a list of class this class is dependent on.
+    std::vector<reflect_class*> get_dependencies();
+
     // Returns true if thie given parent class is somwhere in the classes heirarchy.
     bool is_derived_from(reflect_class* parent);
 
@@ -71,7 +77,8 @@ protected:
         size_t offset, 
         size_t element_size, 
         std::type_index type, 
-        std::type_index super_type, 
+        std::type_index super_type,
+        std::type_index enum_type,
         const char* display_name, 
         const char* description, 
         reflect_field_container_type field_type, 
@@ -79,12 +86,15 @@ protected:
 
     void add_constraint(const char* name, float min_value, float max_value);
 
+    void add_dependency(std::type_index type);
+
 private:
     std::vector<std::unique_ptr<reflect_field>> m_fields;
     std::string m_name;
     std::string m_display_name;
     std::type_index m_type_index;
     std::type_index m_parent_type_index;
+    std::vector<std::type_index> m_dependencies;
     reflect_class_flags m_flags;
     instance_create_t m_create_function;
 

@@ -19,7 +19,9 @@
 namespace ws {
 
 class render_scene_manager;
+class render_system_debug;
 enum class render_gpu_flags;
+enum class render_draw_flags;
 
 // ================================================================================================
 //  Base class for all types of objects that exist within the render scene - meshes, views, etc.
@@ -64,6 +66,16 @@ public:
     // Sets the render flags of this object.
     virtual void set_render_gpu_flags(render_gpu_flags flags);
     render_gpu_flags get_render_gpu_flags();
+    bool has_render_gpu_flag(render_gpu_flags flag);
+
+    // Sets the flag dictating which views this object is rendered to.
+    virtual void set_draw_flags(render_draw_flags flags);
+    render_draw_flags get_draw_flags();
+    bool has_draw_flag(render_draw_flags flag);
+
+    // Gets or sets the visibility of the object.
+    virtual void set_visibility(bool flags);
+    bool get_visibility();
 
 protected:
 
@@ -72,6 +84,9 @@ protected:
     render_object_id m_id;
 
     render_gpu_flags m_gpu_flags = (render_gpu_flags)0;
+    render_draw_flags m_draw_flags = (render_draw_flags)0;
+
+    bool m_visibility = true;
 
     // Visibility manager state.
     render_visibility_manager::object_id m_visibility_id;

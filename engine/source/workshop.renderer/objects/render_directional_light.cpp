@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.render_interface/ri_interface.h"
 
 namespace ws {

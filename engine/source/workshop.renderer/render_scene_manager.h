@@ -51,6 +51,10 @@ public:
         return dynamic_cast<T*>(resolve_id(id));
     }
 
+    // Gets a list of all objects. 
+    // This is slow, don't use it for anything but debugging.
+    std::vector<render_object*> get_objects();
+
 public:
 
     // ===========================================================================================
@@ -62,6 +66,12 @@ public:
 
     // Sets the flags on an object that defines how it is rendered.
     void set_object_gpu_flags(render_object_id id, render_gpu_flags flags);
+
+    // Sets the flags that dictate what views an object is drawn to.
+    void set_object_draw_flags(render_object_id id, render_draw_flags flags);
+
+    // Sets the visibility of the render object.
+    void set_object_visibility(render_object_id id, bool visibility);
 
     // ===========================================================================================
     //  Views

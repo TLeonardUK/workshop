@@ -115,7 +115,7 @@ void render_light::set_local_transform(const vector3& location, const quat& rota
 void render_light::update_render_data()
 {
     vector3 world_location = m_local_location;
-    vector3 world_direction = vector3::forward * m_local_rotation;
+    vector3 world_direction = m_local_rotation * vector3::forward;
 
     m_light_state_param_block->set("position", world_location);
     m_light_state_param_block->set("direction", world_direction);

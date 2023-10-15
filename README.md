@@ -33,6 +33,9 @@ We use cmake for generating project files. You can either use the cmake frontend
 
 Once generated the project files are stored in the intermediate folder, at this point you can just open them and build the project in visual studio.
 
+# Wheres the documentation?
+Head over to the wiki from the tabs above, it has some good documentation on what you need to do to get setup.
+
 # Whats in the repository?
 ```
 /
@@ -44,19 +47,5 @@ Once generated the project files are stored in the intermediate folder, at this 
 │   │   ├── workshop.*/       Each individual folder is a seperate engine projects.
 │   ├── tools/                Contains the tools used to build the engine, cmake scripts and various batch scripts.
 ├── game/                     All game assets and code.
-│   ├── roguelike/            This is a simple example game using the engine.
+│   ├── example/             This is a simple example game using the engine.
 ```
-
-# Source code structure
-The source code is currently split into multiple projects, which are arranged into 4 tiers. The tiers are visible in the visual studio solution explorer or the cmake files (unfortunately the folder structure doesn't distinguish them well).
-
-The purpose of tiers is to provide clear seperation of the different "layers" of the engine, and to control dependencies.
-
-Projects in a tier can depend on other projects in the same tier or in tiers lower than them, but they can never depend on projects above them.
-
-- tier 0 : Contains core / utility code. eg. Logging, IO, math, etc.
-- tier 1 : Contains hardware interface code. eg. Render interface, audio interface, asset management, etc.
-- tier 2 : Contains core engine code and gameplay frameworks. eg. The main engine class, the frame loop, scene management, etc.
-- tier 3 : Contains game-specific code goes. The code for all this is held in the games directory rather than the engine directory.
-
-Third party libraries do not have any of this control and can be used by any tier.

@@ -26,6 +26,7 @@ class material;
 enum class visualization_mode;
 enum class render_flag;
 enum class render_gpu_flags;
+enum class render_draw_flags;
 class render_options;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
@@ -102,6 +103,12 @@ public:
 
     // Sets the flags passed to the gpu to render the object.
     void set_object_gpu_flags(render_object_id id, render_gpu_flags flags);
+
+    // Sets the flags that dictate what views an object is drawn to.
+    void set_object_draw_flags(render_object_id id, render_draw_flags flags);
+
+    // Sets the visibility of the render object.
+    void set_object_visibility(render_object_id id, bool visibility);
 
     // ===========================================================================================
     //  Views

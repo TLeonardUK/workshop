@@ -35,6 +35,19 @@ render_object* render_scene_manager::resolve_id(render_object_id id)
     return nullptr;
 }
 
+std::vector<render_object*> render_scene_manager::get_objects()
+{
+    std::scoped_lock lock(m_mutex);
+
+    std::vector<render_object*> objects;
+    for (auto& [key, value] : m_objects)
+    {
+        objects.push_back(value.get());
+    }
+
+    return objects;
+}
+
 // ===========================================================================================
 //  Objects
 // ===========================================================================================
@@ -67,6 +80,34 @@ void render_scene_manager::set_object_gpu_flags(render_object_id id, render_gpu_
     }
 }
 
+void render_scene_manager::set_object_draw_flags(render_object_id id, render_draw_flags flags)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_object* object = resolve_id(id))
+    {
+        object->set_draw_flags(flags);
+    }
+    else
+    {
+        db_warning(renderer, "set_object_draw_flags called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_object_visibility(render_object_id id, bool visibility)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_object* object = resolve_id(id))
+    {
+        object->set_visibility(visibility);
+    }
+    else
+    {
+        db_warning(renderer, "set_object_visibility called with non-existant id {%zi}.", id);
+    }
+}
+
 // ===========================================================================================
 //  Views
 // ===========================================================================================
@@ -78,6 +119,7 @@ void render_scene_manager::create_view(render_object_id id, const char* name)
     std::unique_ptr<render_view> view = std::make_unique<render_view>(id, m_renderer);
     view->init();
     view->set_name(name);
+    view->set_draw_flags(render_draw_flags::geometry);
 
     render_view* view_ptr = view.get();
 
@@ -157,6 +199,7 @@ void render_scene_manager::create_static_mesh(render_object_id id, const char* n
     std::unique_ptr<render_static_mesh> obj = std::make_unique<render_static_mesh>(id, m_renderer);
     obj->init();
     obj->set_name(name);
+    obj->set_draw_flags(render_draw_flags::geometry);
 
     render_static_mesh* obj_ptr = obj.get();
 

@@ -125,6 +125,9 @@ public:
     // Returns true if the object is visible inside the given view.
     bool is_object_visibile(view_id view_id, object_id object_id);
 
+    // Allows manually setting an object as non-visible and overriding its normal visibility state.
+    void set_object_manual_visibility(object_id id, bool visible);
+
     // Views
 
     // Registers a view that will determine visibility of objects.
@@ -162,6 +165,7 @@ private:
         obb bounds;
         render_visibility_flags flags;
         std::bitset<k_max_tracked_views> visibility;
+        bool manual_visibility;
 
         oct_tree<object_id>::token oct_tree_entry;
 

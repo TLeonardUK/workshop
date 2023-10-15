@@ -1,0 +1,11 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/core/primitives/cone.obj
+    
+materials:
+  "DefaultMaterial": "data:models/core/primitives/materials/white.yaml"

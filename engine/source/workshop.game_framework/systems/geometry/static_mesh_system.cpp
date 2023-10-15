@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 #include "workshop.engine/ecs/component_filter.h"
+#include "workshop.engine/ecs/meta_component.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
@@ -101,11 +102,12 @@ void static_mesh_system::step(const frame_time& time)
     renderer& render = engine.get_renderer();
     render_command_queue& render_command_queue = render.get_command_queue();
 
-    component_filter<static_mesh_component, const transform_component> filter(m_manager);
+    component_filter<static_mesh_component, const transform_component, const meta_component> filter(m_manager);
     for (size_t i = 0; i < filter.size(); i++)
     {
         object obj = filter.get_object(i);
 
+        const meta_component* meta = filter.get_component<meta_component>(i);
         const transform_component* transform = filter.get_component<transform_component>(i);
         static_mesh_component* light = filter.get_component<static_mesh_component>(i);
 
@@ -137,6 +139,7 @@ void static_mesh_system::step(const frame_time& time)
             render_command_queue.set_static_mesh_materials(light->render_id, light->materials);
             render_command_queue.set_static_mesh_model(light->render_id, light->model);
             render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
+            render_command_queue.set_object_draw_flags(light->render_id, light->render_draw_flags);
             light->is_dirty = false;
         }
     
@@ -145,6 +148,24 @@ void static_mesh_system::step(const frame_time& time)
         {
             light->last_transform_generation = transform->generation;
             render_command_queue.set_object_transform(light->render_id, transform->world_location, transform->world_rotation, transform->world_scale);
+        }
+
+        // Mark the render primitives as selected for the renderer.
+        bool should_be_selected = (meta->flags & object_flags::selected) != object_flags::none;
+        bool is_selected = (light->render_gpu_flags & render_gpu_flags::selected) != render_gpu_flags::none;
+
+        if (should_be_selected != is_selected)
+        {
+            if (should_be_selected)
+            {
+                light->render_gpu_flags = light->render_gpu_flags | render_gpu_flags::selected;
+            }
+            else
+            {
+                light->render_gpu_flags = light->render_gpu_flags & ~render_gpu_flags::selected;
+            }
+
+            render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
         }
 
         light->last_model = light->model;

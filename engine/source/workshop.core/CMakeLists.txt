@@ -140,6 +140,8 @@ SET(SOURCES
     "reflection/reflect.h"
     "reflection/reflect_class.cpp"
     "reflection/reflect_class.h"
+    "reflection/reflect_enum.cpp"
+    "reflection/reflect_enum.h"
     "reflection/reflect_field.cpp"
     "reflection/reflect_field.h"
     "reflection/reflect_constraint.cpp"

@@ -48,7 +48,7 @@ public:
     };
 
     // Maximum amount of queries that can be allocated.
-    constexpr static size_t k_maximum_queries = 10'000;
+    constexpr static size_t k_maximum_queries = 200;
  
     dx12_render_interface();
     virtual ~dx12_render_interface();

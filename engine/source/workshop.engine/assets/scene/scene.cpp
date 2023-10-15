@@ -97,6 +97,8 @@ bool scene::post_load()
                 }
             }
         }
+
+        obj_manager.ensure_dependent_components_exist(handle);
     }
 
     // Mark all objects as modified.

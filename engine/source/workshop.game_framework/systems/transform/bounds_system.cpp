@@ -11,6 +11,7 @@
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
+#include "workshop.game_framework/components/geometry/billboard_component.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/async/async.h"
 #include "workshop.core/perf/profile.h"
@@ -43,29 +44,46 @@ void bounds_system::step(const frame_time& time)
     std::vector<std::pair<object, bounds_component*>> modified_bounds;
 
     // Calculate bounds for any components with static meshes.
-    component_filter<transform_component, bounds_component, static_mesh_component> filter(m_manager);
+    component_filter<transform_component, bounds_component> filter(m_manager);
     for (size_t i = 0; i < filter.size(); i++)
     {
         object obj = filter.get_object(i);
 
         const transform_component* transform = filter.get_component<transform_component>(i);
-        static_mesh_component* mesh = filter.get_component<static_mesh_component>(i);
         bounds_component* bounds = filter.get_component<bounds_component>(i);
-        
-        if (!mesh->model.is_loaded())
+
+        static_mesh_component* mesh = m_manager.get_component<static_mesh_component>(obj);
+        billboard_component* billboard = m_manager.get_component<billboard_component>(obj);
+
+        matrix4 model_transform = matrix4::identity;
+        asset_ptr<model> model;
+        if (mesh)
+        {
+            model = mesh->model;
+        }
+        else if (billboard)
+        {
+            model = billboard->model;
+            model_transform = billboard->transform;
+        }
+
+        if (!model.is_loaded())
         {
             continue;
         }
 
-        if (transform->generation != bounds->last_transform_generation ||
-            mesh->model.get_version() != bounds->last_model_version ||
-            mesh->model.get_hash() != bounds->last_model_hash)
+        if (model_transform != bounds->last_model_transform ||
+            transform->generation != bounds->last_transform_generation ||
+            model.get_version() != bounds->last_model_version ||
+            model.get_hash() != bounds->last_model_hash)
         {
-            bounds->local_bounds = obb(mesh->model->geometry->bounds, matrix4::identity);
-            bounds->world_bounds = obb(mesh->model->geometry->bounds, transform->local_to_world);
+            bounds->local_bounds = obb(model->geometry->bounds, model_transform * matrix4::identity);
+            bounds->world_bounds = obb(model->geometry->bounds, model_transform * transform->local_to_world);
 
+            bounds->last_model_transform = model_transform;
             bounds->last_transform_generation = transform->generation;
-            bounds->last_model_version = mesh->model.get_version();
+            bounds->last_model_version = model.get_version();
+            bounds->last_model_hash = model.get_hash();
             bounds->is_valid = true;
             bounds->has_bounds_source = true;
 

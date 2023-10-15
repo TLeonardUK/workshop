@@ -19,33 +19,44 @@ namespace ws {
 // ================================================================================================
 //  Represents a spot light in the world.
 // ================================================================================================
-class spot_light_component : public light_component
+class spot_light_component : public component
 {
 public:
 
 	// The inner radius of the spotlight. The intensity is attenuated linearly between the radii.
 	// The range is in radians between [0, pi]
-	float inner_radius = 0.0f;
+	float inner_radius = 0.2f;
 	
 	// The outer radius of the spotlight. The intensity is attenuated linearly between the radii.
 	// The range is in radians between [0, pi]
-	float outer_radius = 0.2f;
+	float outer_radius = 0.3f;
 
 protected:
 
 	friend class spot_light_system;
 
-    // Component is dirty and all settings need to be applied to render object.
-    bool is_dirty = false;
+	// Component is dirty and all settings need to be applied to render object.
+	bool is_dirty = false;
+
+	// ID of the range render object in the renderer.
+	render_object_id range_render_id = null_render_object;
+
+	// Tracks the last transform we applied to the render object.
+	size_t last_transform_generation = 0;
+
+	// Object flags from last frame.
+	object_flags last_flags = object_flags::unset;
 
 public:
 
-    BEGIN_REFLECT(spot_light_component, "Spot Light", light_component, reflect_class_flags::none)
+    BEGIN_REFLECT(spot_light_component, "Spot Light", component, reflect_class_flags::none)
         REFLECT_FIELD(inner_radius, "Inner Radius", "The inner radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
         REFLECT_FIELD(outer_radius, "Outer Radius", "The outer radius of the spotlight. The intensity is attenuated linearly between the radii.\nThe range is in radians between [0, pi]")
 
         REFLECT_CONSTRAINT_RANGE(inner_radius, 0.0f, math::pi)
-    END_REFLECT()
+
+		REFLECT_DEPENDENCY(light_component)
+	END_REFLECT()
 
 };
 

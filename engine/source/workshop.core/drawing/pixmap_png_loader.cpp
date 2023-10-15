@@ -42,8 +42,8 @@ std::vector<std::unique_ptr<pixmap>> pixmap_png_loader::load(const std::vector<c
 
 bool pixmap_png_loader::save(pixmap& input, std::vector<char>& buffer)
 {
-    db_assert_message(input.get_format() != pixmap_format::R8G8B8A8_SRGB &&
-                      input.get_format() != pixmap_format::R8G8B8A8, "Format is not valid for PNG format.");
+    db_assert_message(input.get_format() == pixmap_format::R8G8B8A8_SRGB ||
+                      input.get_format() == pixmap_format::R8G8B8A8, "Format is not valid for PNG format.");
 
     unsigned char* image = nullptr;
     size_t image_size = 0;

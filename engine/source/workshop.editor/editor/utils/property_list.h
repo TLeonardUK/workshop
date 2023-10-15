@@ -64,6 +64,9 @@ protected:
     bool draw_edit(reflect_field* field, asset_ptr<scene>& value);
     bool draw_edit(reflect_field* field, component_ref_base& value);
 
+    bool draw_edit_enum_flags(reflect_field* field, reflect_enum* enumeration, int64_t& value);
+    bool draw_edit_enum(reflect_field* field, reflect_enum* enumeration, int64_t& value);
+
     bool draw_field(reflect_field* field, uint8_t* field_data, bool container_element = false);
 
     bool draw_asset(reflect_field* field, std::string& path, const char* drag_drop_type);

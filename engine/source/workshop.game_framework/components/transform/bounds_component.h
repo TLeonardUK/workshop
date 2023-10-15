@@ -35,6 +35,9 @@ protected:
     // Tracks the last transform we applied to the render object.
     size_t last_transform_generation = 0;
 
+    // Last local transform of the model (for billboards etc).
+    matrix4 last_model_transform = matrix4::identity;
+
     // Tracks the last model used for calculating bounds.
     size_t last_model_version = 0;
     size_t last_model_hash = 0;

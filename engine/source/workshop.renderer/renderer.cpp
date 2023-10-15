@@ -111,6 +111,11 @@ void renderer::register_init(init_list& list)
         [this, &list]() -> result<void> { return load_debug_models(); },
         [this, &list]() -> result<void> { return unload_debug_models(); }
     );
+    list.add_step(
+        "Renderer Debug Materials",
+        [this, &list]() -> result<void> { return load_debug_materials(); },
+        [this, &list]() -> result<void> { return unload_debug_materials(); }
+    );
 }
 
 result<void> renderer::create_systems(init_list& list)
@@ -281,10 +286,13 @@ result<void> renderer::destroy_resources()
     return true;
 }
 
-
 result<void> renderer::load_debug_models()
 {
-    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/primitives/sphere.yaml", 0);
+    m_debug_models[(int)debug_model::sphere] = m_asset_manager.request_asset<model>("data:models/core/primitives/sphere.yaml", 0);
+    m_debug_models[(int)debug_model::plane] = m_asset_manager.request_asset<model>("data:models/core/primitives/plane.yaml", 0);
+    m_debug_models[(int)debug_model::cone] = m_asset_manager.request_asset<model>("data:models/core/primitives/cone.yaml", 0);
+    m_debug_models[(int)debug_model::inverted_cone] = m_asset_manager.request_asset<model>("data:models/core/primitives/inverted_cone.yaml", 0);
+    m_debug_models[(int)debug_model::arrow] = m_asset_manager.request_asset<model>("data:models/core/primitives/arrow.yaml", 0);
 
     for (size_t i = 0; i < m_debug_models.size(); i++)
     {
@@ -305,6 +313,34 @@ result<void> renderer::unload_debug_models()
     for (size_t i = 0; i < m_debug_models.size(); i++)
     {
         m_debug_models[i] = {};
+    }
+
+    return true;
+}
+
+result<void> renderer::load_debug_materials()
+{
+    m_debug_materials[(int)debug_material::transparent_red] = m_asset_manager.request_asset<material>("data:materials/core/solid/transparent_red.yaml", 0);
+
+    for (size_t i = 0; i < m_debug_materials.size(); i++)
+    {
+        m_debug_materials[i].wait_for_load();
+
+        if (!m_debug_materials[i].is_loaded())
+        {
+            db_error(renderer, "Failed to load debug material: %s", m_debug_materials[i].get_path().c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+result<void> renderer::unload_debug_materials()
+{
+    for (size_t i = 0; i < m_debug_materials.size(); i++)
+    {
+        m_debug_materials[i] = {};
     }
 
     return true;
@@ -1067,6 +1103,11 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ver
 asset_ptr<model> renderer::get_debug_model(debug_model model)
 {
     return m_debug_models[(int)model];
+}
+
+asset_ptr<material> renderer::get_debug_material(debug_material model)
+{
+    return m_debug_materials[(int)model];
 }
 
 void renderer::drain()
