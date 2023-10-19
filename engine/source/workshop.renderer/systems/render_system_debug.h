@@ -52,13 +52,11 @@ public:
 
 private:
 
-#pragma pack(push, 1)
     struct debug_primitive_vertex
     {
         vector3 position;
         vector4 color;
     };
-#pragma pack(pop)
 
     // Used to store a precalculated shape to avoid recalculating
     // positional information each time a debug element is added.
@@ -88,7 +86,8 @@ private:
     size_t m_queued_vertex_count = 0;
     size_t m_draw_vertex_count = 0;
 
-    std::unique_ptr<ri_buffer> m_vertex_buffer;
+    std::unique_ptr<ri_buffer> m_position_buffer;
+    std::unique_ptr<ri_buffer> m_color0_buffer;
     std::unique_ptr<ri_buffer> m_index_buffer;
 
 };

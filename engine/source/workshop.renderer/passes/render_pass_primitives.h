@@ -21,7 +21,8 @@ class render_pass_primitives
 {
 public:
 
-    ri_buffer* vertex_buffer;
+    ri_buffer* position_buffer;
+    ri_buffer* color0_buffer;
     ri_buffer* index_buffer;
     size_t vertex_count = 0;
 

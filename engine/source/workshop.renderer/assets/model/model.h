@@ -58,6 +58,22 @@ public:
         std::unique_ptr<ri_buffer> vertex_buffer;
     };
 
+    // If you modify these, ensure you update model_info in common.yaml
+    inline static ri_data_type k_vertex_stream_runtime_types[static_cast<int>(geometry_vertex_stream_type::COUNT)] = {
+        ri_data_type::t_float3,
+        ri_data_type::t_compressed_unit_vector,
+        ri_data_type::t_compressed_unit_vector,
+        ri_data_type::t_compressed_unit_vector,
+        ri_data_type::t_float2,
+        ri_data_type::t_float2,
+        ri_data_type::t_float2,
+        ri_data_type::t_float2,
+        ri_data_type::t_float4,
+        ri_data_type::t_float4,
+        ri_data_type::t_float4,
+        ri_data_type::t_float4
+    };
+
 public:
     using param_block_setup_callback_t = std::function<void(ri_param_block& block)>;
 
@@ -72,14 +88,12 @@ public:
     // makes a new one and calls the setup_callback function.
     ri_param_block* find_or_create_param_block(const char* type, size_t key, param_block_setup_callback_t setup_callback);
 
-    // Finds a vertex buffer created for this model with the given layout, or if none has 
-    // been created, generates a new one. Created vertex buffers will exist as long as the model
-    // exists, so be careful using a lot of varied layouts or you will end up with a lot
-    // of duplicated vertex data.
-    // 
-    // This function also creates the vertex_info param block that goes along with the buffer when
-    // its used.
-    vertex_buffer* find_or_create_vertex_buffer(const ri_data_layout& layout);
+    // Finds the buffer for the given vertex stream.
+    vertex_buffer* find_vertex_stream_buffer(geometry_vertex_stream_type stream_type);
+
+    // Gets the param block that describes where all the vertex stream buffers are that
+    // make up the geometry for this model.
+    ri_param_block& get_model_info_param_block();
 
     void swap(model* other);
 
@@ -99,6 +113,10 @@ private:
 
     std::unordered_map<size_t, std::unique_ptr<ri_param_block>> m_param_blocks;
     std::unordered_map<ri_data_layout, std::unique_ptr<vertex_buffer>> m_vertex_buffers;
+
+    std::array<std::unique_ptr<vertex_buffer>, (int)geometry_vertex_stream_type::COUNT> m_vertex_streams;
+
+    std::unique_ptr<ri_param_block> m_model_info_param_block;
 
     std::mutex m_mutex;
 

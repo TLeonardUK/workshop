@@ -923,13 +923,18 @@ enum class ri_data_scope
     // rendering as efficient as possible.
     instance,
 
+    // Indirectly referenced, purely defined as a struct in the shader without any
+    // binding semantics.
+    indirect,
+
     COUNT
 };
 
 inline static const char* ri_data_scope_strings[static_cast<int>(ri_data_scope::COUNT)] = {
     "global",
     "draw",
-    "instance"
+    "instance",
+    "indirect"
 };
 
 DEFINE_ENUM_TO_STRING(ri_data_scope, ri_data_scope_strings)

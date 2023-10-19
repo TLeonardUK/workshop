@@ -397,17 +397,17 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     }
 
     // Insert all the vertex streams.
-    result->add_vertex_stream("position", context.positions);
-    result->add_vertex_stream("normal", context.normals);
-    result->add_vertex_stream("tangent", context.tangents);
-    result->add_vertex_stream("bitangent", context.bitangents);
+    result->add_vertex_stream(geometry_vertex_stream_type::position, context.positions);
+    result->add_vertex_stream(geometry_vertex_stream_type::normal, context.normals);
+    result->add_vertex_stream(geometry_vertex_stream_type::tangent, context.tangents);
+    result->add_vertex_stream(geometry_vertex_stream_type::bitangent, context.bitangents);
     for (size_t i = 0; i < context.uvs.size(); i++)
     {
-        result->add_vertex_stream(string_format("uv%zi", i).c_str(), context.uvs[i]);
+        result->add_vertex_stream(static_cast<geometry_vertex_stream_type>((int)geometry_vertex_stream_type::uv0 + i), context.uvs[i]);
     }
     for (size_t i = 0; i < context.colors.size(); i++)
     {
-        result->add_vertex_stream(string_format("color%zi", i).c_str(), context.colors[i]);
+        result->add_vertex_stream(static_cast<geometry_vertex_stream_type>((int)geometry_vertex_stream_type::color0 + i), context.colors[i]);
     }
 
     return result;

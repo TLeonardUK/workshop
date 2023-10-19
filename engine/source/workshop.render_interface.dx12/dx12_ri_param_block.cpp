@@ -63,22 +63,31 @@ void dx12_ri_param_block::mutate()
 
 void* dx12_ri_param_block::consume()
 {
-    m_use_count++;
-
-    // If no param block has been allocated yet, allocate one now.
-    if (!m_allocation.is_valid())
-    {
-        mutate();
-    }
-
     // Warn if not all fields are set.
     for (size_t i = 0; i < m_fields_set.size(); i++)
     {
         if (!m_fields_set[i])
         {
             dx12_ri_layout_factory::field field = m_archetype.get_layout_factory().get_field(i);
+
+            // For buffers, we assume they are intentionally emitted and just clear their references.
+            if (field.type == ri_data_type::t_byteaddressbuffer || 
+                field.type == ri_data_type::t_rwbyteaddressbuffer)
+            {
+                clear_buffer(field.name.c_str());
+                continue;
+            }
+
             db_warning(renderer, "Consuming param block but field '%s' has not been set and is undefined.", field.name.c_str());
         }
+    }
+
+    m_use_count++;
+
+    // If no param block has been allocated yet, allocate one now.
+    if (!m_allocation.is_valid())
+    {
+        mutate();
     }
 
     return m_allocation.gpu_address;

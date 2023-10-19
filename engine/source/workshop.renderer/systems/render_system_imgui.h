@@ -30,15 +30,12 @@ class render_system_imgui
 {
 public:
 
-    // Should match imgui_vertex in shader.
-#pragma pack(push, 1)
     struct vertex
     {
         vector2 position;
         vector2 uv;
         vector4 color;
     };
-#pragma pack(pop)
 
     struct draw_command
     {
@@ -73,7 +70,9 @@ private:
     std::vector<vertex> m_draw_vertices;
     std::vector<uint16_t> m_draw_indices;
 
-    std::unique_ptr<ri_buffer> m_vertex_buffer;
+    std::unique_ptr<ri_buffer> m_position_buffer;
+    std::unique_ptr<ri_buffer> m_uv0_buffer;
+    std::unique_ptr<ri_buffer> m_color0_buffer;
     std::unique_ptr<ri_buffer> m_index_buffer;
 
 };

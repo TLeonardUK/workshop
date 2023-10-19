@@ -92,10 +92,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             asset_ptr<material>& mat = key.material;
 
             profile_gpu_marker(list, profile_colors::gpu_pass, "batch %zi / %zi", i, batches.size());
-
-            // Generate the vertex buffer for this batch.
-            model::vertex_buffer* vertex_buffer = key.model->find_or_create_vertex_buffer(active_technique->pipeline->get_create_params().vertex_layout);
-
+           
             // Generate the geometry_info block for this material.  
             ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), info_param_block_type.c_str(), [&mat, default_black, default_grey, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
 
@@ -160,8 +157,13 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             hash_combine(vertex_info_hash, &instance_buffer->get_buffer());
 
             ri_param_block* vertex_info_param_block = batch->get_resource_cache().find_or_create_param_block((void*)vertex_info_hash, "vertex_info", {});
-            vertex_info_param_block->set("vertex_buffer", *vertex_buffer->vertex_buffer.get());
-            vertex_info_param_block->set("vertex_buffer_offset", 0u);
+
+            size_t model_info_table_index;
+            size_t model_info_table_offset;
+            key.model->get_model_info_param_block().get_table(model_info_table_index, model_info_table_offset);
+
+            vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
+            vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
             vertex_info_param_block->set("instance_buffer", instance_buffer->get_buffer());        
 
             // Put together param block list to use.

@@ -46,7 +46,7 @@ void render_system_debug::build_graph(render_graph& graph, const render_world_st
         return;
     }
 
-    if (m_vertex_buffer == nullptr)
+    if (m_position_buffer == nullptr || m_color0_buffer == nullptr)
     {
         return;
     }
@@ -57,7 +57,8 @@ void render_system_debug::build_graph(render_graph& graph, const render_world_st
     pass->technique = m_renderer.get_effect_manager().get_technique("render_debug_primitive", {});
     pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
     pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
-    pass->vertex_buffer = m_vertex_buffer.get();
+    pass->position_buffer = m_position_buffer.get(); 
+    pass->color0_buffer = m_color0_buffer.get(); 
     pass->index_buffer = m_index_buffer.get();
     pass->vertex_count = m_draw_vertex_count;
     graph.add_node(std::move(pass));
@@ -75,15 +76,25 @@ void render_system_debug::step(const render_world_state& state)
         return;
     }
 
-    // Make sure vertex buffer has enough space.
-    if (m_vertex_buffer == nullptr || m_vertex_buffer->get_element_count() < m_queued_vertex_count)
+    // Make sure position/color buffers have enough space.
+    if (m_position_buffer == nullptr || m_position_buffer->get_element_count() < m_queued_vertex_count)
     {
         ri_buffer::create_params params;
         params.element_count = m_queued_vertex_count;
-        params.element_size = sizeof(debug_primitive_vertex);
+        params.element_size = sizeof(vector3);
         params.usage = ri_buffer_usage::vertex_buffer;
 
-        m_vertex_buffer = ri.create_buffer(params, "Debug Primitive Vertex Buffer");
+        m_position_buffer = ri.create_buffer(params, "Debug Primitive Vertex Stream [Position]");
+    }
+
+    if (m_color0_buffer == nullptr || m_color0_buffer->get_element_count() < m_queued_vertex_count)
+    {
+        ri_buffer::create_params params;
+        params.element_count = m_queued_vertex_count;
+        params.element_size = sizeof(vector4);
+        params.usage = ri_buffer_usage::vertex_buffer;
+
+        m_color0_buffer = ri.create_buffer(params, "Debug Primitive Vertex Stream [Color0]");
     }
 
     // Make sure index buffer has enough space.
@@ -106,9 +117,19 @@ void render_system_debug::step(const render_world_state& state)
     }
 
     // Update vertex buffer.
-    debug_primitive_vertex* vertex_ptr = reinterpret_cast<debug_primitive_vertex*>(m_vertex_buffer->map(0, m_queued_vertex_count * sizeof(debug_primitive_vertex)));
-    memcpy(vertex_ptr, m_vertices.data(), m_queued_vertex_count * sizeof(debug_primitive_vertex));
-    m_vertex_buffer->unmap(vertex_ptr);    
+    vector3* position_ptr = reinterpret_cast<vector3*>(m_position_buffer->map(0, m_queued_vertex_count * sizeof(vector3)));
+    for (size_t i = 0; i < m_queued_vertex_count; i++)
+    {
+        position_ptr[i] = m_vertices[i].position;
+    }
+    m_position_buffer->unmap(position_ptr);
+
+    vector4* color0_ptr = reinterpret_cast<vector4*>(m_color0_buffer->map(0, m_queued_vertex_count * sizeof(vector4)));
+    for (size_t i = 0; i < m_queued_vertex_count; i++)
+    {
+        color0_ptr[i] = m_vertices[i].color;
+    }
+    m_color0_buffer->unmap(color0_ptr);
 
     // Reset vertex buffer so we can start filling it again.
     m_draw_vertex_count = m_queued_vertex_count;

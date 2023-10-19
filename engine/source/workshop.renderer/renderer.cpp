@@ -1072,7 +1072,7 @@ void renderer::regenerate_reflection_probes()
     get_system<render_system_reflection_probes>()->regenerate();
 }
 
-void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index)
+void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_index, ri_param_block*& out_model_info)
 {
     std::scoped_lock lock(m_fullscreen_buffers_mutex);
 
@@ -1082,21 +1082,43 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ver
 
     if (iter != m_fullscreen_buffers.end())
     {
-        out_vertex = iter->vertex_buffer.get();
+        out_model_info = iter->model_info_param_block.get();
         out_index = iter->index_buffer.get();
         return;
     }
 
-    std::unique_ptr<ri_layout_factory> factory = m_render_interface.create_layout_factory(layout, ri_layout_usage::buffer);
-    factory->add("position", { vector2(-1.0f, -1.0f), vector2(1.0f, -1.0f), vector2(-1.0f,  1.0f), vector2(1.0f,  1.0f) });
-    factory->add("uv", { vector2(0.0f,  1.0f), vector2(1.0f,  1.0f), vector2(0.0f,  0.0f), vector2(1.0f,  0.0f) });
-
     fullscreen_buffers& buffers = m_fullscreen_buffers.emplace_back();
     buffers.layout = layout;
-    buffers.vertex_buffer = factory->create_vertex_buffer("Fullscreen Vertex Buffer");
-    buffers.index_buffer = factory->create_index_buffer("Fullscreen Index Buffer", std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
-    
-    out_vertex = buffers.vertex_buffer.get();
+
+    // Create a position buffer.
+    {
+        ri_data_layout position_layout;
+        position_layout.fields.push_back({ "position", model::k_vertex_stream_runtime_types[(int)geometry_vertex_stream_type::position] });
+
+        std::unique_ptr<ri_layout_factory> factory = m_render_interface.create_layout_factory(position_layout, ri_layout_usage::buffer);
+        factory->add("position", { vector3(-1.0f, -1.0f, 0.0f), vector3(1.0f, -1.0f, 0.0f), vector3(-1.0f,  1.0f, 0.0f), vector3(1.0f,  1.0f, 0.0f) });
+
+        buffers.position_buffer = factory->create_vertex_buffer("Fullscreen Vertex Stream [position]");
+        buffers.index_buffer = factory->create_index_buffer("Fullscreen Index Buffer", std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
+    }
+
+    // Create a uv0 buffer.
+    {
+        ri_data_layout position_layout;
+        position_layout.fields.push_back({ "uv0", model::k_vertex_stream_runtime_types[(int)geometry_vertex_stream_type::uv0] });
+
+        std::unique_ptr<ri_layout_factory> factory = m_render_interface.create_layout_factory(position_layout, ri_layout_usage::buffer);
+        factory->add("uv0", { vector2(0.0f,  1.0f), vector2(1.0f,  1.0f), vector2(0.0f,  0.0f), vector2(1.0f,  0.0f) });
+
+        buffers.uv0_buffer = factory->create_vertex_buffer("Fullscreen Vertex Stream [position]");
+    }
+
+    // Create a model info.
+    buffers.model_info_param_block = m_param_block_manager->create_param_block("model_info");
+    buffers.model_info_param_block->set("position_buffer", *buffers.position_buffer);
+    buffers.model_info_param_block->set("uv0_buffer", *buffers.uv0_buffer);
+
+    out_model_info = buffers.model_info_param_block.get();
     out_index = buffers.index_buffer.get();
 }
 

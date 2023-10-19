@@ -20,12 +20,12 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
 {
     // Grab fullscreen buffers for the render pass.
     ri_data_layout layout;
-    ri_buffer* vertex_buffer = nullptr;
+    ri_param_block* model_info_buffer = nullptr;
     ri_buffer* index_buffer = nullptr;
     if (technique)
     {
         layout = technique->pipeline->get_create_params().vertex_layout;
-        renderer.get_fullscreen_buffers(layout, vertex_buffer, index_buffer);
+        renderer.get_fullscreen_buffers(layout, index_buffer, model_info_buffer);
     }
 
     // Grab and update the vertex info buffer.
@@ -43,8 +43,14 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
             owned_vertex_info_param_block = renderer.get_param_block_manager().create_param_block("vertex_info");
             vertex_info_param_block = owned_vertex_info_param_block.get();
         }
-        vertex_info_param_block->set("vertex_buffer", *vertex_buffer);
-        vertex_info_param_block->set("vertex_buffer_offset", 0u);
+
+        size_t model_info_table_index;
+        size_t model_info_table_offset;
+        model_info_buffer->get_table(model_info_table_index, model_info_table_offset);
+
+        vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
+        vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
+
         vertex_info_param_block->clear_buffer("instance_buffer");
         param_blocks.push_back(vertex_info_param_block);
     }

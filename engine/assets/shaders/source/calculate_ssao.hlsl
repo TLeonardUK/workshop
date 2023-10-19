@@ -143,7 +143,7 @@ float3(0.0498, -0.0447, 0.0500),
 
 ssao_output pshader(fullscreen_pinput input)
 {
-    float2 input_uv = (input.uv * uv_scale);
+    float2 input_uv = (input.uv0 * uv_scale);
 
     gbuffer_fragment f = read_gbuffer(input_uv);
 
@@ -151,7 +151,7 @@ ssao_output pshader(fullscreen_pinput input)
     float3 view_space_position = mul(view_matrix, float4(f.world_position, 1.0f)).xyz;
     
     float2 noise_scale = (view_dimensions * ssao_resolution_scale) / 4.0f;
-    float2 noise_uv = input.uv * noise_scale;
+    float2 noise_uv = input.uv0 * noise_scale;
     float3 random_vector = noise_texture.Sample(noise_texture_sampler, noise_uv).xyz;
 
     float3 view_space_tangent = normalize(random_vector - view_space_normal * dot(random_vector, view_space_normal));

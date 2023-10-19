@@ -546,7 +546,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     23:
@@ -570,7 +570,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     24:
@@ -786,7 +786,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     33:
@@ -810,7 +810,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     34:
@@ -834,7 +834,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     35:
@@ -858,7 +858,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     36:
@@ -882,7 +882,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     37:
@@ -906,7 +906,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     38:
@@ -930,7 +930,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     39:
@@ -954,7 +954,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     40:
@@ -978,7 +978,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     41:
@@ -1002,7 +1002,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     42:
@@ -1026,7 +1026,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     43:
@@ -1050,7 +1050,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     44:
@@ -1074,7 +1074,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     45:
@@ -1098,7 +1098,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     46:
@@ -1122,7 +1122,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     47:
@@ -1146,7 +1146,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     48:
@@ -1170,7 +1170,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     49:
@@ -1194,7 +1194,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     50:
@@ -1218,7 +1218,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     51:
@@ -1242,7 +1242,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     52:
@@ -1266,7 +1266,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     53:
@@ -1290,7 +1290,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     54:
@@ -1314,7 +1314,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     55:
@@ -1338,7 +1338,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     56:
@@ -1362,7 +1362,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     57:
@@ -1386,7 +1386,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     58:
@@ -1410,7 +1410,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     59:
@@ -1434,7 +1434,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     60:
@@ -1458,7 +1458,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     61:
@@ -1482,7 +1482,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     62:
@@ -1914,7 +1914,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     80:
@@ -1938,7 +1938,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     81:
@@ -2082,7 +2082,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     87:
@@ -2106,7 +2106,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     88:
@@ -2658,7 +2658,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     111:
@@ -2682,7 +2682,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     112:
@@ -2706,7 +2706,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     113:
@@ -2730,7 +2730,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     114:
@@ -2754,7 +2754,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     115:
@@ -2778,7 +2778,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     116:
@@ -2802,7 +2802,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     117:
@@ -3658,7 +3658,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     151:
@@ -3682,7 +3682,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     152:
@@ -3706,7 +3706,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     153:
@@ -3730,7 +3730,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     154:
@@ -3754,7 +3754,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     155:
@@ -3778,7 +3778,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     156:
@@ -3802,7 +3802,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     157:
@@ -3826,7 +3826,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     158:
@@ -3850,7 +3850,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     159:
@@ -3874,7 +3874,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     160:
@@ -3898,7 +3898,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     161:
@@ -3922,7 +3922,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     162:
@@ -3946,7 +3946,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     163:
@@ -3970,7 +3970,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     164:
@@ -3994,7 +3994,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     165:
@@ -4018,7 +4018,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/quixel/cracked_asphalt_victadr/cracked_asphalt_victadr.yaml
     166:

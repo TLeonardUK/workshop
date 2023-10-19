@@ -62,7 +62,7 @@ vertex_layouts:
   # for things like fullscreen passes.
   vertex2d_pos_uv:
     position: float2
-    uv: float2
+    uv0: float2
   # Standard layout for geometry vertices
   geometry_vertex:
     position: float3
@@ -108,7 +108,7 @@ output_targets:
 param_blocks:
   # Contains all the parameters needed to read/write from the gbuffer.
   gbuffer:
-    scope: global
+    scope: draw
     fields:
       gbuffer0_texture: texture2d
       gbuffer1_texture: texture2d
@@ -118,7 +118,7 @@ param_blocks:
       gbuffer_dimensions: int2
   # Describes the projection information for the view being rendered.
   view_info:
-    scope: global
+    scope: draw
     fields:
       view_matrix: float4x4
       projection_matrix: float4x4
@@ -131,7 +131,7 @@ param_blocks:
   # Format of an instance in a buffer that contains a set of lights
   # TODO: Pack all this data down.
   light_state:
-    scope: instance
+    scope: indirect
     fields:
       type: int
       position: float3
@@ -147,7 +147,7 @@ param_blocks:
       importance_distance: float
   # Format of an instance in a buffer that contains a set of shadow maps
   shadow_map_state:
-    scope: instance
+    scope: indirect
     fields:
       shadow_matrix: float4x4
       depth_map: texture2d
@@ -156,7 +156,7 @@ param_blocks:
       z_near: float
   # Structure of an individual light cluster
   light_cluster:
-    scope: instance
+    scope: indirect
     fields:
       cell: uint3
       aabb_min: float3
@@ -195,7 +195,7 @@ param_blocks:
       ao_uv_scale: float2
   # Structure describing individual light grids.
   light_probe_grid_state:
-    scope: instance
+    scope: indirect
     fields:
       world_to_grid_matrix: float4x4
       size: int3
@@ -204,7 +204,7 @@ param_blocks:
       sh_table: rwbyteaddressbuffer
   # Structure describing individual reflection probes.
   reflection_probe_state:
-    scope: instance
+    scope: indirect
     fields:
       world_position: float3
       radius: float
@@ -238,9 +238,17 @@ param_blocks:
       skybox_texture: texturecube
       skybox_sampler: sampler
       
+  # Param block thats implicitly passed into shaders to define what to render
+  vertex_info:
+    scope: draw
+    fields:
+      model_info_table: uint
+      model_info_offset: uint
+      instance_buffer: byteaddressbuffer
+
   # Information about a material.
   material_info:
-    scope: draw
+    scope: indirect
     fields:
       domain: int
       albedo_texture: texture2d
@@ -256,15 +264,25 @@ param_blocks:
       skybox_texture: texturecube
       skybox_sampler: sampler  
 
-  # Information about a models geometry.
+  # Contains information on all the vertex streams for a given model.
+  # Buffers should be checked for validity before being used as any may be omitted.
   model_info:
-    scope: draw
+    scope: indirect
     fields:
-      position_buffer: int
-      normal_buffer: int
-      tangent_buffer: int
-      bitangent_buffer: int
-      uv0_buffer: int
+      # These buffers should match k_vertex_stream_runtime_types in model.h
+      # They should also match the loading function in global.hlsl
+      position_buffer: byteaddressbuffer
+      normal_buffer: byteaddressbuffer
+      tangent_buffer: byteaddressbuffer
+      bitangent_buffer: byteaddressbuffer
+      uv0_buffer: byteaddressbuffer
+      uv1_buffer: byteaddressbuffer
+      uv2_buffer: byteaddressbuffer
+      uv3_buffer: byteaddressbuffer
+      color0_buffer: byteaddressbuffer
+      color1_buffer: byteaddressbuffer
+      color2_buffer: byteaddressbuffer
+      color3_buffer: byteaddressbuffer
 
 defines:
   # The size of the grid the frustum is split into for light culling.

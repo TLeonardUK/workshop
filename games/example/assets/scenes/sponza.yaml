@@ -13,14 +13,14 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  -0.0482960343
-                y:  0.0119858254
-                z:  -0.000579585962
-                w:  0.998760939
+                x:  0.353710532
+                y:  -0.615337312
+                z:  0.359148115
+                w:  -0.606020987
             local_location:
-                x:  1.1590333
-                y:  334.831177
-                z:  -232.874573
+                x:  1276.36438
+                y:  3463.98486
+                z:  31.3588848
             local_scale:
                 x:  1
                 y:  1
@@ -44,18 +44,18 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  -0.599847794
-                y:  0.153166294
-                z:  0.194290504
-                w:  0.760903299
+                x:  0.119857408
+                y:  0.63182348
+                z:  -0.758278072
+                w:  0.106994092
             local_location:
-                x:  0
-                y:  300
-                z:  0
+                x:  -0.00187549344
+                y:  399.99884
+                z:  0.000175490291
             local_scale:
-                x:  1
-                y:  1
-                z:  1
+                x:  0.999999344
+                y:  0.999999464
+                z:  1.00000072
         bounds_component:
             {}
         directional_light_component:
@@ -64,40 +64,42 @@ objects:
             shadow_cascade_blend: 0.100000001
         light_component:
             intensity: 1
-            range: 10000
-            importance_range: 5000
+            range: 1000000
+            importance_range: 1000000
             color:
                 r:  1
                 g:  1
                 b:  1
                 a:  1
-            shadow_casting: false
+            shadow_casting: true
             shadow_map_size: 512
-            shadow_map_distance: 3000
+            shadow_map_distance: 5000
     3:
         meta_component:
             name: skybox
         transform_component:
             parent: 0
             local_rotation:
-                x:  0
-                y:  0
-                z:  0
-                w:  1
+                x:  -0.0104330936
+                y:  0.643595099
+                z:  -0.765215635
+                w:  0.0110213552
             local_location:
                 x:  0
                 y:  0
                 z:  0
             local_scale:
-                x:  10000
-                y:  10000
-                z:  10000
+                x:  9999.97363
+                y:  9999.99512
+                z:  9999.97754
         bounds_component:
             {}
         static_mesh_component:
             model: data:models/skyboxs/skybox_3.yaml
             materials:
                 -   data:models/skyboxs/materials/skybox_3.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     4:
         meta_component:
             name: light probe grid
@@ -193,6 +195,8 @@ objects:
                 -   data:models/test_scenes/sponza/materials/ceiling_plaster_01.yaml
                 -   data:models/test_scenes/sponza/materials/roof_tiles_01.yaml
                 -   data:models/test_scenes/sponza/materials/ornament_01.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     7:
         meta_component:
             name: sponza curtains
@@ -220,6 +224,8 @@ objects:
                 -   data:models/test_scenes/sponza_curtains/materials/curtain_02.yaml
                 -   data:models/test_scenes/sponza_curtains/materials/curtain_03.yaml
                 -   data:models/test_scenes/sponza_curtains/materials/metal_door.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     8:
         meta_component:
             name: sponza ivy
@@ -245,3 +251,5 @@ objects:
             materials:
                 -   data:models/test_scenes/sponza_ivy/materials/ivyleaf.yaml
                 -   data:models/test_scenes/sponza_ivy/materials/bark.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0

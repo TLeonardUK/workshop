@@ -32,13 +32,13 @@ void object_pick_system::model_ray_intersects(object handle, const ray& target_r
 {
     profile_marker(profile_colors::system, "model_ray_intersection");
 
-    geometry_vertex_stream* position_vertex_stream = instance.geometry->find_vertex_stream("position");
+    geometry_vertex_stream* position_vertex_stream = instance.geometry->find_vertex_stream(geometry_vertex_stream_type::position);
     if (position_vertex_stream == nullptr)
     {
         return;
     }
 
-    db_assert(position_vertex_stream->type == geometry_data_type::t_float3);
+    db_assert(position_vertex_stream->data_type == geometry_data_type::t_float3);
     vector3* position_array = reinterpret_cast<vector3*>(position_vertex_stream->data.data());
 
     // Check for any sub-mesh intersection.

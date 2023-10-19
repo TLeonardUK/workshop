@@ -11,12 +11,12 @@ struct pshader_output
     float4 color : SV_Target0;
 };
 
-//    float3 result = get_cubemap_normal(source_texture_face, source_texture_size, uint2(input.uv * source_texture_size) + uint2(-1, -1));
+//    float3 result = get_cubemap_normal(source_texture_face, source_texture_size, uint2(input.uv0 * source_texture_size) + uint2(-1, -1));
 
 
 float4 convolve(fullscreen_pinput input)
 {
-    float3 n = get_cubemap_normal(source_texture_face, source_texture_size, uint2(input.uv * source_texture_size) + uint2(-1, -1));
+    float3 n = get_cubemap_normal(source_texture_face, source_texture_size, uint2(input.uv0 * source_texture_size) + uint2(-1, -1));
     float3 r = n;
     float3 v = r;
 

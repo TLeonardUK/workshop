@@ -750,7 +750,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     32:
@@ -774,7 +774,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     33:
@@ -798,7 +798,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     34:
@@ -822,7 +822,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     35:
@@ -846,7 +846,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     36:
@@ -870,7 +870,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     37:
@@ -894,7 +894,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     38:
@@ -942,7 +942,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     40:
@@ -966,7 +966,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     41:
@@ -990,7 +990,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     42:
@@ -1014,7 +1014,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     43:
@@ -1038,7 +1038,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     44:
@@ -1062,7 +1062,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     45:
@@ -1086,7 +1086,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     46:
@@ -1110,7 +1110,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     47:
@@ -1686,7 +1686,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     71:
@@ -1758,7 +1758,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     74:
@@ -1806,7 +1806,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     76:
@@ -2118,7 +2118,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     89:
@@ -2262,7 +2262,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     95:
@@ -2358,7 +2358,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     99:
@@ -2382,7 +2382,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     100:
@@ -2406,7 +2406,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     101:
@@ -2430,7 +2430,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     102:
@@ -2454,7 +2454,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     103:
@@ -2478,7 +2478,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     104:
@@ -2502,7 +2502,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     105:
@@ -2526,7 +2526,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     106:
@@ -2598,7 +2598,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     109:
@@ -2622,7 +2622,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     110:
@@ -2646,7 +2646,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     111:
@@ -2670,7 +2670,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     112:
@@ -2694,7 +2694,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     113:
@@ -2718,7 +2718,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     114:
@@ -2742,7 +2742,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     115:
@@ -2766,7 +2766,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     116:
@@ -2910,7 +2910,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     122:
@@ -2958,7 +2958,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     124:
@@ -2982,7 +2982,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     125:
@@ -3006,7 +3006,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     126:
@@ -3150,7 +3150,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     132:
@@ -3174,7 +3174,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     133:
@@ -3198,7 +3198,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     134:
@@ -3222,7 +3222,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/worn_herringbone_parquet_ufomabmo/worn_herringbone_parquet_ufomabmo.yaml
     135:
@@ -3294,7 +3294,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     138:
@@ -3318,7 +3318,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     139:
@@ -3342,7 +3342,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     140:
@@ -3366,7 +3366,7 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/noredist/wooden_wall_panels_uftoffdfw/wooden_wall_panels_uftoffdfw.yaml
     141:

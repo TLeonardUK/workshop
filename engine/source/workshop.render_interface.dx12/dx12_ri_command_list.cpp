@@ -257,7 +257,8 @@ void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> p
         ri_param_block_archetype* archetype = archetype_list[i];
 
         // Instance param blocks are passed in via the instant buffer. We don't need to provide them here.
-        if (archetype->get_create_params().scope == ri_data_scope::instance)
+        if (archetype->get_create_params().scope == ri_data_scope::instance ||
+            archetype->get_create_params().scope == ri_data_scope::indirect)
         {
             continue;
         }

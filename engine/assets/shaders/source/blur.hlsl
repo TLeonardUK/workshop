@@ -80,13 +80,13 @@ float4 blur(float2 blur_direction, float2 pixel_coord)
 pshader_output pshader_horizontal(fullscreen_pinput input)
 {
     pshader_output output;
-    output.color = blur(float2(1, 0), input.uv * input_uv_scale);
+    output.color = blur(float2(1, 0), input.uv0 * input_uv_scale);
     return output;
 }
 
 pshader_output pshader_vertical(fullscreen_pinput input)
 {
     pshader_output output;
-    output.color = blur(float2(0, 1), input.uv * input_uv_scale);
+    output.color = blur(float2(0, 1), input.uv0 * input_uv_scale);
     return output;
 }

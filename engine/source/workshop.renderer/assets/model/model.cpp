@@ -78,9 +78,40 @@ bool model::post_load()
         info.index_buffer = m_renderer.get_render_interface().create_buffer(params, index_buffer_name.c_str());
     }
 
-    // Create buffer for each vertex stream.
+    // Create a model_info param block that points to all the vertex stream buffers.
+    m_model_info_param_block = m_renderer.get_param_block_manager().create_param_block("model_info");
 
-    
+    // Create buffer for each vertex stream.
+    for (size_t i = 0; i < (int)geometry_vertex_stream_type::COUNT; i++)
+    {
+        geometry_vertex_stream_type stream_type = (geometry_vertex_stream_type)i;
+
+        const char* stream_name = geometry_vertex_stream_type_strings[i];
+        std::string field_name = string_format("%s_buffer", stream_name);
+
+        geometry_vertex_stream* stream = geometry->find_vertex_stream(stream_type);
+        if (!stream)
+        {
+            m_model_info_param_block->clear_buffer(field_name.c_str());
+            m_vertex_streams[i] = nullptr;
+            continue;
+        }
+
+        ri_data_layout stream_layout;
+        stream_layout.fields.push_back({ stream_name, k_vertex_stream_runtime_types[i] });
+
+        std::unique_ptr<ri_layout_factory> factory = m_renderer.get_render_interface().create_layout_factory(stream_layout, ri_layout_usage::buffer);
+        factory->add(stream_name, stream->data, stream->element_size, ri_convert_geometry_data_type(stream->data_type));
+
+        std::string vertex_buffer_name = string_format("Model Vertex Stream[%s]: %s", stream_name, name.c_str());
+
+        std::unique_ptr<vertex_buffer> buf = std::make_unique<vertex_buffer>();
+        buf->vertex_buffer = factory->create_vertex_buffer(vertex_buffer_name.c_str());;
+
+        m_model_info_param_block->set(field_name.c_str(), *buf->vertex_buffer, false);
+        m_vertex_streams[i] = std::move(buf);
+    }
+
     return true;
 }
 
@@ -89,10 +120,7 @@ ri_raytracing_blas* model::find_or_create_blas(size_t mesh_index)
     model::vertex_buffer* buffer = nullptr;
 
     {
-        ri_data_layout position_only_layout;
-        position_only_layout.fields.push_back({ "position", ri_data_type::t_float3 });
-
-        buffer = find_or_create_vertex_buffer(position_only_layout);
+        buffer = find_vertex_stream_buffer(geometry_vertex_stream_type::position);
     }
 
     {
@@ -135,47 +163,16 @@ ri_param_block* model::find_or_create_param_block(const char* type, size_t key, 
     return new_block_ptr;
 }
 
-model::vertex_buffer* model::find_or_create_vertex_buffer(const ri_data_layout& layout)
+model::vertex_buffer* model::find_vertex_stream_buffer(geometry_vertex_stream_type stream_type)
 {
-    // TODO: Get rid of all this stupidity, we want to use non-interleaved vertex buffers ideally to preent duplication
-    //       of data due to different shaders using different layouts, and prevent duplication with raytracing structures.
-    //       Would also allow us to dispose of the source data after creating all vertex stream buffers.
-
     std::scoped_lock lock(m_mutex);
 
-    if (auto iter = m_vertex_buffers.find(layout); iter != m_vertex_buffers.end())
-    {
-        return iter->second.get();
-    }
+    return m_vertex_streams[(int)stream_type].get();
+}
 
-    std::unique_ptr<ri_layout_factory> factory = m_renderer.get_render_interface().create_layout_factory(layout, ri_layout_usage::buffer);
-    for (geometry_vertex_stream& stream : geometry->get_vertex_streams())
-    {
-        bool is_needed = false;
-        for (const ri_data_layout::field& field : layout.fields)
-        {
-            if (field.name == stream.name)
-            {
-                is_needed = true;
-                break;
-            }
-        }
-
-        if (is_needed)
-        {
-            factory->add(stream.name.c_str(), stream.data, stream.element_size, ri_convert_geometry_data_type(stream.type));
-        }
-    }
-
-    std::string vertex_buffer_name = string_format("Model Vertex Buffer[%zi]: %s", m_vertex_buffers.size(), name.c_str());
-
-    std::unique_ptr<vertex_buffer> buf = std::make_unique<vertex_buffer>();
-    buf->vertex_buffer = factory->create_vertex_buffer(vertex_buffer_name.c_str());;
-
-    vertex_buffer* new_buf_ptr = buf.get();
-    m_vertex_buffers[layout] = std::move(buf);
-
-    return new_buf_ptr;
+ri_param_block& model::get_model_info_param_block()
+{
+    return *m_model_info_param_block;
 }
 
 void model::swap(model* other)

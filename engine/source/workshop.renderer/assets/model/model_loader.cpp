@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 33;
+constexpr size_t k_asset_compiled_version = 34;
 
 };
 
@@ -52,8 +52,8 @@ inline void stream_serialize(stream& out, geometry& geo)
     stream_serialize(out, geo.bounds);
 
     stream_serialize_list(out, streams, [&out](geometry_vertex_stream& stream) {
-        stream_serialize(out, stream.name);
         stream_serialize_enum(out, stream.type);
+        stream_serialize_enum(out, stream.data_type);
         stream_serialize(out, stream.element_size);
         stream_serialize_list(out, stream.data);
     });

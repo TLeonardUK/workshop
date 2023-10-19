@@ -24,7 +24,9 @@ public:
 
     ri_texture* default_texture = nullptr;
 
-    ri_buffer* vertex_buffer = nullptr;
+    ri_buffer* position_buffer = nullptr;
+    ri_buffer* uv0_buffer = nullptr;
+    ri_buffer* color0_buffer = nullptr;
     ri_buffer* index_buffer = nullptr;
 
     std::vector<render_system_imgui::draw_command> draw_commands;

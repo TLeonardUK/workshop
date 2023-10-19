@@ -158,9 +158,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:materials/solid/blue.yaml
+                -   data:materials/core/solid/blue.yaml
     7:
         meta_component:
             name: green
@@ -182,9 +182,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:materials/solid/green.yaml
+                -   data:materials/core/solid/green.yaml
     8:
         meta_component:
             name: red
@@ -206,9 +206,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:materials/solid/red.yaml
+                -   data:materials/core/solid/red.yaml
     9:
         meta_component:
             name: red
@@ -230,9 +230,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/sphere.yaml
+            model: data:models/core/primitives/sphere.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     10:
         meta_component:
             name: skybox
@@ -320,9 +320,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     14:
         meta_component:
             name: green
@@ -344,9 +344,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     15:
         meta_component:
             name: green
@@ -368,9 +368,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     16:
         meta_component:
             name: green
@@ -392,9 +392,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     17:
         meta_component:
             name: green
@@ -416,9 +416,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     18:
         meta_component:
             name: green
@@ -440,9 +440,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/sphere.yaml
+            model: data:models/core/primitives/sphere.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     19:
         meta_component:
             name: unnamed object
@@ -532,9 +532,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     22:
         meta_component:
             name: green
@@ -556,9 +556,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     23:
         meta_component:
             name: green
@@ -580,9 +580,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     24:
         meta_component:
             name: green
@@ -604,9 +604,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     25:
         meta_component:
             name: green
@@ -628,9 +628,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:models/primitives/materials/white.yaml
+                -   data:models/core/primitives/materials/white.yaml
     26:
         meta_component:
             name: green
@@ -652,9 +652,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:materials/solid/green.yaml
+                -   data:materials/core/solid/green.yaml
     27:
         meta_component:
             name: blue
@@ -676,9 +676,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:materials/solid/blue.yaml
+                -   data:materials/core/solid/blue.yaml
     28:
         meta_component:
             name: red
@@ -700,9 +700,9 @@ objects:
         bounds_component:
             {}
         static_mesh_component:
-            model: data:models/primitives/cube.yaml
+            model: data:models/core/primitives/cube.yaml
             materials:
-                -   data:materials/solid/red.yaml
+                -   data:materials/core/solid/red.yaml
     29:
         meta_component:
             name: unnamed object

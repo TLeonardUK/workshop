@@ -49,7 +49,9 @@ void render_system_imgui::build_graph(render_graph& graph, const render_world_st
     pass->technique = m_renderer.get_effect_manager().get_technique("render_imgui", {});
     pass->output = m_renderer.get_swapchain_output();
     pass->default_texture = m_default_texture.get();
-    pass->vertex_buffer = m_vertex_buffer.get();
+    pass->position_buffer = m_position_buffer.get();
+    pass->uv0_buffer = m_uv0_buffer.get();
+    pass->color0_buffer = m_color0_buffer.get();
     pass->index_buffer = m_index_buffer.get();
     pass->draw_commands = m_draw_commands;
     graph.add_node(std::move(pass));
@@ -69,14 +71,34 @@ void render_system_imgui::step(const render_world_state& state)
     // TODO: Should we be using a layout factory for all this?
 
     // Make sure vertex buffer has enough space.
-    if (m_vertex_buffer == nullptr || m_vertex_buffer->get_element_count() < m_draw_vertices.size())
+    if (m_position_buffer == nullptr || m_position_buffer->get_element_count() < m_draw_vertices.size())
     {
         ri_buffer::create_params params;
         params.element_count = m_draw_vertices.size();
-        params.element_size = sizeof(vertex);
+        params.element_size = sizeof(vector3);
         params.usage = ri_buffer_usage::vertex_buffer;
 
-        m_vertex_buffer = ri.create_buffer(params, "ImGui Vertex Buffer");
+        m_position_buffer = ri.create_buffer(params, "ImGui Vertex Buffer [position]");
+    }
+
+    if (m_uv0_buffer == nullptr || m_uv0_buffer->get_element_count() < m_draw_vertices.size())
+    {
+        ri_buffer::create_params params;
+        params.element_count = m_draw_vertices.size();
+        params.element_size = sizeof(vector2);
+        params.usage = ri_buffer_usage::vertex_buffer;
+
+        m_uv0_buffer = ri.create_buffer(params, "ImGui Vertex Buffer [uv0]");
+    }
+
+    if (m_color0_buffer == nullptr || m_color0_buffer->get_element_count() < m_draw_vertices.size())
+    {
+        ri_buffer::create_params params;
+        params.element_count = m_draw_vertices.size();
+        params.element_size = sizeof(vector4);
+        params.usage = ri_buffer_usage::vertex_buffer;
+
+        m_color0_buffer = ri.create_buffer(params, "ImGui Vertex Buffer [color0]");
     }
 
     // Make sure index buffer has enough space.
@@ -91,12 +113,26 @@ void render_system_imgui::step(const render_world_state& state)
     }
 
     // Update vertex buffer.
-    vertex* vertex_ptr = reinterpret_cast<vertex*>(m_vertex_buffer->map(0, m_draw_vertices.size() * sizeof(vertex)));
+    vector3* position_ptr = reinterpret_cast<vector3*>(m_position_buffer->map(0, m_draw_vertices.size() * sizeof(vector3)));
     for (size_t i = 0; i < m_draw_vertices.size(); i++)
     {
-        vertex_ptr[i] = m_draw_vertices[i];
+        position_ptr[i] = vector3(m_draw_vertices[i].position.x, m_draw_vertices[i].position.y, 0.0f);
     }
-    m_vertex_buffer->unmap(vertex_ptr);
+    m_position_buffer->unmap(position_ptr);
+
+    vector2* uv0_ptr = reinterpret_cast<vector2*>(m_uv0_buffer->map(0, m_draw_vertices.size() * sizeof(vector2)));
+    for (size_t i = 0; i < m_draw_vertices.size(); i++)
+    {
+        uv0_ptr[i] = m_draw_vertices[i].uv;
+    }
+    m_uv0_buffer->unmap(uv0_ptr);
+
+    vector4* color0_ptr = reinterpret_cast<vector4*>(m_color0_buffer->map(0, m_draw_vertices.size() * sizeof(vector4)));
+    for (size_t i = 0; i < m_draw_vertices.size(); i++)
+    {
+        color0_ptr[i] = m_draw_vertices[i].color;
+    }
+    m_color0_buffer->unmap(color0_ptr);
     
     // Update index buffer.
     uint16_t* index_ptr = reinterpret_cast<uint16_t*>(m_index_buffer->map(0, m_draw_indices.size() * sizeof(uint16_t)));

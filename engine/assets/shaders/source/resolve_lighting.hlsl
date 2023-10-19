@@ -13,7 +13,7 @@ struct lightbuffer_output
 
 lightbuffer_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment frag = read_gbuffer(input.uv * uv_scale);
+    gbuffer_fragment frag = read_gbuffer(input.uv0 * uv_scale);
 
     lightbuffer_output output;
     output.color = shade_fragment(frag, false);

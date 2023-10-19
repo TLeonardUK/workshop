@@ -74,17 +74,34 @@ enum class geometry_vertex_stream_type
     color0,
     color1,
     color2,
-    color3
+    color3,
+
+    COUNT
+};
+
+static const char* geometry_vertex_stream_type_strings[static_cast<int>(geometry_vertex_stream_type::COUNT)] = {
+    "position",
+    "normal",
+    "tangent",
+    "bitangent",
+    "uv0",
+    "uv1",
+    "uv2",
+    "uv3",
+    "color0",
+    "color1",
+    "color2",
+    "color3"
 };
 
 // Represents an individual vertex stream held in a geometry instance.
 struct geometry_vertex_stream
 {
-	// Name of this stream.
-	std::string name;
+	// Contents of this stream.
+    geometry_vertex_stream_type type;
 
 	// Data type of elements stored in this stream.
-	geometry_data_type type;
+	geometry_data_type data_type;
 
 	// How large an individual element is in the stream. This can be derived from type.
 	size_t element_size;
@@ -147,40 +164,40 @@ public:
     // expected to be of the same length.
 	
 	// bool
-	void add_vertex_stream(const char* field_name, const std::vector<uint8_t>& values); // Fucking bools.
-	void add_vertex_stream(const char* field_name, const std::vector<vector2b>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector3b>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector4b>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<uint8_t>& values); // Fucking bools.
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2b>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3b>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4b>& values);
 
 	// int
-	void add_vertex_stream(const char* field_name, const std::vector<int32_t>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector2i>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector3i>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector4i>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<int32_t>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2i>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3i>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4i>& values);
 
 	// uint
-	void add_vertex_stream(const char* field_name, const std::vector<uint32_t>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector2u>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector3u>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector4u>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<uint32_t>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2u>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3u>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4u>& values);
 
 	// float
-	void add_vertex_stream(const char* field_name, const std::vector<float>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector2>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector3>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector4>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<matrix2>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<matrix3>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<matrix4>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<float>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix2>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix3>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix4>& values);
 
 	// double
-	void add_vertex_stream(const char* field_name, const std::vector<double>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector2d>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector3d>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<vector4d>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<matrix2d>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<matrix3d>& values);
-	void add_vertex_stream(const char* field_name, const std::vector<matrix4d>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<double>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2d>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3d>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4d>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix2d>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix3d>& values);
+	void add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix4d>& values);
 
     // Adds a new material that will be used to render the given set of vertices.
     // Returns the index of the material for use with add_mesh.
@@ -197,7 +214,7 @@ public:
 	std::vector<geometry_vertex_stream>& get_vertex_streams();
 
 	// Gets a geometry stream with the given name.
-	geometry_vertex_stream* find_vertex_stream(const char* name);
+	geometry_vertex_stream* find_vertex_stream(geometry_vertex_stream_type type);
 
     // Gets all the meshes in this geometry.
     std::vector<geometry_mesh>& get_meshes();
@@ -218,7 +235,7 @@ public:
 	aabb bounds;
 
 private:
-	void add_vertex_stream(const char* field_name, std::span<uint8_t> data, size_t element_size, geometry_data_type type);
+	void add_vertex_stream(geometry_vertex_stream_type type, std::span<uint8_t> data, size_t element_size, geometry_data_type data_type);
 
 private:
 	std::vector<geometry_vertex_stream> m_streams;

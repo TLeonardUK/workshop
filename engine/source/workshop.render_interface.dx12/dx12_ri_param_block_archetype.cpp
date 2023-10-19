@@ -15,14 +15,16 @@ dx12_ri_param_block_archetype::dx12_ri_param_block_archetype(dx12_render_interfa
     , m_create_params(params)
     , m_debug_name(debug_name)
 {
+    bool indirect_referenced = (m_create_params.scope == ri_data_scope::instance || m_create_params.scope == ri_data_scope::indirect);
+
     m_layout_factory = m_renderer.create_layout_factory(
         m_create_params.layout, 
-        m_create_params.scope == ri_data_scope::instance ? ri_layout_usage::buffer : ri_layout_usage::param_block
+        indirect_referenced ? ri_layout_usage::buffer : ri_layout_usage::param_block
     );
     m_instance_size = m_layout_factory->get_instance_size();
 
     // Instance param blocks are read as byte address buffers not cbuffers so don't need to follow the cbuffer alignment rules.
-    if (m_create_params.scope == ri_data_scope::instance)
+    if (indirect_referenced)
     {
         m_instance_stride = m_instance_size;
     }
@@ -42,7 +44,8 @@ dx12_ri_param_block_archetype::~dx12_ri_param_block_archetype()
             db_warning(renderer, "Param block archetype '%s' is being destroyed but not all param blocks have been deallocated.", m_debug_name.c_str());
         }
 
-        if (m_create_params.scope == ri_data_scope::instance)
+        bool indirect_referenced = (m_create_params.scope == ri_data_scope::instance || m_create_params.scope == ri_data_scope::indirect);
+        if (indirect_referenced)
         {
             m_renderer.defer_delete([renderer = &m_renderer, srv = instance.srv]()
             {
@@ -194,7 +197,7 @@ void dx12_ri_param_block_archetype::add_page()
 
     // If using this param block as instance data, we need to create an SRV in the buffer
     // descriptor table so we can access it by index.
-    if (m_create_params.scope == ri_data_scope::instance)
+    if (m_create_params.scope == ri_data_scope::instance || m_create_params.scope == ri_data_scope::indirect)
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
         view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

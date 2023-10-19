@@ -73,9 +73,6 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
             model::mesh_info& mesh_info = model_instance->meshes[i];
             model::material_info& material_info = model_instance->materials[mesh_info.material_index];
 
-            // Generate the vertex buffer for this batch.
-            model::vertex_buffer* vertex_buffer = model_instance->find_or_create_vertex_buffer(technique->pipeline->get_create_params().vertex_layout);
-
             // Generate the instance buffer for this batch.
             render_batch_instance_buffer* instance_buffer = view->get_resource_cache().find_or_create_instance_buffer(get_cache_key(*view));
             for (size_t j = 0; j < instances.size(); j++)
@@ -92,8 +89,13 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
 
             // Generate the vertex info buffer for this batch.
             ri_param_block* vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info", {});
-            vertex_info_param_block->set("vertex_buffer", *vertex_buffer->vertex_buffer.get());
-            vertex_info_param_block->set("vertex_buffer_offset", 0u);
+
+            size_t model_info_table_index;
+            size_t model_info_table_offset;
+            model_instance->get_model_info_param_block().get_table(model_info_table_index, model_info_table_offset);
+
+            vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
+            vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
             vertex_info_param_block->set("instance_buffer", instance_buffer->get_buffer());        
 
             // Put together param block list to use.

@@ -10,141 +10,141 @@
 
 namespace ws {
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<uint8_t>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<uint8_t>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(uint8_t)), sizeof(uint8_t), geometry_data_type::t_bool);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(uint8_t)), sizeof(uint8_t), geometry_data_type::t_bool);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector2b>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2b>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2b)), sizeof(vector2b), geometry_data_type::t_bool2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2b)), sizeof(vector2b), geometry_data_type::t_bool2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector3b>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3b>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3b)), sizeof(vector3b), geometry_data_type::t_bool3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3b)), sizeof(vector3b), geometry_data_type::t_bool3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector4b>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4b>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4b)), sizeof(vector4b), geometry_data_type::t_bool4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4b)), sizeof(vector4b), geometry_data_type::t_bool4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<int32_t>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<int32_t>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(int32_t)), sizeof(int32_t), geometry_data_type::t_int);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(int32_t)), sizeof(int32_t), geometry_data_type::t_int);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector2i>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2i>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2i)), sizeof(vector2i), geometry_data_type::t_int2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2i)), sizeof(vector2i), geometry_data_type::t_int2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector3i>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3i>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3i)), sizeof(vector3i), geometry_data_type::t_int3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3i)), sizeof(vector3i), geometry_data_type::t_int3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector4i>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4i>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4i)), sizeof(vector4i), geometry_data_type::t_int4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4i)), sizeof(vector4i), geometry_data_type::t_int4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<uint32_t>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<uint32_t>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(uint32_t)), sizeof(uint32_t), geometry_data_type::t_uint);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(uint32_t)), sizeof(uint32_t), geometry_data_type::t_uint);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector2u>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2u>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2u)), sizeof(vector2u), geometry_data_type::t_uint2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2u)), sizeof(vector2u), geometry_data_type::t_uint2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector3u>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3u>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3u)), sizeof(vector3u), geometry_data_type::t_uint3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3u)), sizeof(vector3u), geometry_data_type::t_uint3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector4u>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4u>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4u)), sizeof(vector4u), geometry_data_type::t_uint4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4u)), sizeof(vector4u), geometry_data_type::t_uint4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<float>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<float>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(float)), sizeof(float), geometry_data_type::t_float);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(float)), sizeof(float), geometry_data_type::t_float);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector2>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2)), sizeof(vector2), geometry_data_type::t_float2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2)), sizeof(vector2), geometry_data_type::t_float2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector3>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3)), sizeof(vector3), geometry_data_type::t_float3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3)), sizeof(vector3), geometry_data_type::t_float3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector4>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4)), sizeof(vector4), geometry_data_type::t_float4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4)), sizeof(vector4), geometry_data_type::t_float4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<matrix2>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix2>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix2)), sizeof(matrix2), geometry_data_type::t_float2x2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix2)), sizeof(matrix2), geometry_data_type::t_float2x2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<matrix3>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix3>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix3)), sizeof(matrix3), geometry_data_type::t_float3x3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix3)), sizeof(matrix3), geometry_data_type::t_float3x3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<matrix4>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix4>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix4)), sizeof(matrix4), geometry_data_type::t_float4x4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix4)), sizeof(matrix4), geometry_data_type::t_float4x4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<double>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<double>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(double)), sizeof(double), geometry_data_type::t_double);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(double)), sizeof(double), geometry_data_type::t_double);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector2d>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector2d>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2d)), sizeof(vector2d), geometry_data_type::t_double2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector2d)), sizeof(vector2d), geometry_data_type::t_double2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector3d>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector3d>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3d)), sizeof(vector3d), geometry_data_type::t_double3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector3d)), sizeof(vector3d), geometry_data_type::t_double3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<vector4d>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<vector4d>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4d)), sizeof(vector4d), geometry_data_type::t_double4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(vector4d)), sizeof(vector4d), geometry_data_type::t_double4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<matrix2d>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix2d>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix2d)), sizeof(matrix2d), geometry_data_type::t_double2x2);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix2d)), sizeof(matrix2d), geometry_data_type::t_double2x2);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<matrix3d>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix3d>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix3d)), sizeof(matrix3d), geometry_data_type::t_double3x3);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix3d)), sizeof(matrix3d), geometry_data_type::t_double3x3);
 }
 
-void geometry::add_vertex_stream(const char* field_name, const std::vector<matrix4d>& values)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, const std::vector<matrix4d>& values)
 {
-    add_vertex_stream(field_name, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix4d)), sizeof(matrix4d), geometry_data_type::t_double4x4);
+    add_vertex_stream(type, std::span((uint8_t*)values.data(), values.size() * sizeof(matrix4d)), sizeof(matrix4d), geometry_data_type::t_double4x4);
 }
 
-void geometry::add_vertex_stream(const char* field_name, std::span<uint8_t> data, size_t element_size, geometry_data_type type)
+void geometry::add_vertex_stream(geometry_vertex_stream_type type, std::span<uint8_t> data, size_t element_size, geometry_data_type data_type)
 {
     geometry_vertex_stream& stream = m_streams.emplace_back();
-    stream.name = field_name;
     stream.type = type;
+    stream.data_type = data_type;
     stream.data.insert(stream.data.end(), data.data(), data.data() + data.size_bytes());
     stream.element_size = element_size;
 }
@@ -185,11 +185,11 @@ std::vector<geometry_vertex_stream>& geometry::get_vertex_streams()
     return m_streams;
 }
 
-geometry_vertex_stream* geometry::find_vertex_stream(const char* name)
+geometry_vertex_stream* geometry::find_vertex_stream(geometry_vertex_stream_type type)
 {
     for (geometry_vertex_stream& stream : m_streams)
     {
-        if (stream.name == name)
+        if (stream.type == type)
         {
             return &stream;
         }

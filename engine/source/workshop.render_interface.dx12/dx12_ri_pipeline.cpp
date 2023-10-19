@@ -90,7 +90,8 @@ bool dx12_ri_pipeline::create_root_signature()
     for (size_t i = 0; i < m_create_params.param_block_archetypes.size(); i++)
     {
         // Skip the instance param blocks they are indirectly referenced.
-        if (m_create_params.param_block_archetypes[i]->get_create_params().scope == ri_data_scope::instance)
+        if (m_create_params.param_block_archetypes[i]->get_create_params().scope == ri_data_scope::instance ||
+            m_create_params.param_block_archetypes[i]->get_create_params().scope == ri_data_scope::indirect)
         {
             continue;
         }

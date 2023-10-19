@@ -167,7 +167,7 @@ bool reflect_class::is_derived_from(reflect_class* parent)
 
 reflect_class* reflect_class::get_parent()
 {
-    return get_reflect_class(m_parent_type_index);;
+    return get_reflect_class(m_parent_type_index);
 }
 
 void* reflect_class::create_instance()

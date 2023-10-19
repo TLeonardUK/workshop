@@ -53,6 +53,6 @@ float2 integrate_brdf(float n_dot_v, float roughness)
 pshader_output pshader(fullscreen_pinput input)
 {
     pshader_output output;
-    output.color = float4(integrate_brdf(input.uv.x, input.uv.y), 0.0f, 1.0f);
+    output.color = float4(integrate_brdf(input.uv0.x, input.uv0.y), 0.0f, 1.0f);
     return output;
 }

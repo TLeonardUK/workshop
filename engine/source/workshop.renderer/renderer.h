@@ -326,7 +326,7 @@ public:
     visualization_mode get_visualization_mode();
 
     // Gets buffers desc
-    void get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_vertex, ri_buffer*& out_index);
+    void get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_index, ri_param_block*& out_model_info);
 
     // Gets a pointer to the given debug model.
     asset_ptr<model> get_debug_model(debug_model model);
@@ -450,8 +450,11 @@ private:
     struct fullscreen_buffers
     {
         ri_data_layout layout;
-        std::unique_ptr<ri_buffer> vertex_buffer;
+        std::unique_ptr<ri_buffer> position_buffer;
+        std::unique_ptr<ri_buffer> uv0_buffer;
         std::unique_ptr<ri_buffer> index_buffer;
+
+        std::unique_ptr<ri_param_block> model_info_param_block;
     };
 
     std::mutex m_fullscreen_buffers_mutex;
