@@ -30,6 +30,8 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
     ri_param_block* vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info");
     vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
     vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
+    vertex_info_param_block->set("material_info_table", 0);
+    vertex_info_param_block->set("material_info_offset", 0);
     vertex_info_param_block->clear_buffer("instance_buffer");
 
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();

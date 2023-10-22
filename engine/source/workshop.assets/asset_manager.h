@@ -391,6 +391,15 @@ protected:
     // version if it exists. May migrate assets to closer caches in found in far caches.
     bool search_cache_for_key(const asset_cache_key& cache_key, std::string& compiled_path);
 
+    // Checks if all dependencies of an asset have finished loading.
+    bool are_dependencies_loaded(asset_state* state);
+
+    // Checks if any dependencies failed to load.
+    bool any_dependencies_failed(asset_state* state);
+
+    // Runs the post-load function on an asset and unloads it and marks it as a failure on error.
+    bool post_load_asset(asset_state* state);
+
     // Compiles the given asset and stores it in the cache.
     bool compile_asset(asset_cache_key& cache_key, asset_loader* loader, asset_state* state, std::string& compiled_path);
 

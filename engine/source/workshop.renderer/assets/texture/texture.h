@@ -98,7 +98,7 @@ public:
     std::unique_ptr<ri_texture> ri_instance;
 
 protected:
-    virtual bool post_load() override;
+    virtual bool load_dependencies() override;
 
 private:
     ri_interface& m_ri_interface;

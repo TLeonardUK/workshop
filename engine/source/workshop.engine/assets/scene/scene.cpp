@@ -49,7 +49,7 @@ size_t scene::intern_string(const char* string)
     return string_table.size() - 1;
 }
 
-bool scene::post_load()
+bool scene::load_dependencies()
 {
     world_instance = m_engine->create_world(name.c_str());
     object_manager& obj_manager = world_instance->get_object_manager();

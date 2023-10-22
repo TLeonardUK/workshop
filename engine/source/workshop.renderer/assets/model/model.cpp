@@ -24,7 +24,7 @@ model::~model()
 {
 }
 
-bool model::post_load()
+bool model::load_dependencies()
 {
     std::scoped_lock lock(m_mutex);
 

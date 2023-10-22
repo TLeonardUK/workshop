@@ -85,4 +85,57 @@ vertex load_model_vertex(model_info info, uint vertex_id)
     return result;
 }
 
+// Make sure this matches the enum in material.h
+enum material_domain
+{
+    opaque,
+    masked,
+    transparent,
+    sky
+};
+
+struct material
+{
+    material_domain domain;
+
+    Texture2D albedo_texture;
+    Texture2D opacity_texture;
+    Texture2D metallic_texture;
+    Texture2D roughness_texture;
+    Texture2D normal_texture;
+    TextureCube skybox_texture;
+
+    sampler albedo_sampler;
+    sampler opacity_sampler;
+    sampler metallic_sampler;
+    sampler roughness_sampler;
+    sampler normal_sampler;
+    sampler skybox_sampler;
+};
+
+material load_material_from_table(uint table, uint offset)
+{
+    material_info info = table_byte_buffers[table].Load<material_info>(offset);
+
+    material mat;
+    
+    mat.domain = (material_domain)info.domain;
+
+    mat.albedo_texture = table_texture_2d[info.albedo_texture_index];
+    mat.opacity_texture = table_texture_2d[info.opacity_texture_index];
+    mat.metallic_texture = table_texture_2d[info.metallic_texture_index];
+    mat.roughness_texture = table_texture_2d[info.roughness_texture_index];
+    mat.normal_texture = table_texture_2d[info.normal_texture_index];
+    mat.skybox_texture = table_texture_cube[info.skybox_texture_index];
+
+    mat.albedo_sampler = table_samplers[info.albedo_sampler_index];
+    mat.opacity_sampler = table_samplers[info.opacity_sampler_index];
+    mat.metallic_sampler = table_samplers[info.metallic_sampler_index];
+    mat.roughness_sampler = table_samplers[info.roughness_sampler_index];
+    mat.normal_sampler = table_samplers[info.normal_sampler_index];
+    mat.skybox_sampler = table_samplers[info.skybox_sampler_index];
+
+    return mat;
+}
+
 #endif

@@ -163,9 +163,20 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
 
     std::vector<std::unique_ptr<D3D12_DXIL_LIBRARY_DESC>> library_descs;
     std::vector<std::unique_ptr<D3D12_EXPORT_DESC>> export_descs;
+    std::vector<std::unique_ptr<D3D12_HIT_GROUP_DESC>> hit_group_descs;
     std::vector<std::unique_ptr<std::wstring>> export_names;
 
     std::vector<D3D12_STATE_SUBOBJECT> subobjects;
+
+    auto add_string = [&export_names](const std::string& in) -> const wchar_t*
+    {
+        std::unique_ptr<std::wstring> export_name = std::make_unique<std::wstring>();
+        *export_name = widen_string(in.c_str());
+
+        const wchar_t* ret = export_name->c_str();
+        export_names.push_back(std::move(export_name));
+        return ret;
+    };
 
     // Add global root signature.
     {
@@ -195,11 +206,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
             continue;
         }
 
-        std::unique_ptr<std::wstring> export_name = std::make_unique<std::wstring>();
-        *export_name = widen_string(stage_params.entry_point);
-
         std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
-        export_desc->Name = export_name->c_str();
+        export_desc->Name = add_string(stage_params.entry_point);
         export_desc->Flags = D3D12_EXPORT_FLAG_NONE;
         export_desc->ExportToRename = nullptr;
 
@@ -215,7 +223,64 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
 
         library_descs.push_back(std::move(sub_object_desc));
         export_descs.push_back(std::move(export_desc));
-        export_names.push_back(std::move(export_name));
+    }
+
+    // Add all the raytrace hitgroups.
+    for (ri_pipeline::create_params::ray_hitgroup& hitgroup : m_create_params.ray_hitgroups)
+    {
+        for (size_t i = (int)ri_shader_stage::rt_start; i <= (int)ri_shader_stage::rt_end; i++)
+        {
+            ri_pipeline::create_params::stage& stage_params = hitgroup.stages[i];
+            if (stage_params.bytecode.empty())
+            {
+                continue;
+            }
+
+            std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
+            export_desc->Name = add_string(stage_params.entry_point);
+            export_desc->Flags = D3D12_EXPORT_FLAG_NONE;
+            export_desc->ExportToRename = nullptr;
+
+            std::unique_ptr<D3D12_DXIL_LIBRARY_DESC> sub_object_desc = std::make_unique<D3D12_DXIL_LIBRARY_DESC>();
+            sub_object_desc->DXILLibrary.pShaderBytecode = stage_params.bytecode.data();
+            sub_object_desc->DXILLibrary.BytecodeLength = stage_params.bytecode.size();
+            sub_object_desc->NumExports = 1;
+            sub_object_desc->pExports = export_desc.get();
+
+            D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+            sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+            sub_object.pDesc = sub_object_desc.get();
+
+            library_descs.push_back(std::move(sub_object_desc));
+            export_descs.push_back(std::move(export_desc));
+        }
+
+        std::unique_ptr<D3D12_HIT_GROUP_DESC> hitgroup_desc = std::make_unique<D3D12_HIT_GROUP_DESC>();
+        hitgroup_desc->HitGroupExport = add_string(hitgroup.name);
+        hitgroup_desc->AnyHitShaderImport = nullptr;
+        hitgroup_desc->ClosestHitShaderImport = nullptr;
+        hitgroup_desc->IntersectionShaderImport = nullptr;
+
+        if (hitgroup.stages[(int)ri_shader_stage::ray_intersection].bytecode.empty())
+        {
+            hitgroup_desc->Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
+
+            if (!hitgroup.stages[(int)ri_shader_stage::ray_any_hit].bytecode.empty())
+            {
+                hitgroup_desc->AnyHitShaderImport = add_string(hitgroup.stages[(int)ri_shader_stage::ray_any_hit].entry_point);
+            }
+            if (!hitgroup.stages[(int)ri_shader_stage::ray_closest_hit].bytecode.empty())
+            {
+                hitgroup_desc->ClosestHitShaderImport = add_string(hitgroup.stages[(int)ri_shader_stage::ray_closest_hit].entry_point);
+            }
+        }
+        else
+        {
+            hitgroup_desc->Type = D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE;
+            hitgroup_desc->IntersectionShaderImport = add_string(hitgroup.stages[(int)ri_shader_stage::ray_intersection].entry_point);
+        }
+
+        hit_group_descs.push_back(std::move(hitgroup_desc));
     }
 
     D3D12_STATE_OBJECT_DESC desc = {};

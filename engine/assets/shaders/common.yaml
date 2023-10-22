@@ -60,15 +60,9 @@ render_states:
 vertex_layouts:
   # Simple layout that contains only vert position and uv. Useful
   # for things like fullscreen passes.
-  vertex2d_pos_uv:
-    position: float2
-    uv0: float2
+  vertex2d_pos_uv: [ position, uv0 ]
   # Standard layout for geometry vertices
-  geometry_vertex:
-    position: float3
-    normal: compressed_unit_vector
-    tangent: compressed_unit_vector
-    uv0: float2
+  geometry_vertex: [ position, normal, tangent, uv0 ]
 
 output_targets:
   # Main gbuffer target with all MRT targets.
@@ -217,33 +211,15 @@ param_blocks:
     fields:
       model_matrix: float4x4
       gpu_flags: uint
-  # Geometry batch information
-  geometry_info:
-    scope: draw
-    fields:
-      albedo_texture: texture2d
-      albedo_sampler: sampler
-      opacity_texture: texture2d
-      opacity_sampler: sampler
-      metallic_texture: texture2d
-      metallic_sampler: sampler
-      roughness_texture: texture2d
-      roughness_sampler: sampler
-      normal_texture: texture2d
-      normal_sampler: sampler     
-  # Skybox batch information
-  geometry_skybox_info:
-    scope: draw
-    fields:
-      skybox_texture: texturecube
-      skybox_sampler: sampler
-      
+        
   # Param block thats implicitly passed into shaders to define what to render
   vertex_info:
     scope: draw
     fields:
       model_info_table: uint
       model_info_offset: uint
+      material_info_table: uint
+      material_info_offset: uint
       instance_buffer: byteaddressbuffer
 
   # Information about a material.

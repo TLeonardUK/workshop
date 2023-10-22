@@ -21,7 +21,7 @@ texture::~texture()
 {
 }
 
-bool texture::post_load()
+bool texture::load_dependencies()
 {
     ri_texture::create_params params;
     params.width = width;

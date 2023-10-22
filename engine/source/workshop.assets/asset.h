@@ -60,9 +60,19 @@ public:
 protected:
     friend class asset_manager;
 
-    // Called after an asset has been loaded. Can be used to do any
+    // Called after an assets data is loaded, any assets requested in this 
+    // function will be considered dependencies of this asset, and this asset will not
+    // be considered loaded until all the dependencies (and their dependencies)
+    // have finished loading.
+    virtual bool load_dependencies() { return true; };
+
+    // Called after an asset and all its dependencies have been loaded. 
+    // Can be used to do any
     // required post-processing, such as creating rendering resources, etc.
     // This will be called from a worker thread.
+    // 
+    // post_load is (currently) serialized, so avoid doing complex
+    // logic in it, consider doing it in load_dependencies instead.
     virtual bool post_load() { return true; };
 
 };

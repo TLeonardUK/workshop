@@ -25,4 +25,4 @@ techniques:
     render_state: default
     vertex_layout: geometry_vertex
     output_target: gbuffer
-    param_blocks: [ gbuffer, view_info, geometry_skybox_info, geometry_instance_info ]
+    param_blocks: [ gbuffer, view_info, geometry_instance_info ]

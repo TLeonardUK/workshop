@@ -79,21 +79,29 @@ public:
         render_effect_manager::effect_id renderer_id;
     };
 
+    struct shader_stage
+    {
+        std::string file;
+        std::string entry_point;
+        std::vector<uint8_t> bytecode;
+    };
+
+    struct ray_hitgroup
+    {
+        std::string name;
+        material_domain domain;
+        std::array<shader_stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
+    };
+
     struct technique
     {
-        struct stage
-        {
-            std::string file;
-            std::string entry_point;
-            std::vector<uint8_t> bytecode;
-        };
-
         std::string name;
-        std::array<stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
+        std::array<shader_stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
         size_t render_state_index;
         size_t vertex_layout_index;
         size_t output_target_index;
         std::vector<size_t> param_block_indices;
+        std::vector<ray_hitgroup> ray_hitgroups;
         std::unordered_map<std::string, std::string> defines;
     };
 
@@ -112,12 +120,13 @@ public:
     std::vector<output_target> output_targets;
     std::vector<effect> effects;
     std::vector<technique> techniques;
+    std::vector<ray_hitgroup> ray_hitgroups;
 
 protected:
 
     std::unique_ptr<ri_pipeline> make_technique_pipeline(const technique& instance);
 
-    virtual bool post_load() override;
+    virtual bool load_dependencies() override;
 
     void unregister_effects();
 

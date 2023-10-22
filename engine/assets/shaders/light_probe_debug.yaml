@@ -24,10 +24,7 @@ param_blocks:
       is_valid: bool
 
 vertex_layouts:
-  light_probe_vertex:
-    position: float3
-    normal: float3
-    color0: float4
+  light_probe_vertex: [ position, normal, color0 ]
 
 techniques:
   light_probe_debug:

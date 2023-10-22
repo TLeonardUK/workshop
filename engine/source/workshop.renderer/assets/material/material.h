@@ -25,6 +25,7 @@ class asset_manager;
 
 // ================================================================================================
 //  Defines what part of the rendering pipeline this mateiral is going to be used in.
+//  Make sure this matches the enum in global.hlsl
 // ================================================================================================
 enum class material_domain
 {
@@ -113,13 +114,21 @@ public:
     // Gets a texture with the given name, returns the provided default if none exists.
     ri_texture* get_texture(const char* name, ri_texture* default_instance = nullptr);
 
-protected:
+    // Gets a param block that describes the material on the gpu.
+    ri_param_block* get_material_info_param_block();
+
+protected:    
+    virtual bool load_dependencies() override;
     virtual bool post_load() override;
+
+    void create_material_info_param_block();
 
 private:
     ri_interface& m_ri_interface;
     renderer& m_renderer;
     asset_manager& m_asset_manager;
+
+    std::unique_ptr<ri_param_block> m_material_info_param_block;
 
 };
 

@@ -54,15 +54,17 @@ float calculate_weight(float z, float a)
 
 geometry_poutput pshader(geometry_pinput input)
 {
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);;
+    material mat = load_material();
+
+    float4 albedo = mat.albedo_texture.Sample(mat.albedo_sampler, input.uv0);;
 
     gbuffer_fragment f;
     f.albedo = albedo.rgb;
     f.flags = input.flags;
-    f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
-    f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
+    f.metallic = mat.metallic_texture.Sample(mat.metallic_sampler, input.uv0).r;
+    f.roughness = mat.roughness_texture.Sample(mat.roughness_sampler, input.uv0).r;
     f.world_normal = calculate_world_normal(
-        unpack_compressed_normal(normal_texture.Sample(normal_sampler, input.uv0).xy),
+        unpack_compressed_normal(mat.normal_texture.Sample(mat.normal_sampler, input.uv0).xy),
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz
     );

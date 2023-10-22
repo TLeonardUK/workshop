@@ -15,10 +15,7 @@ effects:
       render_imgui: {}
 
 vertex_layouts:
-  imgui_vertex:
-    position: float2
-    uv0: float2
-    color0: float4
+  imgui_vertex: [ position, uv0, color0 ]
 
 param_blocks:
   imgui_params:

@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/assets/shader/shader_loader.h"
 #include "workshop.renderer/assets/shader/shader.h"
+#include "workshop.renderer/assets/material/material.h"
 #include "workshop.assets/asset_cache.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
@@ -23,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 18;
+constexpr size_t k_asset_compiled_version = 22;
 
 };
 
@@ -88,13 +89,28 @@ inline void stream_serialize(stream& out, shader::effect& block)
 }
 
 template<>
+inline void stream_serialize(stream& out, shader::ray_hitgroup& block)
+{
+    stream_serialize(out, block.name);
+    stream_serialize_enum(out, block.domain);
+
+    for (size_t i = 0; i < block.stages.size(); i++)
+    {
+        shader::shader_stage& stage = block.stages[i];
+        stream_serialize(out, stage.file);
+        stream_serialize(out, stage.entry_point);
+        stream_serialize_list(out, stage.bytecode);
+    }
+}
+
+template<>
 inline void stream_serialize(stream& out, shader::technique& block)
 {
     stream_serialize(out, block.name);
 
     for (size_t i = 0; i < block.stages.size(); i++)
     {
-        shader::technique::stage& stage = block.stages[i];
+        shader::shader_stage& stage = block.stages[i];
         stream_serialize(out, stage.file);
         stream_serialize(out, stage.entry_point);
         stream_serialize_list(out, stage.bytecode);
@@ -104,6 +120,7 @@ inline void stream_serialize(stream& out, shader::technique& block)
     stream_serialize(out, block.vertex_layout_index);
     stream_serialize(out, block.output_target_index);
     stream_serialize_list(out, block.param_block_indices);
+    stream_serialize_list(out, block.ray_hitgroups);
     stream_serialize_map(out, block.defines);
 }
 
@@ -177,6 +194,7 @@ bool shader_loader::serialize(const char* path, shader& asset, bool isSaving)
     stream_serialize_list(*stream, asset.output_targets);
     stream_serialize_list(*stream, asset.effects);
     stream_serialize_list(*stream, asset.techniques);
+    // stream_serialize_list(*stream, asset.ray_hitgroups); // technique instances these, no need to keep the global list around.
     stream_serialize_map(*stream, asset.global_defines);
 
     return true;
@@ -350,6 +368,85 @@ bool shader_loader::parse_param_block(const char* path, const char* name, YAML::
             db_error(asset, "[%s] param block field '%s' has invalid data type '%s'.", path, field.name.c_str(), field_data_type.c_str());
             return false;
         }
+    }
+
+    return true;
+}
+
+bool shader_loader::parse_ray_hitgroups(const char* path, YAML::Node& node, shader& asset)
+{
+    YAML::Node ray_hitgroups_node = node["ray_hitgroups"];
+
+    if (!ray_hitgroups_node.IsDefined())
+    {
+        return true;
+    }
+
+    if (ray_hitgroups_node.Type() != YAML::NodeType::Map)
+    {
+        db_error(asset, "[%s] ray_hitgroups node is invalid data type.", path);
+        return false;
+    }
+
+    for (auto iter = ray_hitgroups_node.begin(); iter != ray_hitgroups_node.end(); iter++)
+    {
+        std::string name = iter->first.as<std::string>();
+
+        if (!iter->second.IsMap())
+        {
+            db_error(asset, "[%s] ray hitgroups node '%s' was not map type.", path, name.c_str());
+            return false;
+        }
+
+        YAML::Node child = iter->second;
+        if (!parse_ray_hitgroup(path, name.c_str(), child, asset))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool shader_loader::parse_ray_hitgroup(const char* path, const char* name, YAML::Node& node, shader& asset)
+{
+    YAML::Node material_domain_group = node["material_domain"];
+
+    shader::ray_hitgroup& block = asset.ray_hitgroups.emplace_back();
+    block.name = name;
+
+    if (!material_domain_group.IsDefined())
+    {
+        db_error(asset, "[%s] material_domain not defined for ray hit group '%s'.", path, name);
+        return false;
+    }
+    if (material_domain_group.Type() != YAML::NodeType::Scalar)
+    {
+        db_error(asset, "[%s] material_domain for ray hit group '%s' was not a scalar type.", path, name);
+        return false;
+    }
+
+    if (auto ret = from_string<material_domain>(material_domain_group.as<std::string>()); ret)
+    {
+        block.domain = ret.get();
+    }
+    else
+    {
+        db_error(asset, "[%s] material_domain for ray hit group '%s' is invalid type '%s'.", path, material_domain_group.as<std::string>().c_str());
+        return false;
+    }
+
+    size_t loaded_stage_count = 0;
+
+    if (!parse_shader_stages(path, name, node, asset, block.stages, loaded_stage_count))
+    {
+        return false;
+    }
+
+    if (loaded_stage_count == 0)
+    {
+        db_error(asset, "[%s] ray hitgroup '%s' defines no shader stages.", path, name);
+        return false;
     }
 
     return true;
@@ -543,9 +640,9 @@ bool shader_loader::parse_vertex_layouts(const char* path, YAML::Node& node, sha
     {
         std::string name = iter->first.as<std::string>();
 
-        if (!iter->second.IsMap())
+        if (!iter->second.IsSequence())
         {
-            db_error(asset, "[%s] vertex layout node '%s' was not map type.", path, name.c_str());
+            db_error(asset, "[%s] vertex layout node '%s' was not sequence type.", path, name.c_str());
             return false;
         }
 
@@ -567,24 +664,8 @@ bool shader_loader::parse_vertex_layout(const char* path, const char* name, YAML
     for (auto iter = node.begin(); iter != node.end(); iter++)
     {
         ri_data_layout::field& field = block.layout.fields.emplace_back();
-        field.name = iter->first.as<std::string>();
-
-        if (!iter->second.IsScalar())
-        {
-            db_error(asset, "[%s] vertex layout field '%s' was not map type.", path, field.name.c_str());
-            return false;
-        }
-
-        std::string field_data_type = iter->second.as<std::string>();
-        if (auto ret = from_string<ri_data_type>(field_data_type.c_str()); ret)
-        {
-            field.data_type = ret.get();
-        }
-        else
-        {
-            db_error(asset, "[%s] vertex layout field '%s' has invalid data type '%s'.", path, field.name.c_str(), field_data_type.c_str());
-            return false;
-        }
+        field.name = iter->as<std::string>();
+        field.data_type = ri_data_type::t_float4; // data type is not relevant, the types are chosen internally by the engine and unpacked in the shader.
     }
 
     return true;
@@ -713,7 +794,7 @@ bool shader_loader::parse_techniques(const char* path, YAML::Node& node, shader&
     return true;
 }
 
-bool shader_loader::parse_technique(const char* path, const char* name, YAML::Node& node, shader& asset)
+bool shader_loader::parse_shader_stages(const char* path, const char* name, YAML::Node& node, shader& asset, std::array<shader::shader_stage, static_cast<int>(ri_shader_stage::COUNT)>& stages, size_t& loaded_stage_count)
 {
     std::array<YAML::Node, static_cast<int>(ri_shader_stage::COUNT)> stage_nodes = {
         node["vertex_shader"],
@@ -727,20 +808,10 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
         node["ray_any_hit_shader"],
         node["ray_closest_hit_shader"],
         node["ray_miss_shader"],
-        node["ray_intersection_shader"]
+        node["ray_intersection_shader"],
     };
 
-    YAML::Node render_state_node = node["render_state"];
-    YAML::Node vertex_layout_node = node["vertex_layout"];
-    YAML::Node output_target_node = node["output_target"];
-    YAML::Node param_blocks_node = node["param_blocks"];
-    YAML::Node defines_node = node["defines"];
-
-    shader::technique& block = asset.techniques.emplace_back();
-    block.name = name;
-
     // Parse shader stages.
-    size_t shader_count = 0;
     for (size_t i = 0; i < stage_nodes.size(); i++)
     {
         ri_shader_stage stage = static_cast<ri_shader_stage>(i);
@@ -781,12 +852,34 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
             return false;
         }
 
-        block.stages[i].entry_point = entry_node.as<std::string>();
-        block.stages[i].file = file_node.as<std::string>();
-        shader_count++;
+        stages[i].entry_point = entry_node.as<std::string>();
+        stages[i].file = file_node.as<std::string>();
+        loaded_stage_count++;
     }
 
-    if (shader_count == 0)
+    return true;
+}
+
+bool shader_loader::parse_technique(const char* path, const char* name, YAML::Node& node, shader& asset)
+{
+    YAML::Node render_state_node = node["render_state"];
+    YAML::Node vertex_layout_node = node["vertex_layout"];
+    YAML::Node output_target_node = node["output_target"];
+    YAML::Node param_blocks_node = node["param_blocks"];
+    YAML::Node defines_node = node["defines"];
+    YAML::Node ray_hitgroups_node = node["ray_hitgroups"];
+
+    shader::technique& block = asset.techniques.emplace_back();
+    block.name = name;
+
+    size_t loaded_stage_count = 0;
+
+    if (!parse_shader_stages(path, name, node, asset, block.stages, loaded_stage_count))
+    {
+        return false;
+    }
+
+    if (loaded_stage_count == 0)
     {
         db_error(asset, "[%s] technique '%s' defines no shader stages.", path, name);
         return false;
@@ -912,6 +1005,39 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
             else
             {
                 block.param_block_indices.push_back(std::distance(asset.param_blocks.begin(), param_block_iter));
+            }
+        }
+    }
+
+    // Parse ray hitgroups
+    if (ray_hitgroups_node.IsDefined())
+    {
+        if (ray_hitgroups_node.Type() != YAML::NodeType::Sequence)
+        {
+            db_error(asset, "[%s] ray hit groups for technique '%s' was not a sequence type.", path, name);
+            return false;
+        }
+
+        for (auto iter = ray_hitgroups_node.begin(); iter != ray_hitgroups_node.end(); iter++)
+        {
+            if (!iter->IsScalar())
+            {
+                db_error(asset, "[%s] ray hit group value for technique '%s' was not scalar type.", path, name);
+                return false;
+            }
+
+            std::string group_name = iter->as<std::string>();
+            auto group_iter = std::find_if(asset.ray_hitgroups.begin(), asset.ray_hitgroups.end(), [&group_name](const shader::ray_hitgroup& state) {
+                return state.name == group_name;
+            });
+            if (group_iter == asset.ray_hitgroups.end())
+            {
+                db_error(asset, "[%s] ray hitgroups '%s' for technique '%s' was not found.", path, group_name.c_str(), name);
+                return false;
+            }
+            else
+            {
+                block.ray_hitgroups.push_back(*group_iter);
             }
         }
     }
@@ -1051,6 +1177,11 @@ bool shader_loader::parse_file(const char* path, shader& asset)
     }
 
     if (!parse_param_blocks(path, node, asset))
+    {
+        return false;
+    }
+
+    if (!parse_ray_hitgroups(path, node, asset))
     {
         return false;
     }
@@ -1217,11 +1348,14 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
                     continue;
                 }
 
-                result += string_format("#define %s %s[%s_index]\n",
-                    field.name.c_str(),
-                    table_name.c_str(), 
-                    field.name.c_str()
-                );
+                if (block.scope != ri_data_scope::indirect)
+                {
+                    result += string_format("#define %s %s[%s_index]\n",
+                        field.name.c_str(),
+                        table_name.c_str(), 
+                        field.name.c_str()
+                    );
+                }
                 texture_defines++;
             }
         }
@@ -1245,6 +1379,12 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
         result += "vertex load_vertex(uint vertex_id) {\n";
         result += " model_info info = table_byte_buffers[model_info_table].Load<model_info>(model_info_offset);\n";
         result += " return load_model_vertex(info, vertex_id);\n";
+        result += "};\n";
+        result += "\n";
+
+        // Add a function for loading material info.
+        result += "material load_material() {\n";
+        result += " return load_material_from_table(material_info_table, material_info_offset);";
         result += "};\n";
         result += "\n";
     }
@@ -1296,13 +1436,105 @@ std::string shader_loader::create_autogenerated_stub(shader::technique& techniqu
     return result;
 }
 
-bool shader_loader::compile_technique(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config)
+bool shader_loader::compile_shader_stage(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config, shader::shader_stage& stage, ri_shader_stage pipeline_stage)
 {
     std::unique_ptr<ri_shader_compiler> compiler = m_ri_interface.create_shader_compiler();
 
+    std::string source_code = "";
+
+    // Read in all text from shader source.
+    {
+        std::unique_ptr<stream> stream = virtual_file_system::get().open(stage.file.c_str(), false);
+        if (!stream)
+        {
+            db_error(asset, "[%s] Failed to open stream to shader source.", path);
+            return false;
+        }
+
+        source_code = stream->read_all_string();
+    }
+
+    // Prefix the file with autogenerated stub code for param block structs etc.
+    std::string shader_stub = create_autogenerated_stub(technique, asset);
+    std::unordered_map<std::string, std::string> defines = technique.defines;
+
+    source_code = shader_stub + "\n" + source_code;
+
+    // Merge in the global defines.
+    for (auto& pair : asset.global_defines)
+    {
+        defines[pair.first] = pair.second;
+    }
+
+    if (asset_config == config_type::debug)
+    {
+        defines["WS_DEBUG"] = "1";
+    }
+    else
+    {
+        defines["WS_RELEASE"] = "1";
+    }
+
+    // Remember this file as a compile dependency.
+    asset.header.add_dependency(stage.file.c_str());
+
+    // Compiler source.
+    ri_shader_compiler_output output = compiler->compile(
+        pipeline_stage, 
+        source_code.c_str(),
+        stage.file.c_str(), 
+        stage.entry_point.c_str(),
+        defines,
+        (asset_config == config_type::debug)
+    );
+
+    if (output.success())
+    {
+        stage.bytecode = output.get_bytecode();
+
+        for (const std::string& dependency : output.get_dependencies())
+        {
+            asset.header.add_dependency(dependency.c_str());
+        }
+    }
+    else
+    {
+        for (const ri_shader_compiler_output::log& log : output.get_errors())
+        {
+            db_error(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
+            for (const std::string& context : log.context)
+            {
+                db_error(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
+            }
+        }
+        for (const ri_shader_compiler_output::log& log : output.get_warnings())
+        {
+            db_warning(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
+            for (const std::string& context : log.context)
+            {
+                db_warning(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
+            }
+        }
+        for (const ri_shader_compiler_output::log& log : output.get_messages())
+        {
+            db_log(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
+            for (const std::string& context : log.context)
+            {
+                db_log(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
+            }
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+bool shader_loader::compile_technique(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config)
+{
     for (size_t i = 0; i < technique.stages.size(); i++)
     {
-        shader::technique::stage& stage = technique.stages[i];
+        shader::shader_stage& stage = technique.stages[i];
         ri_shader_stage pipeline_stage = static_cast<ri_shader_stage>(i);
 
         if (stage.file.empty())
@@ -1310,91 +1542,40 @@ bool shader_loader::compile_technique(const char* path, shader::technique& techn
             continue;
         }
 
-        std::string source_code = "";
-
-        // Read in all text from shader source.
+        if (!compile_shader_stage(path, technique, asset, asset_platform, asset_config, stage, pipeline_stage))
         {
-            std::unique_ptr<stream> stream = virtual_file_system::get().open(stage.file.c_str(), false);
-            if (!stream)
-            {
-                db_error(asset, "[%s] Failed to open stream to shader source.", path);
-                return false;
-            }
+            return false;
+        }
+    }
 
-            source_code = stream->read_all_string();
+    // For each hitgroup in the technique, compile that.
+    for (shader::ray_hitgroup& hitgroup : technique.ray_hitgroups)
+    {
+        db_log(asset, "[%s] compiling shader hit group '%s' for technique '%s'.", path, hitgroup.name.c_str(), technique.name.c_str());
+
+        if (!compile_ray_hitgroup(path, technique, hitgroup, asset, asset_platform, asset_config))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool shader_loader::compile_ray_hitgroup(const char* path, shader::technique& technique, shader::ray_hitgroup& hitgroup, shader& asset, platform_type asset_platform, config_type asset_config)
+{
+    for (size_t i = 0; i < hitgroup.stages.size(); i++)
+    {
+        shader::shader_stage& stage = hitgroup.stages[i];
+        ri_shader_stage pipeline_stage = static_cast<ri_shader_stage>(i);
+
+        if (stage.file.empty())
+        {
+            continue;
         }
 
-        // Prefix the file with autogenerated stub code for param block structs etc.
-        std::string stub = create_autogenerated_stub(technique, asset);
-        source_code = stub + "\n" + source_code;
-
-        // Add some system defines.
-        std::unordered_map<std::string, std::string> defines = technique.defines;
-
-        // Merge in the global defines.
-        for (auto& pair : asset.global_defines)
+        if (!compile_shader_stage(path, technique, asset, asset_platform, asset_config, stage, pipeline_stage))
         {
-            defines[pair.first] = pair.second;
-        }
-
-        if (asset_config == config_type::debug)
-        {
-            defines["WS_DEBUG"] = "1";
-        }
-        else
-        {
-            defines["WS_RELEASE"] = "1";
-        }
-
-        // Remember this file as a compile dependency.
-        asset.header.add_dependency(stage.file.c_str());
-
-        // Compiler source.
-        ri_shader_compiler_output output = compiler->compile(
-            pipeline_stage, 
-            source_code.c_str(),
-            stage.file.c_str(), 
-            stage.entry_point.c_str(),
-            defines,
-            (asset_config == config_type::debug)
-        );
-
-        if (output.success())
-        {
-            stage.bytecode = output.get_bytecode();
-
-            for (const std::string& dependency : output.get_dependencies())
-            {
-                asset.header.add_dependency(dependency.c_str());
-            }
-        }
-        else
-        {
-            for (const ri_shader_compiler_output::log& log : output.get_errors())
-            {
-                db_error(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
-                for (const std::string& context : log.context)
-                {
-                    db_error(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
-                }
-            }
-            for (const ri_shader_compiler_output::log& log : output.get_warnings())
-            {
-                db_warning(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
-                for (const std::string& context : log.context)
-                {
-                    db_warning(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
-                }
-            }
-            for (const ri_shader_compiler_output::log& log : output.get_messages())
-            {
-                db_log(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
-                for (const std::string& context : log.context)
-                {
-                    db_log(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
-                }
-            }
-
             return false;
         }
     }
@@ -1428,27 +1609,12 @@ bool shader_loader::compile(const char* input_path, const char* output_path, pla
     }
 
     // Add implicit param blocks
-    if (!is_compute)
-    {
-        auto vertex_info_iter = std::find_if(asset.param_blocks.begin(), asset.param_blocks.end(), [](const shader::param_block& a) { return a.name == "vertex_info"; });
-        if (vertex_info_iter == asset.param_blocks.end())
-        {
-            db_error(asset, "[%s] Failed to find implicitly required param block 'vertex_info'.", input_path);
-            return false;
-        }
-
-        size_t vertex_info_index = std::distance(asset.param_blocks.begin(), vertex_info_iter);
-        for (shader::technique& technique : asset.techniques)
-        {
-            technique.param_block_indices.push_back(vertex_info_index);
-        }
-    }
-
-    {
-        auto model_info_iter = std::find_if(asset.param_blocks.begin(), asset.param_blocks.end(), [](const shader::param_block& a) { return a.name == "model_info"; });
+    auto add_implicit_param_block = [&](const char* name)
+    {        
+        auto model_info_iter = std::find_if(asset.param_blocks.begin(), asset.param_blocks.end(), [&](const shader::param_block& a) { return a.name == name; });
         if (model_info_iter == asset.param_blocks.end())
         {
-            db_error(asset, "[%s] Failed to find implicitly required param block 'model_info'.", input_path);
+            db_error(asset, "[%s] Failed to find implicitly required param block '%s'.", input_path, name);
             return false;
         }
 
@@ -1457,6 +1623,22 @@ bool shader_loader::compile(const char* input_path, const char* output_path, pla
         {
             technique.param_block_indices.push_back(model_info_index);
         }
+
+        return true;
+    };
+
+    if (!is_compute)
+    {
+       if (!add_implicit_param_block("vertex_info"))
+       {
+           return false;
+       }
+    }
+
+    if (!add_implicit_param_block("model_info") ||
+        !add_implicit_param_block("material_info"))
+    {
+        return false;
     }
 
     // For each technique, compile the shader bytecode.

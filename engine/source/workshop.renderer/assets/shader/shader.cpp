@@ -83,6 +83,20 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
         params.stages[i].file = instance.stages[i].file;
     }
 
+    for (const ray_hitgroup& group : instance.ray_hitgroups)
+    {
+        ri_pipeline::create_params::ray_hitgroup& param_group = params.ray_hitgroups.emplace_back();
+        param_group.domain = (size_t)group.domain;
+        param_group.name = group.name.c_str();
+
+        for (size_t i = 0; i < group.stages.size(); i++)
+        {
+            param_group.stages[i].bytecode = group.stages[i].bytecode;
+            param_group.stages[i].entry_point = group.stages[i].entry_point;
+            param_group.stages[i].file = group.stages[i].file;
+        }
+    }
+
     std::unique_ptr<ri_pipeline> pipeline = m_ri_interface.create_pipeline(params, instance.name.c_str());
     if (pipeline == nullptr)
     {
@@ -93,7 +107,7 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
     return pipeline;
 }
 
-bool shader::post_load() 
+bool shader::load_dependencies()
 {
     for (param_block& instance : param_blocks)
     {

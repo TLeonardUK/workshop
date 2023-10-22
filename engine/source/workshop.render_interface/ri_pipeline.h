@@ -28,10 +28,19 @@ public:
             std::vector<uint8_t> bytecode;
         };
 
+        struct ray_hitgroup
+        {
+            const char* name;
+            size_t domain;
+            std::array<stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
+        };
+
         std::array<stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
         ri_pipeline_render_state render_state;
         std::vector<ri_param_block_archetype*> param_block_archetypes;
         ri_data_layout vertex_layout;
+
+        std::vector<ray_hitgroup> ray_hitgroups;
 
         std::vector<ri_descriptor_table> descriptor_tables;
 

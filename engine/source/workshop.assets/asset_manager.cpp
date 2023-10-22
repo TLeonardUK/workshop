@@ -52,7 +52,10 @@ namespace ws {
 
 namespace {
 
-// Holds the current asset being post-loaded on the current thread.
+// Holds the current asset that is having load_dependencies call on it in the current thread.
+static thread_local asset_state* g_tls_current_load_dependencies_asset = nullptr;
+
+// Holds the current asset that is having post_load call on it in the current thread.
 static thread_local asset_state* g_tls_current_post_load_asset = nullptr;
 
 };
@@ -295,6 +298,8 @@ void asset_manager::decrement_ref(asset_state* state, bool state_lock_held)
 
 asset_state* asset_manager::create_asset_state(const std::type_info& id, const char* path, int32_t priority, bool is_hot_reload)
 {
+    db_assert_message(g_tls_current_post_load_asset == nullptr, "Assets cannot be requested during a post_load. Use load_dependencies instead.");
+    
     std::unique_lock lock(m_states_mutex);
     return create_asset_state_lockless(id, path, priority, is_hot_reload);
 }
@@ -348,7 +353,7 @@ asset_state* asset_manager::create_asset_state_lockless(const std::type_info& id
 
     // If we are loading this as a dependent asset, keep track of the references so
     // we don't mark our state as completed.
-    asset_state* parent_state = g_tls_current_post_load_asset;
+    asset_state* parent_state = g_tls_current_load_dependencies_asset;
     if (parent_state != nullptr)
     {
         auto dependent_iter = std::find(parent_state->dependencies.begin(), parent_state->dependencies.end(), state);
@@ -536,7 +541,7 @@ void asset_manager::begin_load(asset_state* state)
 
     state->current_operations.fetch_add(1);
 
-    async("Load Asset", task_queue::loading, [this, state]() {
+    async("Load Asset", task_queue::loading, [this, state]() mutable {
     
         do_load(state);
 
@@ -546,19 +551,17 @@ void asset_manager::begin_load(asset_state* state)
             asset_loading_state new_state;
             if (state->instance)
             {
-                // See if our dependencies are all loaded yet.
-                bool all_loaded = true;
-                for (asset_state* child : state->dependencies)
+                if (are_dependencies_loaded(state))
                 {
-                    if (child->loading_state != asset_loading_state::loaded)
+                    // TODO: Move this out of the lock, right now post-load is serialized.
+                    if (!post_load_asset(state))
                     {
-                        all_loaded = false;
+                        new_state = asset_loading_state::failed;
                     }
-                }
-
-                if (all_loaded)
-                {
-                    new_state = asset_loading_state::loaded;
+                    else
+                    {
+                        new_state = asset_loading_state::loaded;
+                    }
                 }
                 else
                 {
@@ -592,22 +595,51 @@ void asset_manager::begin_load(asset_state* state)
     });
 }
 
+bool asset_manager::post_load_asset(asset_state* state)
+{
+    // Mark which asset is being post_load'd so we can handle things
+    // differently in dependent assets are loaded during post_load.
+    asset_state* old_state = g_tls_current_post_load_asset;
+    g_tls_current_post_load_asset = state;
+
+    bool success = false;
+    if (state->instance->post_load())
+    {
+        success = true;
+    }
+    else
+    {
+        asset_loader* loader = get_loader_for_type(state->type_id);
+        if (loader)
+        {
+            loader->unload(state->instance);
+        }
+        state->instance = nullptr;
+    }
+
+    g_tls_current_post_load_asset = old_state;
+
+    return success;
+}
+
 void asset_manager::check_dependency_load_state(asset_state* state)
 {
     db_assert(state->loading_state == asset_loading_state::waiting_for_dependencies);
 
-    bool all_loaded = true;
-    for (asset_state* child : state->dependencies)
-    {
-        if (child->loading_state != asset_loading_state::loaded)
-        {
-            all_loaded = false;
-        }
-    }
+    bool all_loaded = are_dependencies_loaded(state);
 
     if (all_loaded)
     {
-        set_load_state(state, asset_loading_state::loaded);
+        // TODO: Move this out of the lock, right now post-load is serialized.
+        if (!post_load_asset(state))
+        {
+            set_load_state(state, asset_loading_state::failed);
+
+        }
+        else
+        {
+            set_load_state(state, asset_loading_state::loaded);
+        }
 
         // Propogate the load upwards to any parents that depend on us.
         for (asset_state* parent : state->depended_on_by)
@@ -904,20 +936,21 @@ void asset_manager::do_load(asset_state* state)
 
             if (state->instance)
             {
-                // Mark which asset is being post_load'd so we can handle things
-                // differently in dependent assets are loaded during post_load.
-                asset_state* old_state = g_tls_current_post_load_asset;
-                g_tls_current_post_load_asset = state;
+                // Mark which asset is being load_dependencies'd so we can handle things
+                // differently in dependent assets are loaded during load_dependencies.
+                asset_state* old_state = g_tls_current_load_dependencies_asset;
+                g_tls_current_load_dependencies_asset = state;
 
-                if (!state->instance->post_load())
+                // Allow instance to load any dependent assets.
+                if (!state->instance->load_dependencies())
                 {
-                    db_error(asset, "[%s] Failed to post load asset.", state->path.c_str());
+                    db_error(asset, "[%s] Failed to load asset dependencies.", state->path.c_str());
 
                     loader->unload(state->instance);
                     state->instance = nullptr;
                 }
 
-                g_tls_current_post_load_asset = old_state;
+                g_tls_current_load_dependencies_asset = old_state;
             }
             else
             {
@@ -943,6 +976,32 @@ void asset_manager::do_unload(asset_state* state)
         loader->unload(state->instance);
         state->instance = nullptr;
     }
+}
+
+bool asset_manager::are_dependencies_loaded(asset_state* state)
+{
+    bool all_loaded = true;
+    for (asset_state* child : state->dependencies)
+    {
+        if (child->loading_state != asset_loading_state::loaded && 
+            child->loading_state != asset_loading_state::failed)
+        {
+            all_loaded = false;
+        }
+    }
+    return all_loaded;
+}
+
+bool asset_manager::any_dependencies_failed(asset_state* state)
+{
+    for (asset_state* child : state->dependencies)
+    {
+        if (child->loading_state == asset_loading_state::failed)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void asset_manager::set_load_state(asset_state* state, asset_loading_state new_state)

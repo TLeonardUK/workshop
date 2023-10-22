@@ -44,7 +44,9 @@ private:
 
     bool save(const char* path, shader& asset);
 
+    bool compile_shader_stage(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config, shader::shader_stage& stage, ri_shader_stage pipeline_stage);
     bool compile_technique(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config);
+    bool compile_ray_hitgroup(const char* path, shader::technique& technique, shader::ray_hitgroup& hitgroup, shader& asset, platform_type asset_platform, config_type asset_config);
 
     bool parse_imports(const char* path, YAML::Node& node, shader& asset);
 
@@ -52,6 +54,9 @@ private:
 
     bool parse_param_blocks(const char* path, YAML::Node& node, shader& asset);
     bool parse_param_block(const char* path, const char* name, YAML::Node& node, shader& asset);
+
+    bool parse_ray_hitgroups(const char* path, YAML::Node& node, shader& asset);
+    bool parse_ray_hitgroup(const char* path, const char* name, YAML::Node& node, shader& asset);
 
     bool parse_render_states(const char* path, YAML::Node& node, shader& asset);
     bool parse_render_state(const char* path, const char* name, YAML::Node& node, shader& asset);
@@ -64,6 +69,8 @@ private:
 
     bool parse_output_targets(const char* path, YAML::Node& node, shader& asset);
     bool parse_output_target(const char* path, const char* name, YAML::Node& node, shader& asset);
+
+    bool parse_shader_stages(const char* path, const char* name, YAML::Node& node, shader& asset, std::array<shader::shader_stage, static_cast<int>(ri_shader_stage::COUNT)>& stages, size_t& loaded_stage_count);
 
     bool parse_techniques(const char* path, YAML::Node& node, shader& asset);
     bool parse_technique(const char* path, const char* name, YAML::Node& node, shader& asset);

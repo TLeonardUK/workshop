@@ -71,14 +71,6 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         list.set_scissor(view->get_viewport());
         list.set_primitive_topology(ri_primitive::triangle_list);
 
-        // Grab some default values used to contruct param blocks.
-        ri_texture* default_black = renderer.get_default_texture(default_texture_type::black);
-        ri_texture* default_white = renderer.get_default_texture(default_texture_type::white);
-        ri_texture* default_grey = renderer.get_default_texture(default_texture_type::grey);
-        ri_texture* default_normal = renderer.get_default_texture(default_texture_type::normal);
-        ri_sampler* default_sampler_color = renderer.get_default_sampler(default_sampler_type::color);
-        ri_sampler* default_sampler_normal = renderer.get_default_sampler(default_sampler_type::normal);
-
         render_draw_flags view_draw_flags = view->get_draw_flags();
 
         // Draw each batch.
@@ -93,27 +85,6 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
             profile_gpu_marker(list, profile_colors::gpu_pass, "batch %zi / %zi", i, batches.size());
            
-            // Generate the geometry_info block for this material.  
-            ri_param_block* geometry_info_param_block = batch->get_resource_cache().find_or_create_param_block(get_cache_key(*view), info_param_block_type.c_str(), [&mat, default_black, default_grey, default_white, default_normal, default_sampler_color, default_sampler_normal](ri_param_block& param_block) {
-
-                // TODO: We should make this a callback to wherever is creating this geometry pass.
-                // This is all currently unpleasently hard-coded.
-                param_block.set("albedo_texture", *mat->get_texture("albedo_texture", default_black));
-                param_block.set("opacity_texture", *mat->get_texture("opacity_texture", default_white));
-                param_block.set("metallic_texture", *mat->get_texture("metallic_texture", default_black));
-                param_block.set("roughness_texture", *mat->get_texture("roughness_texture", default_grey));
-                param_block.set("normal_texture", *mat->get_texture("normal_texture", default_normal));
-                param_block.set("skybox_texture", *mat->get_texture("skybox_texture", default_white));
-
-                param_block.set("albedo_sampler", *mat->get_sampler("albedo_sampler", default_sampler_color));
-                param_block.set("opacity_sampler", *mat->get_sampler("opacity_sampler", default_sampler_color));
-                param_block.set("metallic_sampler", *mat->get_sampler("metallic_sampler", default_sampler_color));
-                param_block.set("roughness_sampler", *mat->get_sampler("roughness_sampler", default_sampler_color));
-                param_block.set("normal_sampler", *mat->get_sampler("normal_sampler", default_sampler_normal));
-                param_block.set("skybox_sampler", *mat->get_sampler("skybox_sampler", default_sampler_color));
-
-            });
-
             // Generate the instance buffer for this batch.
             render_batch_instance_buffer* instance_buffer = batch->get_resource_cache().find_or_create_instance_buffer(get_cache_key(*view));
             size_t visible_instance_count = 0;
@@ -162,14 +133,19 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
             size_t model_info_table_offset;
             key.model->get_model_info_param_block().get_table(model_info_table_index, model_info_table_offset);
 
+            size_t material_info_table_index;
+            size_t material_info_table_offset;
+            key.material->get_material_info_param_block()->get_table(material_info_table_index,  material_info_table_offset);
+
             vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
             vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
+            vertex_info_param_block->set("material_info_table", (uint32_t)material_info_table_index);
+            vertex_info_param_block->set("material_info_offset", (uint32_t)material_info_table_offset);
             vertex_info_param_block->set("instance_buffer", instance_buffer->get_buffer());        
 
             // Put together param block list to use.
             std::vector<ri_param_block*> blocks = bind_param_blocks(view->get_resource_cache());
             blocks.push_back(view->get_view_info_param_block());
-            blocks.push_back(geometry_info_param_block);
             blocks.push_back(vertex_info_param_block);
             list.set_param_blocks(blocks);
 

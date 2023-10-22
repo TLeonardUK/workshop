@@ -104,7 +104,7 @@ public:
     std::string source_node;
 
 protected:
-    virtual bool post_load() override;
+    virtual bool load_dependencies() override;
 
 private:
     ri_interface& m_ri_interface;

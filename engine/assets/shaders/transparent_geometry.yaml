@@ -85,7 +85,6 @@ techniques:
     param_blocks: [ 
       view_info, 
       gbuffer,
-      geometry_info, 
       geometry_instance_info,   
       light_state, 
       light_cluster, 

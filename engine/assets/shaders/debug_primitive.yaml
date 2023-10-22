@@ -15,9 +15,7 @@ effects:
       render_debug_primitive: {}
 
 vertex_layouts:
-  debug_primitive_vertex:
-    position: float3
-    color0: float4
+  debug_primitive_vertex: [ position, color0 ]
 
 render_states:
   debug_primitive_render_state: 

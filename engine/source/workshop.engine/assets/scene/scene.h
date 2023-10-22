@@ -76,7 +76,7 @@ public:
     virtual ~scene();
 
 protected:
-    virtual bool post_load() override;
+    virtual bool load_dependencies() override;
 
 private:
     asset_manager& m_asset_manager;

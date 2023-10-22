@@ -16,19 +16,45 @@ effects:
       raytrace_scene: {}
    
 param_blocks:
+  scene_instance_data:
+    scope: indirect
+    fields:
+      material_table: int
+      material_offset: int
+      model_index: int
+      model_offset: int
+      gpu_flags: int
+
   raytrace_scene_parameters:
     scope: draw
     fields:
       scene_tlas: tlas
+      scene_tlas_instance_data: byteaddressbuffer
 
 ray_hitgroups:
-  main_hitgroup:
+  opaque_hitgroup:
+    material_domain: opaque
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_closest_hit
+      entry: ray_closest_hit_opaque
+
+  masked_hitgroup:
+    material_domain: masked
+    ray_closest_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_closest_hit_masked
+      
+  transparent_hitgroup:
+    material_domain: transparent
     ray_any_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_any_hit
+      entry: ray_any_hit_transparent
+      
+  sky_hitgroup:
+    material_domain: sky
+    ray_closest_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_closest_hit_sky
 
 render_states:
   raytrace_scene_render_state:
@@ -42,8 +68,6 @@ techniques:
     ray_miss_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_miss
-    ray_hitgroups: [ main_hitgroup  ]
+    ray_hitgroups: [ opaque_hitgroup, masked_hitgroup, transparent_hitgroup, sky_hitgroup  ]
     render_state: raytrace_scene_render_state
     param_blocks: [ raytrace_scene_parameters  ]
-
-  # TODO: add shader to pack to SH probe

@@ -39,22 +39,18 @@ geometry_pinput vshader(vertex_input input)
     return result;
 }
 
-gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
+gbuffer_output pshader_common(geometry_pinput input, material mat, float4 albedo)
 {
     gbuffer_fragment f;
     f.albedo = albedo.rgb;
     f.flags = input.flags;
-    f.metallic = metallic_texture.Sample(metallic_sampler, input.uv0).r;
-    f.roughness = roughness_texture.Sample(roughness_sampler, input.uv0).r;
-#if 0
-    f.world_normal = normalize(input.world_normal).xyz;
-#else
+    f.metallic = mat.metallic_texture.Sample(mat.metallic_sampler, input.uv0).r;
+    f.roughness = mat.roughness_texture.Sample(mat.roughness_sampler, input.uv0).r;
     f.world_normal = calculate_world_normal(
-        unpack_compressed_normal(normal_texture.Sample(normal_sampler, input.uv0).xy),
+        unpack_compressed_normal(mat.normal_texture.Sample(mat.normal_sampler, input.uv0).xy),
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz
     );
-#endif
     f.world_position = input.world_position;
 
 #ifdef GBUFFER_DEBUG_DATA
@@ -66,32 +62,23 @@ gbuffer_output pshader_common(geometry_pinput input, float4 albedo)
 
 gbuffer_output pshader_opaque(geometry_pinput input)
 {
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
-    return pshader_common(input, albedo);
+    material mat = load_material();
+
+    float4 albedo = mat.albedo_texture.Sample(mat.albedo_sampler, input.uv0);
+    return pshader_common(input, mat, albedo);
 }
 
 gbuffer_output pshader_masked(geometry_pinput input)
 {
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    material mat = load_material();
+
+    float4 albedo = mat.albedo_texture.Sample(mat.albedo_sampler, input.uv0);
     if (albedo.a < 0.5)
     {
         discard;
     }
-    return pshader_common(input, albedo);
-}
 
-gbuffer_output pshader_transparent(geometry_pinput input)
-{
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
-    return pshader_common(input, albedo);
-}
-
-gbuffer_output pshader_transparent_masked(geometry_pinput input)
-{
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
-    float4 opacity = opacity_texture.Sample(albedo_sampler, input.uv0);
-    albedo *= opacity;
-    return pshader_common(input, albedo);
+    return pshader_common(input, mat, albedo);
 }
 
 // ================================================================================================
@@ -124,7 +111,9 @@ void pshader_opaque_depth_only(geometry_pinput_depth_only input)
 
 void pshader_masked_depth_only(geometry_pinput_depth_only input)
 {
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    material mat = load_material();
+
+    float4 albedo = mat.albedo_texture.Sample(mat.albedo_sampler, input.uv0);
     if (albedo.a < 0.5)
     {
         discard;
@@ -179,7 +168,9 @@ linear_depth_output pshader_opaque_linear_depth_only(geometry_pinput_linear_dept
 
 linear_depth_output pshader_masked_linear_depth_only(geometry_pinput_linear_depth_only input)
 {
-    float4 albedo = albedo_texture.Sample(albedo_sampler, input.uv0);
+    material mat = load_material();
+
+    float4 albedo = mat.albedo_texture.Sample(mat.albedo_sampler, input.uv0);
     if (albedo.a < 0.5)
     {
         discard;
