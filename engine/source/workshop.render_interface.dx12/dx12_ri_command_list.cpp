@@ -426,6 +426,28 @@ void dx12_ri_command_list::dispatch(size_t group_size_x, size_t group_size_y, si
     m_command_list->Dispatch(static_cast<UINT>(group_size_x), static_cast<UINT>(group_size_y), static_cast<UINT>(group_size_z));
 }
 
+void dx12_ri_command_list::dispatch_rays(size_t group_size_x, size_t group_size_y, size_t group_size_z)
+{
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> command_list_4;
+    if (FAILED(m_command_list.As(&command_list_4)))
+    {
+        db_fatal(renderer, "Command list does not support raytracing pso's.");
+    }
+
+    D3D12_DISPATCH_RAYS_DESC desc;
+    desc.Width = (UINT)group_size_x;
+    desc.Height = (UINT)group_size_y;
+    desc.Depth = (UINT)group_size_z;
+    desc.CallableShaderTable.StartAddress = 0;
+    desc.CallableShaderTable.SizeInBytes = 0;
+    desc.CallableShaderTable.StrideInBytes = 0;
+    desc.HitGroupTable = m_active_pipeline->get_hit_group_table();
+    desc.MissShaderTable = m_active_pipeline->get_miss_shader_table();
+    desc.RayGenerationShaderRecord = m_active_pipeline->get_ray_generation_shader_record();
+
+    command_list_4->DispatchRays(&desc);
+}
+
 void dx12_ri_command_list::begin_event(const color& color, const char* format, ...)
 {
     uint8_t r, g, b, a;

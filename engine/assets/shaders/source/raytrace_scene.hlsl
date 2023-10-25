@@ -6,6 +6,7 @@
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/math.hlsl"
 #include "data:shaders/source/common/sh.hlsl"
+#include "data:shaders/source/common/raytracing.hlsl"
 
 struct ray_payload
 {
@@ -21,7 +22,7 @@ void ray_generation()
 }
 
 [shader("miss")]
-void ray_miss(inout ray_payload payload)
+void ray_primitive_miss(inout ray_payload payload)
 {
     payload.hit_t = -1.f;
 }
@@ -29,15 +30,25 @@ void ray_miss(inout ray_payload payload)
 // Opaque geometry
 
 [shader("closesthit")]
-void ray_closest_hit_opaque(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
+void ray_primitive_opaque_closest_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
+    tlas_metadata metadata = load_tlas_metadata();
+    material mat = load_tlas_material(metadata);
+    model_info model = load_tlas_model(metadata);
+
     // todo
 }
 
 // Masked geometry
 
 [shader("closesthit")]
-void ray_closest_hit_masked(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
+void ray_primitive_masked_closest_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
+{
+    // todo
+}
+
+[shader("anyhit")]
+void ray_primitive_masked_any_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     // todo
 }
@@ -45,7 +56,7 @@ void ray_closest_hit_masked(inout ray_payload payload, BuiltInTriangleIntersecti
 // Sky geometry
 
 [shader("closesthit")]
-void ray_closest_hit_sky(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
+void ray_primitive_sky_closest_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     // todo
 }
@@ -53,7 +64,7 @@ void ray_closest_hit_sky(inout ray_payload payload, BuiltInTriangleIntersectionA
 // Transparent geometry
 
 [shader("anyhit")]
-void ray_any_hit_transparent(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
+void ray_primitive_transparent_any_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     // todo
 }

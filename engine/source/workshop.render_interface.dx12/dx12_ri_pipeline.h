@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.render_interface/ri_pipeline.h"
+#include "workshop.render_interface/ri_buffer.h"
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
@@ -35,6 +36,10 @@ public:
     bool is_compute();
     bool is_raytracing();
 
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE get_hit_group_table();
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE get_miss_shader_table();
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE get_ray_generation_shader_record();
+
 protected:
 
     bool create_root_signature();
@@ -42,6 +47,8 @@ protected:
     result<void> create_graphics_pso();
     result<void> create_compute_pso();
     result<void> create_raytracing_pso();
+
+    result<void> build_sbt();
 
 private:
     dx12_render_interface& m_renderer;
@@ -55,6 +62,12 @@ private:
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipeline_state = nullptr;
     Microsoft::WRL::ComPtr<ID3D12StateObject> m_rt_pipeline_state = nullptr;    
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_root_signature = nullptr;
+
+    size_t m_ray_generation_shader_offset = 0;
+    size_t m_ray_miss_table_offset = 0;
+    size_t m_ray_hit_group_table_offset = 0;
+
+    std::unique_ptr<ri_buffer> m_shader_binding_table;
 };
 
 }; // namespace ws

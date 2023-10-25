@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 22;
+constexpr size_t k_asset_compiled_version = 24;
 
 };
 
@@ -93,6 +93,7 @@ inline void stream_serialize(stream& out, shader::ray_hitgroup& block)
 {
     stream_serialize(out, block.name);
     stream_serialize_enum(out, block.domain);
+    stream_serialize_enum(out, block.type);
 
     for (size_t i = 0; i < block.stages.size(); i++)
     {
@@ -101,6 +102,18 @@ inline void stream_serialize(stream& out, shader::ray_hitgroup& block)
         stream_serialize(out, stage.entry_point);
         stream_serialize_list(out, stage.bytecode);
     }
+}
+
+template<>
+inline void stream_serialize(stream& out, shader::ray_missgroup& block)
+{
+    stream_serialize(out, block.name);
+    stream_serialize_enum(out, block.type);
+
+    shader::shader_stage& stage = block.ray_miss_stage;
+    stream_serialize(out, stage.file);
+    stream_serialize(out, stage.entry_point);
+    stream_serialize_list(out, stage.bytecode);
 }
 
 template<>
@@ -121,6 +134,7 @@ inline void stream_serialize(stream& out, shader::technique& block)
     stream_serialize(out, block.output_target_index);
     stream_serialize_list(out, block.param_block_indices);
     stream_serialize_list(out, block.ray_hitgroups);
+    stream_serialize_list(out, block.ray_missgroups);
     stream_serialize_map(out, block.defines);
 }
 
@@ -195,6 +209,7 @@ bool shader_loader::serialize(const char* path, shader& asset, bool isSaving)
     stream_serialize_list(*stream, asset.effects);
     stream_serialize_list(*stream, asset.techniques);
     // stream_serialize_list(*stream, asset.ray_hitgroups); // technique instances these, no need to keep the global list around.
+    // stream_serialize_list(*stream, asset.ray_missgroups); // technique instances these, no need to keep the global list around.
     stream_serialize_map(*stream, asset.global_defines);
 
     return true;
@@ -411,6 +426,7 @@ bool shader_loader::parse_ray_hitgroups(const char* path, YAML::Node& node, shad
 bool shader_loader::parse_ray_hitgroup(const char* path, const char* name, YAML::Node& node, shader& asset)
 {
     YAML::Node material_domain_group = node["material_domain"];
+    YAML::Node ray_type_group = node["ray_type"];
 
     shader::ray_hitgroup& block = asset.ray_hitgroups.emplace_back();
     block.name = name;
@@ -426,6 +442,17 @@ bool shader_loader::parse_ray_hitgroup(const char* path, const char* name, YAML:
         return false;
     }
 
+    if (!ray_type_group.IsDefined())
+    {
+        db_error(asset, "[%s] ray_type not defined for ray hit group '%s'.", path, name);
+        return false;
+    }
+    if (ray_type_group.Type() != YAML::NodeType::Scalar)
+    {
+        db_error(asset, "[%s] ray_type for ray hit group '%s' was not a scalar type.", path, name);
+        return false;
+    }
+
     if (auto ret = from_string<material_domain>(material_domain_group.as<std::string>()); ret)
     {
         block.domain = ret.get();
@@ -433,6 +460,16 @@ bool shader_loader::parse_ray_hitgroup(const char* path, const char* name, YAML:
     else
     {
         db_error(asset, "[%s] material_domain for ray hit group '%s' is invalid type '%s'.", path, material_domain_group.as<std::string>().c_str());
+        return false;
+    }
+
+    if (auto ret = from_string<ray_type>(ray_type_group.as<std::string>()); ret)
+    {
+        block.type = ret.get();
+    }
+    else
+    {
+        db_error(asset, "[%s] ray_type for ray hit group '%s' is invalid type '%s'.", path, ray_type_group.as<std::string>().c_str());
         return false;
     }
 
@@ -448,6 +485,88 @@ bool shader_loader::parse_ray_hitgroup(const char* path, const char* name, YAML:
         db_error(asset, "[%s] ray hitgroup '%s' defines no shader stages.", path, name);
         return false;
     }
+
+    return true;
+}
+
+bool shader_loader::parse_ray_missgroups(const char* path, YAML::Node& node, shader& asset)
+{
+    YAML::Node ray_hitgroups_node = node["ray_missgroups"];
+
+    if (!ray_hitgroups_node.IsDefined())
+    {
+        return true;
+    }
+
+    if (ray_hitgroups_node.Type() != YAML::NodeType::Map)
+    {
+        db_error(asset, "[%s] ray_missgroups node is invalid data type.", path);
+        return false;
+    }
+
+    for (auto iter = ray_hitgroups_node.begin(); iter != ray_hitgroups_node.end(); iter++)
+    {
+        std::string name = iter->first.as<std::string>();
+
+        if (!iter->second.IsMap())
+        {
+            db_error(asset, "[%s] ray_missgroups node '%s' was not map type.", path, name.c_str());
+            return false;
+        }
+
+        YAML::Node child = iter->second;
+        if (!parse_ray_missgroup(path, name.c_str(), child, asset))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool shader_loader::parse_ray_missgroup(const char* path, const char* name, YAML::Node& node, shader& asset)
+{
+    YAML::Node ray_type_group = node["ray_type"];
+
+    shader::ray_missgroup& block = asset.ray_missgroups.emplace_back();
+    block.name = name;
+
+    if (!ray_type_group.IsDefined())
+    {
+        db_error(asset, "[%s] ray_type not defined for ray miss group '%s'.", path, name);
+        return false;
+    }
+    if (ray_type_group.Type() != YAML::NodeType::Scalar)
+    {
+        db_error(asset, "[%s] ray_type for ray miss group '%s' was not a scalar type.", path, name);
+        return false;
+    }
+
+    if (auto ret = from_string<ray_type>(ray_type_group.as<std::string>()); ret)
+    {
+        block.type = ret.get();
+    }
+    else
+    {
+        db_error(asset, "[%s] ray_type for ray miss group '%s' is invalid type '%s'.", path, ray_type_group.as<std::string>().c_str());
+        return false;
+    }
+
+    size_t loaded_stage_count = 0;
+    std::array<shader::shader_stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
+
+    if (!parse_shader_stages(path, name, node, asset, stages, loaded_stage_count))
+    {
+        return false;
+    }
+
+    if (loaded_stage_count == 0 || stages[(int)ri_shader_stage::ray_miss].entry_point.empty())
+    {
+        db_error(asset, "[%s] ray missgroup '%s' defines no miss shader stage.", path, name);
+        return false;
+    }
+
+    block.ray_miss_stage = stages[(int)ri_shader_stage::ray_miss];
 
     return true;
 }
@@ -868,6 +987,7 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
     YAML::Node param_blocks_node = node["param_blocks"];
     YAML::Node defines_node = node["defines"];
     YAML::Node ray_hitgroups_node = node["ray_hitgroups"];
+    YAML::Node ray_missgroups_node = node["ray_missgroups"];
 
     shader::technique& block = asset.techniques.emplace_back();
     block.name = name;
@@ -1042,6 +1162,39 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
         }
     }
 
+    // Parse ray missgroups
+    if (ray_missgroups_node.IsDefined())
+    {
+        if (ray_missgroups_node.Type() != YAML::NodeType::Sequence)
+        {
+            db_error(asset, "[%s] ray miss groups for technique '%s' was not a sequence type.", path, name);
+            return false;
+        }
+
+        for (auto iter = ray_missgroups_node.begin(); iter != ray_missgroups_node.end(); iter++)
+        {
+            if (!iter->IsScalar())
+            {
+                db_error(asset, "[%s] ray miss group value for technique '%s' was not scalar type.", path, name);
+                return false;
+            }
+
+            std::string group_name = iter->as<std::string>();
+            auto group_iter = std::find_if(asset.ray_missgroups.begin(), asset.ray_missgroups.end(), [&group_name](const shader::ray_missgroup& state) {
+                return state.name == group_name;
+                });
+            if (group_iter == asset.ray_missgroups.end())
+            {
+                db_error(asset, "[%s] ray missgroups '%s' for technique '%s' was not found.", path, group_name.c_str(), name);
+                return false;
+            }
+            else
+            {
+                block.ray_missgroups.push_back(*group_iter);
+            }
+        }
+    }
+
     // Prase defines.
     if (defines_node.IsDefined())
     {
@@ -1182,6 +1335,11 @@ bool shader_loader::parse_file(const char* path, shader& asset)
     }
 
     if (!parse_ray_hitgroups(path, node, asset))
+    {
+        return false;
+    }
+
+    if (!parse_ray_missgroups(path, node, asset))
     {
         return false;
     }
@@ -1559,6 +1717,17 @@ bool shader_loader::compile_technique(const char* path, shader::technique& techn
         }
     }
 
+    // For each missgroup in the technique, compile that.
+    for (shader::ray_missgroup& missgroup : technique.ray_missgroups)
+    {
+        db_log(asset, "[%s] compiling shader miss group '%s' for technique '%s'.", path, missgroup.name.c_str(), technique.name.c_str());
+
+        if (!compile_ray_missgroup(path, technique, missgroup, asset, asset_platform, asset_config))
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1580,6 +1749,23 @@ bool shader_loader::compile_ray_hitgroup(const char* path, shader::technique& te
         }
     }
 
+    return true;
+}
+
+bool shader_loader::compile_ray_missgroup(const char* path, shader::technique& technique, shader::ray_missgroup& missgroup, shader& asset, platform_type asset_platform, config_type asset_config)
+{
+    shader::shader_stage& stage = missgroup.ray_miss_stage;
+    
+    if (stage.file.empty())
+    {
+        return false;
+    }
+
+    if (!compile_shader_stage(path, technique, asset, asset_platform, asset_config, stage, ri_shader_stage::ray_miss))
+    {
+        return false;
+    }
+ 
     return true;
 }
 

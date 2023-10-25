@@ -24,6 +24,30 @@ class ri_interface;
 class renderer;
 
 // ================================================================================================
+//  Defines the different types of rays that can be cast in the scene which determines
+//  how their shaders are selected from the shader binding table.
+// ================================================================================================
+enum class ray_type
+{
+    // Traces primitive geometry in the scene and returns radiance 
+    // values for them.
+    primitive = 0,
+
+    // Traces primitive geometry in the scene and returns depth 
+    // values for them.
+    occlusion = 1,
+
+    COUNT
+};
+
+inline static const char* ray_type_strings[static_cast<int>(ray_type::COUNT)] = {
+    "primitive",
+    "occlusion"
+};
+
+DEFINE_ENUM_TO_STRING(ray_type, ray_type_strings)
+
+// ================================================================================================
 //  Shader files contain a description of the param blocks, render state, techniques
 //  and other associated rendering data required to use a shader as part of
 //  a render pass.
@@ -90,7 +114,15 @@ public:
     {
         std::string name;
         material_domain domain;
+        ray_type type;
         std::array<shader_stage, static_cast<int>(ri_shader_stage::COUNT)> stages;
+    };
+
+    struct ray_missgroup
+    {
+        std::string name;
+        ray_type type;
+        shader_stage ray_miss_stage;
     };
 
     struct technique
@@ -102,6 +134,7 @@ public:
         size_t output_target_index;
         std::vector<size_t> param_block_indices;
         std::vector<ray_hitgroup> ray_hitgroups;
+        std::vector<ray_missgroup> ray_missgroups;
         std::unordered_map<std::string, std::string> defines;
     };
 
@@ -121,6 +154,7 @@ public:
     std::vector<effect> effects;
     std::vector<technique> techniques;
     std::vector<ray_hitgroup> ray_hitgroups;
+    std::vector<ray_missgroup> ray_missgroups;
 
 protected:
 

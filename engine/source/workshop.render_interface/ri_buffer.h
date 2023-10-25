@@ -26,6 +26,9 @@ enum class ri_buffer_usage
 
     // raytraching instance-data buffer used to store tlas instance data like the transforms of referenced blas's.
     raytracing_as_instance_data,
+
+    // shader binding table for selecting ray intersection shaders.
+    raytracing_shader_binding_table,
 };
 
 // ================================================================================================

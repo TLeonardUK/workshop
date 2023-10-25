@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.render_interface.dx12/dx12_ri_pipeline.h"
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
+#include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 
 namespace ws {
@@ -280,7 +281,39 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
             hitgroup_desc->IntersectionShaderImport = add_string(hitgroup.stages[(int)ri_shader_stage::ray_intersection].entry_point);
         }
 
+        D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+        sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        sub_object.pDesc = hitgroup_desc.get();
+
         hit_group_descs.push_back(std::move(hitgroup_desc));
+    }
+
+    // Add all the raytrace missgroups.
+    for (ri_pipeline::create_params::ray_missgroup& missgroup : m_create_params.ray_missgroups)
+    {
+        ri_pipeline::create_params::stage& stage_params = missgroup.ray_miss_stage;
+        if (stage_params.bytecode.empty())
+        {
+            continue;
+        }
+
+        std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
+        export_desc->Name = add_string(stage_params.entry_point);
+        export_desc->Flags = D3D12_EXPORT_FLAG_NONE;
+        export_desc->ExportToRename = nullptr;
+
+        std::unique_ptr<D3D12_DXIL_LIBRARY_DESC> sub_object_desc = std::make_unique<D3D12_DXIL_LIBRARY_DESC>();
+        sub_object_desc->DXILLibrary.pShaderBytecode = stage_params.bytecode.data();
+        sub_object_desc->DXILLibrary.BytecodeLength = stage_params.bytecode.size();
+        sub_object_desc->NumExports = 1;
+        sub_object_desc->pExports = export_desc.get();
+
+        D3D12_STATE_SUBOBJECT& sub_object = subobjects.emplace_back();
+        sub_object.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+        sub_object.pDesc = sub_object_desc.get();
+
+        library_descs.push_back(std::move(sub_object_desc));
+        export_descs.push_back(std::move(export_desc));
     }
 
     D3D12_STATE_OBJECT_DESC desc = {};
@@ -295,8 +328,159 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
         return false;
     }
 
+    if (result<void> ret = build_sbt(); !ret)
+    {
+        return false;
+    }
+
     m_is_raytracing = true;
     return true;
+}
+
+result<void> dx12_ri_pipeline::build_sbt()
+{
+    // Create the shader binding table.
+    Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> state_properties = nullptr;
+    if (HRESULT hr = m_rt_pipeline_state.As(&state_properties); FAILED(hr))
+    {
+        db_error(render_interface, "Failed to get ID3D12StateObjectProperties with error 0x%08x.", hr);
+        return false;
+    }
+
+    size_t sbt_hitgroup_count = m_create_params.ray_domain_count * m_create_params.ray_type_count;
+    size_t sbt_miss_count = m_create_params.ray_type_count;
+    size_t sbt_generate_count = 1;
+    size_t sbt_record_count = ((sbt_hitgroup_count * 3) + sbt_miss_count + sbt_generate_count);
+    size_t shader_id_size = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    size_t shader_table_size = shader_id_size * sbt_record_count;
+
+    std::vector<uint8_t> sbt_data;
+    sbt_data.resize(shader_table_size, 0);
+
+    // Build the SBT's data.
+    uint8_t* record_ptr = sbt_data.data();
+    bool failed = false;
+
+    auto add_record = [&record_ptr, &state_properties, &failed](const std::string& name, bool optional = false) {
+        if (name.empty() && optional)
+        {
+            record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+            return;
+        }
+        void* shader_id = state_properties->GetShaderIdentifier(widen_string(name).c_str());
+        if (shader_id == nullptr)
+        {
+            db_error(render_interface, "Failed to find shader id for shader with entry point '%s'.", name.c_str());
+            failed = true;
+            return;
+        }
+        memcpy(record_ptr, shader_id, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    };
+
+    auto add_empty_record = [&record_ptr]() {
+        record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    };
+
+    auto find_hit_group = [this](size_t domain, size_t type) -> ri_pipeline::create_params::ray_hitgroup* {
+        for (ri_pipeline::create_params::ray_hitgroup& hitgroup : m_create_params.ray_hitgroups)
+        {
+            if (hitgroup.domain == domain && hitgroup.type == type)
+            {
+                return &hitgroup;
+            }
+        }
+        return nullptr;
+    };
+
+    auto find_miss_group = [this](size_t type) -> ri_pipeline::create_params::ray_missgroup* {
+        for (ri_pipeline::create_params::ray_missgroup& missgroup : m_create_params.ray_missgroups)
+        {
+            if (missgroup.type == type)
+            {
+                return &missgroup;
+            }
+        }
+        return nullptr;
+    };
+
+    // Generation shader first.
+    m_ray_generation_shader_offset = (size_t)(record_ptr - sbt_data.data());
+    add_record(m_create_params.stages[(int)ri_shader_stage::ray_generation].entry_point);
+
+    // Miss shaders next.
+    m_ray_miss_table_offset = (size_t)(record_ptr - sbt_data.data());
+    for (size_t type = 0; type < m_create_params.ray_type_count; type++)
+    {
+        ri_pipeline::create_params::ray_missgroup* miss_group = find_miss_group(type);
+        if (miss_group == nullptr)
+        {
+            add_empty_record();
+        }
+        else
+        {
+            add_record(miss_group->ray_miss_stage.entry_point);
+        }
+    }
+
+    // Add all the hitgroups.
+    m_ray_hit_group_table_offset = (size_t)(record_ptr - sbt_data.data());
+    for (size_t domain = 0; domain < m_create_params.ray_domain_count; domain++)
+    {
+        for (size_t type = 0; type < m_create_params.ray_type_count; type++)
+        {
+            ri_pipeline::create_params::ray_hitgroup* hit_group = find_hit_group(domain, type);
+            if (hit_group == nullptr)
+            {
+                add_empty_record();
+            }
+            else
+            {
+                add_record(hit_group->name);
+            }
+        }
+    }
+
+    if (failed)
+    {
+        return false;
+    }
+
+    ri_buffer::create_params sbt_params;
+    sbt_params.element_count = 1;
+    sbt_params.element_size = shader_table_size;
+    sbt_params.usage = ri_buffer_usage::raytracing_shader_binding_table;
+    sbt_params.linear_data = std::span<uint8_t>(sbt_data.begin(), sbt_data.end());
+
+    m_shader_binding_table = m_renderer.create_buffer(sbt_params, string_format("%s : shader binding table", m_debug_name.c_str()).c_str());
+
+    return true;
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE dx12_ri_pipeline::get_hit_group_table()
+{
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE ret;
+    ret.StartAddress = static_cast<dx12_ri_buffer*>(m_shader_binding_table.get())->get_gpu_address() + m_ray_hit_group_table_offset;
+    ret.StrideInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES * m_create_params.ray_type_count * m_create_params.ray_domain_count * 3;
+    return ret;
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE dx12_ri_pipeline::get_miss_shader_table()
+{
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE ret;
+    ret.StartAddress = static_cast<dx12_ri_buffer*>(m_shader_binding_table.get())->get_gpu_address() + m_ray_miss_table_offset;
+    ret.StrideInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES * m_create_params.ray_type_count;
+    return ret;
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS_RANGE dx12_ri_pipeline::get_ray_generation_shader_record()
+{
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE ret;
+    ret.StartAddress = static_cast<dx12_ri_buffer*>(m_shader_binding_table.get())->get_gpu_address() + m_ray_generation_shader_offset;
+    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    return ret;
 }
 
 result<void> dx12_ri_pipeline::create_graphics_pso()

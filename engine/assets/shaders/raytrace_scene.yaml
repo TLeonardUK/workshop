@@ -16,45 +16,53 @@ effects:
       raytrace_scene: {}
    
 param_blocks:
-  scene_instance_data:
-    scope: indirect
-    fields:
-      material_table: int
-      material_offset: int
-      model_index: int
-      model_offset: int
-      gpu_flags: int
-
   raytrace_scene_parameters:
     scope: draw
     fields:
       scene_tlas: tlas
-      scene_tlas_instance_data: byteaddressbuffer
+      scene_tlas_metadata: byteaddressbuffer
 
 ray_hitgroups:
+  # Primitive ray types
   opaque_hitgroup:
     material_domain: opaque
+    ray_type: primitive
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_closest_hit_opaque
-
+      entry: ray_primitive_opaque_closest_hit
   masked_hitgroup:
     material_domain: masked
+    ray_type: primitive
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_closest_hit_masked
-      
-  transparent_hitgroup:
-    material_domain: transparent
+      entry: ray_primitive_masked_closest_hit    
     ray_any_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_any_hit_transparent
-      
+      entry: ray_primitive_masked_any_hit
+  transparent_hitgroup:
+    material_domain: transparent
+    ray_type: primitive
+    ray_any_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_primitive_transparent_any_hit      
   sky_hitgroup:
     material_domain: sky
+    ray_type: primitive
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_closest_hit_sky
+      entry: ray_primitive_sky_closest_hit
+  # Occlusion ray types
+  # TODO
+
+ray_missgroups:
+  # Primitive ray types
+  primitive_missgroup:
+    ray_type: primitive
+    ray_miss_shader:
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_primitive_miss
+  # Occlusion ray types
+  # TODO
 
 render_states:
   raytrace_scene_render_state:
@@ -65,9 +73,7 @@ techniques:
     ray_generation_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_generation
-    ray_miss_shader: 
-      file: data:shaders/source/raytrace_scene.hlsl
-      entry: ray_miss
-    ray_hitgroups: [ opaque_hitgroup, masked_hitgroup, transparent_hitgroup, sky_hitgroup  ]
+    ray_hitgroups: [ opaque_hitgroup, masked_hitgroup, transparent_hitgroup, sky_hitgroup ]
+    ray_missgroups: [ primitive_missgroup ]
     render_state: raytrace_scene_render_state
-    param_blocks: [ raytrace_scene_parameters  ]
+    param_blocks: [ raytrace_scene_parameters, tlas_metadata ]

@@ -222,6 +222,18 @@ param_blocks:
       material_info_offset: uint
       instance_buffer: byteaddressbuffer
 
+  # Metadata about an instance in the TLAS raytracing structure. Used to lookup
+  # model/material/etc information. This is akin to vertex_info from the raster pipeline
+  # except it also includes instance information.
+  tlas_metadata:
+    scope: indirect
+    fields:
+      model_info_table: uint
+      model_info_offset: uint
+      material_info_table: uint
+      material_info_offset: uint
+      gpu_flags: uint
+
   # Information about a material.
   material_info:
     scope: indirect

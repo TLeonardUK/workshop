@@ -31,9 +31,10 @@ public:
     result<void> create_resources();
     void destroy_resources();
 
-    virtual instance_id add_instance(ri_raytracing_blas* blas, const matrix4& transform) override;
+    virtual instance_id add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata) override;
     virtual void remove_instance(instance_id id) override;
     virtual void update_instance(instance_id id, const matrix4& transform) override;
+    virtual ri_buffer* get_metadata_buffer() override;
 
     // Called by interface each frame if building is required.
     void build(dx12_ri_command_list& cmd_list);
@@ -51,6 +52,9 @@ private:
     {
         dx12_ri_raytracing_blas* blas;
         matrix4 transform;
+        size_t domain;
+        ri_param_block* metadata;
+        bool opaque;
         bool dirty;
     };
 
@@ -64,6 +68,7 @@ private:
     std::unique_ptr<ri_buffer> m_scratch;
     std::unique_ptr<ri_buffer> m_resource;
     std::unique_ptr<ri_buffer> m_instance_data;
+    std::unique_ptr<ri_buffer> m_metadata_buffer;
 
     std::vector<size_t> m_active_instance_indices;
 

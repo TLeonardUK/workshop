@@ -88,7 +88,7 @@ public:
     virtual void dispatch(size_t group_size_x, size_t group_size_y, size_t group_size_z) = 0;
 
     // Dispatches a set of rays.
-    //virtual void dispatch_rays(size_t group_size_x, size_t group_size_y, size_t group_size_z) = 0;
+    virtual void dispatch_rays(size_t group_size_x, size_t group_size_y, size_t group_size_z) = 0;
 
     // Begins a profiling scope within the queue.
     virtual void begin_event(const color& color, const char* name, ...) = 0;

@@ -6,6 +6,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_raytracing_blas.h"
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
 #include "workshop.render_interface.dx12/dx12_ri_command_queue.h"
+#include "workshop.render_interface.dx12/dx12_ri_param_block.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 
@@ -87,6 +88,13 @@ result<void> dx12_ri_raytracing_tlas::create_resources()
     result_data_params.usage = ri_buffer_usage::raytracing_as;
     m_resource = m_renderer.create_buffer(result_data_params, string_format("%s: as", m_debug_name.c_str()).c_str());
 
+    // Create metadata buffer.
+    ri_buffer::create_params metadata_params;
+    metadata_params.element_size = sizeof(int) * 2;
+    metadata_params.element_count = m_instances.size();
+    metadata_params.usage = ri_buffer_usage::generic;
+    m_metadata_buffer = m_renderer.create_buffer(metadata_params, string_format("%s: metadata", m_debug_name.c_str()).c_str());
+
     m_instance_data_size = m_instances.size();
 
     for (size_t i = 0; i < m_instances.size(); i++)
@@ -97,7 +105,7 @@ result<void> dx12_ri_raytracing_tlas::create_resources()
     return true;
 }
 
-dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_raytracing_blas* blas, const matrix4& transform)
+dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata)
 {
     std::scoped_lock lock(m_instance_mutex);
 
@@ -109,6 +117,9 @@ dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_ra
     instance& inst = m_instances.emplace_back();
     inst.blas = static_cast<dx12_ri_raytracing_blas*>(blas);
     inst.transform = transform;
+    inst.domain = domain;
+    inst.opaque = opaque;
+    inst.metadata = metadata;
     inst.dirty = true;
 
     mark_dirty();
@@ -156,6 +167,11 @@ void dx12_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& tra
     mark_dirty();
 }
 
+ri_buffer* dx12_ri_raytracing_tlas::get_metadata_buffer()
+{
+    return m_metadata_buffer.get();
+}
+
 void dx12_ri_raytracing_tlas::mark_dirty()
 {
     if (m_dirty)
@@ -178,15 +194,24 @@ void dx12_ri_raytracing_tlas::build(dx12_ri_command_list& cmd_list)
         instance& inst = m_instances[i];
         if (inst.dirty)
         {
+            // Update TLAS instance data.
             D3D12_RAYTRACING_INSTANCE_DESC* desc = static_cast<D3D12_RAYTRACING_INSTANCE_DESC*>(m_instance_data->map(i * sizeof(D3D12_RAYTRACING_INSTANCE_DESC), sizeof(D3D12_RAYTRACING_INSTANCE_DESC)));
             desc->AccelerationStructure = inst.blas->get_gpu_address();
             memcpy(desc->Transform, &inst.transform, sizeof(desc->Transform));
-            desc->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+            desc->Flags = inst.opaque ? D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE : D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
             desc->InstanceMask = 0xFF;
-            desc->InstanceID = 0;                                       // TODO
-            desc->InstanceContributionToHitGroupIndex = 0;              // TODO
-
+            desc->InstanceID = i;
+            desc->InstanceContributionToHitGroupIndex = inst.domain;
             m_instance_data->unmap(desc);
+
+            // Update metadata buffer.
+            size_t table_index, table_offset;
+            inst.metadata->get_table(table_index, table_offset);
+
+            uint32_t* indexes = reinterpret_cast<uint32_t*>(m_metadata_buffer->map(i * sizeof(uint32_t) * 2, sizeof(uint32_t) * 2));
+            indexes[0] = (uint32_t)table_index;
+            indexes[1] = (uint32_t)table_offset;
+            m_metadata_buffer->unmap(indexes);
 
             inst.dirty = false;
         }

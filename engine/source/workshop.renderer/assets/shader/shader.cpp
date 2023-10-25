@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.renderer/assets/shader/shader.h"
+#include "workshop.renderer/assets/material/material.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_pipeline.h"
 #include "workshop.renderer/renderer.h"
@@ -83,10 +84,22 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
         params.stages[i].file = instance.stages[i].file;
     }
 
+    for (const ray_missgroup& group : instance.ray_missgroups)
+    {
+        ri_pipeline::create_params::ray_missgroup& param_group = params.ray_missgroups.emplace_back();
+        param_group.type = (size_t)group.type;
+        param_group.name = group.name.c_str();
+
+        param_group.ray_miss_stage.bytecode = group.ray_miss_stage.bytecode;
+        param_group.ray_miss_stage.entry_point = group.ray_miss_stage.entry_point;
+        param_group.ray_miss_stage.file = group.ray_miss_stage.file;
+    }
+
     for (const ray_hitgroup& group : instance.ray_hitgroups)
     {
         ri_pipeline::create_params::ray_hitgroup& param_group = params.ray_hitgroups.emplace_back();
         param_group.domain = (size_t)group.domain;
+        param_group.type = (size_t)group.type;
         param_group.name = group.name.c_str();
 
         for (size_t i = 0; i < group.stages.size(); i++)
@@ -96,6 +109,9 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
             param_group.stages[i].file = group.stages[i].file;
         }
     }
+
+    params.ray_domain_count = (int)material_domain::COUNT;
+    params.ray_type_count = (int)ray_type::COUNT;
 
     std::unique_ptr<ri_pipeline> pipeline = m_ri_interface.create_pipeline(params, instance.name.c_str());
     if (pipeline == nullptr)

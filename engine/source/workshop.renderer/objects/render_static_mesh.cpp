@@ -201,9 +201,22 @@ void render_static_mesh::create_render_data()
 
         m_registered_batches.push_back(info);
 
-        // Add to scene tlas.
+        // Create metadata for the tlas
         ri_raytracing_blas* blas = m_model->find_or_create_blas(i);
-        m_registered_tlas_instances.push_back(m_renderer->get_scene_tlas().add_instance(blas, get_transform()));
+
+        tlas_instance* tlas = &m_registered_tlas_instances.emplace_back();
+        tlas->metadata = m_renderer->get_param_block_manager().create_param_block("tlas_metadata");
+
+        size_t table_index, table_offset;
+        m_model->get_model_info_param_block().get_table(table_index, table_offset);
+        tlas->metadata->set("model_info_table", (uint32_t)table_index);
+        tlas->metadata->set("model_info_offset", (uint32_t)table_offset);
+        mat->get_material_info_param_block()->get_table(table_index, table_offset);
+        tlas->metadata->set("material_info_table", (uint32_t)table_index);
+        tlas->metadata->set("material_info_offset", (uint32_t)table_offset);
+        tlas->metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
+
+        tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, mat->domain != material_domain::transparent, tlas->metadata.get());
     }
 }
 
@@ -221,9 +234,9 @@ void render_static_mesh::destroy_render_data()
     }
     m_registered_batches.clear();
 
-    for (ri_raytracing_tlas::instance_id instance : m_registered_tlas_instances)
+    for (tlas_instance& instance : m_registered_tlas_instances)
     {
-        m_renderer->get_scene_tlas().remove_instance(instance);
+        m_renderer->get_scene_tlas().remove_instance(instance.id);
     }
     m_registered_tlas_instances.clear();
 
@@ -237,10 +250,12 @@ void render_static_mesh::update_render_data()
     m_geometry_instance_info->set("model_matrix", transform);
     m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
 
-    // Update tlas transform fo all meshes.
-    for (ri_raytracing_tlas::instance_id instance : m_registered_tlas_instances)
+    // Update tlas transform and metadata.
+    for (tlas_instance& instance : m_registered_tlas_instances)
     {
-        m_renderer->get_scene_tlas().update_instance(instance, transform);
+        instance.metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
+
+        m_renderer->get_scene_tlas().update_instance(instance.id, transform);
     }
 }
 

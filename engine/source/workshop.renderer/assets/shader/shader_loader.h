@@ -47,6 +47,7 @@ private:
     bool compile_shader_stage(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config, shader::shader_stage& stage, ri_shader_stage pipeline_stage);
     bool compile_technique(const char* path, shader::technique& technique, shader& asset, platform_type asset_platform, config_type asset_config);
     bool compile_ray_hitgroup(const char* path, shader::technique& technique, shader::ray_hitgroup& hitgroup, shader& asset, platform_type asset_platform, config_type asset_config);
+    bool compile_ray_missgroup(const char* path, shader::technique& technique, shader::ray_missgroup& missgroup, shader& asset, platform_type asset_platform, config_type asset_config);
 
     bool parse_imports(const char* path, YAML::Node& node, shader& asset);
 
@@ -57,6 +58,9 @@ private:
 
     bool parse_ray_hitgroups(const char* path, YAML::Node& node, shader& asset);
     bool parse_ray_hitgroup(const char* path, const char* name, YAML::Node& node, shader& asset);
+
+    bool parse_ray_missgroups(const char* path, YAML::Node& node, shader& asset);
+    bool parse_ray_missgroup(const char* path, const char* name, YAML::Node& node, shader& asset);
 
     bool parse_render_states(const char* path, YAML::Node& node, shader& asset);
     bool parse_render_state(const char* path, const char* name, YAML::Node& node, shader& asset);

@@ -70,6 +70,7 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     case ri_buffer_usage::raytracing_as:
     case ri_buffer_usage::raytracing_as_instance_data:
     case ri_buffer_usage::raytracing_as_scratch:
+    case ri_buffer_usage::raytracing_shader_binding_table:
     {
         mem_type = memory_type::rendering__vram__raytracing_buffer;
         break;
@@ -155,6 +156,7 @@ result<void> dx12_ri_buffer::create_resources()
             m_common_state = ri_resource_state::raytracing_acceleration_structure;
             break;
         }
+    case ri_buffer_usage::raytracing_shader_binding_table:
     case ri_buffer_usage::raytracing_as_instance_data:
         {
             m_common_state = ri_resource_state::non_pixel_shader_resource;
