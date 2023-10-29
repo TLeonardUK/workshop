@@ -35,11 +35,12 @@ void editor_performance_window::draw()
     size_t display_width = (size_t)ImGui::GetIO().DisplaySize.x;
     size_t display_height = (size_t)ImGui::GetIO().DisplaySize.y;
 
-    ImGui::SetNextWindowPos(ImVec2((float)(display_width - k_width - k_padding), (float)k_padding), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(k_width, 0), ImGuiCond_Always);
-
     if (m_open)
     {
+        ImGui::SetNextWindowPos(ImVec2((float)(display_width - k_width - k_padding), (float)k_padding), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(k_width, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(0.85f);
+
         if (ImGui::Begin(get_window_id(), &m_open, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize))
         {
             if (ImGui::BeginTable("Stats Table", 2))
