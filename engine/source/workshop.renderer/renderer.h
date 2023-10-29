@@ -92,6 +92,7 @@ enum class visualization_mode
     indirect_diffuse,
     direct_light,
     ao,
+    raytraced_scene,
 
     COUNT
 };
@@ -113,7 +114,8 @@ static inline const char* visualization_mode_strings[] = {
     "Indirect Specular",
     "Indirect Diffuse",
     "Direct Light",
-    "Ambient Occlusion"
+    "Ambient Occlusion",
+    "Raytraced Scene"
 };
 
 // Global render flags are used to define how various parts of the render pipeline should behave.
@@ -462,7 +464,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::normal;
+    visualization_mode m_visualization_mode = visualization_mode::raytraced_scene;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

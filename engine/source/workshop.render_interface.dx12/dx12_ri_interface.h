@@ -49,8 +49,17 @@ public:
 
     // Maximum amount of queries that can be allocated.
     constexpr static size_t k_maximum_queries = 200;
- 
-    dx12_render_interface();
+
+    // TODO: Move this configuration elsewhere.
+    // ray_type_count
+    //  Number of domains for each raytracing hitgroup. Think of these as material domains
+    //  they determine what shader to execute on intersection.
+    // ray_domain_count
+    //  Number of ray types for each raytracing hitgroup. These are varients of the hitgroups
+    //  that collect and return different data. For example you can have a "primitive" type
+    //  that returns color data, or an "occlusion" type that returns depth data. This determines
+    //  what shader is executed on intersection along with the ray_domain_count.
+    dx12_render_interface(size_t ray_type_count, size_t ray_domain_count);
     virtual ~dx12_render_interface();
 
     virtual void register_init(init_list& list) override;
@@ -99,6 +108,9 @@ public:
     dx12_ri_descriptor_table& get_descriptor_table(ri_descriptor_table table);
 
     size_t get_frame_index();
+
+    size_t get_ray_domain_count();
+    size_t get_ray_type_count();
 
     // Used to queue a rebuild of a tlas/blas resources.
     void queue_as_build(dx12_ri_raytracing_tlas* tlas);
@@ -163,6 +175,9 @@ private:
     std::mutex m_pending_as_build_mutex;
     std::unordered_set<dx12_ri_raytracing_blas*> m_pending_blas_builds;
     std::unordered_set<dx12_ri_raytracing_tlas*> m_pending_tlas_builds;
+
+    size_t m_ray_type_count;
+    size_t m_ray_domain_count;
 
 };
 

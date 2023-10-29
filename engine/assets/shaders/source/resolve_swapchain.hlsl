@@ -16,7 +16,7 @@ struct swapchain_output
 
 swapchain_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment f = read_gbuffer(input.uv0 * uv_scale);
+    //gbuffer_fragment f = read_gbuffer(input.uv0 * uv_scale);
 
     swapchain_output output;
     bool tonemap = false;
@@ -41,18 +41,24 @@ swapchain_output pshader(fullscreen_pinput input)
         case visualization_mode_t::wireframe:
         case visualization_mode_t::ao:
         {
+            output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv0 * uv_scale);
+            tonemap = false;
+            break;
+        }
+        case visualization_mode_t::raytraced_scene:
+        { 
+            output.color = raytraced_scene_texture.Sample(raytraced_scene_sampler, input.uv0);// * uv_scale);
+            //output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv0 * uv_scale);
             tonemap = false;
             break;
         }
         case visualization_mode_t::normal:
         {
+            output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv0 * uv_scale);
             tonemap = true;
             break;
         }
     }
-
-    // Grab fragment color from lit buffer.
-    output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv0 * uv_scale);
 
     // Gamma correct the output
     if (tonemap && tonemap_enabled)

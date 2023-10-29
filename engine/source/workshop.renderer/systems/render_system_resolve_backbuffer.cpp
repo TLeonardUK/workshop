@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/systems/render_system_resolve_backbuffer.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.renderer/systems/render_system_raytrace_scene.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
@@ -148,6 +149,8 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     }
     resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
     resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    resolve_param_block->set("raytraced_scene_texture", m_renderer.get_system<render_system_raytrace_scene>()->get_output_buffer());
+    resolve_param_block->set("raytraced_scene_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
     resolve_param_block->set("tonemap_enabled", !is_hdr_output);
     resolve_param_block->set("white_point_squared", math::square(white_point));    
     resolve_param_block->set("average_luminance_buffer", *m_luminance_average_buffer, true);

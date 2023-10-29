@@ -25,6 +25,8 @@ param_blocks:
       visualization_mode: int
       light_buffer_texture: texture2d
       light_buffer_sampler: sampler     
+      raytraced_scene_texture: texture2d
+      raytraced_scene_sampler: sampler
       uv_scale: float2
       tonemap_enabled: bool
       average_luminance_buffer: rwbyteaddressbuffer

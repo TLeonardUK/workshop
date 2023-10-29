@@ -347,10 +347,13 @@ result<void> dx12_ri_pipeline::build_sbt()
         return false;
     }
 
-    size_t sbt_hitgroup_count = m_create_params.ray_domain_count * m_create_params.ray_type_count;
-    size_t sbt_miss_count = m_create_params.ray_type_count;
+    size_t ray_domain_count = m_renderer.get_ray_domain_count();
+    size_t ray_type_count = m_renderer.get_ray_type_count();
+
+    size_t sbt_hitgroup_count = ray_domain_count * ray_type_count;
+    size_t sbt_miss_count = ray_type_count;
     size_t sbt_generate_count = 1;
-    size_t sbt_record_count = ((sbt_hitgroup_count * 3) + sbt_miss_count + sbt_generate_count);
+    size_t sbt_record_count = (sbt_hitgroup_count + sbt_miss_count + sbt_generate_count);
     size_t shader_id_size = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     size_t shader_table_size = shader_id_size * sbt_record_count;
 
@@ -361,7 +364,7 @@ result<void> dx12_ri_pipeline::build_sbt()
     uint8_t* record_ptr = sbt_data.data();
     bool failed = false;
 
-    auto add_record = [&record_ptr, &state_properties, &failed](const std::string& name, bool optional = false) {
+    auto add_record = [&record_ptr, &state_properties, &failed, &sbt_data](const std::string& name, bool optional = false) {
         if (name.empty() && optional)
         {
             record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
@@ -374,11 +377,13 @@ result<void> dx12_ri_pipeline::build_sbt()
             failed = true;
             return;
         }
+        db_log(core, "%zi: %s", (size_t)(record_ptr - sbt_data.data()), name.c_str());
         memcpy(record_ptr, shader_id, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     };
 
-    auto add_empty_record = [&record_ptr]() {
+    auto add_empty_record = [&record_ptr, &sbt_data]() {
+        db_log(core, "%zi: %s", (size_t)(record_ptr - sbt_data.data()), "empty record");
         record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     };
 
@@ -404,13 +409,30 @@ result<void> dx12_ri_pipeline::build_sbt()
         return nullptr;
     };
 
+    auto align_offset = [&record_ptr, &sbt_data](size_t alignment) {
+        size_t offset = (size_t)(record_ptr - sbt_data.data());
+        size_t left_over = offset % alignment;
+        if (left_over == 0)
+        {
+            return;
+        }
+        size_t padding = alignment - left_over;
+        db_log(core, "%zi: %zi bytes of padding", (size_t)(record_ptr - sbt_data.data()), padding);
+        record_ptr += padding;
+    };
+
+    db_log(core, "=========== Shader Binding Table Layout: %s ============", m_debug_name.c_str());
+
     // Generation shader first.
     m_ray_generation_shader_offset = (size_t)(record_ptr - sbt_data.data());
     add_record(m_create_params.stages[(int)ri_shader_stage::ray_generation].entry_point);
 
     // Miss shaders next.
+    align_offset(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+
+    db_log(core, "== MISS SHADER TABLE ==");
     m_ray_miss_table_offset = (size_t)(record_ptr - sbt_data.data());
-    for (size_t type = 0; type < m_create_params.ray_type_count; type++)
+    for (size_t type = 0; type < ray_type_count; type++)
     {
         ri_pipeline::create_params::ray_missgroup* miss_group = find_miss_group(type);
         if (miss_group == nullptr)
@@ -424,10 +446,13 @@ result<void> dx12_ri_pipeline::build_sbt()
     }
 
     // Add all the hitgroups.
+    align_offset(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+
+    db_log(core, "== HIT GROUP TABLE ==");
     m_ray_hit_group_table_offset = (size_t)(record_ptr - sbt_data.data());
-    for (size_t domain = 0; domain < m_create_params.ray_domain_count; domain++)
+    for (size_t domain = 0; domain < ray_domain_count; domain++)
     {
-        for (size_t type = 0; type < m_create_params.ray_type_count; type++)
+        for (size_t type = 0; type < ray_type_count; type++)
         {
             ri_pipeline::create_params::ray_hitgroup* hit_group = find_hit_group(domain, type);
             if (hit_group == nullptr)
@@ -446,6 +471,8 @@ result<void> dx12_ri_pipeline::build_sbt()
         return false;
     }
 
+    db_log(core, "==== END ====");
+
     ri_buffer::create_params sbt_params;
     sbt_params.element_count = 1;
     sbt_params.element_size = shader_table_size;
@@ -459,19 +486,26 @@ result<void> dx12_ri_pipeline::build_sbt()
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE dx12_ri_pipeline::get_hit_group_table()
 {
+    size_t ray_domain_count = m_renderer.get_ray_domain_count();
+    size_t ray_type_count = m_renderer.get_ray_type_count();
+
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE ret;
     ret.StartAddress = static_cast<dx12_ri_buffer*>(m_shader_binding_table.get())->get_gpu_address() + m_ray_hit_group_table_offset;
     ret.StrideInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES * m_create_params.ray_type_count * m_create_params.ray_domain_count * 3;
+    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES * ray_type_count * ray_domain_count;
+
     return ret;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE dx12_ri_pipeline::get_miss_shader_table()
 {
+    size_t ray_type_count = m_renderer.get_ray_type_count();
+
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE ret;
     ret.StartAddress = static_cast<dx12_ri_buffer*>(m_shader_binding_table.get())->get_gpu_address() + m_ray_miss_table_offset;
     ret.StrideInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES * m_create_params.ray_type_count;
+    ret.SizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES * ray_type_count;
+
     return ret;
 }
 

@@ -37,7 +37,7 @@ geometry_pinput vshader(vertex_input input)
     result.world_position = mul(vi.model_matrix, float4(v.position, 1.0f));
 
     return result;
-}
+} 
 
 gbuffer_output pshader_common(geometry_pinput input, material mat, float4 albedo)
 {

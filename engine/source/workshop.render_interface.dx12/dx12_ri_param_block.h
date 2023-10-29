@@ -31,6 +31,7 @@ public:
     virtual void set(const char* field_name, const ri_sampler& resource) override;
     virtual void set(const char* field_name, const ri_texture_view& resource, bool writable) override;
     virtual void set(const char* field_name, const ri_buffer& resource, bool writable) override;
+    virtual void set(const char* field_name, const ri_raytracing_tlas& resource) override;
 
     virtual void clear_buffer(const char* field_name) override;
 

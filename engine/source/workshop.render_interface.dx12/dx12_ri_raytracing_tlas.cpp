@@ -172,6 +172,11 @@ ri_buffer* dx12_ri_raytracing_tlas::get_metadata_buffer()
     return m_metadata_buffer.get();
 }
 
+const ri_buffer& dx12_ri_raytracing_tlas::get_tlas_buffer() const
+{
+    return *m_resource;
+}
+
 void dx12_ri_raytracing_tlas::mark_dirty()
 {
     if (m_dirty)
@@ -185,6 +190,9 @@ void dx12_ri_raytracing_tlas::mark_dirty()
 
 void dx12_ri_raytracing_tlas::build(dx12_ri_command_list& cmd_list)
 {
+    size_t ray_domain_count = m_renderer.get_ray_domain_count();
+    size_t ray_type_count = m_renderer.get_ray_type_count();
+
     // Ensure we have appropriately sized resources.
     create_resources();
 
@@ -201,7 +209,7 @@ void dx12_ri_raytracing_tlas::build(dx12_ri_command_list& cmd_list)
             desc->Flags = inst.opaque ? D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE : D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
             desc->InstanceMask = 0xFF;
             desc->InstanceID = i;
-            desc->InstanceContributionToHitGroupIndex = inst.domain;
+            desc->InstanceContributionToHitGroupIndex = inst.domain * ray_type_count;
             m_instance_data->unmap(desc);
 
             // Update metadata buffer.

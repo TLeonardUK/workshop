@@ -36,6 +36,8 @@ public:
     virtual void update_instance(instance_id id, const matrix4& transform) override;
     virtual ri_buffer* get_metadata_buffer() override;
 
+    const ri_buffer& get_tlas_buffer() const;
+
     // Called by interface each frame if building is required.
     void build(dx12_ri_command_list& cmd_list);
 

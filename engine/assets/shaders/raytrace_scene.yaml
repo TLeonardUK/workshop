@@ -21,16 +21,17 @@ param_blocks:
     fields:
       scene_tlas: tlas
       scene_tlas_metadata: byteaddressbuffer
+      output_texture: rwtexture2d
 
 ray_hitgroups:
   # Primitive ray types
-  opaque_hitgroup:
+  primitive_opaque_hitgroup:
     material_domain: opaque
     ray_type: primitive
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_opaque_closest_hit
-  masked_hitgroup:
+  primitive_masked_hitgroup:
     material_domain: masked
     ray_type: primitive
     ray_closest_hit_shader: 
@@ -39,20 +40,46 @@ ray_hitgroups:
     ray_any_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_masked_any_hit
-  transparent_hitgroup:
+  primitive_transparent_hitgroup:
     material_domain: transparent
     ray_type: primitive
     ray_any_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_transparent_any_hit      
-  sky_hitgroup:
+  primitive_sky_hitgroup:
     material_domain: sky
     ray_type: primitive
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_sky_closest_hit
   # Occlusion ray types
-  # TODO
+  occlusion_opaque_hitgroup:
+    material_domain: opaque
+    ray_type: occlusion
+    ray_closest_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_occlusion_opaque_closest_hit
+  occlusion_masked_hitgroup:
+    material_domain: masked
+    ray_type: occlusion
+    ray_closest_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_occlusion_masked_closest_hit    
+    ray_any_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_occlusion_masked_any_hit
+  occlusion_transparent_hitgroup:
+    material_domain: transparent
+    ray_type: occlusion
+    ray_any_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_occlusion_transparent_any_hit      
+  occlusion_sky_hitgroup:
+    material_domain: sky
+    ray_type: occlusion
+    ray_closest_hit_shader: 
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_occlusion_sky_closest_hit
 
 ray_missgroups:
   # Primitive ray types
@@ -62,7 +89,11 @@ ray_missgroups:
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_miss
   # Occlusion ray types
-  # TODO
+  occlusion_missgroup:
+    ray_type: occlusion
+    ray_miss_shader:
+      file: data:shaders/source/raytrace_scene.hlsl
+      entry: ray_occlusion_miss
 
 render_states:
   raytrace_scene_render_state:
@@ -73,7 +104,23 @@ techniques:
     ray_generation_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_generation
-    ray_hitgroups: [ opaque_hitgroup, masked_hitgroup, transparent_hitgroup, sky_hitgroup ]
-    ray_missgroups: [ primitive_missgroup ]
+    ray_hitgroups: [ 
+      primitive_opaque_hitgroup, 
+      primitive_masked_hitgroup, 
+      primitive_transparent_hitgroup, 
+      primitive_sky_hitgroup,
+      occlusion_opaque_hitgroup, 
+      occlusion_masked_hitgroup, 
+      occlusion_transparent_hitgroup, 
+      occlusion_sky_hitgroup 
+    ]
+    ray_missgroups: [ 
+      primitive_missgroup, 
+      occlusion_missgroup 
+    ]
     render_state: raytrace_scene_render_state
-    param_blocks: [ raytrace_scene_parameters, tlas_metadata ]
+    param_blocks: [ 
+      view_info, 
+      raytrace_scene_parameters, 
+      tlas_metadata 
+    ]

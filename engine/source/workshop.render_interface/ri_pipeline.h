@@ -56,20 +56,6 @@ public:
         std::vector<ri_texture_format> color_formats;
         ri_texture_format depth_format;
 
-        // Number of domains for each raytracing hitgroup. Think of these as material domains
-        // they determine what shader to execute on intersection.
-        // 
-        // Number should for all shaders.
-        size_t ray_domain_count;
-
-        // Number of ray types for each raytracing hitgroup. These are varients of the hitgroups
-        // that collect and return different data. For example you can have a "primitive" type
-        // that returns color data, or an "occlusion" type that returns depth data. This determines
-        // what shader is executed on intersection along with the ray_domain_count.
-        // 
-        // Number should for all shaders.
-        size_t ray_type_count;
-
     };
 
 public:

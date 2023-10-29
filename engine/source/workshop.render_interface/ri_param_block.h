@@ -22,6 +22,7 @@ class ri_texture;
 class ri_sampler;
 class ri_buffer;
 class ri_param_block_archetype;
+class ri_raytracing_tlas;
 
 // ================================================================================================
 //  Represents a block of parameters that can be passed into a shader as a constant buffer.
@@ -72,6 +73,7 @@ public:
 	virtual void set(const char* field_name, const ri_texture_view& resource, bool writable = false) = 0;
 	virtual void set(const char* field_name, const ri_sampler& resource) = 0;
 	virtual void set(const char* field_name, const ri_buffer& resource, bool writable = false) = 0;
+    virtual void set(const char* field_name, const ri_raytracing_tlas& resource) = 0;
 
 	virtual void clear_buffer(const char* field_name) = 0;
 

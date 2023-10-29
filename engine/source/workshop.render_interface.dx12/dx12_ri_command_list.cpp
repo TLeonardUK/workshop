@@ -142,6 +142,12 @@ void dx12_ri_command_list::barrier(ID3D12Resource* resource, ri_resource_state r
     barrier.Transition.StateAfter = ri_to_dx12(destination_state);
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     m_command_list->ResourceBarrier(1, &barrier);
+
+    // If we are transitioning from a UAV resource, also put a uav barrier in.
+    if (source_state == ri_resource_state::unordered_access)
+    {
+        barrier_uav(resource);
+    }
 }
 
 void dx12_ri_command_list::barrier_uav(ID3D12Resource* resource)
@@ -271,7 +277,7 @@ void dx12_ri_command_list::set_param_blocks(const std::vector<ri_param_block*> p
             dx12_ri_param_block* input = static_cast<dx12_ri_param_block*>(base);
             if (input->get_archetype() == archetype)
             {
-                if (m_active_pipeline->is_compute())
+                if (m_active_pipeline->is_compute() || m_active_pipeline->is_raytracing())
                 {
                     m_command_list->SetComputeRootConstantBufferView(
                         static_cast<UINT>(base_param_block_root_parameter + cbv_index),

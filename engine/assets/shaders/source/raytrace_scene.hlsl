@@ -7,64 +7,44 @@
 #include "data:shaders/source/common/math.hlsl"
 #include "data:shaders/source/common/sh.hlsl"
 #include "data:shaders/source/common/raytracing.hlsl"
-
-struct ray_payload
-{
-    float  hit_t;
-    float3 world_position;
-    int    instance_index;
-};
+#include "data:shaders/source/common/raytracing_primitive_ray.hlsl"
+#include "data:shaders/source/common/raytracing_occlusion_ray.hlsl"
 
 [shader("raygeneration")]
 void ray_generation()
 {
-    // todo
-}
+    float4x4 mvp_matrix = mul(projection_matrix, view_matrix);
+    float3 forward_direction = mul(view_matrix, float4(0.0f, 0.0f, 1.0f, 0.0f));
 
-[shader("miss")]
-void ray_primitive_miss(inout ray_payload payload)
-{
-    payload.hit_t = -1.f;
-}
+    // Get location within output target
+    uint2 launch_index = DispatchRaysIndex().xy;
+    float2 dims = float2(DispatchRaysDimensions().xy);
+    float2 ndc = (launch_index.xy + 0.5f) / dims.xy;
+    ndc = float2(ndc.x, 1.0f - ndc.y);
 
-// Opaque geometry
+    float3 ray_origin = ndc_to_world_space(ndc, inverse_projection_matrix, inverse_view_matrix).xyz;
+    float3 ray_direction = (ray_origin - view_world_position);
 
-[shader("closesthit")]
-void ray_primitive_opaque_closest_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-    tlas_metadata metadata = load_tlas_metadata();
-    material mat = load_tlas_material(metadata);
-    model_info model = load_tlas_model(metadata);
+    RayDesc ray;
+    ray.Origin = ray_origin;
+    ray.Direction = ray_direction;
+    ray.TMin = 0;
+    ray.TMax = view_z_near + view_z_far;
 
-    // todo
-}
+    // Initialize the ray payload
+    primitive_ray_payload payload;
+    payload.hit_t = -1.0f;
+    payload.color = float3(1.0f, 0, 1.0f);
 
-// Masked geometry
+    TraceRay(
+        scene_tlas,
+        RAY_FLAG_NONE,
+        0xFF,
+        ray_type::primitive,
+        ray_type::count,
+        0,
+        ray,
+        payload);
 
-[shader("closesthit")]
-void ray_primitive_masked_closest_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-    // todo
-}
-
-[shader("anyhit")]
-void ray_primitive_masked_any_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-    // todo
-}
-
-// Sky geometry
-
-[shader("closesthit")]
-void ray_primitive_sky_closest_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-    // todo
-}
-
-// Transparent geometry
-
-[shader("anyhit")]
-void ray_primitive_transparent_any_hit(inout ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
-{
-    // todo
+    output_texture[launch_index] = float4(payload.color.rgb, 1.0f); 
 }

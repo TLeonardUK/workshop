@@ -36,7 +36,7 @@ void example_game_app::configure_engine(engine& engine)
 
 ws::result<void> example_game_app::start()
 {
-    get_engine().load_world("data:scenes/diffuse_probe_tests.yaml");
+    get_engine().load_world("data:scenes/sponza.yaml");
     return true;
 }
 

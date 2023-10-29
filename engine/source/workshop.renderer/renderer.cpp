@@ -17,6 +17,7 @@
 #include "workshop.renderer/systems/render_system_light_probes.h"
 #include "workshop.renderer/systems/render_system_reflection_probes.h"
 #include "workshop.renderer/systems/render_system_selection_outline.h"
+#include "workshop.renderer/systems/render_system_raytrace_scene.h"
 
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_effect.h"
@@ -126,6 +127,7 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
     m_systems.push_back(std::make_unique<render_system_ssao>(*this));
+    m_systems.push_back(std::make_unique<render_system_raytrace_scene>(*this));    
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_transparent_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_light_probes>(*this));

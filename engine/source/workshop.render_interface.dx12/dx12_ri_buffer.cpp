@@ -21,15 +21,15 @@ dx12_ri_buffer::dx12_ri_buffer(dx12_render_interface& renderer, const char* debu
 
 dx12_ri_buffer::~dx12_ri_buffer()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav]()
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav, srv_table = m_srv_table, uav_table = m_uav_table]()
     {
         if (srv.is_valid())
         {
-            renderer->get_descriptor_table(ri_descriptor_table::buffer).free(srv);
+            renderer->get_descriptor_table(srv_table).free(srv);
         }
         if (uav.is_valid())
         {
-            renderer->get_descriptor_table(ri_descriptor_table::rwbuffer).free(uav);
+            renderer->get_descriptor_table(uav_table).free(uav);
         }
         //CheckedRelease(handle);    
     });
@@ -108,7 +108,8 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     if (m_create_params.usage == ri_buffer_usage::generic ||
         m_create_params.usage == ri_buffer_usage::raytracing_as_instance_data ||
         m_create_params.usage == ri_buffer_usage::raytracing_as_scratch ||
-        m_create_params.usage == ri_buffer_usage::raytracing_as)
+        m_create_params.usage == ri_buffer_usage::raytracing_as ||
+        m_create_params.usage == ri_buffer_usage::raytracing_shader_binding_table)
     {
         desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -144,6 +145,9 @@ result<void> dx12_ri_buffer::create_resources()
     size_t total_size = m_create_params.element_size * m_create_params.element_count;
     m_is_small_buffer = (total_size < small_allocator.get_max_size());
 
+    m_uav_table = ri_descriptor_table::rwbuffer;
+    m_srv_table = ri_descriptor_table::buffer;
+
     switch (m_create_params.usage)
     {
     case ri_buffer_usage::index_buffer:
@@ -154,6 +158,7 @@ result<void> dx12_ri_buffer::create_resources()
     case ri_buffer_usage::raytracing_as:
         {
             m_common_state = ri_resource_state::raytracing_acceleration_structure;
+            m_srv_table = ri_descriptor_table::tlas;
             break;
         }
     case ri_buffer_usage::raytracing_shader_binding_table:
@@ -218,18 +223,39 @@ result<void> dx12_ri_buffer::create_resources()
     // Create SRV view for buffer.
     D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
     view_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
-    view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-    view_desc.Buffer.FirstElement = sub_allocation_offset / 4;
-    view_desc.Buffer.NumElements = static_cast<UINT>((m_create_params.element_count * m_create_params.element_size) / 4);
-    view_desc.Buffer.StructureByteStride = 0;
-    view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+    if (m_create_params.usage == ri_buffer_usage::raytracing_as)
+    {
+        view_desc.Format = DXGI_FORMAT_UNKNOWN;
+        view_desc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        view_desc.RaytracingAccelerationStructure.Location = get_gpu_address();
+    }
+    else
+    {
+        view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
+        view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        view_desc.Buffer.FirstElement = sub_allocation_offset / 4;
+        view_desc.Buffer.NumElements = static_cast<UINT>((m_create_params.element_count * m_create_params.element_size) / 4);
+        view_desc.Buffer.StructureByteStride = 0;
+        view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+    }
 
-    m_srv = m_renderer.get_descriptor_table(ri_descriptor_table::buffer).allocate();
-    m_renderer.get_device()->CreateShaderResourceView(get_resource(), &view_desc, m_srv.cpu_handle);
+    m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
+
+    if (m_create_params.usage == ri_buffer_usage::raytracing_as)
+    {
+        m_renderer.get_device()->CreateShaderResourceView(nullptr, &view_desc, m_srv.cpu_handle);
+    }
+    else
+        m_renderer.get_device()->CreateShaderResourceView(get_resource(), &view_desc, m_srv.cpu_handle);
+    {
+    }
 
     // Create a UAV view for the buffer as well incase we need unordered access later.
-    if (m_create_params.usage == ri_buffer_usage::generic)
+    if (m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::raytracing_as ||
+        m_create_params.usage == ri_buffer_usage::raytracing_as_scratch ||
+        m_create_params.usage == ri_buffer_usage::raytracing_as_instance_data ||
+        m_create_params.usage == ri_buffer_usage::raytracing_shader_binding_table)
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC uav_view_desc = {};
         uav_view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
@@ -239,7 +265,7 @@ result<void> dx12_ri_buffer::create_resources()
         uav_view_desc.Buffer.StructureByteStride = 0;
         uav_view_desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 
-        m_uav = m_renderer.get_descriptor_table(ri_descriptor_table::rwbuffer).allocate();
+        m_uav = m_renderer.get_descriptor_table(m_uav_table).allocate();
         m_renderer.get_device()->CreateUnorderedAccessView(get_resource(), nullptr, &uav_view_desc, m_uav.cpu_handle);
     }
 
@@ -292,11 +318,13 @@ ri_resource_state dx12_ri_buffer::get_initial_state()
 
 dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_srv() const
 {
+    db_assert(m_srv.is_valid());
     return m_srv;
 }
 
 dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_uav() const
 {
+    db_assert(m_uav.is_valid());
     return m_uav;
 }
 

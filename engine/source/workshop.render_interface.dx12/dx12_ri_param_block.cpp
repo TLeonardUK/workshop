@@ -10,6 +10,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_ri_sampler.h"
+#include "workshop.render_interface.dx12/dx12_ri_raytracing_tlas.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 
@@ -314,6 +315,16 @@ void dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource,
     }
 
     set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), type);
+}
+
+void dx12_ri_param_block::set(const char* field_name, const ri_raytracing_tlas& resource)
+{
+    const dx12_ri_raytracing_tlas& dx12_resource = static_cast<const dx12_ri_raytracing_tlas&>(resource);
+    const dx12_ri_buffer& buffer_resource = static_cast<const dx12_ri_buffer&>(dx12_resource.get_tlas_buffer());
+
+    uint32_t table_index = static_cast<uint32_t>(buffer_resource.get_srv().get_table_index());
+
+    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_tlas);
 }
 
 void dx12_ri_param_block::clear_buffer(const char* field_name)

@@ -28,6 +28,7 @@
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
+#include "workshop.renderer/assets/material/material.h"
 
 #include "workshop.window_interface/window_interface.h"
 #include "workshop.window_interface.sdl/sdl_window_interface.h"
@@ -622,7 +623,7 @@ result<void> engine::create_render_interface(init_list& list)
 #ifdef WS_WINDOWS
     case ri_interface_type::dx12:
         {
-            m_render_interface = std::make_unique<dx12_render_interface>();
+            m_render_interface = std::make_unique<dx12_render_interface>((size_t)ray_type::COUNT, (size_t)material_domain::COUNT);
             m_render_interface->register_init(list);
             break;
         }

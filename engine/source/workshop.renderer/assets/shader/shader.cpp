@@ -110,9 +110,6 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
         }
     }
 
-    params.ray_domain_count = (int)material_domain::COUNT;
-    params.ray_type_count = (int)ray_type::COUNT;
-
     std::unique_ptr<ri_pipeline> pipeline = m_ri_interface.create_pipeline(params, instance.name.c_str());
     if (pipeline == nullptr)
     {

@@ -67,6 +67,9 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;
 
+    ri_descriptor_table m_srv_table;
+    ri_descriptor_table m_uav_table;
+
     dx12_ri_descriptor_table::allocation m_srv;
     dx12_ri_descriptor_table::allocation m_uav;
 

@@ -65,6 +65,8 @@ SET(SOURCES
     "passes/render_pass_imgui.cpp"
     "passes/render_pass_compute.h"
     "passes/render_pass_compute.cpp"
+    "passes/render_pass_raytracing.h"
+    "passes/render_pass_raytracing.cpp"
     "passes/render_pass_calculate_mips.h"
     "passes/render_pass_calculate_mips.cpp"
     "passes/render_pass_clear.h"
@@ -113,6 +115,8 @@ SET(SOURCES
     "systems/render_system_ssao.cpp"
     "systems/render_system_selection_outline.h"
     "systems/render_system_selection_outline.cpp"
+    "systems/render_system_raytrace_scene.h"
+    "systems/render_system_raytrace_scene.cpp"
     
     "assets/shader/shader.h"
     "assets/shader/shader.cpp"

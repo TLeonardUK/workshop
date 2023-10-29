@@ -32,7 +32,9 @@ namespace ws {
 
 dx12_render_interface::~dx12_render_interface() = default;
 
-dx12_render_interface::dx12_render_interface()
+dx12_render_interface::dx12_render_interface(size_t ray_type_count, size_t ray_domain_count)
+    : m_ray_type_count(ray_type_count)
+    , m_ray_domain_count(ray_domain_count)
 {
 }
 
@@ -270,6 +272,16 @@ dx12_ri_query_manager& dx12_render_interface::get_query_manager()
 size_t dx12_render_interface::get_frame_index()
 {
     return m_frame_index;
+}
+
+size_t dx12_render_interface::get_ray_domain_count()
+{
+    return m_ray_domain_count;
+}
+
+size_t dx12_render_interface::get_ray_type_count()
+{
+    return m_ray_type_count;
 }
 
 result<void> dx12_render_interface::create_device()

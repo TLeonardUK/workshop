@@ -24,7 +24,8 @@ enum visualization_mode_t
     indirect_specular,
     indirect_diffuse,   
     direct_light,
-    ao
+    ao,
+    raytraced_scene
 };
 
 static const float3 debug_colors[8] = 

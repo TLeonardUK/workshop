@@ -78,6 +78,47 @@ float4 screen_space_to_view_space(float4 location, float2 screen_dimensions, flo
     return view;
 }
 
+float4 ndc_to_view_space(float2 uv, float4x4 inverse_projection)
+{
+    // Convert to clipspace.
+    float4 clip = float4(
+        uv.x * 2 - 1,
+        uv.y * 2 - 1,
+        0.0f,
+        1.0f
+    );
+
+    // Convert to view
+    float4 view = mul(inverse_projection, clip);
+    
+    // Perspective projection.
+    view = view / view.w;
+
+    return view;
+}
+
+float4 ndc_to_world_space(float2 uv, float4x4 inverse_projection, float4x4 inverse_view)
+{
+    // Convert to clipspace.
+    float4 clip = float4(
+        uv.x * 2 - 1,
+        uv.y * 2 - 1,
+        0.0f,
+        1.0f
+    );
+
+    // Convert to view
+    float4 view = mul(inverse_projection, clip);
+    
+    // Perspective projection.
+    view = view / view.w;
+
+    // Convert to world
+    float4 world = mul(inverse_view, view);
+
+    return world;
+}
+
 // Create a line segment from the eye to the screen location, then finds it 
 // intersection with a z plane located the given distance from the origin.
 float3 intersect_line_to_z_plane(float3 a, float3 b, float distance)
