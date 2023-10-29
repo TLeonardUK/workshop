@@ -15,7 +15,8 @@ enum class editor_window_layout
     left,
     right,
     
-    popup
+    popup,
+    overlay
 };
 
 // ================================================================================================

@@ -140,9 +140,6 @@ enum class render_flag
     // If true the rendering is frozen on a given frame but allows the user to continue moving the camera about.
     freeze_rendering,
 
-    // Draws a simple performance overlay in the top-right with memory/perf stats in it.
-    draw_performance_overlay,
-
     COUNT
 };
 
@@ -464,7 +461,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::raytraced_scene;
+    visualization_mode m_visualization_mode = visualization_mode::normal;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

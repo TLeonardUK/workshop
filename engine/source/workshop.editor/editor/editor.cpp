@@ -7,6 +7,7 @@
 #include "workshop.editor/editor/windows/editor_loading_window.h"
 #include "workshop.editor/editor/windows/editor_log_window.h"
 #include "workshop.editor/editor/windows/editor_memory_window.h"
+#include "workshop.editor/editor/windows/editor_performance_window.h"
 #include "workshop.editor/editor/windows/editor_scene_tree_window.h"
 #include "workshop.editor/editor/windows/editor_properties_window.h"
 #include "workshop.editor/editor/windows/editor_assets_window.h"
@@ -247,9 +248,6 @@ result<void> editor::create_main_menu(init_list& list)
         m_set_default_dock_space = false;
     }));    
     m_main_menu_options.push_back(m_main_menu->add_menu_seperator("Window"));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Window/Performance", [this]() { 
-        m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::draw_performance_overlay);
-    }));
     m_main_menu_options.push_back(m_main_menu->add_menu_custom("Window/", [this]() {       
         for (auto& window : m_windows)
         {
@@ -257,7 +255,14 @@ result<void> editor::create_main_menu(init_list& list)
             {
                 if (ImGui::MenuItem(window->get_window_id()))
                 {
-                    window->open();
+                    if (window->is_open())
+                    {
+                        window->close();
+                    }
+                    else
+                    {
+                        window->open();
+                    }
                 }
             }
         }
@@ -300,6 +305,7 @@ result<void> editor::create_windows(init_list& list)
     create_window<editor_assets_window>(&m_engine.get_asset_manager(), &m_engine.get_asset_database());
     create_window<editor_log_window>();
     create_window<editor_memory_window>();
+    create_window<editor_performance_window>();
     create_window<editor_progress_popup>();
 
     return true;
@@ -746,6 +752,16 @@ void editor::step(const frame_time& time)
         ImGui::End();
 	}
 
+    // Draw all overlay windows on top of everything even if not in editor mode.
+    // They are used to show persistent stuff like performance stats.
+    for (auto& window : m_windows)
+    {
+        if (window->get_layout() == editor_window_layout::overlay)
+        {
+            window->draw();
+        }
+    }
+
     // We contract the viewport a little bit to account for using splitters/etc which may move the cursor slightly
     // into the viewport but we don't wish to treat it as though it is.
     viewport_rect.Expand(-10.0f);
@@ -876,9 +892,13 @@ void editor::draw_dockspace()
 	ImGui::End();
 
     // Draw all windows that are docked in the new dockspace.
+    // Exclude overlays, we draw them outside the editor ui.
     for (auto& window : m_windows)
     {
-        window->draw();
+        if (window->get_layout() != editor_window_layout::overlay)
+        {
+            window->draw();
+        }
     }    
 }
 
@@ -981,6 +1001,7 @@ void editor::reset_dockspace_layout()
                 break;
             }
         case editor_window_layout::popup:
+        case editor_window_layout::overlay:
             {
                 // We don't want to dock popup windows.
                 continue;

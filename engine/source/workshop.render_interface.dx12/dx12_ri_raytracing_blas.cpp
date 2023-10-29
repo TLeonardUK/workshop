@@ -44,7 +44,7 @@ D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS dx12_ri_raytracing_blas::ge
     m_input_desc.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
     m_input_desc.NumDescs = 1;
     m_input_desc.pGeometryDescs = &m_geom_desc;
-    m_input_desc.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+    m_input_desc.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
     
     return m_input_desc;
 }
