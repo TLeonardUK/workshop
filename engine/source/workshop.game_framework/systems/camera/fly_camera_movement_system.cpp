@@ -187,11 +187,12 @@ void fly_camera_movement_system::step(const frame_time& time)
 
             movement->rotation_euler.x = std::fmod(movement->rotation_euler.x, math::pi2);
             movement->rotation_euler.y = std::fmod(movement->rotation_euler.y, math::pi2);
-
-            quat x_rotation = quat::angle_axis(movement->rotation_euler.y, vector3::up);
-            quat y_rotation = quat::angle_axis(movement->rotation_euler.x, vector3::right);
-            target_rotation = y_rotation * x_rotation;
         }
+
+        // Apply current rotation.
+        quat x_rotation = quat::angle_axis(movement->rotation_euler.y, vector3::up);
+        quat y_rotation = quat::angle_axis(movement->rotation_euler.x, vector3::right);
+        target_rotation = y_rotation * x_rotation;
 
         // Apply movement input.
         target_position += (vector3::forward * target_rotation) * forward_movement * movement->speed;
