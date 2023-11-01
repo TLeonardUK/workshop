@@ -19,6 +19,7 @@ namespace ws {
 void render_pass_imgui::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
     ri_param_block* model_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "model_info");
+    model_info_param_block->set("index_size", (int)index_buffer->get_element_size());
     model_info_param_block->set("position_buffer", *position_buffer);
     model_info_param_block->set("uv0_buffer", *uv0_buffer);
     model_info_param_block->set("color0_buffer", *color0_buffer);

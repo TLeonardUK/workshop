@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 24;
+constexpr size_t k_asset_compiled_version = 25;
 
 };
 
@@ -1012,7 +1012,14 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
                       !block.stages[(int)ri_shader_stage::ray_intersection].file.empty() ||
                       !block.stages[(int)ri_shader_stage::ray_miss].file.empty();
 
-    if (!is_compute)
+    bool is_raytracing =
+        !block.stages[(int)ri_shader_stage::ray_any_hit].file.empty() ||
+        !block.stages[(int)ri_shader_stage::ray_closest_hit].file.empty() ||
+        !block.stages[(int)ri_shader_stage::ray_generation].file.empty() ||
+        !block.stages[(int)ri_shader_stage::ray_intersection].file.empty() ||
+        !block.stages[(int)ri_shader_stage::ray_miss].file.empty();;
+
+    if (!is_compute || is_raytracing)
     {
         // Parse render state.
         if (!render_state_node.IsDefined())
@@ -1030,17 +1037,20 @@ bool shader_loader::parse_technique(const char* path, const char* name, YAML::No
         std::string render_state_name = render_state_node.as<std::string>();
         auto render_state_iter = std::find_if(asset.render_states.begin(), asset.render_states.end(), [&render_state_name](const shader::render_state& state) {
             return state.name == render_state_name;
-        });
+            });
         if (render_state_iter == asset.render_states.end())
         {
             db_error(asset, "[%s] render state '%s' for technique '%s' was not found.", path, render_state_name.c_str(), name);
-            return false;                
+            return false;
         }
         else
         {
             block.render_state_index = std::distance(asset.render_states.begin(), render_state_iter);
         }
+    }
 
+    if (!is_compute)
+    {
         // Parse vertex layout.
         if (!vertex_layout_node.IsDefined())
         {

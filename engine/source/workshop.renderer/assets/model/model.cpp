@@ -43,7 +43,9 @@ bool model::load_dependencies()
 
         // Create index buffer for rendering each mesh.
         std::vector<uint32_t> indices_32;
+#if 0
         std::vector<uint16_t> indices_16;
+#endif
 
         ri_buffer::create_params params;
         params.element_count = info.indices.size();
@@ -51,8 +53,12 @@ bool model::load_dependencies()
 
         size_t max_index_value = *std::max_element(info.indices.begin(), info.indices.end());
 
+        // Note: Before you enable 16bit index buffers, check out the shaders that read from the index buffer
+        // indirectly (eg. the raytracing ones). They don't currently support loading 16bit values.
+#if 0
         if (max_index_value >= std::numeric_limits<uint16_t>::max())
         {
+#endif
             indices_32.reserve(info.indices.size());
             for (size_t index : info.indices)
             {
@@ -61,6 +67,7 @@ bool model::load_dependencies()
 
             params.element_size = sizeof(uint32_t);
             params.linear_data = std::span{ (uint8_t*)indices_32.data(), indices_32.size() * sizeof(uint32_t) };
+#if 0
         }
         else
         {
@@ -73,13 +80,17 @@ bool model::load_dependencies()
             params.element_size = sizeof(uint16_t);
             params.linear_data = std::span{ (uint8_t*)indices_16.data(), indices_16.size() * sizeof(uint16_t) };
         }
+#endif
 
         std::string index_buffer_name = string_format("Model Index Buffer[%zi]: %s", i, name.c_str());
         info.index_buffer = m_renderer.get_render_interface().create_buffer(params, index_buffer_name.c_str());
-    }
 
-    // Create a model_info param block that points to all the vertex stream buffers.
-    m_model_info_param_block = m_renderer.get_param_block_manager().create_param_block("model_info");
+        // Create a model_info param block that points to all the vertex stream buffers.
+        std::unique_ptr<ri_param_block> model_info = m_renderer.get_param_block_manager().create_param_block("model_info");
+        model_info->set("index_buffer", *info.index_buffer, false);
+        model_info->set("index_size", (int)params.element_size);
+        m_model_info_param_blocks.push_back(std::move(model_info));
+    }
 
     // Create buffer for each vertex stream.
     for (size_t i = 0; i < (int)geometry_vertex_stream_type::COUNT; i++)
@@ -92,7 +103,10 @@ bool model::load_dependencies()
         geometry_vertex_stream* stream = geometry->find_vertex_stream(stream_type);
         if (!stream)
         {
-            m_model_info_param_block->clear_buffer(field_name.c_str());
+            for (auto& param_block : m_model_info_param_blocks)
+            {
+                param_block->clear_buffer(field_name.c_str());
+            }
             m_vertex_streams[i] = nullptr;
             continue;
         }
@@ -108,7 +122,10 @@ bool model::load_dependencies()
         std::unique_ptr<vertex_buffer> buf = std::make_unique<vertex_buffer>();
         buf->vertex_buffer = factory->create_vertex_buffer(vertex_buffer_name.c_str());;
 
-        m_model_info_param_block->set(field_name.c_str(), *buf->vertex_buffer, false);
+        for (auto& param_block : m_model_info_param_blocks)
+        {
+            param_block->set(field_name.c_str(), *buf->vertex_buffer, false);
+        }
         m_vertex_streams[i] = std::move(buf);
     }
 
@@ -170,9 +187,9 @@ model::vertex_buffer* model::find_vertex_stream_buffer(geometry_vertex_stream_ty
     return m_vertex_streams[(int)stream_type].get();
 }
 
-ri_param_block& model::get_model_info_param_block()
+ri_param_block& model::get_model_info_param_block(size_t mesh_index)
 {
-    return *m_model_info_param_block;
+    return *m_model_info_param_blocks[mesh_index];
 }
 
 void model::swap(model* other)

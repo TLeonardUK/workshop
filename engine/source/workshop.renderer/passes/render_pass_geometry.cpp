@@ -131,7 +131,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
             size_t model_info_table_index;
             size_t model_info_table_offset;
-            key.model->get_model_info_param_block().get_table(model_info_table_index, model_info_table_offset);
+            key.model->get_model_info_param_block(key.mesh_index).get_table(model_info_table_index, model_info_table_offset);
 
             size_t material_info_table_index;
             size_t material_info_table_offset;

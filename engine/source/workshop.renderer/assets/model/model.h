@@ -93,7 +93,7 @@ public:
 
     // Gets the param block that describes where all the vertex stream buffers are that
     // make up the geometry for this model.
-    ri_param_block& get_model_info_param_block();
+    ri_param_block& get_model_info_param_block(size_t mesh_index);
 
     void swap(model* other);
 
@@ -116,7 +116,8 @@ private:
 
     std::array<std::unique_ptr<vertex_buffer>, (int)geometry_vertex_stream_type::COUNT> m_vertex_streams;
 
-    std::unique_ptr<ri_param_block> m_model_info_param_block;
+    std::vector<std::unique_ptr<ri_param_block>> m_model_info_param_blocks;
+    
 
     std::mutex m_mutex;
 

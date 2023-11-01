@@ -16,6 +16,25 @@ enum light_type
     spotlight
 };
 
+float calculate_wboit_weight(float z, float a)
+{
+    return clamp(pow(min(1.0, a * 10.0) + 0.01, 3.0) * 1e8 * 
+                     pow(1.0f - z * 0.9, 3.0), 1e-2, 3e3);
+}
+
+float4 calculate_wboit_result(float4 accumulation, float revelance)
+{
+    // Prevent overflow
+    float max_val = max3(abs(accumulation.rgb));
+    if (isinf(max_val))
+    {
+        accumulation.rgb = accumulation.a;
+    }
+
+    float3 average_color = accumulation.rgb / max(accumulation.a, 0.00001f);
+    return float4(average_color.rgb, 1.0f - revelance);
+}
+
 float3 fresnel_schlick(float cos_theta, float3 f0)
 {
     return f0 + (1.0 - f0) * pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);

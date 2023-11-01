@@ -97,7 +97,7 @@ ray_missgroups:
 
 render_states:
   raytrace_scene_render_state:
-    max_rt_payload_size: 32
+    max_rt_payload_size: 48 
 
 techniques:
   raytrace_scene:
@@ -120,7 +120,14 @@ techniques:
     ]
     render_state: raytrace_scene_render_state
     param_blocks: [ 
-      view_info, 
       raytrace_scene_parameters, 
-      tlas_metadata 
+      tlas_metadata,
+      view_info, 
+      gbuffer,
+      light_state, 
+      light_cluster, 
+      light_probe_grid_state, 
+      reflection_probe_state,
+      shadow_map_state, 
+      resolve_lighting_parameters 
     ]

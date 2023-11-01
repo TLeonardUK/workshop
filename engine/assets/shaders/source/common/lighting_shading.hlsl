@@ -132,7 +132,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
         default:
         case shadow_filter::no_filter:
         {
-            float depth = shadow_map.Sample(shadow_map_sampler, shadow_map_coord).r;
+            float depth = shadow_map.SampleLevel(shadow_map_sampler, shadow_map_coord, 0).r;
 
             result = (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
             break;
@@ -147,7 +147,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
                 for (int x = -direction_samples; x <= direction_samples; x++)
                 {
                     float2 uv = shadow_map_coord + float2(x, y) * texel_size;      
-                    float depth = shadow_map.Sample(shadow_map_sampler, uv).r;
+                    float depth = shadow_map.SampleLevel(shadow_map_sampler, uv, 0).r;
                     result += (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
                     sample_count++;
                 }
@@ -178,7 +178,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
                 );
        
                 float2 uv = shadow_map_coord + poisson_offset * texel_size * kernel_size;
-                float depth = shadow_map.Sample(shadow_map_sampler, uv).r;
+                float depth = shadow_map.SampleLevel(shadow_map_sampler, uv, 0).r;
                 result += (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
             }
 
@@ -222,7 +222,7 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
         {
             float3 frag_to_light = frag.world_position.xyz - light.position.xyz;
             float current_depth = length(frag_to_light);        
-            float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r * state.z_far;
+            float depth = shadow_map_cube.SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
 
             result += (depth < current_depth - bias ? 0.0 : 1.0);
 
@@ -247,7 +247,7 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
                     float3 frag_to_light = (frag.world_position.xyz + offset) - light.position.xyz;
                     float current_depth = length(frag_to_light);        
         
-                    float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r * state.z_far;
+                    float depth = shadow_map_cube.SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
                     result += (depth < current_depth - bias ? 0.0 : 1.0);
                     sample_count++;
                 }
@@ -281,7 +281,7 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
                 float3 frag_to_light = (frag.world_position.xyz + offset) - light.position.xyz;
                 float current_depth = length(frag_to_light);        
        
-                float depth = shadow_map_cube.Sample(shadow_map_sampler, frag_to_light).r * state.z_far;
+                float depth = shadow_map_cube.SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
                 result += (depth < current_depth - bias ? 0.0 : 1.0);
             }
 
@@ -415,7 +415,7 @@ struct direct_lighting_result
     float2 shadow_attenuation_and_cascade_index;
 };
 
-direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light, bool is_transparent)
+direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light, bool is_transparent_or_ray)
 {    
     float3 normal = normalize(frag.world_normal);
     float3 view_direction = normalize(view_world_position - frag.world_position);
@@ -485,9 +485,9 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
 
     // Total contribution for this light.
     float ao = 1.0f;
-    if (!is_transparent)
+    if (!is_transparent_or_ray)
     {
-        ao = ao_texture.Sample(ao_sampler, frag.uv * ao_uv_scale).r;
+        ao = ao_texture.SampleLevel(ao_sampler, frag.uv * ao_uv_scale, 0).r;
     }
     float ao_multiplier = lerp(1.0f, ao, ao_direct_light_effect);
 
@@ -501,7 +501,7 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     return ret;
 }
 
-float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent)
+float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_ray)
 {    
     if (use_constant_ambient)
     {
@@ -537,14 +537,14 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent)
 
     // Sample our reflection probes + BRDF LUT to calculate our specular term.
     float3 reflection_probe_color = sample_reflection_probes(frag.world_position, reflect_direction, reflection_probe_count, reflection_probe_buffer, frag.roughness);
-    float2 brdf = brdf_lut.Sample(brdf_lut_sampler, float2(max(dot(normal, view_direction), 0.0), frag.roughness)).rg;
+    float2 brdf = brdf_lut.SampleLevel(brdf_lut_sampler, float2(max(dot(normal, view_direction), 0.0), frag.roughness), 0).rg;
     float3 specular = reflection_probe_color * (F * brdf.x + brdf.y);
 
     // Grab the AO output to tint our ambient term.
     float ao = 1.0f;
-    if (!is_transparent)
+    if (!is_transparent_or_ray)
     {
-        ao = ao_texture.Sample(ao_sampler, frag.uv * ao_uv_scale).r;
+        ao = ao_texture.SampleLevel(ao_sampler, frag.uv * ao_uv_scale, 0).r;
     }
 
     float3 ambient = (kD * diffuse + specular) * ao;
@@ -581,7 +581,7 @@ uint get_cluster_index(float3 world_position)
 //  The all powerful shade function!
 // ================================================================================================
 
-float4 shade_fragment(gbuffer_fragment frag, bool is_transparent)
+float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
 {
     float3 final_color = 0.0f;
     float3 ambient_lighting = 0.0f;
@@ -593,7 +593,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent)
     if ((frag.flags & render_gpu_flags::unlit) == 0)
     {
         // Calculate ambient lighting from our light probes.
-        ambient_lighting = calculate_ambient_lighting(frag, is_transparent);
+        ambient_lighting = calculate_ambient_lighting(frag, is_transparent_or_ray);
         
         // Calculate the cluser we are contained inside of.
         cluster_index = get_cluster_index(frag.world_position.xyz);
@@ -610,7 +610,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent)
             uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
             light_state light = get_light_state(light_index);
             
-            direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent);
+            direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent_or_ray);
             direct_lighting += result.lighting;
             max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
         }

@@ -8,14 +8,11 @@
 struct occlusion_ray_payload
 {
     float  hit_t;
-    float3 color;
 };
 
 [shader("miss")]
 void ray_occlusion_miss(inout occlusion_ray_payload payload)
 {
-    payload.hit_t = -1.0f;
-    payload.color = float3(0.0f, 0.0f, 0.0f);
 }
 
 // Opaque geometry
@@ -23,11 +20,6 @@ void ray_occlusion_miss(inout occlusion_ray_payload payload)
 [shader("closesthit")]
 void ray_occlusion_opaque_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-    //tlas_metadata metadata = load_tlas_metadata();
-    //material mat = load_tlas_material(metadata);
-    //model_info model = load_tlas_model(metadata);
-
-    payload.color = float3(0.0f, 0.0f, 0.0f);
 }
 
 // Masked geometry
@@ -35,14 +27,11 @@ void ray_occlusion_opaque_closest_hit(inout occlusion_ray_payload payload, Built
 [shader("closesthit")]
 void ray_occlusion_masked_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-    // todo
-    payload.color = float3(0.0f, 0.0f, 0.0f);
 }
 
 [shader("anyhit")]
 void ray_occlusion_masked_any_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-    // todo
 }
 
 // Sky geometry
@@ -50,8 +39,6 @@ void ray_occlusion_masked_any_hit(inout occlusion_ray_payload payload, BuiltInTr
 [shader("closesthit")]
 void ray_occlusion_sky_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-    // todo
-    payload.color = float3(0.0f, 0.0f, 0.0f);
 }
 
 // Transparent geometry
@@ -59,8 +46,6 @@ void ray_occlusion_sky_closest_hit(inout occlusion_ray_payload payload, BuiltInT
 [shader("anyhit")]
 void ray_occlusion_transparent_any_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
-    // todo
-    payload.color = float3(0.0f, 0.0f, 0.0f);
 }
 
 #endif

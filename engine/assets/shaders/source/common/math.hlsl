@@ -338,4 +338,29 @@ float inverse_lerp(float a, float b, float value)
         return (value - a) / (b - a);
 }
 
+float barycentric_lerp(in float v0, in float v1, in float v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float2 barycentric_lerp(in float2 v0, in float2 v1, in float2 v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float3 barycentric_lerp(in float3 v0, in float3 v1, in float3 v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float4 barycentric_lerp(in float4 v0, in float4 v1, in float4 v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float3 max3(float3 input)
+{
+    return (max(input.x, input.y), input.z);
+}
+ 
 #endif // _MATH_HLSL_

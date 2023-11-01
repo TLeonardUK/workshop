@@ -256,7 +256,10 @@ param_blocks:
   # Buffers should be checked for validity before being used as any may be omitted.
   model_info:
     scope: indirect
-    fields:
+    fields:  
+      index_buffer: byteaddressbuffer
+      index_size: int
+
       # These buffers should match k_vertex_stream_runtime_types in model.h
       # They should also match the loading function in global.hlsl
       position_buffer: byteaddressbuffer

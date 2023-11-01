@@ -127,11 +127,11 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_shadows>(*this));
     m_systems.push_back(std::make_unique<render_system_ssao>(*this));
-    m_systems.push_back(std::make_unique<render_system_raytrace_scene>(*this));    
     m_systems.push_back(std::make_unique<render_system_lighting>(*this));
     m_systems.push_back(std::make_unique<render_system_transparent_geometry>(*this));
     m_systems.push_back(std::make_unique<render_system_light_probes>(*this));
     m_systems.push_back(std::make_unique<render_system_reflection_probes>(*this));
+    m_systems.push_back(std::make_unique<render_system_raytrace_scene>(*this));
     m_systems.push_back(std::make_unique<render_system_resolve_backbuffer>(*this));
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
     m_systems.push_back(std::make_unique<render_system_selection_outline>(*this));
@@ -1096,7 +1096,7 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ind
         factory->add("position", { vector3(-1.0f, -1.0f, 0.0f), vector3(1.0f, -1.0f, 0.0f), vector3(-1.0f,  1.0f, 0.0f), vector3(1.0f,  1.0f, 0.0f) });
 
         buffers.position_buffer = factory->create_vertex_buffer("Fullscreen Vertex Stream [position]");
-        buffers.index_buffer = factory->create_index_buffer("Fullscreen Index Buffer", std::vector<uint16_t> { 2, 1, 0, 3, 1, 2 });
+        buffers.index_buffer = factory->create_index_buffer("Fullscreen Index Buffer", std::vector<uint32_t> { 2, 1, 0, 3, 1, 2 });
     }
 
     // Create a uv0 buffer.
@@ -1112,6 +1112,7 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ind
 
     // Create a model info.
     buffers.model_info_param_block = m_param_block_manager->create_param_block("model_info");
+    buffers.model_info_param_block->set("index_size", (int)buffers.index_buffer->get_element_size());
     buffers.model_info_param_block->set("position_buffer", *buffers.position_buffer);
     buffers.model_info_param_block->set("uv0_buffer", *buffers.uv0_buffer);
 

@@ -226,6 +226,7 @@ std::unique_ptr<ri_buffer> dx12_ri_layout_factory::create_vertex_buffer(const ch
     return m_renderer.create_buffer(params, name);
 }
 
+#if 0
 std::unique_ptr<ri_buffer> dx12_ri_layout_factory::create_index_buffer(const char* name, const std::vector<uint16_t>& indices)
 {
     validate();
@@ -250,6 +251,7 @@ std::unique_ptr<ri_buffer> dx12_ri_layout_factory::create_index_buffer(const cha
     params.linear_data = std::span { (uint8_t*)indices.data(), indices.size() * sizeof(uint16_t) };
     return m_renderer.create_buffer(params, name);
 }
+#endif
 
 std::unique_ptr<ri_buffer> dx12_ri_layout_factory::create_index_buffer(const char* name, const std::vector<uint32_t>& indices)
 {

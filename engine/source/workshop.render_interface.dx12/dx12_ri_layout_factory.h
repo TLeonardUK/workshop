@@ -32,7 +32,9 @@ public:
     virtual void add(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
 
     virtual std::unique_ptr<ri_buffer> create_vertex_buffer(const char* name) override;
+    #if 0
     virtual std::unique_ptr<ri_buffer> create_index_buffer(const char* name, const std::vector<uint16_t>& indices) override;
+    #endif
     virtual std::unique_ptr<ri_buffer> create_index_buffer(const char* name, const std::vector<uint32_t>& indices) override;
 
 public:

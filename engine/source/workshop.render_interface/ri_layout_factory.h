@@ -75,7 +75,9 @@ public:
 
 	// Creation of buffers from.
 	virtual std::unique_ptr<ri_buffer> create_vertex_buffer(const char* name) = 0;
+    #if 0
 	virtual std::unique_ptr<ri_buffer> create_index_buffer(const char* name, const std::vector<uint16_t>& indices) = 0;
+    #endif
 	virtual std::unique_ptr<ri_buffer> create_index_buffer(const char* name, const std::vector<uint32_t>& indices) = 0;
 
 	// Add as raw data. Prefer type functions before touching this. This is mainly exposed for 

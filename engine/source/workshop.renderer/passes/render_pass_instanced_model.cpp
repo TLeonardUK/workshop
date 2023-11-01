@@ -92,7 +92,7 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
 
             size_t model_info_table_index;
             size_t model_info_table_offset;
-            model_instance->get_model_info_param_block().get_table(model_info_table_index, model_info_table_offset);
+            model_instance->get_model_info_param_block(i).get_table(model_info_table_index, model_info_table_offset);
 
             size_t material_info_table_index;
             size_t material_info_table_offset;

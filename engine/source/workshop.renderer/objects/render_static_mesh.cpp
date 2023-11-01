@@ -208,7 +208,7 @@ void render_static_mesh::create_render_data()
         tlas->metadata = m_renderer->get_param_block_manager().create_param_block("tlas_metadata");
 
         size_t table_index, table_offset;
-        m_model->get_model_info_param_block().get_table(table_index, table_offset);
+        m_model->get_model_info_param_block(i).get_table(table_index, table_offset);
         tlas->metadata->set("model_info_table", (uint32_t)table_index);
         tlas->metadata->set("model_info_offset", (uint32_t)table_offset);
         mat->get_material_info_param_block()->get_table(table_index, table_offset);

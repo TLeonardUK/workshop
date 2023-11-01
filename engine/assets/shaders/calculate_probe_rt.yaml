@@ -14,6 +14,10 @@ effects:
     techniques:
       calculate_probe_rt: {}
    
+render_states:
+  calculate_probe_render_state:
+    max_rt_payload_size: 48 
+
 param_blocks:
   calculate_probe_rt_parameters:
     scope: draw
@@ -32,5 +36,6 @@ techniques:
       file: data:shaders/source/calculate_probe_rt.hlsl
       entry: ray_miss
     param_blocks: [ calculate_probe_rt_parameters  ]
+    render_state: calculate_probe_render_state
 
   # TODO: add shader to pack to SH probe

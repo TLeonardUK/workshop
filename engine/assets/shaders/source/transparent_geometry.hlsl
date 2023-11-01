@@ -46,12 +46,6 @@ geometry_pinput vshader(vertex_input input)
     return result;
 }
 
-float calculate_weight(float z, float a)
-{
-    return clamp(pow(min(1.0, a * 10.0) + 0.01, 3.0) * 1e8 * 
-                     pow(1.0f - z * 0.9, 3.0), 1e-2, 3e3);
-}
-
 geometry_poutput pshader(geometry_pinput input)
 {
     material mat = load_material();
@@ -72,7 +66,7 @@ geometry_poutput pshader(geometry_pinput input)
     f.uv = (input.position.xy / view_dimensions.xy) * uv_scale;
 
     float4 shaded_color = float4(shade_fragment(f, true).rgb, albedo.a);
-    float weight = calculate_weight(input.position.z, shaded_color.a); 
+    float weight = calculate_wboit_weight(input.position.z, shaded_color.a); 
 
     geometry_poutput output;
     output.accumulation = float4(shaded_color.rgb * shaded_color.a, shaded_color.a) * weight;

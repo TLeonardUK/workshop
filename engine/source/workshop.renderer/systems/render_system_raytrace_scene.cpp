@@ -67,10 +67,17 @@ ri_texture& render_system_raytrace_scene::get_output_buffer()
 
 void render_system_raytrace_scene::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
+    if (!view.has_flag(render_view_flags::normal))
+    {
+        return;
+    }
+
     if (m_renderer.get_visualization_mode() != visualization_mode::raytraced_scene)
     {
         return;
     }
+
+    render_system_lighting* lighting_system = m_renderer.get_system<render_system_lighting>();
 
     const render_options& options = m_renderer.get_options();
 
@@ -89,6 +96,8 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
     resolve_pass->technique = m_renderer.get_effect_manager().get_technique("raytrace_scene", {});
     resolve_pass->param_blocks.push_back(view.get_view_info_param_block());
     resolve_pass->param_blocks.push_back(raytrace_scene_parameters);
+    resolve_pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+    resolve_pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(view));
     graph.add_node(std::move(resolve_pass));
 }
 

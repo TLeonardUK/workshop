@@ -6,6 +6,7 @@
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/math.hlsl"
 #include "data:shaders/source/common/sh.hlsl"
+#include "data:shaders/source/common/lighting.hlsl"
 #include "data:shaders/source/common/raytracing.hlsl"
 #include "data:shaders/source/common/raytracing_primitive_ray.hlsl"
 #include "data:shaders/source/common/raytracing_occlusion_ray.hlsl"
@@ -33,8 +34,11 @@ void ray_generation()
 
     // Initialize the ray payload
     primitive_ray_payload payload;
-    payload.hit_t = -1.0f;
+    payload.opaque_hit_t = -1.0f;
+    payload.transparent_hit_t = -1.0f;
     payload.color = float3(1.0f, 0, 1.0f);
+    payload.transparent_revealance = 1.0f;
+    payload.transparent_accumulation = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
     TraceRay(
         scene_tlas,
@@ -46,5 +50,13 @@ void ray_generation()
         ray,
         payload);
 
-    output_texture[launch_index] = float4(payload.color.rgb, 1.0f); 
+    // Blend transparent and opaque hits so it matches raster pipeline.    
+    float4 output = float4(payload.color.rgb, 1.0f); ;
+    if (payload.transparent_hit_t < payload.opaque_hit_t && payload.transparent_hit_t >= 0.0f)
+    {
+        float4 source = calculate_wboit_result(payload.transparent_accumulation, payload.transparent_revealance);
+        output.rgb = (source.rgb * source.a) + (output.rgb * (1.0f - source.a));
+    }
+
+    output_texture[launch_index] = output;
 }
