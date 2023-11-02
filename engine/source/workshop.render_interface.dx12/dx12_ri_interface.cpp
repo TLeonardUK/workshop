@@ -423,11 +423,7 @@ result<void> dx12_render_interface::check_feature_support()
         m_allow_tearing = (tearingAllowed == TRUE);
     }
 
-    if (m_options_5.RaytracingTier < D3D12_RAYTRACING_TIER_1_0)
-    {
-        db_error(render_interface, "Required ray tracing not supported on this gpu.", hr);
-        return false;
-    }
+    m_feature_support[(int)ri_feature::raytracing] = (m_options_5.RaytracingTier >= D3D12_RAYTRACING_TIER_1_0);
 
     if (m_options.ResourceBindingTier < D3D12_RESOURCE_BINDING_TIER_3)
     {
@@ -439,6 +435,12 @@ result<void> dx12_render_interface::check_feature_support()
     {
         db_error(render_interface, "Required tiled resource tier not supported on this gpu.", hr);
         return false;
+    }
+
+    db_log(render_interface, "Feature Support:");
+    for (size_t i = 0; i < (int)ri_feature::COUNT; i++)
+    {
+        db_log(render_interface, "     %s: %s", ri_feature_strings[i], m_feature_support[i] ? "Supported" : "Not Supported");
     }
 
     return true;
@@ -792,6 +794,11 @@ size_t dx12_render_interface::get_cube_map_face_index(ri_cube_map_face face)
     };
 
     return lookup[static_cast<size_t>(face)];
+}
+
+bool dx12_render_interface::check_feature(ri_feature feature)
+{
+    return m_feature_support[(int)feature];
 }
 
 }; // namespace ws

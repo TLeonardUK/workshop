@@ -201,22 +201,26 @@ void render_static_mesh::create_render_data()
 
         m_registered_batches.push_back(info);
 
-        // Create metadata for the tlas
-        ri_raytracing_blas* blas = m_model->find_or_create_blas(i);
+        // If we support raytracing create add an entry for this mesh into the scene tlas.
+        if (m_renderer->get_render_interface().check_feature(ri_feature::raytracing))
+        {
+            // Create metadata for the blas
+            ri_raytracing_blas* blas = m_model->find_or_create_blas(i);
 
-        tlas_instance* tlas = &m_registered_tlas_instances.emplace_back();
-        tlas->metadata = m_renderer->get_param_block_manager().create_param_block("tlas_metadata");
+            tlas_instance* tlas = &m_registered_tlas_instances.emplace_back();
+            tlas->metadata = m_renderer->get_param_block_manager().create_param_block("tlas_metadata");
 
-        size_t table_index, table_offset;
-        m_model->get_model_info_param_block(i).get_table(table_index, table_offset);
-        tlas->metadata->set("model_info_table", (uint32_t)table_index);
-        tlas->metadata->set("model_info_offset", (uint32_t)table_offset);
-        mat->get_material_info_param_block()->get_table(table_index, table_offset);
-        tlas->metadata->set("material_info_table", (uint32_t)table_index);
-        tlas->metadata->set("material_info_offset", (uint32_t)table_offset);
-        tlas->metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
+            size_t table_index, table_offset;
+            m_model->get_model_info_param_block(i).get_table(table_index, table_offset);
+            tlas->metadata->set("model_info_table", (uint32_t)table_index);
+            tlas->metadata->set("model_info_offset", (uint32_t)table_offset);
+            mat->get_material_info_param_block()->get_table(table_index, table_offset);
+            tlas->metadata->set("material_info_table", (uint32_t)table_index);
+            tlas->metadata->set("material_info_offset", (uint32_t)table_offset);
+            tlas->metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
 
-        tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, mat->domain != material_domain::transparent, tlas->metadata.get());
+            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, mat->domain != material_domain::transparent, tlas->metadata.get());
+        }
     }
 }
 

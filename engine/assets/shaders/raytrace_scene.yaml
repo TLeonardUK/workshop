@@ -52,6 +52,7 @@ ray_hitgroups:
     ray_closest_hit_shader: 
       file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_sky_closest_hit
+      
   # Occlusion ray types
   occlusion_opaque_hitgroup:
     material_domain: opaque

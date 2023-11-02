@@ -13,11 +13,11 @@
 
 struct primitive_ray_payload
 {
+    float4 transparent_accumulation;
     float3 color;
     float  opaque_hit_t;
     float  transparent_hit_t;
-    float4 transparent_accumulation;
-    float transparent_revealance;
+    float  transparent_revealance;
 };
 
 [shader("miss")]
@@ -115,7 +115,7 @@ void ray_primitive_transparent_any_hit(inout primitive_ray_payload payload, Buil
     float weight = calculate_wboit_weight(RayTCurrent(), shaded_color.a); 
 
     payload.transparent_accumulation += float4(shaded_color.rgb * shaded_color.a, shaded_color.a) * weight;
-    payload.transparent_revealance += payload.transparent_revealance * (1.0 - shaded_color.a);
+    payload.transparent_revealance = payload.transparent_revealance * (1.0 - shaded_color.a);
     payload.transparent_hit_t = payload.transparent_hit_t < 0.0f ? RayTCurrent() : min(payload.transparent_hit_t, RayTCurrent());
 
     IgnoreHit();

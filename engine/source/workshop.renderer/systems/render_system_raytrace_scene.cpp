@@ -81,6 +81,12 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
 
     const render_options& options = m_renderer.get_options();
 
+    if (!options.raytracing_enabled || 
+        !m_renderer.get_render_interface().check_feature(ri_feature::raytracing))
+    {
+        return;
+    }
+
     ri_param_block* raytrace_scene_parameters = view.get_resource_cache().find_or_create_param_block(this, "raytrace_scene_parameters");
 
     raytrace_scene_parameters->set("scene_tlas", m_renderer.get_scene_tlas());

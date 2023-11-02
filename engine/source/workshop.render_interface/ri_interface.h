@@ -124,6 +124,9 @@ public:
 
     // Gets the texture slice that represents a given cube map face.
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) = 0;
+    
+    // Checks if a given feature is supported by the device.
+    virtual bool check_feature(ri_feature feature) = 0;
 
 };
 

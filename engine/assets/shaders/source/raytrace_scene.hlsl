@@ -32,7 +32,25 @@ void ray_generation()
     ray.TMin = 0;
     ray.TMax = view_z_near + view_z_far;
 
-    // Initialize the ray payload
+    // Initially find the closest depth, we use this to make sure we only blend transparent
+    // triangles in-front of the closest opaque point.
+    occlusion_ray_payload occlusion_payload;
+    occlusion_payload.hit_t = -1.0f;
+
+    TraceRay(
+        scene_tlas,
+        RAY_FLAG_CULL_NON_OPAQUE,
+        0xFF,
+        ray_type::occlusion,
+        ray_type::count,
+        0,
+        ray,
+        occlusion_payload);
+
+    // Truncate ray to first opaque hit so we don't run the transparent anyhit shaders on occluded geometry.
+    ray.TMax = occlusion_payload.hit_t + 0.001f;
+
+    // Trace our actual shaded scene.
     primitive_ray_payload payload;
     payload.opaque_hit_t = -1.0f;
     payload.transparent_hit_t = -1.0f;
@@ -52,11 +70,11 @@ void ray_generation()
 
     // Blend transparent and opaque hits so it matches raster pipeline.    
     float4 output = float4(payload.color.rgb, 1.0f); ;
-    if (payload.transparent_hit_t < payload.opaque_hit_t && payload.transparent_hit_t >= 0.0f)
+    if (payload.transparent_hit_t >= 0.0f)
     {
         float4 source = calculate_wboit_result(payload.transparent_accumulation, payload.transparent_revealance);
         output.rgb = (source.rgb * source.a) + (output.rgb * (1.0f - source.a));
-    }
+    } 
 
     output_texture[launch_index] = output;
 }

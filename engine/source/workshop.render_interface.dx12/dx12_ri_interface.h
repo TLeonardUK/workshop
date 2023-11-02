@@ -85,6 +85,7 @@ public:
     virtual void defer_delete(const deferred_delete_function_t& func) override;
     virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) override;
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
+    virtual bool check_feature(ri_feature feature) override;
 
     // Drains all of the defered deletes without regard for which frame they should
     // be destroyed on. Be -very- careful with this, the only real usecase is when we are
@@ -175,6 +176,8 @@ private:
     std::mutex m_pending_as_build_mutex;
     std::unordered_set<dx12_ri_raytracing_blas*> m_pending_blas_builds;
     std::unordered_set<dx12_ri_raytracing_tlas*> m_pending_tlas_builds;
+
+    std::array<bool, (int)ri_feature::COUNT> m_feature_support;
 
     size_t m_ray_type_count;
     size_t m_ray_domain_count;

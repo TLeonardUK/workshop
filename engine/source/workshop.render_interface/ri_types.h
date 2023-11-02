@@ -14,6 +14,22 @@
 namespace ws {
 
 // ================================================================================================
+//  Specifies different features of the gpu that can be queried using check_feature
+//  of the ri_interface.
+// ================================================================================================
+enum class ri_feature
+{
+    // Full raytracing Tier 1.1 support is available.
+    raytracing,
+
+    COUNT
+};
+
+inline static const char* ri_feature_strings[static_cast<int>(ri_feature::COUNT)] = {
+    "Raytracing"
+};
+
+// ================================================================================================
 //  Used to reference a give face on a cube map.
 // ================================================================================================
 enum class ri_cube_map_face

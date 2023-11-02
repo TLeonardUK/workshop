@@ -257,7 +257,10 @@ result<void> renderer::create_resources()
     m_gpu_time_query = m_render_interface.create_query(query_params, "Gpu time query");
 
     // Create the TLAS containing the main scene.
-    m_scene_tlas = m_render_interface.create_raytracing_tlas("scene tlas");
+    if (m_render_interface.check_feature(ri_feature::raytracing))
+    {
+        m_scene_tlas = m_render_interface.create_raytracing_tlas("scene tlas");
+    }
 
     return true;
 }

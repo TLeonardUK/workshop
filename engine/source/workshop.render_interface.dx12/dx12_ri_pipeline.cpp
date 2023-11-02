@@ -355,19 +355,16 @@ result<void> dx12_ri_pipeline::build_sbt()
     size_t sbt_generate_count = 1;
     size_t sbt_record_count = (sbt_hitgroup_count + sbt_miss_count + sbt_generate_count);
     size_t shader_id_size = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-    size_t shader_table_size = shader_id_size * sbt_record_count;
 
     std::vector<uint8_t> sbt_data;
-    sbt_data.resize(shader_table_size, 0);
 
     // Build the SBT's data.
-    uint8_t* record_ptr = sbt_data.data();
     bool failed = false;
 
-    auto add_record = [&record_ptr, &state_properties, &failed, &sbt_data](const std::string& name, bool optional = false) {
+    auto add_record = [&state_properties, &failed, &sbt_data](const std::string& name, bool optional = false) {
         if (name.empty() && optional)
         {
-            record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+            sbt_data.resize(sbt_data.size() + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
             return;
         }
         void* shader_id = state_properties->GetShaderIdentifier(widen_string(name).c_str());
@@ -377,14 +374,15 @@ result<void> dx12_ri_pipeline::build_sbt()
             failed = true;
             return;
         }
-        db_log(core, "%zi: %s", (size_t)(record_ptr - sbt_data.data()), name.c_str());
-        memcpy(record_ptr, shader_id, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+        db_log(core, "%zi: %s", sbt_data.size(), name.c_str());
+
+        sbt_data.resize(sbt_data.size() + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        memcpy(sbt_data.data() + sbt_data.size() - D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES, shader_id, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
     };
 
-    auto add_empty_record = [&record_ptr, &sbt_data]() {
-        db_log(core, "%zi: %s", (size_t)(record_ptr - sbt_data.data()), "empty record");
-        record_ptr += D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+    auto add_empty_record = [&sbt_data]() {
+        db_log(core, "%zi: %s", sbt_data.size(), "empty record");
+        sbt_data.resize(sbt_data.size() + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
     };
 
     auto find_hit_group = [this](size_t domain, size_t type) -> ri_pipeline::create_params::ray_hitgroup* {
@@ -409,29 +407,29 @@ result<void> dx12_ri_pipeline::build_sbt()
         return nullptr;
     };
 
-    auto align_offset = [&record_ptr, &sbt_data](size_t alignment) {
-        size_t offset = (size_t)(record_ptr - sbt_data.data());
+    auto align_offset = [&sbt_data](size_t alignment) {
+        size_t offset = sbt_data.size();
         size_t left_over = offset % alignment;
         if (left_over == 0)
         {
             return;
         }
         size_t padding = alignment - left_over;
-        db_log(core, "%zi: %zi bytes of padding", (size_t)(record_ptr - sbt_data.data()), padding);
-        record_ptr += padding;
+        db_log(core, "%zi: %zi bytes of padding", sbt_data.size(), padding);
+        sbt_data.resize(sbt_data.size() + padding);
     };
 
     db_log(core, "=========== Shader Binding Table Layout: %s ============", m_debug_name.c_str());
 
     // Generation shader first.
-    m_ray_generation_shader_offset = (size_t)(record_ptr - sbt_data.data());
+    m_ray_generation_shader_offset = 0;
     add_record(m_create_params.stages[(int)ri_shader_stage::ray_generation].entry_point);
 
     // Miss shaders next.
     align_offset(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
     db_log(core, "== MISS SHADER TABLE ==");
-    m_ray_miss_table_offset = (size_t)(record_ptr - sbt_data.data());
+    m_ray_miss_table_offset = sbt_data.size();
     for (size_t type = 0; type < ray_type_count; type++)
     {
         ri_pipeline::create_params::ray_missgroup* miss_group = find_miss_group(type);
@@ -449,7 +447,7 @@ result<void> dx12_ri_pipeline::build_sbt()
     align_offset(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
     db_log(core, "== HIT GROUP TABLE ==");
-    m_ray_hit_group_table_offset = (size_t)(record_ptr - sbt_data.data());
+    m_ray_hit_group_table_offset = sbt_data.size();
     for (size_t domain = 0; domain < ray_domain_count; domain++)
     {
         for (size_t type = 0; type < ray_type_count; type++)
@@ -475,7 +473,7 @@ result<void> dx12_ri_pipeline::build_sbt()
 
     ri_buffer::create_params sbt_params;
     sbt_params.element_count = 1;
-    sbt_params.element_size = shader_table_size;
+    sbt_params.element_size = sbt_data.size();
     sbt_params.usage = ri_buffer_usage::raytracing_shader_binding_table;
     sbt_params.linear_data = std::span<uint8_t>(sbt_data.begin(), sbt_data.end());
 

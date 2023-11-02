@@ -20,7 +20,7 @@ public:
 
 	// How many mips to drop of a texture as its loaded. This can be used to quickly strim down the 
 	// maximum memory being used. In general texture streaming/etc should be used rather than this.
-	size_t textures_dropped_mips = 2;
+	size_t textures_dropped_mips = 0;
 
 	// ================================================================================================
 	//  Light Probes
@@ -118,6 +118,13 @@ public:
 	// Determines how much effect the ssao has on direct lighting. In theory SSAO should only effect
 	// ambient lighting, but having a small amount added direct lighting avoids things looking flat.
 	float ssao_direct_light_effect = 0.5f;
+
+    // ================================================================================================
+    //  Raytracing
+    // ================================================================================================
+
+    // Toggles on or off raytracing in its entirity.
+    bool raytracing_enabled = true;
 
 };
 

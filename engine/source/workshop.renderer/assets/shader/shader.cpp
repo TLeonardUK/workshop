@@ -110,6 +110,14 @@ std::unique_ptr<ri_pipeline> shader::make_technique_pipeline(const technique& in
         }
     }
 
+    // If device doesn't support raytracing, don't bother creating the pipeline we won't be 
+    // able to actually do anything with it ...
+    if (!instance.stages[(int)ri_shader_stage::ray_generation].entry_point.empty() && 
+        !m_ri_interface.check_feature(ri_feature::raytracing))
+    {
+        return nullptr;
+    }
+
     std::unique_ptr<ri_pipeline> pipeline = m_ri_interface.create_pipeline(params, instance.name.c_str());
     if (pipeline == nullptr)
     {
