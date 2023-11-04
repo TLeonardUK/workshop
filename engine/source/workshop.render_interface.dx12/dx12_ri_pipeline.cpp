@@ -198,6 +198,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
         sub_object.pDesc = &pipeline_config_desc;
     }
 
+    db_log(renderer, "==== Building raytracing pipeline: %s ====", m_debug_name.c_str());
+
     // Add all the RT shaders this pipeline uses.
     for (size_t i = (int)ri_shader_stage::rt_start; i <= (int)ri_shader_stage::rt_end; i++)
     {
@@ -206,6 +208,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
         {
             continue;
         }
+
+        db_log(renderer, "%s: %s", ri_shader_stage_strings[i], stage_params.entry_point.c_str());
 
         std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
         export_desc->Name = add_string(stage_params.entry_point);
@@ -229,6 +233,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
     // Add all the raytrace hitgroups.
     for (ri_pipeline::create_params::ray_hitgroup& hitgroup : m_create_params.ray_hitgroups)
     {
+        db_log(renderer, "Hitgroup: %s", hitgroup.name);
+
         for (size_t i = (int)ri_shader_stage::rt_start; i <= (int)ri_shader_stage::rt_end; i++)
         {
             ri_pipeline::create_params::stage& stage_params = hitgroup.stages[i];
@@ -236,6 +242,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
             {
                 continue;
             }
+        
+            db_log(renderer, "\t%s: %s", ri_shader_stage_strings[i], stage_params.entry_point.c_str());
 
             std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
             export_desc->Name = add_string(stage_params.entry_point);
@@ -297,6 +305,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
             continue;
         }
 
+        db_log(renderer, "Missgroup: %s", stage_params.entry_point.c_str());
+
         std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
         export_desc->Name = add_string(stage_params.entry_point);
         export_desc->Flags = D3D12_EXPORT_FLAG_NONE;
@@ -315,6 +325,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
         library_descs.push_back(std::move(sub_object_desc));
         export_descs.push_back(std::move(export_desc));
     }
+
+    db_log(renderer, "==== End ====");
 
     D3D12_STATE_OBJECT_DESC desc = {};
     desc.NumSubobjects = (UINT)subobjects.size();

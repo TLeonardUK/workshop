@@ -461,7 +461,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::raytraced_scene;
+    visualization_mode m_visualization_mode = visualization_mode::light_probes;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

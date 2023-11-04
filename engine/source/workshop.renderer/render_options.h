@@ -26,19 +26,15 @@ public:
 	//  Light Probes
 	// ================================================================================================
 
-	// Size of the cubemap that is captured and then convolved into the final spherical harmonic
-	// coefficients used for the actual probe.
-	size_t light_probe_cubemap_size = 128;
+	// How many rays to cast per probe to calculate diffus lighting.
+	size_t light_probe_ray_count = 196;
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
-	size_t light_probe_max_regenerations_per_frame = 1;
-
-	// Near clipping plane of the view used to capture a light probes cubemap.
-	float light_probe_near_z = 10.0f;
+	size_t light_probe_max_regenerations_per_frame = 32;
 
 	// Far clipping plane of the view used to capture a light probes cubemap.
-	float light_probe_far_z = 10'000.0f;
+	float light_probe_far_z = 100'000.0f;
 
 	// Light probes are prioritized for rendering based on how close they are to a "normal" view.
 	// The prioritization list is only updated whenever the view moves by this amount.

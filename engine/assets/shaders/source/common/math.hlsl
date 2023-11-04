@@ -7,6 +7,7 @@
 
 static const float pi = 3.14159265359;
 static const float half_pi = pi / 2.0;
+static const float pi2 = pi * 2.0;
 
 static const float2 poisson_disk[16] = 
 {
@@ -361,6 +362,18 @@ float4 barycentric_lerp(in float4 v0, in float4 v1, in float4 v2, in float3 bary
 float3 max3(float3 input)
 {
     return (max(input.x, input.y), input.z);
+}
+
+// Computes a spherically distributed set of directions ont he unit sphere.
+// Based on the ray selection code in RTXGI
+float3 spherical_fibonacci(float sample_index, float num_samples)
+{
+    const float b = (sqrt(5.f) * 0.5f + 0.5f) - 1.f;
+    float phi = pi2 * frac(sample_index * b);
+    float cos_theta = 1.f - (2.f * sample_index + 1.f) * (1.f / num_samples);
+    float sin_theta = sqrt(saturate(1.f - (cos_theta * cos_theta)));
+
+    return normalize(float3((cos(phi) * sin_theta), (sin(phi) * sin_theta), cos_theta));
 }
  
 #endif // _MATH_HLSL_

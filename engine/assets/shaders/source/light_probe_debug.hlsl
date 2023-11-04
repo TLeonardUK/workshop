@@ -47,7 +47,8 @@ light_probe_poutput pshader(light_probe_pinput input)
         RWByteAddressBuffer sh_buffer = table_rw_byte_buffers[NonUniformResourceIndex(input.probe_location.y)];
         sh_color_coefficients radiance = sh_buffer.Load<sh_color_coefficients>(input.probe_location.z);
 
-        output.color = float4(calculate_sh_diffuse(sample_normal, radiance, 1.0f), 1.0f);
+        float3 diffuse = calculate_sh_diffuse(sample_normal, radiance, float3(1.0f, 1.0f, 1.0f));
+        output.color = float4(diffuse, 1.0f);
     }
 
     return output;

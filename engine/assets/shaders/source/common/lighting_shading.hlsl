@@ -422,10 +422,12 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     float3 metallic = frag.metallic;
 
     float3 albedo = frag.albedo;
+#ifndef DISABLE_VISUALIZATION_MODES
     if (visualization_mode == visualization_mode_t::lighting)
     {
         albedo = float3(1.0f, 1.0f, 1.0f);
     }
+#endif
 
     // Direction between light and frag.    
     float3 light_frag_direction = 0.0f;
@@ -503,6 +505,9 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
 
 float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_ray)
 {    
+#ifdef DISABLE_AMBIENT_LIGHTING    
+    return float3(0.0f, 0.0f, 0.0f);
+#else
     if (use_constant_ambient)
     {
         return float3(0.0f, 0.0f, 0.0f);
@@ -520,10 +525,12 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
     float3 metallic = frag.metallic;
     float3 albedo = frag.albedo;
 
+#ifndef DISABLE_VISUALIZATION_MODES
     if (visualization_mode == visualization_mode_t::lighting)
     {
         albedo = float3(1.0f, 1.0f, 1.0f);
     }
+#endif
 
     float3 fresnel_reflectance = lerp(dielectric_fresnel, albedo, metallic);
     float3 F = fresnel_schlick_roughness(max(dot(normal, view_direction), 0.0), fresnel_reflectance, frag.roughness);;
@@ -549,6 +556,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
 
     float3 ambient = (kD * diffuse + specular) * ao;
 
+#ifndef DISABLE_VISUALIZATION_MODES
     if (visualization_mode == visualization_mode_t::indirect_specular)
     {
         ambient = specular;
@@ -561,8 +569,10 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
     {
         ambient = ao;
     }
+#endif
 
     return ambient;
+#endif
 }
 
 uint get_cluster_index(float3 world_position)
@@ -594,14 +604,15 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
     {
         // Calculate ambient lighting from our light probes.
         ambient_lighting = calculate_ambient_lighting(frag, is_transparent_or_ray);
-        
-        // Calculate the cluser we are contained inside of.
-        cluster_index = get_cluster_index(frag.world_position.xyz);
-        light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
 
         // Calculate direct contribution of all lights that effect us.
         direct_lighting = float3(0.0, 0.0, 0.0);
         max_cascade = 0;
+
+#ifndef DO_NOT_USE_LIGHT_CLUSTERS    
+        // Calculate the cluser we are contained inside of.
+        cluster_index = get_cluster_index(frag.world_position.xyz);
+        light_cluster cluster = light_cluster_buffer.Load<light_cluster>(cluster_index * sizeof(light_cluster));
         visible_light_count = cluster.visible_light_count;
 
         // Go through all effecting lights.
@@ -614,6 +625,23 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
             direct_lighting += result.lighting;
             max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
         }
+#else
+    for (int i = 0; i < light_count; i++)
+    {
+        light_state light = get_light_state(i);
+
+        float distance = length(light.position - frag.world_position.xyz);
+        if (distance < light.range && distance < light.importance_distance)
+        {
+            visible_light_count++;
+
+            direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent_or_ray);
+            direct_lighting += result.lighting;
+            max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
+        }
+    }
+
+#endif
 
         // Mix final color.
         final_color = ambient_lighting + direct_lighting;
@@ -623,6 +651,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
         final_color = frag.albedo;
     }
 
+#ifndef DISABLE_VISUALIZATION_MODES
     // If we are in a visualization mode, tint colors as appropriate.
     switch (visualization_mode)
     {
@@ -704,7 +733,8 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
             break;
         }
     }
-    
+#endif
+
     return float4(final_color, 1.0f);
 }
 

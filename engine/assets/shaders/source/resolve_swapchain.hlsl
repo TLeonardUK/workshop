@@ -49,7 +49,7 @@ swapchain_output pshader(fullscreen_pinput input)
         { 
             output.color = raytraced_scene_texture.Sample(raytraced_scene_sampler, input.uv0);// * uv_scale);
             //output.color = light_buffer_texture.Sample(light_buffer_sampler, input.uv0 * uv_scale);
-            tonemap = false;
+            tonemap = true;
             break;
         }
         case visualization_mode_t::normal:

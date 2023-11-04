@@ -42,7 +42,7 @@ public:
         300000, // buffer
         100000, // rwbuffer
         1000,   // rwtexture_2d
-        1000,   // tlas
+        100000, // tlas
         1000,   // render_target
         1000,   // depth_stencil
     };

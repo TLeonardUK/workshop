@@ -127,13 +127,13 @@ void dx12_ri_param_block::transpose_matrices(void* field, ri_data_type type)
     }
 }
 
-void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
+bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
 {
     dx12_ri_layout_factory::field field_info;
     if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
     {
         //db_error(renderer, "Attempting to set unknown field '%s' on param block.", field_name);
-        return;
+        return false;
     }
 
     if (field_info.type != type)
@@ -145,7 +145,7 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
     if (field_info.size != value_size)
     {
         db_error(renderer, "Value size missmatch for field '%s' on param block. Got '%zi' expected '%zi'.", field_name, value_size, field_info.size);
-        return;
+        return false;
     }
 
     db_assert_message(values.size() == value_size, "Array values are not yet supported in param blocks.");
@@ -156,7 +156,7 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
         void* field_ptr = static_cast<uint8_t*>(m_allocation.cpu_address) + field_info.offset;
         if (memcmp(field_ptr, values.data(), values.size()) == 0)
         {
-            return;
+            return false;
         }
     }
 
@@ -169,9 +169,11 @@ void dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
 
     // Matrices are stored column-major but HLSL expects them in row-major, so transpose them.
     transpose_matrices(field_ptr, type);
+
+    return true;
 }
 
-void dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
+bool dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
 {    
     const dx12_ri_texture& dx12_resource = static_cast<const dx12_ri_texture&>(resource);
     uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_main_srv().get_table_index());
@@ -206,10 +208,10 @@ void dx12_ri_param_block::set(const char* field_name, const ri_texture& resource
         }
     }
 
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
+    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
 }
 
-void dx12_ri_param_block::set(const char* field_name, const ri_texture_view& resource, bool writable)
+bool dx12_ri_param_block::set(const char* field_name, const ri_texture_view& resource, bool writable)
 {
     const dx12_ri_texture& dx12_resource = static_cast<const dx12_ri_texture&>(*resource.texture);
     uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_main_srv().get_table_index());
@@ -285,18 +287,18 @@ void dx12_ri_param_block::set(const char* field_name, const ri_texture_view& res
         }
     }
 
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
+    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
 }
 
-void dx12_ri_param_block::set(const char* field_name, const ri_sampler& resource)
+bool dx12_ri_param_block::set(const char* field_name, const ri_sampler& resource)
 {
     const dx12_ri_sampler& dx12_resource = static_cast<const dx12_ri_sampler&>(resource);
     uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_descriptor_table_index());
 
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_sampler);
+    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_sampler);
 }
 
-void dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource, bool writable)
+bool dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource, bool writable)
 {
     const dx12_ri_buffer& dx12_resource = static_cast<const dx12_ri_buffer&>(resource);
 
@@ -314,23 +316,23 @@ void dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource,
         type = ri_data_type::t_byteaddressbuffer;
     }
 
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), type);
+    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), type);
 }
 
-void dx12_ri_param_block::set(const char* field_name, const ri_raytracing_tlas& resource)
+bool dx12_ri_param_block::set(const char* field_name, const ri_raytracing_tlas& resource)
 {
     const dx12_ri_raytracing_tlas& dx12_resource = static_cast<const dx12_ri_raytracing_tlas&>(resource);
     const dx12_ri_buffer& buffer_resource = static_cast<const dx12_ri_buffer&>(dx12_resource.get_tlas_buffer());
 
     uint32_t table_index = static_cast<uint32_t>(buffer_resource.get_srv().get_table_index());
 
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_tlas);
+    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_tlas);
 }
 
-void dx12_ri_param_block::clear_buffer(const char* field_name)
+bool dx12_ri_param_block::clear_buffer(const char* field_name)
 {
     uint32_t table_index = 0;
-    set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_byteaddressbuffer);
+    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_byteaddressbuffer);
 }
 
 }; // namespace ws

@@ -8,8 +8,11 @@
 #include "data:shaders/source/common/gbuffer.hlsl"
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
+#include "data:shaders/source/common/math.hlsl"
+#include "data:shaders/source/common/sh.hlsl"
 #include "data:shaders/source/common/lighting.hlsl"
 #include "data:shaders/source/common/lighting_shading.hlsl"
+#include "data:shaders/source/common/raytracing.hlsl"
 
 struct occlusion_ray_payload
 {

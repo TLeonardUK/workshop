@@ -33,49 +33,49 @@ public:
     virtual ~ri_param_block() {}
 
 	// bool
-	void set(const char* field_name, const uint8_t& values); // Fucking bools.
-	void set(const char* field_name, const vector2b& values);
-	void set(const char* field_name, const vector3b& values);
-	void set(const char* field_name, const vector4b& values);
+	bool set(const char* field_name, const uint8_t& values); // Fucking bools.
+	bool set(const char* field_name, const vector2b& values);
+	bool set(const char* field_name, const vector3b& values);
+	bool set(const char* field_name, const vector4b& values);
 
 	// int
-	void set(const char* field_name, const int32_t& values);
-	void set(const char* field_name, const vector2i& values);
-	void set(const char* field_name, const vector3i& values);
-	void set(const char* field_name, const vector4i& values);
+	bool set(const char* field_name, const int32_t& values);
+	bool set(const char* field_name, const vector2i& values);
+	bool set(const char* field_name, const vector3i& values);
+	bool set(const char* field_name, const vector4i& values);
 
 	// uint
-	void set(const char* field_name, const uint32_t& values);
-	void set(const char* field_name, const vector2u& values);
-	void set(const char* field_name, const vector3u& values);
-	void set(const char* field_name, const vector4u& values);
+	bool set(const char* field_name, const uint32_t& values);
+	bool set(const char* field_name, const vector2u& values);
+	bool set(const char* field_name, const vector3u& values);
+	bool set(const char* field_name, const vector4u& values);
 
 	// float
-	void set(const char* field_name, const float& values);
-	void set(const char* field_name, const vector2& values);
-	void set(const char* field_name, const vector3& values);
-	void set(const char* field_name, const vector4& values);
-	void set(const char* field_name, const matrix2& values);
-	void set(const char* field_name, const matrix3& values);
-	void set(const char* field_name, const matrix4& values);
+	bool set(const char* field_name, const float& values);
+	bool set(const char* field_name, const vector2& values);
+	bool set(const char* field_name, const vector3& values);
+	bool set(const char* field_name, const vector4& values);
+	bool set(const char* field_name, const matrix2& values);
+	bool set(const char* field_name, const matrix3& values);
+	bool set(const char* field_name, const matrix4& values);
 
 	// double
-	void set(const char* field_name, const double& values);
-	void set(const char* field_name, const vector2d& values);
-	void set(const char* field_name, const vector3d& values);
-	void set(const char* field_name, const vector4d& values);
-	void set(const char* field_name, const matrix2d& values);
-	void set(const char* field_name, const matrix3d& values);
-	void set(const char* field_name, const matrix4d& values);
+	bool set(const char* field_name, const double& values);
+	bool set(const char* field_name, const vector2d& values);
+	bool set(const char* field_name, const vector3d& values);
+	bool set(const char* field_name, const vector4d& values);
+	bool set(const char* field_name, const matrix2d& values);
+	bool set(const char* field_name, const matrix3d& values);
+	bool set(const char* field_name, const matrix4d& values);
 
 	// Resources
-	virtual void set(const char* field_name, const ri_texture& resource) = 0;
-	virtual void set(const char* field_name, const ri_texture_view& resource, bool writable = false) = 0;
-	virtual void set(const char* field_name, const ri_sampler& resource) = 0;
-	virtual void set(const char* field_name, const ri_buffer& resource, bool writable = false) = 0;
-    virtual void set(const char* field_name, const ri_raytracing_tlas& resource) = 0;
+	virtual bool set(const char* field_name, const ri_texture& resource) = 0;
+	virtual bool set(const char* field_name, const ri_texture_view& resource, bool writable = false) = 0;
+	virtual bool set(const char* field_name, const ri_sampler& resource) = 0;
+	virtual bool set(const char* field_name, const ri_buffer& resource, bool writable = false) = 0;
+    virtual bool set(const char* field_name, const ri_raytracing_tlas& resource) = 0;
 
-	virtual void clear_buffer(const char* field_name) = 0;
+	virtual bool clear_buffer(const char* field_name) = 0;
 
 	virtual ri_param_block_archetype* get_archetype() = 0;
 
@@ -84,7 +84,7 @@ public:
     virtual void get_table(size_t& index, size_t& offset) = 0;
 
 private:
-	virtual void set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) = 0;
+	virtual bool set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) = 0;
 
 };
 

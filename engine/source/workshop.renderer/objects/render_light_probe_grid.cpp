@@ -120,7 +120,7 @@ void render_light_probe_grid::recalculate_probes()
                 probe.orientation = m_local_rotation;
 
                 probe.debug_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_instance_info");
-                probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(10.0f, 10.0f, 10.0f)) * matrix4::translate(probe.origin));
+                probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(40.0f, 40.0f, 40.0f)) * matrix4::translate(probe.origin));
                 probe.debug_param_block->set("sh_table_index", *m_spherical_harmonic_buffer, true);
                 probe.debug_param_block->set("sh_table_offset", (int)(probe.index * k_probe_coefficient_size));
             }

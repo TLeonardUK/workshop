@@ -219,7 +219,9 @@ void render_static_mesh::create_render_data()
             tlas->metadata->set("material_info_offset", (uint32_t)table_offset);
             tlas->metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
 
-            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, mat->domain != material_domain::transparent, tlas->metadata.get());
+            bool is_transparent = (mat->domain == material_domain::transparent || mat->domain == material_domain::masked);
+
+            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, !is_transparent, tlas->metadata.get());
         }
     }
 }
@@ -251,15 +253,18 @@ void render_static_mesh::update_render_data()
 {
     matrix4 transform = get_transform();
 
-    m_geometry_instance_info->set("model_matrix", transform);
-    m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
+    bool changed = false;
+    changed |= m_geometry_instance_info->set("model_matrix", transform);
+    changed |= m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
 
     // Update tlas transform and metadata.
-    for (tlas_instance& instance : m_registered_tlas_instances)
+    if (changed)
     {
-        instance.metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
-
-        m_renderer->get_scene_tlas().update_instance(instance.id, transform);
+        for (tlas_instance& instance : m_registered_tlas_instances)
+        {
+            instance.metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
+            m_renderer->get_scene_tlas().update_instance(instance.id, transform);
+        }
     }
 }
 

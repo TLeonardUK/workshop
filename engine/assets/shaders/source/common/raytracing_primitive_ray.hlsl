@@ -8,15 +8,16 @@
 #include "data:shaders/source/common/gbuffer.hlsl"
 #include "data:shaders/source/common/vertex.hlsl"
 #include "data:shaders/source/common/normal.hlsl"
+#include "data:shaders/source/common/math.hlsl"
+#include "data:shaders/source/common/sh.hlsl"
 #include "data:shaders/source/common/lighting.hlsl"
 #include "data:shaders/source/common/lighting_shading.hlsl"
+#include "data:shaders/source/common/raytracing.hlsl"
 
 struct primitive_ray_payload
 {
     float4 transparent_accumulation;
     float3 color;
-    float  opaque_hit_t;
-    float  transparent_hit_t;
     float  transparent_revealance;
 };
 
@@ -60,7 +61,6 @@ float4 ray_primitive_common(inout primitive_ray_payload payload, BuiltInTriangle
 void ray_primitive_opaque_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.color = ray_primitive_common(payload, attrib).rgb;
-    payload.opaque_hit_t = RayTCurrent();
 }
 
 // ================================================================================================
@@ -71,7 +71,6 @@ void ray_primitive_opaque_closest_hit(inout primitive_ray_payload payload, Built
 void ray_primitive_masked_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.color = ray_primitive_common(payload, attrib).rgb;
-    payload.opaque_hit_t = RayTCurrent();
 }
 
 [shader("anyhit")]
@@ -101,7 +100,6 @@ void ray_primitive_sky_closest_hit(inout primitive_ray_payload payload, BuiltInT
     material mat = load_tlas_material(metadata);
 
     payload.color = mat.skybox_texture.SampleLevel(mat.skybox_sampler, WorldRayDirection(), 0.0f);
-    payload.opaque_hit_t = RayTCurrent();
 }
 
 // ================================================================================================
@@ -116,7 +114,6 @@ void ray_primitive_transparent_any_hit(inout primitive_ray_payload payload, Buil
 
     payload.transparent_accumulation += float4(shaded_color.rgb * shaded_color.a, shaded_color.a) * weight;
     payload.transparent_revealance = payload.transparent_revealance * (1.0 - shaded_color.a);
-    payload.transparent_hit_t = payload.transparent_hit_t < 0.0f ? RayTCurrent() : min(payload.transparent_hit_t, RayTCurrent());
 
     IgnoreHit();
 }

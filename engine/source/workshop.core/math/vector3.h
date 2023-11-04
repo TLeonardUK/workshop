@@ -52,6 +52,11 @@ public:
 	static base_vector3 cross(const base_vector3& a, const base_vector3& b);
 	static base_vector3 min(const base_vector3& a, const base_vector3& b);
 	static base_vector3 max(const base_vector3& a, const base_vector3& b);
+
+    // Computes a spherically distributed set of directions ont he unit sphere.
+    // Based on the ray selection code in RTXGI
+    static base_vector3 spherical_fibonacci(float sample_index, float num_samples);
+
 };
 
 using vector3  = base_vector3<float>;
@@ -266,6 +271,21 @@ inline base_vector3<element_type> base_vector3<element_type>::max(const base_vec
 		a.y > b.y ? a.y : b.y,
 		a.z > b.z ? a.z : b.z
 	);
+}
+
+template <typename element_type>
+inline base_vector3<element_type> base_vector3<element_type>::spherical_fibonacci(float sample_index, float num_samples)
+{
+    const float b = (sqrt(5.f) * 0.5f + 0.5f) - 1.f;
+
+    double intpart;
+    double frac = modf(sample_index * b, &intpart);
+
+    float phi = math::pi2 * (float)frac;
+    float cos_theta = 1.f - (2.f * sample_index + 1.f) * (1.f / num_samples);
+    float sin_theta = math::sqrt(math::saturate(1.f - (cos_theta * cos_theta)));
+
+    return base_vector3<element_type>((cos(phi) * sin_theta), (sin(phi) * sin_theta), cos_theta).normalize();
 }
 
 template <typename element_type>

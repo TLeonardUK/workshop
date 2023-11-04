@@ -34,27 +34,17 @@ public:
 
     void regenerate();
 
-private:
-    void regenerate_probe(render_light_probe_grid* grid, render_light_probe_grid::probe* probe, size_t regeneration_index);
+private:    
+    render_view* get_main_view();
 
     result<void> create_resources();
     result<void> destroy_resources();
 
 private:
 
-    size_t m_probe_cubemap_size = 128;
+    size_t m_probe_ray_count = 192;
     size_t m_probe_regenerations_per_frame = 1;
-    float m_probe_near_z = 10.0f;
     float m_probe_far_z = 10000.0f;
-
-    struct view_info
-    {
-        render_object_id id;
-        render_light_probe_grid* grid;
-        size_t probe_index;
-        ri_texture* render_target;
-        std::unique_ptr<ri_param_block> resolve_params;
-    };
 
     struct dirty_probe
     {
@@ -63,13 +53,14 @@ private:
         float distance;
     };
 
+
+    std::unique_ptr<ri_buffer> m_scratch_buffer;
+    std::vector<std::unique_ptr<ri_param_block>> m_regeneration_param_blocks;
+
     std::vector<dirty_probe> m_dirty_probes;
+    std::vector<dirty_probe> m_probes_to_regenerate;
     vector3 m_last_dirty_view_position;
 
-    std::vector<std::unique_ptr<ri_texture>> m_probe_capture_targets;
-    std::vector<view_info> m_probe_capture_views;
-
-    size_t m_probes_regenerating;
     bool m_should_regenerate = false;
 
 };

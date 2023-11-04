@@ -13,14 +13,14 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  0.0794393569
-                y:  -0.735405445
-                z:  0.0875556022
-                w:  -0.667234778
+                x:  0.139501408
+                y:  -0.611446917
+                z:  0.110633373
+                w:  -0.770994306
             local_location:
-                x:  1262.6604
-                y:  322.270966
-                z:  173.128387
+                x:  1327.28223
+                y:  737.184814
+                z:  -2363.37524
             local_scale:
                 x:  1
                 y:  1
@@ -64,35 +64,36 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  -0.599847794
-                y:  0.153166294
-                z:  0.194290504
-                w:  0.760903299
+                x:  -0.599847734
+                y:  0.153166384
+                z:  0.194290519
+                w:  0.760903358
             local_location:
-                x:  0
-                y:  300
-                z:  0
+                x:  -5.84945292e-06
+                y:  590
+                z:  -7.92741776e-06
             local_scale:
-                x:  1
+                x:  1.00000036
                 y:  1
-                z:  1
+                z:  1.00000024
         bounds_component:
             {}
         directional_light_component:
             shadow_cascades: 3
             shadow_cascade_exponent: 0.600000024
             shadow_cascade_blend: 0.100000001
-            intensity: 5
+        light_component:
+            intensity: 1
             range: 10000
-            importance_range: 1000000
+            importance_range: 5000
             color:
                 r:  1
                 g:  1
                 b:  1
                 a:  1
-            shadow_casting: true
-            shadow_map_size: 2048
-            shadow_map_distance: 10000
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
     4:
         meta_component:
             name: light probe grid
@@ -161,6 +162,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/core/solid/blue.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     7:
         meta_component:
             name: green
@@ -185,6 +188,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/core/solid/green.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     8:
         meta_component:
             name: red
@@ -209,6 +214,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/core/solid/red.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     9:
         meta_component:
             name: red
@@ -220,9 +227,9 @@ objects:
                 z:  0
                 w:  1
             local_location:
-                x:  1.52587891e-05
+                x:  50.000061
                 y:  107.000023
-                z:  181
+                z:  81.0000076
             local_scale:
                 x:  149.999985
                 y:  149.999985
@@ -233,6 +240,8 @@ objects:
             model: data:models/core/primitives/sphere.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     10:
         meta_component:
             name: skybox
@@ -246,7 +255,7 @@ objects:
             local_location:
                 x:  0
                 y:  0
-                z:  0
+                z:  410
             local_scale:
                 x:  10000
                 y:  10000
@@ -257,6 +266,8 @@ objects:
             model: data:models/skyboxs/skybox_3.yaml
             materials:
                 -   data:models/skyboxs/materials/skybox_3.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     11:
         meta_component:
             name: box
@@ -323,6 +334,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     14:
         meta_component:
             name: green
@@ -347,6 +360,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     15:
         meta_component:
             name: green
@@ -371,6 +386,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     16:
         meta_component:
             name: green
@@ -395,6 +412,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     17:
         meta_component:
             name: green
@@ -419,6 +438,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     18:
         meta_component:
             name: green
@@ -443,32 +464,35 @@ objects:
             model: data:models/core/primitives/sphere.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     19:
         meta_component:
             name: unnamed object
         transform_component:
             parent: 11
             local_rotation:
-                x:  -0.254217416
-                y:  -0.0483696572
-                z:  -0.00461256783
-                w:  0.965925694
+                x:  0.17781812
+                y:  -0.0418884568
+                z:  -0.0246222839
+                w:  0.982863069
             local_location:
-                x:  -7.69711187e-06
-                y:  299.999969
-                z:  99.9997559
+                x:  100.000038
+                y:  299.999451
+                z:  100.000977
             local_scale:
-                x:  1
-                y:  0.999999881
-                z:  1.00000024
+                x:  0.999999642
+                y:  1.00000095
+                z:  0.999999702
         bounds_component:
             {}
         spot_light_component:
             inner_radius: 1.5
             outer_radius: 15
-            intensity: 8
-            range: 500
-            importance_range: 1000000
+        light_component:
+            intensity: 1
+            range: 300
+            importance_range: 300000
             color:
                 r:  1
                 g:  0
@@ -483,28 +507,29 @@ objects:
         transform_component:
             parent: 11
             local_rotation:
-                x:  0.00453903433
-                y:  -0.983520567
-                z:  0.178276777
-                w:  0.0297330674
+                x:  -0.00711316988
+                y:  0.99531579
+                z:  -0.0918788984
+                w:  -0.0292244405
             local_location:
-                x:  -0.000289189629
-                y:  289.998718
-                z:  -99.9970703
+                x:  99.9997635
+                y:  259.998016
+                z:  -79.9956055
             local_scale:
                 x:  0.999999881
                 y:  1.00000024
-                z:  1.00000012
+                z:  1
         bounds_component:
             {}
         spot_light_component:
             inner_radius: 1.5
             outer_radius: 15
-            intensity: 8
-            range: 1000000
-            importance_range: 1000000
+        light_component:
+            intensity: 1
+            range: 300
+            importance_range: 5000
             color:
-                r:  0.143646359
+                r:  0.0773481131
                 g:  1
                 b:  0
                 a:  1
@@ -535,6 +560,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     22:
         meta_component:
             name: green
@@ -559,6 +586,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     23:
         meta_component:
             name: green
@@ -583,6 +612,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     24:
         meta_component:
             name: green
@@ -607,6 +638,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     25:
         meta_component:
             name: green
@@ -631,6 +664,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:models/core/primitives/materials/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     26:
         meta_component:
             name: green
@@ -655,6 +690,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/core/solid/green.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     27:
         meta_component:
             name: blue
@@ -679,6 +716,8 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/core/solid/blue.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
     28:
         meta_component:
             name: red
@@ -703,37 +742,5 @@ objects:
             model: data:models/core/primitives/cube.yaml
             materials:
                 -   data:materials/core/solid/red.yaml
-    29:
-        meta_component:
-            name: unnamed object
-        transform_component:
-            parent: 20
-            local_rotation:
-                x:  -0.254217416
-                y:  -0.0483696572
-                z:  -0.00461256783
-                w:  0.965925694
-            local_location:
-                x:  -7.69711187e-06
-                y:  299.999969
-                z:  99.9997559
-            local_scale:
-                x:  1
-                y:  0.999999881
-                z:  1.00000024
-        bounds_component:
-            {}
-        spot_light_component:
-            inner_radius: 1.5
-            outer_radius: 15
-            intensity: 8
-            range: 500
-            importance_range: 1000000
-            color:
-                r:  1
-                g:  0
-                b:  0
-                a:  1
-            shadow_casting: false
-            shadow_map_size: 512
-            shadow_map_distance: 3000
+            render_draw_flags: 1
+            render_gpu_flags: 0

@@ -707,7 +707,7 @@ void dx12_render_interface::process_as_build_requests()
     build_list.open();
 
     // Order is important, blas should be built before tlas.
-    db_log(renderer, "Building raytracing AS: Bottom=%zi Top=%zi", m_pending_blas_builds.size(), m_pending_tlas_builds.size());
+    //db_log(renderer, "Building raytracing AS: Bottom=%zi Top=%zi", m_pending_blas_builds.size(), m_pending_tlas_builds.size());
 
     for (dx12_ri_raytracing_blas* blas : m_pending_blas_builds)
     {
