@@ -31,7 +31,7 @@ public:
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
-	size_t light_probe_max_regenerations_per_frame = 32;
+	size_t light_probe_max_regenerations_per_frame = 16;
 
 	// Far clipping plane of the view used to capture a light probes cubemap.
 	float light_probe_far_z = 100'000.0f;
@@ -39,6 +39,17 @@ public:
 	// Light probes are prioritized for rendering based on how close they are to a "normal" view.
 	// The prioritization list is only updated whenever the view moves by this amount.
 	float light_probe_queue_update_distance = 1'000.0f;
+
+    // Size of the irradiance map for probe. Larger means more memory usage, but gives more
+    // accurate avoidance of light leaking.
+    size_t light_probe_irradiance_map_size = 4;
+
+    // Size of the occlusion map for probe. Larger means more memory usage, but gives more
+    // accurate avoidance of light leaking.
+    size_t light_probe_occlusion_map_size = 14;
+
+    // Exponent used for depth testing. High values react quickly to depth discontinuties but may cause banding.
+    float light_probe_distance_exponent = 50.0f;
 
 	// ================================================================================================
 	//  Reflection Probes

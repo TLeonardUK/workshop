@@ -359,9 +359,9 @@ float4 barycentric_lerp(in float4 v0, in float4 v1, in float4 v2, in float3 bary
     return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
 }
 
-float3 max3(float3 input)
+float max3(float3 input)
 {
-    return (max(input.x, input.y), input.z);
+    return max(max(input.x, input.y), input.z);
 }
 
 // Computes a spherically distributed set of directions ont he unit sphere.
@@ -376,4 +376,16 @@ float3 spherical_fibonacci(float sample_index, float num_samples)
     return normalize(float3((cos(phi) * sin_theta), (sin(phi) * sin_theta), cos_theta));
 }
  
+// Returns either -1 or 1 based on the sign of the input value.
+// If the input is zero, 1 is returned.
+float sign_not_zero(float v)
+{
+    return (v >= 0.f) ? 1.f : -1.f;
+}
+
+float2 sign_not_zero(float2 v)
+{
+    return float2(sign_not_zero(v.x), sign_not_zero(v.y));
+}
+
 #endif // _MATH_HLSL_

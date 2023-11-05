@@ -1664,6 +1664,31 @@ bool shader_loader::compile_shader_stage(const char* path, shader::technique& te
         (asset_config == config_type::debug)
     );
 
+    for (const ri_shader_compiler_output::log& log : output.get_errors())
+    {
+        db_error(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
+        for (const std::string& context : log.context)
+        {
+            db_error(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
+        }
+    }
+    for (const ri_shader_compiler_output::log& log : output.get_warnings())
+    {
+        db_warning(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
+        for (const std::string& context : log.context)
+        {
+            db_warning(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
+        }
+    }
+    for (const ri_shader_compiler_output::log& log : output.get_messages())
+    {
+        db_log(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
+        for (const std::string& context : log.context)
+        {
+            db_log(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
+        }
+    }
+
     if (output.success())
     {
         stage.bytecode = output.get_bytecode();
@@ -1675,31 +1700,6 @@ bool shader_loader::compile_shader_stage(const char* path, shader::technique& te
     }
     else
     {
-        for (const ri_shader_compiler_output::log& log : output.get_errors())
-        {
-            db_error(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
-            for (const std::string& context : log.context)
-            {
-                db_error(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
-            }
-        }
-        for (const ri_shader_compiler_output::log& log : output.get_warnings())
-        {
-            db_warning(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
-            for (const std::string& context : log.context)
-            {
-                db_warning(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
-            }
-        }
-        for (const ri_shader_compiler_output::log& log : output.get_messages())
-        {
-            db_log(asset, "[%s:%zi] %s", stage.file.c_str(), log.line, log.message.c_str());
-            for (const std::string& context : log.context)
-            {
-                db_log(asset, "[%s:%zi] \t%s", stage.file.c_str(), log.line, context.c_str());
-            }
-        }
-
         return false;
     }
 

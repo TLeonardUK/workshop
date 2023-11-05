@@ -188,4 +188,23 @@ inline float byte_to_float(uint8_t value)
 	return ret;
 }
 
+// Gets the size an atlas rectangle needs to be to fit the given number of sub rectangles.
+// Sizes increate in powers of two.
+inline size_t calculate_atlas_size(size_t sub_rect_size, size_t sub_rect_count)
+{
+    size_t atlas_size = 1;
+    while (true)
+    {
+        size_t per_row = (atlas_size / sub_rect_size);
+        size_t fit_count = per_row * per_row;
+        if (fit_count >= sub_rect_count)
+        {
+            break;
+        }
+        atlas_size = atlas_size * 2;
+    }
+
+    return atlas_size;
+}
+
 }; // namespace ws::math

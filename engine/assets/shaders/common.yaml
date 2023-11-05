@@ -198,7 +198,16 @@ param_blocks:
       size: int3
       bounds: float3
       density: float
-      sh_table: rwbyteaddressbuffer
+      irradiance_texture: texture2d
+      occlusion_texture: texture2d
+      map_sampler: sampler
+      irradiance_texture_size: int 
+      irradiance_map_size: int
+      irradiance_probes_per_row: int
+      occlusion_texture_size: int 
+      occlusion_map_size: int
+      occlusion_probes_per_row: int
+
   # Structure describing individual reflection probes.
   reflection_probe_state:
     scope: indirect

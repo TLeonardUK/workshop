@@ -44,8 +44,11 @@ public:
     // Called when the bounds of an object is modified.
     virtual void bounds_modified();
 
-    // Gets buffer containing spherical harmonics for each probe inside the grid.
-    ri_buffer& get_spherical_harmonic_buffer();
+    // Gets the buffer containing occlusion data for each probe.
+    ri_texture& get_occlusion_texture();
+
+    // Gets the buffer containing irradiance data for each probe.
+    ri_texture& get_irradiance_texture();
 
     // Gets the param block describing this grid for rendering it as part of the lighting pass.
     ri_param_block& get_param_block();
@@ -72,7 +75,8 @@ private:
 
     std::vector<probe> m_probes;
 
-    std::unique_ptr<ri_buffer> m_spherical_harmonic_buffer;
+    std::unique_ptr<ri_texture> m_occlusion_texture;
+    std::unique_ptr<ri_texture> m_irradiance_texture;
     std::unique_ptr<ri_param_block> m_param_block;
 
 };

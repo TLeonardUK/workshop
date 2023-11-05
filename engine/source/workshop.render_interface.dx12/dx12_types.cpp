@@ -223,6 +223,8 @@ DXGI_FORMAT ri_to_dx12(ri_texture_format value)
         DXGI_FORMAT_R32G32_UINT,
         DXGI_FORMAT_R32G32_SINT,
 
+        DXGI_FORMAT_R11G11B10_FLOAT,
+
         DXGI_FORMAT_R8G8B8A8_UNORM,
         DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
         DXGI_FORMAT_R8G8B8A8_UINT,
@@ -291,7 +293,8 @@ D3D12_FILTER ri_to_dx12(ri_texture_filter value)
     static std::array<D3D12_FILTER, static_cast<int>(ri_texture_filter::COUNT)> conversion = {
         D3D12_FILTER_MIN_MAG_MIP_LINEAR,
         D3D12_FILTER_ANISOTROPIC,
-        D3D12_FILTER_MIN_MAG_MIP_POINT,    
+        D3D12_FILTER_MIN_MAG_MIP_POINT, 
+        D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT,
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

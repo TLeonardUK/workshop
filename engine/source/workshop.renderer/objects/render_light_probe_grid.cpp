@@ -61,9 +61,14 @@ size_t render_light_probe_grid::get_probe_index(size_t x, size_t y, size_t z)
         x;
 }
 
-ri_buffer& render_light_probe_grid::get_spherical_harmonic_buffer()
+ri_texture& render_light_probe_grid::get_occlusion_texture()
 {
-    return *m_spherical_harmonic_buffer;
+    return *m_occlusion_texture;
+}
+
+ri_texture& render_light_probe_grid::get_irradiance_texture()
+{
+    return *m_irradiance_texture;
 }
 
 ri_param_block& render_light_probe_grid::get_param_block()
@@ -85,17 +90,49 @@ void render_light_probe_grid::recalculate_probes()
 
     m_probes.resize(m_width * m_height * m_depth);
 
-    // Create the buffer that will hold our SH values.
-    ri_buffer::create_params buffer_params;
-    buffer_params.element_count = std::max(1llu, m_probes.size());
-    buffer_params.element_size = k_probe_coefficient_size;
-    buffer_params.usage = ri_buffer_usage::generic;
-    m_spherical_harmonic_buffer = m_renderer->get_render_interface().create_buffer(buffer_params, "light grid sh coefficients");
+    // Create a texture that can store out occlusion data.
+    const render_options& options = m_renderer->get_options();
+
+    size_t map_padding = 2;
+
+    size_t occlusion_required_space = options.light_probe_occlusion_map_size + map_padding;
+    size_t occlusion_texture_size = math::calculate_atlas_size(occlusion_required_space, m_probes.size());
+
+    ri_texture::create_params texture_params;
+    texture_params.allow_unordered_access = true;
+    texture_params.width = occlusion_texture_size;
+    texture_params.height = occlusion_texture_size;
+    texture_params.format = ri_texture_format::R16G16_FLOAT;
+    m_occlusion_texture = m_renderer->get_render_interface().create_texture(texture_params, "light grid occlusion");
+
+    size_t irradiance_required_space = options.light_probe_irradiance_map_size + map_padding;
+    size_t irradiance_texture_size = math::calculate_atlas_size(irradiance_required_space, m_probes.size());
+
+    texture_params.width = irradiance_texture_size;
+    texture_params.height = irradiance_texture_size;
+    texture_params.format = ri_texture_format::R11G11B10_FLOAT;
+    m_irradiance_texture = m_renderer->get_render_interface().create_texture(texture_params, "light grid irradiance");
 
     matrix4 grid_transform =
         matrix4::rotation(m_local_rotation) *
         matrix4::translate(m_local_location);
 
+    // Update the param block description.
+    m_param_block->set("world_to_grid_matrix", grid_transform.inverse());
+    m_param_block->set("size", vector3i((int)m_width, (int)m_height, (int)m_depth));
+    m_param_block->set("bounds", bounds);
+    m_param_block->set("density", m_density);
+    m_param_block->set("irradiance_texture", *m_irradiance_texture);
+    m_param_block->set("occlusion_texture", *m_occlusion_texture);
+    m_param_block->set("map_sampler", *m_renderer->get_default_sampler(default_sampler_type::bilinear));
+    m_param_block->set("irradiance_texture_size", (int)m_irradiance_texture->get_width());
+    m_param_block->set("irradiance_map_size", (int)options.light_probe_irradiance_map_size);
+    m_param_block->set("irradiance_probes_per_row", (int)(m_irradiance_texture->get_width() / irradiance_required_space));
+    m_param_block->set("occlusion_texture_size", (int)m_occlusion_texture->get_width());
+    m_param_block->set("occlusion_map_size", (int)options.light_probe_occlusion_map_size);
+    m_param_block->set("occlusion_probes_per_row", (int)(m_irradiance_texture->get_width() / occlusion_required_space));
+
+    // Update individual probes.
     for (size_t z = 0; z < m_depth; z++)
     {
         for (size_t y = 0; y < m_height; y++)
@@ -120,19 +157,19 @@ void render_light_probe_grid::recalculate_probes()
                 probe.orientation = m_local_rotation;
 
                 probe.debug_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_instance_info");
-                probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(40.0f, 40.0f, 40.0f)) * matrix4::translate(probe.origin));
-                probe.debug_param_block->set("sh_table_index", *m_spherical_harmonic_buffer, true);
-                probe.debug_param_block->set("sh_table_offset", (int)(probe.index * k_probe_coefficient_size));
+                probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(25.0f, 25.0f, 25.0f)) * matrix4::translate(probe.origin));
+
+                size_t table_index, table_offset;
+                m_param_block->get_table(table_index, table_offset);
+
+                probe.debug_param_block->set("grid_state_table_index", (int)table_index);
+                probe.debug_param_block->set("grid_state_table_offset", (int)table_offset);
+
+                probe.debug_param_block->set("grid_coord", vector3i((int)x, (int)y, (int)z));
             }
         }
     }
 
-    // Update the param block description.
-    m_param_block->set("world_to_grid_matrix", grid_transform.inverse());
-    m_param_block->set("size", vector3i((int)m_width, (int)m_height, (int)m_depth));
-    m_param_block->set("bounds", bounds);
-    m_param_block->set("density", m_density);
-    m_param_block->set("sh_table", *m_spherical_harmonic_buffer, true);
 }
 
 }; // namespace ws

@@ -198,7 +198,9 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
         sub_object.pDesc = &pipeline_config_desc;
     }
 
+#if 0
     db_log(renderer, "==== Building raytracing pipeline: %s ====", m_debug_name.c_str());
+#endif
 
     // Add all the RT shaders this pipeline uses.
     for (size_t i = (int)ri_shader_stage::rt_start; i <= (int)ri_shader_stage::rt_end; i++)
@@ -233,7 +235,9 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
     // Add all the raytrace hitgroups.
     for (ri_pipeline::create_params::ray_hitgroup& hitgroup : m_create_params.ray_hitgroups)
     {
+#if 0
         db_log(renderer, "Hitgroup: %s", hitgroup.name);
+#endif
 
         for (size_t i = (int)ri_shader_stage::rt_start; i <= (int)ri_shader_stage::rt_end; i++)
         {
@@ -305,7 +309,9 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
             continue;
         }
 
+#if 0
         db_log(renderer, "Missgroup: %s", stage_params.entry_point.c_str());
+#endif
 
         std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
         export_desc->Name = add_string(stage_params.entry_point);
@@ -326,7 +332,9 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
         export_descs.push_back(std::move(export_desc));
     }
 
+#if 0
     db_log(renderer, "==== End ====");
+#endif
 
     D3D12_STATE_OBJECT_DESC desc = {};
     desc.NumSubobjects = (UINT)subobjects.size();
@@ -386,7 +394,9 @@ result<void> dx12_ri_pipeline::build_sbt()
             failed = true;
             return;
         }
+#if 0
         db_log(core, "%zi: %s", sbt_data.size(), name.c_str());
+#endif
 
         sbt_data.resize(sbt_data.size() + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         memcpy(sbt_data.data() + sbt_data.size() - D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES, shader_id, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
@@ -427,11 +437,17 @@ result<void> dx12_ri_pipeline::build_sbt()
             return;
         }
         size_t padding = alignment - left_over;
+
+#if 0
         db_log(core, "%zi: %zi bytes of padding", sbt_data.size(), padding);
+#endif
+
         sbt_data.resize(sbt_data.size() + padding);
     };
 
+#if 0
     db_log(core, "=========== Shader Binding Table Layout: %s ============", m_debug_name.c_str());
+#endif
 
     // Generation shader first.
     m_ray_generation_shader_offset = 0;
@@ -440,7 +456,9 @@ result<void> dx12_ri_pipeline::build_sbt()
     // Miss shaders next.
     align_offset(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
+#if 0
     db_log(core, "== MISS SHADER TABLE ==");
+#endif
     m_ray_miss_table_offset = sbt_data.size();
     for (size_t type = 0; type < ray_type_count; type++)
     {
@@ -458,7 +476,9 @@ result<void> dx12_ri_pipeline::build_sbt()
     // Add all the hitgroups.
     align_offset(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
 
+#if 0
     db_log(core, "== HIT GROUP TABLE ==");
+#endif
     m_ray_hit_group_table_offset = sbt_data.size();
     for (size_t domain = 0; domain < ray_domain_count; domain++)
     {
@@ -481,7 +501,9 @@ result<void> dx12_ri_pipeline::build_sbt()
         return false;
     }
 
+#if 0
     db_log(core, "==== END ====");
+#endif
 
     ri_buffer::create_params sbt_params;
     sbt_params.element_count = 1;

@@ -1,0 +1,331 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    1:
+        meta_component:
+            name: main camera
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.412508845
+                y:  -0.0327829421
+                z:  0.0148567632
+                w:  0.910242319
+            local_location:
+                x:  162.69632
+                y:  603.370972
+                z:  -248.469711
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        camera_component:
+            fov: 45
+            aspect_ratio: 1.76999998
+            min_depth: 10
+            max_depth: 20000
+        fly_camera_movement_component:
+            sensitivity: 0.00100000005
+            speed: 1500
+            zoom_speed: 50000
+            pan_speed: 50
+            max_vertical_angle: 0.800000012
+    2:
+        meta_component:
+            name: rgb strip
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  200
+                y:  0
+                z:  0
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+    3:
+        meta_component:
+            name: sun light
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.599847734
+                y:  0.153166384
+                z:  0.194290519
+                w:  0.760903358
+            local_location:
+                x:  -5.84945292e-06
+                y:  590
+                z:  -7.92741776e-06
+            local_scale:
+                x:  1.00000036
+                y:  1
+                z:  1.00000024
+        bounds_component:
+            {}
+        directional_light_component:
+            shadow_cascades: 3
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+        light_component:
+            intensity: 1
+            range: 10000
+            importance_range: 5000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+    4:
+        meta_component:
+            name: light probe grid
+        transform_component:
+            parent: 2
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  119.999702
+                y:  209.998459
+                z:  159.99968
+            local_scale:
+                x:  894.347534
+                y:  507.386688
+                z:  1108.79834
+        bounds_component:
+            {}
+        light_probe_grid_component:
+            density: 150
+    5:
+        meta_component:
+            name: reflection probe
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  200
+                z:  0
+            local_scale:
+                x:  4000
+                y:  4000
+                z:  4000
+        bounds_component:
+            {}
+        reflection_probe_component:
+            {}
+    6:
+        meta_component:
+            name: green
+        transform_component:
+            parent: 2
+            local_rotation:
+                x:  0.500035644
+                y:  -0.500208259
+                z:  -0.499791533
+                w:  0.499964505
+            local_location:
+                x:  -0.000122070312
+                y:  100.000015
+                z:  199.999878
+            local_scale:
+                x:  400.000397
+                y:  1.00000024
+                z:  400.000214
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/core/primitives/cube.yaml
+            materials:
+                -   data:materials/core/solid/magenta.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    7:
+        meta_component:
+            name: green
+        transform_component:
+            parent: 2
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  400
+                y:  1
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/core/primitives/cube.yaml
+            materials:
+                -   data:materials/core/solid/green.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    8:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  200
+                y:  100
+                z:  -600
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        light_component:
+            intensity: 1
+            range: 1000000
+            importance_range: 5754.3999
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: false
+            shadow_map_size: 512
+            shadow_map_distance: 3000
+        spot_light_component:
+            inner_radius: 0.5
+            outer_radius: 0.699999988
+    10:
+        meta_component:
+            name: skybox
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  200
+                y:  0
+                z:  410
+            local_scale:
+                x:  10000
+                y:  10000
+                z:  10000
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/skyboxs/skybox_3.yaml
+            materials:
+                -   data:models/skyboxs/materials/skybox_3.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    26:
+        meta_component:
+            name: green
+        transform_component:
+            parent: 2
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  270
+                z:  0
+            local_scale:
+                x:  400
+                y:  1
+                z:  400
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/core/primitives/cube.yaml
+            materials:
+                -   data:materials/core/solid/red.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    27:
+        meta_component:
+            name: green
+        transform_component:
+            parent: 2
+            local_rotation:
+                x:  0
+                y:  0
+                z:  -0.706984699
+                w:  0.707228839
+            local_location:
+                x:  199.999908
+                y:  100
+                z:  0
+            local_scale:
+                x:  400.000336
+                y:  1.00000048
+                z:  400.000214
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/core/primitives/cube.yaml
+            materials:
+                -   data:materials/core/solid/blue.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    28:
+        meta_component:
+            name: green
+        transform_component:
+            parent: 2
+            local_rotation:
+                x:  0
+                y:  0
+                z:  -0.706984699
+                w:  0.707228839
+            local_location:
+                x:  -200.000122
+                y:  100.000008
+                z:  0
+            local_scale:
+                x:  400.000336
+                y:  1.00000048
+                z:  400.000214
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/core/primitives/cube.yaml
+            materials:
+                -   data:materials/core/solid/blue.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0

@@ -6,6 +6,7 @@
 #define _RAYTRACING_HLSL_
 
 #include "data:shaders/source/common/math.hlsl"
+//#include "data:shaders/source/common/raytracing_differentials.hlsl"
 
 // Ensure these match the values in ri_types.h
 enum ray_type
@@ -99,6 +100,8 @@ struct ray_shading_data
     model_info model;    
     ray_primitive_info primitive;
     vertex params;
+    float2 ddx;
+    float2 ddy;
 };
 
 ray_shading_data load_ray_shading_data(float2 barycentrics)
@@ -110,6 +113,8 @@ ray_shading_data load_ray_shading_data(float2 barycentrics)
     ret.model = load_tlas_model(ret.metadata);
     ret.primitive = load_tlas_primitive(ret.metadata, ret.model);
     ret.params = interpolate_tlas_primitive(ret.primitive, barycentrics);
+
+    //compute_uv_differentials(ret);
 
     return ret;
 }

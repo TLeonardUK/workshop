@@ -164,14 +164,23 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
         dirty_probe& probe = m_probes_to_regenerate[i];  
         ri_param_block* raytrace_diffuse_probe_parameters = m_regeneration_param_blocks[i].get();
         
+        size_t map_padding = 2;
+
         raytrace_diffuse_probe_parameters->set("scene_tlas", m_renderer.get_scene_tlas());
         raytrace_diffuse_probe_parameters->set("scene_tlas_metadata", *m_renderer.get_scene_tlas().get_metadata_buffer());
         raytrace_diffuse_probe_parameters->set("probe_origin", probe.probe->origin);
         raytrace_diffuse_probe_parameters->set("probe_far_z", m_probe_far_z);
         raytrace_diffuse_probe_parameters->set("probe_ray_count", (int)m_probe_ray_count);
-        raytrace_diffuse_probe_parameters->set("diffuse_output_buffer", probe.grid->get_spherical_harmonic_buffer(), true);
-        raytrace_diffuse_probe_parameters->set("diffuse_output_buffer_start_offset", (int)probe.probe->index * (int)render_light_probe_grid::k_probe_coefficient_size);
         raytrace_diffuse_probe_parameters->set("scratch_buffer", *m_scratch_buffer, true);
+        raytrace_diffuse_probe_parameters->set("probe_index", (int)probe.probe->index);
+        raytrace_diffuse_probe_parameters->set("irradiance_texture", ri_texture_view(&probe.grid->get_irradiance_texture(), 0), true);
+        raytrace_diffuse_probe_parameters->set("irradiance_map_size", (int)options.light_probe_irradiance_map_size);
+        raytrace_diffuse_probe_parameters->set("irradiance_per_row", (int)(probe.grid->get_irradiance_texture().get_width() / (options.light_probe_irradiance_map_size + map_padding)));
+        raytrace_diffuse_probe_parameters->set("occlusion_texture", ri_texture_view(&probe.grid->get_occlusion_texture(), 0), true);
+        raytrace_diffuse_probe_parameters->set("occlusion_map_size", (int)options.light_probe_occlusion_map_size);
+        raytrace_diffuse_probe_parameters->set("occlusion_per_row", (int)(probe.grid->get_occlusion_texture().get_width() / (options.light_probe_occlusion_map_size + map_padding)));
+        raytrace_diffuse_probe_parameters->set("probe_spacing", probe.grid->get_density());
+        raytrace_diffuse_probe_parameters->set("probe_distance_exponent", options.light_probe_distance_exponent);
 
         // Calculate the scene color for each ray.
         std::unique_ptr<render_pass_raytracing> resolve_pass = std::make_unique<render_pass_raytracing>();
@@ -228,16 +237,6 @@ void render_system_light_probes::step(const render_world_state& state)
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
 
     m_probes_to_regenerate.clear();
-
-#if 0
-    // Debug draw spherical sample points
-    render_system_debug* system_debug = m_renderer.get_system<render_system_debug>();
-    for (size_t i = 0; i < m_probe_ray_count; i++)
-    {
-        vector3 n = vector3::spherical_fibonacci((float)i, (float)m_probe_ray_count);
-        system_debug->add_line(vector3::zero, n * m_probe_far_z, color::red);
-    }
-#endif
 
     // If settings have changed, rebuild resources.
     if (options.light_probe_ray_count != m_probe_ray_count || 

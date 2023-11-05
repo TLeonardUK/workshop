@@ -738,6 +738,8 @@ enum class ri_texture_format
     R32G32,
     R32G32_SINT,
 
+    R11G11B10_FLOAT,
+
     R8G8B8A8,
     R8G8B8A8_SRGB,
     R8G8B8A8_UINT,
@@ -812,6 +814,8 @@ inline static const char* ri_texture_format_strings[static_cast<int>(ri_texture_
     "R32G32_FLOAT",
     "R32G32",
     "R32G32_SINT",
+
+    "R11G11B10_FLOAT",
 
     "R8G8B8A8",
     "R8G8B8A8_SRGB",
@@ -985,6 +989,7 @@ enum class ri_texture_filter
     linear,
     anisotropic,
     nearest_neighbour,
+    bilinear,
 
     COUNT
 };
@@ -992,7 +997,8 @@ enum class ri_texture_filter
 inline static const char* ri_texture_filter_strings[static_cast<int>(ri_texture_filter::COUNT)] = {
     "linear",
     "anisotropic",
-    "nearest_neighbour"
+    "nearest_neighbour",
+    "bilinear"
 };
 
 DEFINE_ENUM_TO_STRING(ri_texture_filter, ri_texture_filter_strings)

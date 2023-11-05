@@ -67,6 +67,7 @@ enum class default_sampler_type
     normal,         // Configured for sampling normal data.
     shadow_map,     // Configured for sampling shadow maps - clamps edges.
     color_clamped,  // Configured for sampling shadow maps - clamps edges.
+    bilinear,
 
     COUNT
 };

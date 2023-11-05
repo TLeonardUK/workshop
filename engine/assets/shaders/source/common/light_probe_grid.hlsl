@@ -6,6 +6,7 @@
 #define _LIGHT_PROBE_GRID_HLSL_
 
 #include "data:shaders/source/common/sh.hlsl"
+#include "data:shaders/source/common/octahedral.hlsl"
 
 // Goes through a buffer full of light probe grid states and selects the one appropriate for the given world position.
 // Returns -1 if world position is not inside any grid.
@@ -18,7 +19,7 @@ int find_intersecting_probe_grid(int grid_count, ByteAddressBuffer grid_buffer, 
 
         float3 half_bounds = grid_state.bounds * 0.5f;
 
-        float3 local_position = mul(grid_state.world_to_grid_matrix, float4(world_position, 1.0f));
+        float3 local_position = mul(grid_state.world_to_grid_matrix, float4(world_position, 1.0f)).xyz;
         if (local_position.x >= -half_bounds.x && local_position.x < half_bounds.x &&
             local_position.y >= -half_bounds.y && local_position.y < half_bounds.y &&
             local_position.z >= -half_bounds.z && local_position.z < half_bounds.z)
@@ -30,26 +31,30 @@ int find_intersecting_probe_grid(int grid_count, ByteAddressBuffer grid_buffer, 
     return -1;
 }
 
-float3 sample_light_probe(RWByteAddressBuffer sh_buffer, int3 grid_size, int3 probe_coordinate, float3 world_normal)
+int2 get_probe_atlas_coords(int probe_index, int probes_per_row, int map_size)
+{
+    return int2(probe_index % probes_per_row, probe_index / probes_per_row);
+}
+
+float2 get_probe_uv(int3 probe_coord, int3 grid_size, float2 octant_coordinates, int map_size, int texture_size, int probes_per_row, light_probe_grid_state grid_state)
 {
     int probe_index = 
-        ((grid_size.x * grid_size.y) * probe_coordinate.z) +
-        (grid_size.x * probe_coordinate.y) +
-        probe_coordinate.x;
+        ((grid_size.x * grid_size.y) * probe_coord.z) +
+        (grid_size.x * probe_coord.y) +
+        probe_coord.x;
 
-    // TODO: Huuum, I don't understand how this can happen, the inputs are all clamped, but it -is- happening somehow.
-    if (probe_index >= grid_size.x * grid_size.y * grid_size.z)
-    {
-        return float3(0.0f, 0.0f, 0.0f);
-    }
+    // Get the probe's texel coordinates, assuming one texel per probe
+    uint2 coords = get_probe_atlas_coords(probe_index, probes_per_row, map_size);
 
-    uint probe_coefficient_size = 9 * 3 * sizeof(float);
+    // Add the border texels to get the total texels per probe
+    float num_probe_texels = (map_size + 2.0f);
 
-    uint probe_offset = probe_index * probe_coefficient_size;
+    // Move to the center of the probe and move to the octant texel before normalizing
+    float2 uv = float2(coords.x * num_probe_texels, coords.y * num_probe_texels) + (num_probe_texels * 0.5f);
+    uv += octant_coordinates.xy * ((float)map_size * 0.50f);
+    uv /= float2(texture_size, texture_size);
 
-    sh_color_coefficients radiance = sh_buffer.Load<sh_color_coefficients>(probe_offset);
-
-    return calculate_sh_irradiance(world_normal, radiance);
+    return uv;
 }
 
 // Based on DDGI presentation:
@@ -64,8 +69,8 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
 
         float3 half_bounds = grid_state.bounds * 0.5f;
 
-        float3 local_position = mul(grid_state.world_to_grid_matrix, float4(world_position, 1.0f));
-        float3 local_normal = normalize(mul(grid_state.world_to_grid_matrix, float4(world_normal, 0.0f)));
+        float3 local_position = mul(grid_state.world_to_grid_matrix, float4(world_position, 1.0f)).xyz;
+        float3 local_normal = normalize(mul(grid_state.world_to_grid_matrix, float4(world_normal, 0.0f))).xyz;
 
         if (local_position.x >= -half_bounds.x && local_position.x < half_bounds.x &&
             local_position.y >= -half_bounds.y && local_position.y < half_bounds.y &&
@@ -93,9 +98,10 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             float3 delta = local_position / grid_state.density - min_coords;
 
             // Sample the 8 probes surrounding the position.
-            RWByteAddressBuffer sh_buffer = table_rw_byte_buffers[NonUniformResourceIndex(grid_state.sh_table_index)];
+            Texture2D irradiance_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.irradiance_texture_index)];
+            Texture2D occlusion_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.occlusion_texture_index)];
+            sampler map_sampler = table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)];
 
-#if 1
             int3 sample_locations[] = {
                 int3(min_coords.x, min_coords.y, min_coords.z),
                 int3(max_coords.x, min_coords.y, min_coords.z),
@@ -140,7 +146,10 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             
                 if (weight > 0.0f)
                 {
-                    irradiance += float4(sample_light_probe(sh_buffer, grid_state.size, grid_coord, world_normal), 1.0f) * weight;
+                    // Sample irradiance map.
+                    float2 octant_coords = get_octahedral_coordinates(world_normal);
+                    float2 probe_texture_uv = get_probe_uv(grid_coord, grid_state.size, octant_coords, grid_state.irradiance_map_size, grid_state.irradiance_texture_size, grid_state.irradiance_probes_per_row, grid_state);
+                    irradiance += float4(irradiance_texture_map.SampleLevel(map_sampler, probe_texture_uv, 0).rgb, 1.0f) * weight;
                 }
             }
 
@@ -150,30 +159,6 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             }
             
             return irradiance.rgb / irradiance.a;
-#else
-            float3 min_x_min_y_min_z = sample_light_probe(sh_buffer, grid_state.size, int3(min_coords.x, min_coords.y, min_coords.z), world_normal);
-            float3 max_x_min_y_min_z = sample_light_probe(sh_buffer, grid_state.size, int3(max_coords.x, min_coords.y, min_coords.z), world_normal);
-            float3 max_x_min_y_max_z = sample_light_probe(sh_buffer, grid_state.size, int3(max_coords.x, min_coords.y, max_coords.z), world_normal);
-            float3 min_x_min_y_max_z = sample_light_probe(sh_buffer, grid_state.size, int3(min_coords.x, min_coords.y, max_coords.z), world_normal);
-
-            float3 min_x_max_y_min_z = sample_light_probe(sh_buffer, grid_state.size, int3(min_coords.x, max_coords.y, min_coords.z), world_normal);
-            float3 max_x_max_y_min_z = sample_light_probe(sh_buffer, grid_state.size, int3(max_coords.x, max_coords.y, min_coords.z), world_normal);
-            float3 max_x_max_y_max_z = sample_light_probe(sh_buffer, grid_state.size, int3(max_coords.x, max_coords.y, max_coords.z), world_normal);
-            float3 min_x_max_y_max_z = sample_light_probe(sh_buffer, grid_state.size, int3(min_coords.x, max_coords.y, max_coords.z), world_normal);
-
-            // Interpolate each axis seperately.
-            float3 x_min_y_min_z = lerp(min_x_min_y_min_z, max_x_min_y_min_z, delta.x);
-            float3 x_max_y_min_z = lerp(min_x_max_y_min_z, max_x_max_y_min_z, delta.x);
-            float3 x_max_y_max_z = lerp(min_x_max_y_max_z, max_x_max_y_max_z, delta.x);
-            float3 x_min_y_max_z = lerp(min_x_min_y_max_z, max_x_min_y_max_z, delta.x);
-
-            float3 x_y_min_z = lerp(x_min_y_min_z, x_max_y_min_z, delta.y);
-            float3 x_y_max_z = lerp(x_min_y_max_z, x_max_y_max_z, delta.y);
-            
-            float3 result = lerp(x_y_min_z, x_y_max_z, delta.z);
-
-            return result;
-#endif
         }    
     }
 

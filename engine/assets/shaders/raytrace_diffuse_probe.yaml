@@ -26,9 +26,17 @@ param_blocks:
       probe_origin: float3
       probe_far_z: float
       probe_ray_count: int
-      diffuse_output_buffer: rwbyteaddressbuffer
-      diffuse_output_buffer_start_offset: int
       scratch_buffer: rwbyteaddressbuffer
+      probe_index: int
+      irradiance_texture: rwtexture2d
+      irradiance_map_size: int
+      irradiance_per_row: int
+      occlusion_texture: rwtexture2d
+      occlusion_map_size: int
+      occlusion_per_row: int
+      probe_spacing: float
+      probe_distance_exponent: float
+
   # One instance of this param block is stored for every
   # ray into the scrach_buffer. This is combined into the 
   # final output by the sh generation step.
@@ -37,6 +45,7 @@ param_blocks:
     fields:  
       color: float3
       normal: float3
+      distance: float
       valid: bool
 
 techniques:

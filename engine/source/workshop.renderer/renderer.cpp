@@ -245,6 +245,13 @@ result<void> renderer::create_resources()
     sampler_params.address_mode_w = ri_texture_address_mode::clamp_to_border;
     m_default_samplers[static_cast<int>(default_sampler_type::color_clamped)] = m_render_interface.create_sampler(sampler_params, "default color clamped sampler");
 
+    sampler_params.filter = ri_texture_filter::bilinear;
+    sampler_params.address_mode_u = ri_texture_address_mode::repeat;
+    sampler_params.address_mode_v = ri_texture_address_mode::repeat;
+    sampler_params.address_mode_w = ri_texture_address_mode::repeat;
+    sampler_params.max_anisotropy = 1;
+    m_default_samplers[static_cast<int>(default_sampler_type::bilinear)] = m_render_interface.create_sampler(sampler_params, "default bilinear sampler");
+
     // Recreates any targets that change based on swapchain size.
     if (result<void> ret = recreate_resizable_targets(); !ret)
     {

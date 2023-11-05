@@ -154,6 +154,8 @@ size_t ri_bytes_per_texel(ri_texture_format value)
         8, // R32G32,
         8, // R32G32_SINT,
 
+        4, // R11G11B10_FLOAT
+
         4, // R8G8B8A8,
         4, // R8G8B8A8_SRGB,
         4, // R8G8B8A8_UINT,
@@ -239,6 +241,8 @@ size_t ri_format_block_size(ri_texture_format value)
         1, // R32G32_FLOAT,
         1, // R32G32,
         1, // R32G32_SINT,
+
+        1, // R11G11B10_FLOAT
         
         1, // R8G8B8A8,
         1, // R8G8B8A8_SRGB,
@@ -317,7 +321,7 @@ ri_texture_format ri_convert_pixmap_format(pixmap_format value)
         ri_texture_format::R32G32_FLOAT,        // R32G32_FLOAT,
         ri_texture_format::R32G32_SINT,         // R32G32_SIGNED,
         ri_texture_format::R32G32,              // R32G32,
-        
+
         ri_texture_format::R32_FLOAT,           // R32_FLOAT,
         ri_texture_format::R32_SINT,            // R32_SIGNED,
         ri_texture_format::R32,                 // R32,
