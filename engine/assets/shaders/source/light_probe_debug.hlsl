@@ -58,8 +58,14 @@ light_probe_poutput pshader(light_probe_pinput input)
         sampler map_sampler = table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)];
 
         float2 octant_coords = get_octahedral_coordinates(sample_normal);
+#if 1        
         float2 probe_texture_uv = get_probe_uv(input.probe_grid_coord, grid_state.size, octant_coords, grid_state.irradiance_map_size, grid_state.irradiance_texture_size, grid_state.irradiance_probes_per_row, grid_state);
         float3 diffuse = irradiance_texture_map.SampleLevel(map_sampler, probe_texture_uv, 0).rgb;
+#else
+        float2 probe_texture_uv = get_probe_uv(input.probe_grid_coord, grid_state.size, octant_coords, grid_state.occlusion_map_size, grid_state.occlusion_texture_size, grid_state.occlusion_probes_per_row, grid_state);
+        float3 diffuse = occlusion_texture_map.SampleLevel(map_sampler, probe_texture_uv, 0).rgb;
+        diffuse.rgb = diffuse.r / 150.0f;
+#endif
 
         output.color = float4(diffuse, 1.0f);
     } 

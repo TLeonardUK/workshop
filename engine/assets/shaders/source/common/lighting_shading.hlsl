@@ -487,7 +487,7 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
 
     // Total contribution for this light.
     float ao = 1.0f;
-    if (!is_transparent_or_ray)
+    if (!is_transparent_or_ray && ao_enabled)
     {
         ao = ao_texture.SampleLevel(ao_sampler, frag.uv * ao_uv_scale, 0).r;
     }
@@ -539,7 +539,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
     kD *= 1.0f - metallic;
 
     // Sample light grids for our diffuse term.
-    float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal);
+    float3 irradiance = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal, view_direction);
     float3 diffuse = irradiance * albedo / pi;
 
     // Sample our reflection probes + BRDF LUT to calculate our specular term.
@@ -549,7 +549,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
 
     // Grab the AO output to tint our ambient term.
     float ao = 1.0f;
-    if (!is_transparent_or_ray)
+    if (!is_transparent_or_ray && ao_enabled)
     {
         ao = ao_texture.SampleLevel(ao_sampler, frag.uv * ao_uv_scale, 0).r;
     }
@@ -709,7 +709,8 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
         }
         case visualization_mode_t::light_probe_contribution:             
         {
-            final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal);
+            float3 view_direction = normalize(view_world_position - frag.world_position);
+            final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal, view_direction);
             break;
         }
         case visualization_mode_t::indirect_specular:

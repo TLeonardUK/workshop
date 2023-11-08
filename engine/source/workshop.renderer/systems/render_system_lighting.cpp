@@ -290,6 +290,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
 
         ri_texture& ao_texture = *m_renderer.get_system<render_system_ssao>()->get_ssao_mask();
         resolve_param_block->set("ao_texture", ao_texture);
+        resolve_param_block->set("ao_enabled", options.ssao_enabled);
         resolve_param_block->set("ao_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
         resolve_param_block->set("ao_direct_light_effect", options.ssao_direct_light_effect);
         resolve_param_block->set("ao_uv_scale", vector2(options.ssao_resolution_scale, options.ssao_resolution_scale));

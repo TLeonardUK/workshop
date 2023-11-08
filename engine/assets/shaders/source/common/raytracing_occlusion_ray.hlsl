@@ -17,6 +17,7 @@
 struct occlusion_ray_payload
 {
     float  hit_t;
+    uint   hit_kind;
 };
 
 [shader("miss")]
@@ -33,6 +34,7 @@ void ray_occlusion_miss(inout occlusion_ray_payload payload)
 void ray_occlusion_opaque_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.hit_t = RayTCurrent();
+    payload.hit_kind = HitKind();
 }
 
 // ================================================================================================
@@ -43,6 +45,7 @@ void ray_occlusion_opaque_closest_hit(inout occlusion_ray_payload payload, Built
 void ray_occlusion_masked_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.hit_t = RayTCurrent();
+    payload.hit_kind = HitKind();
 }
 
 [shader("anyhit")]
@@ -69,6 +72,7 @@ void ray_occlusion_masked_any_hit(inout occlusion_ray_payload payload, BuiltInTr
 void ray_occlusion_sky_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.hit_t = RayTCurrent();
+    payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE; // Count all hits as frontfacing for the sky seeing as its essentially inverted.
 }
 
 // ================================================================================================

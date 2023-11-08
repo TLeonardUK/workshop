@@ -13,28 +13,23 @@ effects:
   raytrace_diffuse_probe:
     techniques:
       raytrace_diffuse_probe: {}
-  raytrace_diffuse_probe_combine:
+  raytrace_diffuse_probe_output_irradiance:
     techniques:
-      raytrace_diffuse_probe_combine: {}
-   
+      raytrace_diffuse_probe_output_irradiance: {}
+  raytrace_diffuse_probe_output_occlusion:
+    techniques:
+      raytrace_diffuse_probe_output_occlusion: {}   
+
 param_blocks:
   raytrace_diffuse_probe_parameters:
     scope: draw
     fields:
       scene_tlas: tlas
       scene_tlas_metadata: byteaddressbuffer
-      probe_origin: float3
       probe_far_z: float
       probe_ray_count: int
       scratch_buffer: rwbyteaddressbuffer
-      probe_index: int
-      irradiance_texture: rwtexture2d
-      irradiance_map_size: int
-      irradiance_per_row: int
-      occlusion_texture: rwtexture2d
-      occlusion_map_size: int
-      occlusion_per_row: int
-      probe_spacing: float
+      probe_data_buffer: byteaddressbuffer
       probe_distance_exponent: float
 
   # One instance of this param block is stored for every
@@ -47,11 +42,26 @@ param_blocks:
       normal: float3
       distance: float
       valid: bool
+      back_face: bool
+
+  # Describes a probe to be traced.
+  raytrace_diffuse_probe_data:
+    scope: indirect
+    fields:  
+      probe_index: int
+      probe_origin: float3
+      irradiance_texture: rwtexture2d
+      irradiance_map_size: int
+      irradiance_per_row: int
+      occlusion_texture: rwtexture2d
+      occlusion_map_size: int
+      occlusion_per_row: int
+      probe_spacing: float
 
 techniques:
   raytrace_diffuse_probe:
     ray_generation_shader: 
-      file: data:shaders/source/raytrace_diffuse_probe.hlsl
+      file: data:shaders/source/ddgi/raytrace_diffuse_probe.hlsl
       entry: ray_generation
     ray_hitgroups: [ 
       primitive_opaque_hitgroup, 
@@ -71,6 +81,7 @@ techniques:
     param_blocks: [ 
       raytrace_diffuse_probe_parameters, 
       raytrace_diffuse_probe_scrach_data,
+      raytrace_diffuse_probe_data,
       tlas_metadata,
       view_info, 
       gbuffer,
@@ -86,13 +97,14 @@ techniques:
       DO_NOT_USE_LIGHT_CLUSTERS: 1  # As we can trace in all directions using the light clusters isn't helpful for us, so just iterate the full list, bleh. 
       DISABLE_VISUALIZATION_MODES: 1 # Ignore any visualization modes when calculating shading.
 
-  raytrace_diffuse_probe_combine:
+  raytrace_diffuse_probe_output_irradiance:
     compute_shader: 
-      file: data:shaders/source/raytrace_diffuse_probe.hlsl
-      entry: combine_output_cshader
+      file: data:shaders/source/ddgi/raytrace_diffuse_probe.hlsl
+      entry: output_irradiance_cshader
     param_blocks: [ 
       raytrace_diffuse_probe_parameters, 
       raytrace_diffuse_probe_scrach_data,
+      raytrace_diffuse_probe_data,
       tlas_metadata,
       view_info, 
       gbuffer,
@@ -104,9 +116,29 @@ techniques:
       resolve_lighting_parameters 
     ]
     defines:
-      GROUP_SIZE_X: 1
-      GROUP_SIZE_Y: 1
-      GROUP_SIZE_Z: 1
-      DISPATCH_SIZE_X: 1
+      DISPATCH_SIZE_X: 1 # If changed, ensure you change 
+      DISPATCH_SIZE_Y: 1
+      DISPATCH_SIZE_Z: 1
+
+  raytrace_diffuse_probe_output_occlusion:
+    compute_shader: 
+      file: data:shaders/source/ddgi/raytrace_diffuse_probe.hlsl
+      entry: output_occlusion_cshader
+    param_blocks: [ 
+      raytrace_diffuse_probe_parameters, 
+      raytrace_diffuse_probe_scrach_data,
+      raytrace_diffuse_probe_data,
+      tlas_metadata,
+      view_info, 
+      gbuffer,
+      light_state, 
+      light_cluster, 
+      light_probe_grid_state, 
+      reflection_probe_state,
+      shadow_map_state, 
+      resolve_lighting_parameters 
+    ]
+    defines:
+      DISPATCH_SIZE_X: 1 # If changed, ensure you change 
       DISPATCH_SIZE_Y: 1
       DISPATCH_SIZE_Z: 1

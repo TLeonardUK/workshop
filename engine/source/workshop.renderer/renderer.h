@@ -462,7 +462,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::light_probes;
+    visualization_mode m_visualization_mode = visualization_mode::light_probe_contribution;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

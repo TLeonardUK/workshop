@@ -71,6 +71,8 @@ SET(SOURCES
     "passes/render_pass_calculate_mips.cpp"
     "passes/render_pass_clear.h"
     "passes/render_pass_clear.cpp"
+    "passes/render_pass_query.h"
+    "passes/render_pass_query.cpp"
 
     "objects/render_view.h"
     "objects/render_view.cpp"

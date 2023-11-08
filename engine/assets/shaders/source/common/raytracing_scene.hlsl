@@ -12,6 +12,7 @@ struct raytrace_scene_result
     float4 color;
     float  depth;
     bool   hit;
+    uint   hit_kind;
 };
 
 raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float3 origin, float3 direction, float max_distance)
@@ -26,6 +27,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     // triangles in-front of the closest opaque point.
     occlusion_ray_payload occlusion_payload;
     occlusion_payload.hit_t = -1.0f;
+    occlusion_payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
 
     TraceRay(
         tlas,
@@ -43,6 +45,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
         result.color = float4(0.0f, 0.0f, 0.0f, 0.0f);
         result.depth = 0.0f;
         result.hit = false;
+        result.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
         return result;
     }
 
@@ -54,6 +57,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     payload.color = float3(1.0f, 1.0f, 1.0f); 
     payload.transparent_revealance = 1.0f;
     payload.transparent_accumulation = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
 
     TraceRay(
         tlas,
@@ -77,6 +81,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     result.color = shaded_color;
     result.depth = occlusion_payload.hit_t;
     result.hit = true;
+    result.hit_kind = payload.hit_kind;
     return result;
 }
 

@@ -19,6 +19,7 @@ struct primitive_ray_payload
     float4 transparent_accumulation;
     float3 color;
     float  transparent_revealance;
+    uint hit_kind;
 };
 
 [shader("miss")]
@@ -34,7 +35,7 @@ float4 ray_primitive_common(inout primitive_ray_payload payload, BuiltInTriangle
 {
     ray_shading_data data = load_ray_shading_data(attrib.barycentrics);
 
-    float4x3 object_to_world = ObjectToWorld4x3();
+    float3x4 object_to_world = ObjectToWorld3x4();
     float3 world_normal = mul(object_to_world, float4(data.params.normal, 0.0f));
     float3 world_tangent = mul(object_to_world, float4(data.params.tangent, 0.0f));
     float3 world_position = mul(object_to_world, float4(data.params.position, 1.0f));
@@ -61,6 +62,7 @@ float4 ray_primitive_common(inout primitive_ray_payload payload, BuiltInTriangle
 void ray_primitive_opaque_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.color = ray_primitive_common(payload, attrib).rgb;
+    payload.hit_kind = HitKind();
 }
 
 // ================================================================================================
@@ -71,6 +73,7 @@ void ray_primitive_opaque_closest_hit(inout primitive_ray_payload payload, Built
 void ray_primitive_masked_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.color = ray_primitive_common(payload, attrib).rgb;
+    payload.hit_kind = HitKind();
 }
 
 [shader("anyhit")]
@@ -99,7 +102,8 @@ void ray_primitive_sky_closest_hit(inout primitive_ray_payload payload, BuiltInT
     tlas_metadata metadata = load_tlas_metadata();
     material mat = load_tlas_material(metadata);
 
-    payload.color = mat.skybox_texture.SampleLevel(mat.skybox_sampler, WorldRayDirection(), 0.0f);
+    payload.color = mat.skybox_texture.SampleLevel(mat.skybox_sampler, WorldRayDirection(), 0.0f);    
+    payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE; // Count all hits as frontfacing for the sky seeing as its essentially inverted.
 }
 
 // ================================================================================================

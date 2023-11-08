@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
+#include "workshop.renderer/render_effect_manager.h"
 #include "workshop.render_interface/ri_interface.h"
 
 namespace ws {
@@ -15,6 +16,14 @@ render_light_probe_grid::render_light_probe_grid(render_object_id id, renderer& 
     : render_object(id, &in_renderer, render_visibility_flags::physical)
 {
     m_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_grid_state");
+
+    render_effect::technique* main_technique = m_renderer->get_effect_manager().get_technique("raytrace_diffuse_probe_output_irradiance", {});
+    if (!main_technique->get_define<size_t>("PROBE_GRID_IRRADIANCE_MAP_SIZE", m_irradiance_map_size) ||
+        !main_technique->get_define<size_t>("PROBE_GRID_OCCLUSION_MAP_SIZE", m_occlusion_map_size))
+    {   
+        db_fatal(renderer, "Failed to retrieve expected defines from light probe shaders.");
+        return;
+    }
 }
 
 render_light_probe_grid::~render_light_probe_grid()
@@ -76,8 +85,20 @@ ri_param_block& render_light_probe_grid::get_param_block()
     return *m_param_block;
 }
 
+size_t render_light_probe_grid::get_irradiance_map_size()
+{
+    return m_irradiance_map_size;
+}
+
+size_t render_light_probe_grid::get_occlusion_map_size()
+{
+    return m_occlusion_map_size;
+}
+
 void render_light_probe_grid::recalculate_probes()
 {
+    const render_options& options = m_renderer->get_options();
+
     vector3 bounds = get_local_scale();
 
     m_width = static_cast<size_t>(floor(bounds.x / m_density));
@@ -90,22 +111,19 @@ void render_light_probe_grid::recalculate_probes()
 
     m_probes.resize(m_width * m_height * m_depth);
 
-    // Create a texture that can store out occlusion data.
-    const render_options& options = m_renderer->get_options();
-
     size_t map_padding = 2;
 
-    size_t occlusion_required_space = options.light_probe_occlusion_map_size + map_padding;
+    size_t occlusion_required_space = m_occlusion_map_size + map_padding;
     size_t occlusion_texture_size = math::calculate_atlas_size(occlusion_required_space, m_probes.size());
 
     ri_texture::create_params texture_params;
     texture_params.allow_unordered_access = true;
     texture_params.width = occlusion_texture_size;
     texture_params.height = occlusion_texture_size;
-    texture_params.format = ri_texture_format::R16G16_FLOAT;
+    texture_params.format = ri_texture_format::R32G32_FLOAT;
     m_occlusion_texture = m_renderer->get_render_interface().create_texture(texture_params, "light grid occlusion");
 
-    size_t irradiance_required_space = options.light_probe_irradiance_map_size + map_padding;
+    size_t irradiance_required_space = m_irradiance_map_size + map_padding;
     size_t irradiance_texture_size = math::calculate_atlas_size(irradiance_required_space, m_probes.size());
 
     texture_params.width = irradiance_texture_size;
@@ -119,6 +137,7 @@ void render_light_probe_grid::recalculate_probes()
 
     // Update the param block description.
     m_param_block->set("world_to_grid_matrix", grid_transform.inverse());
+    m_param_block->set("grid_to_world_matrix", grid_transform);
     m_param_block->set("size", vector3i((int)m_width, (int)m_height, (int)m_depth));
     m_param_block->set("bounds", bounds);
     m_param_block->set("density", m_density);
@@ -126,11 +145,13 @@ void render_light_probe_grid::recalculate_probes()
     m_param_block->set("occlusion_texture", *m_occlusion_texture);
     m_param_block->set("map_sampler", *m_renderer->get_default_sampler(default_sampler_type::bilinear));
     m_param_block->set("irradiance_texture_size", (int)m_irradiance_texture->get_width());
-    m_param_block->set("irradiance_map_size", (int)options.light_probe_irradiance_map_size);
+    m_param_block->set("irradiance_map_size", (int)m_irradiance_map_size);
     m_param_block->set("irradiance_probes_per_row", (int)(m_irradiance_texture->get_width() / irradiance_required_space));
     m_param_block->set("occlusion_texture_size", (int)m_occlusion_texture->get_width());
-    m_param_block->set("occlusion_map_size", (int)options.light_probe_occlusion_map_size);
-    m_param_block->set("occlusion_probes_per_row", (int)(m_irradiance_texture->get_width() / occlusion_required_space));
+    m_param_block->set("occlusion_map_size", (int)m_occlusion_map_size);
+    m_param_block->set("occlusion_probes_per_row", (int)(m_occlusion_texture->get_width() / occlusion_required_space));
+    m_param_block->set("view_bias", options.light_probe_view_bias);
+    m_param_block->set("normal_bias", options.light_probe_normal_bias);
 
     // Update individual probes.
     for (size_t z = 0; z < m_depth; z++)

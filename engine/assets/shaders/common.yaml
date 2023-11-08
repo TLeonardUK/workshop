@@ -186,6 +186,7 @@ param_blocks:
       reflection_probe_buffer: byteaddressbuffer     
       brdf_lut: texture2d 
       brdf_lut_sampler: sampler
+      ao_enabled: bool
       ao_texture: texture2d
       ao_sampler: sampler
       ao_direct_light_effect: float
@@ -195,6 +196,7 @@ param_blocks:
     scope: indirect
     fields:
       world_to_grid_matrix: float4x4
+      grid_to_world_matrix: float4x4
       size: int3
       bounds: float3
       density: float
@@ -207,6 +209,8 @@ param_blocks:
       occlusion_texture_size: int 
       occlusion_map_size: int
       occlusion_probes_per_row: int
+      view_bias: float
+      normal_bias: float
 
   # Structure describing individual reflection probes.
   reflection_probe_state:
@@ -372,3 +376,7 @@ defines:
   # Over how much distance is a lights contribution faded out as it gets 
   # to its importance distance. Percentage of importance distance.
   LIGHT_IMPORTANCE_FADE_DISTANCE: 0.2
+  # Size of each probes irradiance map in the grids atlas.  
+  PROBE_GRID_IRRADIANCE_MAP_SIZE: 4
+  # Size of each probes occlusion map in the grids atlas.
+  PROBE_GRID_OCCLUSION_MAP_SIZE: 14

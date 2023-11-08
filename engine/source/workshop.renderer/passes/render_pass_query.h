@@ -13,24 +13,21 @@
 
 namespace ws {
 
+class ri_query;
+
 // ================================================================================================
-//  Render pass that executes a compute shader.
+//  Render pass that starts or stops a query.
 // ================================================================================================
-class render_pass_compute
+class render_pass_query
     : public render_pass_graphics
 {
 public:
 
-    // Overrides the dispatch size with a value calculated as:
-    //  ceil(dispatch_size_coverage / group_size)
-    // 
-    // This is useful if you want to have a group size of say 16x16x1 and want
-    // to dispatch enough blocks that it would have enough threads to cover say a 1080x1920 image.
-    // Handy for post-processing style functionality.
-    vector3i dispatch_size_coverage = vector3i::zero;
+    // Start of a query.
+    bool start = false;
 
-    // Overrides the dispatch size specified in the shader.
-    vector3i dispatch_size = vector3i::zero;
+    // Query to manipulate.
+    ri_query* query = nullptr;
 
 public:
 

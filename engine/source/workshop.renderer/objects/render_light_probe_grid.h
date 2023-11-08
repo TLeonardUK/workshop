@@ -60,6 +60,12 @@ public:
     // to avoid massive memory usage.
     static inline constexpr size_t k_max_dimension = 150;
 
+    // Gest the size of each probes map in the irradiance atlas.
+    size_t get_irradiance_map_size();
+
+    // Gest the size of each probes map in the occlusion atlas.
+    size_t get_occlusion_map_size();
+
 private:
     void recalculate_probes();
 
@@ -78,6 +84,9 @@ private:
     std::unique_ptr<ri_texture> m_occlusion_texture;
     std::unique_ptr<ri_texture> m_irradiance_texture;
     std::unique_ptr<ri_param_block> m_param_block;
+
+    size_t m_irradiance_map_size;
+    size_t m_occlusion_map_size;
 
 };
 

@@ -27,11 +27,11 @@ public:
 	// ================================================================================================
 
 	// How many rays to cast per probe to calculate diffus lighting.
-	size_t light_probe_ray_count = 196;
+	size_t light_probe_ray_count = 200;
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
-	size_t light_probe_max_regenerations_per_frame = 16;
+	size_t light_probe_max_regenerations_per_frame = 4096;
 
 	// Far clipping plane of the view used to capture a light probes cubemap.
 	float light_probe_far_z = 100'000.0f;
@@ -40,16 +40,22 @@ public:
 	// The prioritization list is only updated whenever the view moves by this amount.
 	float light_probe_queue_update_distance = 1'000.0f;
 
-    // Size of the irradiance map for probe. Larger means more memory usage, but gives more
-    // accurate avoidance of light leaking.
-    size_t light_probe_irradiance_map_size = 4;
-
-    // Size of the occlusion map for probe. Larger means more memory usage, but gives more
-    // accurate avoidance of light leaking.
-    size_t light_probe_occlusion_map_size = 14;
-
     // Exponent used for depth testing. High values react quickly to depth discontinuties but may cause banding.
     float light_probe_distance_exponent = 50.0f;
+
+    // How many milliseconds per frame can be spent on regenerating
+    // light probes. As many probes as possible will be run as possible
+    // within this time limit up to the maximum.
+    float light_probe_regeneration_time_limit_ms = 2.0f;
+    
+    // Number of probes per frame to increase or decreate by to adjust to meet the time limit above.
+    size_t light_probe_regeneration_step_amount = 30;
+
+    // Offset along surface normal applied to shader surface to avoid numeric instability when calculating occlusion.
+    float light_probe_normal_bias = 2.0f;
+
+    // Offset along camera view ray applied to shader surface to avoid numeric instability when calculating occlusion.
+    float light_probe_view_bias = 2.0f;
 
 	// ================================================================================================
 	//  Reflection Probes
@@ -112,6 +118,9 @@ public:
 	//  SSAO
 	// ================================================================================================
 
+    // Truns SSAO on or off.
+    bool ssao_enabled = false;
+
 	// Determines over how large and area we sample texels to determine occlusion.
 	float ssao_sample_radius = 15.0f;
 
@@ -124,7 +133,7 @@ public:
 
 	// Determines how much effect the ssao has on direct lighting. In theory SSAO should only effect
 	// ambient lighting, but having a small amount added direct lighting avoids things looking flat.
-	float ssao_direct_light_effect = 0.5f;
+	float ssao_direct_light_effect = 0.0f;
 
     // ================================================================================================
     //  Raytracing

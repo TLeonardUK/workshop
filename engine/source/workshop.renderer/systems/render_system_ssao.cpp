@@ -125,6 +125,11 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
 
     const render_options& options = m_renderer.get_options();
 
+    if (!options.ssao_enabled)
+    {
+        return;
+    }
+
     ri_param_block* ssao_parameters = view.get_resource_cache().find_or_create_param_block(this, "ssao_parameters");
     ri_param_block* h_blur_params = view.get_resource_cache().find_or_create_param_block(this, "blur_params");
     ri_param_block* v_blur_params = view.get_resource_cache().find_or_create_param_block(this + 1, "blur_params");
