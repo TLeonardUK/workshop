@@ -36,7 +36,9 @@ void example_game_app::configure_engine(engine& engine)
 
 ws::result<void> example_game_app::start()
 {
-    get_engine().load_world("data:scenes/dggi_house.yaml");
+    get_engine().load_world("data:scenes/sponza.yaml");
+    //get_engine().load_world("data:scenes/ddgi_house.yaml");
+   // get_engine().load_world("data:scenes/bistro.yaml");
     return true;
 }
 

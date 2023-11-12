@@ -56,19 +56,19 @@ private:
 
     std::unique_ptr<ri_buffer> m_scratch_buffer;
     std::unique_ptr<ri_param_block> m_regeneration_param_block;
-    std::vector<std::unique_ptr<ri_param_block>> m_probe_param_block;
 
     std::unique_ptr<render_batch_instance_buffer> m_regeneration_instance_buffer;
 
     std::vector<dirty_probe> m_dirty_probes;
     std::vector<dirty_probe> m_probes_to_regenerate;
-    vector3 m_last_dirty_view_position;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
     double m_gpu_time = 0.0f;
     size_t m_adjusted_max_probes_per_frame = 1;
     double m_average_gpu_time = 0.0f;
     size_t m_probes_rengerated_last_frame = 0;
+
+    quat m_random_ray_direction;
 
     bool m_should_regenerate = false;
 

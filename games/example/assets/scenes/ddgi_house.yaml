@@ -13,14 +13,14 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  0.0867999196
-                y:  -0.745174825
-                z:  0.0989383236
-                w:  -0.65375185
+                x:  -0.131160244
+                y:  0.673735619
+                z:  -0.123295516
+                w:  0.716711581
             local_location:
-                x:  1451.56458
-                y:  603.687744
-                z:  1621.86755
+                x:  5324.80615
+                y:  2304.85498
+                z:  1188.21289
             local_scale:
                 x:  1
                 y:  1
@@ -79,7 +79,7 @@ objects:
         bounds_component:
             {}
         light_probe_grid_component:
-            density: 100
+            density: 200
     5:
         meta_component:
             name: reflection probe
@@ -370,12 +370,12 @@ objects:
                 b:  1
                 a:  1
             shadow_casting: true
-            shadow_map_size: 512
-            shadow_map_distance: 5000
+            shadow_map_size: 2048
+            shadow_map_distance: 10000
         billboard_component:
             model: data:models/core/primitives/plane.yaml
             materials:
                 -   data:materials/core/icons/light_icon.yaml
             size: 64
             render_draw_flags: 2
-            render_gpu_flags: 1
+            render_gpu_flags: 3

@@ -10,18 +10,24 @@ version: 1
 imports: [ data:shaders/common.yaml ]
 
 effects:
-  raytrace_diffuse_probe:
+  ddgi_trace:
     techniques:
-      raytrace_diffuse_probe: {}
-  raytrace_diffuse_probe_output_irradiance:
+      ddgi_trace: {}
+  ddgi_output_irradiance:
     techniques:
-      raytrace_diffuse_probe_output_irradiance: {}
-  raytrace_diffuse_probe_output_occlusion:
+      ddgi_output_irradiance: {}
+  ddgi_output_occlusion:
     techniques:
-      raytrace_diffuse_probe_output_occlusion: {}   
+      ddgi_output_occlusion: {}   
+  ddgi_relocate:
+    techniques:
+      ddgi_relocate: {}   
+  ddgi_classify:
+    techniques:
+      ddgi_classify: {}   
 
 param_blocks:
-  raytrace_diffuse_probe_parameters:
+  ddgi_probe_parameters:
     scope: draw
     fields:
       scene_tlas: tlas
@@ -31,11 +37,17 @@ param_blocks:
       scratch_buffer: rwbyteaddressbuffer
       probe_data_buffer: byteaddressbuffer
       probe_distance_exponent: float
+      probe_blend_hysteresis: float
+      probe_large_change_threshold: float
+      probe_brightness_threshold: float
+      probe_fixed_ray_backface_threshold: float 
+      probe_min_frontface_distance: float       
+      random_ray_rotation: float4
 
   # One instance of this param block is stored for every
   # ray into the scrach_buffer. This is combined into the 
   # final output by the sh generation step.
-  raytrace_diffuse_probe_scrach_data:
+  ddgi_probe_scrach_data:
     scope: indirect
     fields:  
       color: float3
@@ -44,8 +56,7 @@ param_blocks:
       valid: bool
       back_face: bool
 
-  # Describes a probe to be traced.
-  raytrace_diffuse_probe_data:
+  ddgi_probe_data:
     scope: indirect
     fields:  
       probe_index: int
@@ -57,11 +68,12 @@ param_blocks:
       occlusion_map_size: int
       occlusion_per_row: int
       probe_spacing: float
+      probe_state_buffer: rwbyteaddressbuffer
 
 techniques:
-  raytrace_diffuse_probe:
+  ddgi_trace:
     ray_generation_shader: 
-      file: data:shaders/source/ddgi/raytrace_diffuse_probe.hlsl
+      file: data:shaders/source/ddgi/ddgi_trace.hlsl
       entry: ray_generation
     ray_hitgroups: [ 
       primitive_opaque_hitgroup, 
@@ -79,66 +91,101 @@ techniques:
     ]
     render_state: raytrace_scene_render_state
     param_blocks: [ 
-      raytrace_diffuse_probe_parameters, 
-      raytrace_diffuse_probe_scrach_data,
-      raytrace_diffuse_probe_data,
+      ddgi_probe_parameters, 
+      ddgi_probe_scrach_data,
+      ddgi_probe_data,
       tlas_metadata,
       view_info, 
       gbuffer,
       light_state, 
       light_cluster, 
       light_probe_grid_state, 
+      light_probe_state,
       reflection_probe_state,
       shadow_map_state, 
       resolve_lighting_parameters 
     ]
     defines:    
-      DISABLE_AMBIENT_LIGHTING: 1   # Don't want to read probe data while raytracing scene as its incomplete. 
+      #DISABLE_AMBIENT_LIGHTING: 1   # Don't want to read probe data while raytracing scene as its incomplete. 
       DO_NOT_USE_LIGHT_CLUSTERS: 1  # As we can trace in all directions using the light clusters isn't helpful for us, so just iterate the full list, bleh. 
       DISABLE_VISUALIZATION_MODES: 1 # Ignore any visualization modes when calculating shading.
 
-  raytrace_diffuse_probe_output_irradiance:
+  ddgi_output_irradiance:
     compute_shader: 
-      file: data:shaders/source/ddgi/raytrace_diffuse_probe.hlsl
+      file: data:shaders/source/ddgi/ddgi_output.hlsl
       entry: output_irradiance_cshader
     param_blocks: [ 
-      raytrace_diffuse_probe_parameters, 
-      raytrace_diffuse_probe_scrach_data,
-      raytrace_diffuse_probe_data,
+      ddgi_probe_parameters, 
+      ddgi_probe_scrach_data,
+      ddgi_probe_data,
       tlas_metadata,
       view_info, 
       gbuffer,
       light_state, 
       light_cluster, 
       light_probe_grid_state, 
+      light_probe_state,
       reflection_probe_state,
       shadow_map_state, 
       resolve_lighting_parameters 
     ]
-    defines:
-      DISPATCH_SIZE_X: 1 # If changed, ensure you change 
-      DISPATCH_SIZE_Y: 1
-      DISPATCH_SIZE_Z: 1
 
-  raytrace_diffuse_probe_output_occlusion:
+  ddgi_output_occlusion:
     compute_shader: 
-      file: data:shaders/source/ddgi/raytrace_diffuse_probe.hlsl
+      file: data:shaders/source/ddgi/ddgi_output.hlsl
       entry: output_occlusion_cshader
     param_blocks: [ 
-      raytrace_diffuse_probe_parameters, 
-      raytrace_diffuse_probe_scrach_data,
-      raytrace_diffuse_probe_data,
+      ddgi_probe_parameters, 
+      ddgi_probe_scrach_data,
+      ddgi_probe_data,
       tlas_metadata,
       view_info, 
       gbuffer,
       light_state, 
       light_cluster, 
       light_probe_grid_state, 
+      light_probe_state,
       reflection_probe_state,
       shadow_map_state, 
       resolve_lighting_parameters 
     ]
-    defines:
-      DISPATCH_SIZE_X: 1 # If changed, ensure you change 
-      DISPATCH_SIZE_Y: 1
-      DISPATCH_SIZE_Z: 1
+      
+  ddgi_relocate:
+    compute_shader: 
+      file: data:shaders/source/ddgi/ddgi_relocate.hlsl
+      entry: relocate_cshader
+    param_blocks: [ 
+      ddgi_probe_parameters, 
+      ddgi_probe_scrach_data,
+      ddgi_probe_data,
+      tlas_metadata,
+      view_info, 
+      gbuffer,
+      light_state, 
+      light_cluster, 
+      light_probe_grid_state, 
+      light_probe_state,
+      reflection_probe_state,
+      shadow_map_state, 
+      resolve_lighting_parameters 
+    ]
+
+  ddgi_classify:
+    compute_shader: 
+      file: data:shaders/source/ddgi/ddgi_classify.hlsl
+      entry: classify_cshader
+    param_blocks: [ 
+      ddgi_probe_parameters, 
+      ddgi_probe_scrach_data,
+      ddgi_probe_data,
+      tlas_metadata,
+      view_info, 
+      gbuffer,
+      light_state, 
+      light_cluster, 
+      light_probe_grid_state, 
+      light_probe_state,
+      reflection_probe_state,
+      shadow_map_state, 
+      resolve_lighting_parameters 
+    ]

@@ -211,7 +211,13 @@ param_blocks:
       occlusion_probes_per_row: int
       view_bias: float
       normal_bias: float
-
+      probe_state_buffer: rwbyteaddressbuffer
+  # Structure describing individual reflection probes.
+  light_probe_state:
+    scope: indirect
+    fields:
+      position_offset: float3
+      classification: int
   # Structure describing individual reflection probes.
   reflection_probe_state:
     scope: indirect
@@ -377,6 +383,9 @@ defines:
   # to its importance distance. Percentage of importance distance.
   LIGHT_IMPORTANCE_FADE_DISTANCE: 0.2
   # Size of each probes irradiance map in the grids atlas.  
-  PROBE_GRID_IRRADIANCE_MAP_SIZE: 4
+  PROBE_GRID_IRRADIANCE_MAP_SIZE: 6
   # Size of each probes occlusion map in the grids atlas.
   PROBE_GRID_OCCLUSION_MAP_SIZE: 14
+  # Number of rays per probe that have a fixed orientation to avoid temporal jitter
+  # for steps such as relocation.
+  PROBE_GRID_FIXED_RAY_COUNT: 32

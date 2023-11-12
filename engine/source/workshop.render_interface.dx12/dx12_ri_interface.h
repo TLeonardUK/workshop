@@ -40,7 +40,7 @@ public:
         100,    // texture_cube
         100,    // sampler
         300000, // buffer
-        100000, // rwbuffer
+        300000, // rwbuffer
         1000,   // rwtexture_2d
         100000, // tlas
         1000,   // render_target

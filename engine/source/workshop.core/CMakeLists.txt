@@ -91,6 +91,8 @@ SET(SOURCES
     "utils/yaml.cpp"
     "utils/yaml.h"
     
+    "math/random.h"
+    "math/random.cpp"
     "math/math.h"
     "math/math.cpp"
     "math/aabb.h"

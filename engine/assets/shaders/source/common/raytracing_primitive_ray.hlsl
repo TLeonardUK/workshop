@@ -55,7 +55,7 @@ float4 ray_primitive_common(inout primitive_ray_payload payload, BuiltInTriangle
     f.world_position = world_position;
     f.uv = float2(0.0f, 0.0f);
 
-    return float4(shade_fragment(f, true).rgb, albedo.a);
+    return float4(shade_fragment(f, false).rgb, albedo.a);
 }
 
 [shader("closesthit")]

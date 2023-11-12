@@ -17,7 +17,7 @@ render_light_probe_grid::render_light_probe_grid(render_object_id id, renderer& 
 {
     m_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_grid_state");
 
-    render_effect::technique* main_technique = m_renderer->get_effect_manager().get_technique("raytrace_diffuse_probe_output_irradiance", {});
+    render_effect::technique* main_technique = m_renderer->get_effect_manager().get_technique("ddgi_output_irradiance", {});
     if (!main_technique->get_define<size_t>("PROBE_GRID_IRRADIANCE_MAP_SIZE", m_irradiance_map_size) ||
         !main_technique->get_define<size_t>("PROBE_GRID_OCCLUSION_MAP_SIZE", m_occlusion_map_size))
     {   
@@ -70,6 +70,11 @@ size_t render_light_probe_grid::get_probe_index(size_t x, size_t y, size_t z)
         x;
 }
 
+ri_buffer& render_light_probe_grid::get_probe_state_buffer()
+{
+    return *m_probe_state_buffer;
+}
+
 ri_texture& render_light_probe_grid::get_occlusion_texture()
 {
     return *m_occlusion_texture;
@@ -113,6 +118,16 @@ void render_light_probe_grid::recalculate_probes()
 
     size_t map_padding = 2;
 
+    // Create buffer to store the transient gpu state of each probe.
+    ri_param_block_archetype* state_archetype = m_renderer->get_param_block_manager().get_param_block_archetype("light_probe_state");
+
+    ri_buffer::create_params buffer_params;
+    buffer_params.element_count = std::max(1llu, m_probes.size());
+    buffer_params.element_size = state_archetype->get_size();
+    buffer_params.usage = ri_buffer_usage::generic;
+    m_probe_state_buffer = m_renderer->get_render_interface().create_buffer(buffer_params, "light grid probe state buffer");
+
+    // Create atlas to store occlusion data for each probe in.
     size_t occlusion_required_space = m_occlusion_map_size + map_padding;
     size_t occlusion_texture_size = math::calculate_atlas_size(occlusion_required_space, m_probes.size());
 
@@ -123,12 +138,13 @@ void render_light_probe_grid::recalculate_probes()
     texture_params.format = ri_texture_format::R32G32_FLOAT;
     m_occlusion_texture = m_renderer->get_render_interface().create_texture(texture_params, "light grid occlusion");
 
+    // Create atlas to store irradiance data for each probe in.
     size_t irradiance_required_space = m_irradiance_map_size + map_padding;
     size_t irradiance_texture_size = math::calculate_atlas_size(irradiance_required_space, m_probes.size());
 
     texture_params.width = irradiance_texture_size;
     texture_params.height = irradiance_texture_size;
-    texture_params.format = ri_texture_format::R11G11B10_FLOAT;
+    texture_params.format = ri_texture_format::R32G32B32A32_FLOAT;//R11G11B10_FLOAT;
     m_irradiance_texture = m_renderer->get_render_interface().create_texture(texture_params, "light grid irradiance");
 
     matrix4 grid_transform =
@@ -152,6 +168,7 @@ void render_light_probe_grid::recalculate_probes()
     m_param_block->set("occlusion_probes_per_row", (int)(m_occlusion_texture->get_width() / occlusion_required_space));
     m_param_block->set("view_bias", options.light_probe_view_bias);
     m_param_block->set("normal_bias", options.light_probe_normal_bias);
+    m_param_block->set("probe_state_buffer", *m_probe_state_buffer, true);
 
     // Update individual probes.
     for (size_t z = 0; z < m_depth; z++)
@@ -177,8 +194,24 @@ void render_light_probe_grid::recalculate_probes()
                 );
                 probe.orientation = m_local_rotation;
 
+                // Make "normal" param block
+                // TODO: Get rid of this some how, we end up spending more memory on this than the maps!
+                probe.param_block = m_renderer->get_param_block_manager().create_param_block("ddgi_probe_data");
+                probe.param_block->set("probe_origin", probe.origin);
+                probe.param_block->set("probe_index", (int)probe.index);
+                probe.param_block->set("irradiance_texture", ri_texture_view(&get_irradiance_texture(), 0), true);
+                probe.param_block->set("irradiance_map_size", (int)get_irradiance_map_size());
+                probe.param_block->set("irradiance_per_row", (int)(get_irradiance_texture().get_width() / (get_irradiance_map_size() + map_padding)));
+                probe.param_block->set("occlusion_texture", ri_texture_view(&get_occlusion_texture(), 0), true);
+                probe.param_block->set("occlusion_map_size", (int)get_occlusion_map_size());
+                probe.param_block->set("occlusion_per_row", (int)(get_occlusion_texture().get_width() / (get_occlusion_map_size() + map_padding)));
+                probe.param_block->set("probe_spacing", get_density());
+                probe.param_block->set("probe_state_buffer", get_probe_state_buffer(), true);
+
+                // Make debug param block.
                 probe.debug_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_instance_info");
                 probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(25.0f, 25.0f, 25.0f)) * matrix4::translate(probe.origin));
+                probe.debug_param_block->set("scale", vector3(25.0f, 25.0f, 25.0f));
 
                 size_t table_index, table_offset;
                 m_param_block->get_table(table_index, table_offset);

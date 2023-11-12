@@ -13,46 +13,7 @@
 #include "data:shaders/source/common/raytracing_occlusion_ray.hlsl"
 #include "data:shaders/source/common/raytracing_scene.hlsl"
 
-[shader("raygeneration")]
-void ray_generation()
-{
-    uint launch_index = DispatchRaysIndex().x;
-    uint probe_index = launch_index / probe_ray_count;
-    uint probe_ray_index = launch_index % probe_ray_count;
-
-    instance_offset_info info = probe_data_buffer.Load<instance_offset_info>(probe_index * sizeof(instance_offset_info));
-    raytrace_diffuse_probe_data probe_data = table_byte_buffers[NonUniformResourceIndex(info.data_buffer_index)].Load<raytrace_diffuse_probe_data>(info.data_buffer_offset);
-
-    // Generate a puedo-random population of ray normals
-    float3 ray_normal = spherical_fibonacci(probe_ray_index, probe_ray_count);
-
-    // Trace scene and get result.
-    raytrace_scene_result result = raytrace_scene(
-        scene_tlas,
-        probe_data.probe_origin, 
-        ray_normal,
-        probe_far_z
-    );
-
-    // Store result for later combining.
-    raytrace_diffuse_probe_scrach_data scratch;
-    scratch.color = result.color;
-    scratch.normal = ray_normal;
-    scratch.distance = result.depth;
-    scratch.valid = result.hit;
-    scratch.back_face = (result.hit_kind == HIT_KIND_TRIANGLE_BACK_FACE);
-
-    // Shorten distance to reduce influence during irradiance sampling, and invert
-    // to track backface hits.
-    if (scratch.back_face)
-    {
-        scratch.distance = -scratch.distance * 0.2f;
-    }
-
-    scratch_buffer.Store<raytrace_diffuse_probe_scrach_data>(launch_index * sizeof(raytrace_diffuse_probe_scrach_data), scratch);
-} 
-
-float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, raytrace_diffuse_probe_data probe_data)
+float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, ddgi_probe_data probe_data)
 {
     float2 probe_octant_uv = get_normalized_octahedral_coordinates(texel_location, probe_data.irradiance_map_size);
     float3 probe_ray_direction = get_octahedral_direction(probe_octant_uv);
@@ -66,7 +27,7 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, ra
     for (int i = 0; i < ray_count; i++)
     {
         int ray_index = probe_offset + i;
-        raytrace_diffuse_probe_scrach_data ray_result = scratch_buffer.Load<raytrace_diffuse_probe_scrach_data>(ray_index * sizeof(raytrace_diffuse_probe_scrach_data));
+        ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
         if (ray_result.valid)
         {
             // Don't blend backfaces into the result.
@@ -80,7 +41,8 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, ra
         }
     }
 
-    float epsilon = float(ray_count);
+    // Fixed rays are not blended in.
+    float epsilon = float(ray_count - PROBE_GRID_FIXED_RAY_COUNT);
     epsilon *= 1e-9f;
 
     // Normalize the blended value. Read the RTXGI documentation to get an idea of how this works.
@@ -90,7 +52,7 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, ra
     return result;
 }
 
-float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, raytrace_diffuse_probe_data probe_data)
+float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, ddgi_probe_data probe_data)
 {
     float2 probe_octant_uv = get_normalized_octahedral_coordinates(texel_location, probe_data.occlusion_map_size);
     float3 probe_ray_direction = get_octahedral_direction(probe_octant_uv);
@@ -101,7 +63,7 @@ float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, raytr
     for (int i = 0; i < probe_ray_count; i++)
     {
         int ray_index = ray_offset + i;
-        raytrace_diffuse_probe_scrach_data ray_result = scratch_buffer.Load<raytrace_diffuse_probe_scrach_data>(ray_index * sizeof(raytrace_diffuse_probe_scrach_data));
+        ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
         if (ray_result.valid)
         {
             // Determine contribute of ray to output texel.
@@ -116,7 +78,8 @@ float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, raytr
         }
     }
 
-    float epsilon = float(probe_ray_count);
+    // Fixed rays are not blended in.
+    float epsilon = float(probe_ray_count - PROBE_GRID_FIXED_RAY_COUNT);
     epsilon *= 1e-9f;
 
     // Normalize the blended value. Read the RTXGI documentation to get an idea of how this works.
@@ -153,18 +116,18 @@ void update_border_texels(RWTexture2D<float4> texture, int2 atlas_coord, int2 pr
     texture[probe_location + int2(texel_pos.x, texel_pos.y)] = texture[copy_coord];
 }
 
-struct output_parameters
+struct cshader_parameters
 {
     uint3 group_id : SV_GroupID;
     uint3 group_thread_id : SV_GroupThreadID;
 };
 
 [numthreads(PROBE_GRID_IRRADIANCE_MAP_SIZE + 2, PROBE_GRID_IRRADIANCE_MAP_SIZE + 2, 1)]
-void output_irradiance_cshader(output_parameters params)
+void output_irradiance_cshader(cshader_parameters params)
 {
     // Load probe data.
     instance_offset_info info = probe_data_buffer.Load<instance_offset_info>(params.group_id.x * sizeof(instance_offset_info));
-    raytrace_diffuse_probe_data probe_data = table_byte_buffers[NonUniformResourceIndex(info.data_buffer_index)].Load<raytrace_diffuse_probe_data>(info.data_buffer_offset);
+    ddgi_probe_data probe_data = table_byte_buffers[NonUniformResourceIndex(info.data_buffer_index)].Load<ddgi_probe_data>(info.data_buffer_offset);
     
     RWTexture2D<float4> irradiance_texture = table_rw_texture_2d[probe_data.irradiance_texture_index];
 
@@ -174,11 +137,49 @@ void output_irradiance_cshader(output_parameters params)
     int2 irradiance_atlas_coord = int2(probe_data.probe_index % probe_data.irradiance_per_row, probe_data.probe_index / probe_data.irradiance_per_row);
     int2 irradiance_grid_location = irradiance_atlas_coord * int2(full_irradiance_map_size, full_irradiance_map_size);
  
+    // Update value of non-border pixels.
     int2 texel_coord = params.group_thread_id.xy;
     bool is_border = (texel_coord.x == 0 || texel_coord.y == 0 || texel_coord.x == full_irradiance_map_size - 1 || texel_coord.y == full_irradiance_map_size - 1);
     if (!is_border)
     {
-        irradiance_texture[irradiance_grid_location + texel_coord] = calculate_irradiance_for_texel(int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data);
+        // Calculate new distance and store off the existing distance.
+        float4 result = calculate_irradiance_for_texel(int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data);
+        float4 existing = irradiance_texture[irradiance_grid_location + texel_coord];
+
+        // Blend the result with the existing value.
+        float hysteresis = probe_blend_hysteresis;
+        float3 delta = (result.rgb - existing.rgb);
+
+        // If existing value is completely black, change the hysteresis to take the new
+        // value immediately.        
+        if (dot(existing, existing) == 0) 
+        {
+            hysteresis = 0.f;
+        }
+
+        // If large change is changed, reduce hysteresis to apply lighting effect quicker.
+        if (max3(existing.rgb - result.rgb) > probe_large_change_threshold)
+        {
+            hysteresis = max(0.f, hysteresis - 0.75f);
+        }
+
+        // Clamp max brightness change per update.
+        if (calculate_luminance(delta) > probe_brightness_threshold)
+        {
+            delta *= 0.25f;
+        }
+
+        // Interpolate to get the final result
+        const float threshold = 1.f / 1024.f;
+        float3 lerp_delta = (1.f - hysteresis) * delta;
+        if (max3(result.rgb) < max3(existing.rgb))
+        {
+            lerp_delta = min(max(threshold, abs(lerp_delta)), abs(delta)) * sign(lerp_delta);       
+        }
+        
+        result = float4(existing.rgb + lerp_delta, 1.f);
+        
+        irradiance_texture[irradiance_grid_location + texel_coord] = result;
     }
 
     // Wait for all threads to finish before outputing borders.
@@ -192,11 +193,11 @@ void output_irradiance_cshader(output_parameters params)
 }
 
 [numthreads(PROBE_GRID_OCCLUSION_MAP_SIZE + 2, PROBE_GRID_OCCLUSION_MAP_SIZE + 2, 1)]
-void output_occlusion_cshader(output_parameters params)
+void output_occlusion_cshader(cshader_parameters params)
 {
     // Load probe data.
     instance_offset_info info = probe_data_buffer.Load<instance_offset_info>(params.group_id.x * sizeof(instance_offset_info));
-    raytrace_diffuse_probe_data probe_data = table_byte_buffers[NonUniformResourceIndex(info.data_buffer_index)].Load<raytrace_diffuse_probe_data>(info.data_buffer_offset);
+    ddgi_probe_data probe_data = table_byte_buffers[NonUniformResourceIndex(info.data_buffer_index)].Load<ddgi_probe_data>(info.data_buffer_offset);
     
     RWTexture2D<float4> occlusion_texture = table_rw_texture_2d[probe_data.occlusion_texture_index];
 
@@ -206,11 +207,19 @@ void output_occlusion_cshader(output_parameters params)
     int2 occlusion_atlas_coord = int2(probe_data.probe_index % probe_data.occlusion_per_row, probe_data.probe_index / probe_data.occlusion_per_row);
     int2 occlusion_grid_location = occlusion_atlas_coord * int2(full_occlusion_map_size, full_occlusion_map_size);
     
+    // Update value of non-border pixels.
     int2 texel_coord = params.group_thread_id.xy;
     bool is_border = (texel_coord.x == 0 || texel_coord.y == 0 || texel_coord.x == full_occlusion_map_size - 1 || texel_coord.y == full_occlusion_map_size - 1);
     if (!is_border)
     {
-        occlusion_texture[occlusion_grid_location + texel_coord] = calculate_occlusion_for_texel(int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data);
+        // Calculate new distance and store off the existing distance.
+        float4 result = calculate_occlusion_for_texel(int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data);
+        float4 existing = occlusion_texture[occlusion_grid_location + texel_coord];
+
+        // Interpolate between existing and new distance
+        result = float4(lerp(result.rg, existing.rg, probe_blend_hysteresis), 0.0f, 1.0f);
+
+        occlusion_texture[occlusion_grid_location + texel_coord] = result;
     }
     
     // Wait for all threads to finish before outputing borders.

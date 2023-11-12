@@ -31,6 +31,7 @@ techniques:
       light_state, 
       light_cluster, 
       light_probe_grid_state, 
+      light_probe_state,
       reflection_probe_state,
       shadow_map_state, 
       gbuffer, 

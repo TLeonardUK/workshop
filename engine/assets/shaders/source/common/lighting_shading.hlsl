@@ -519,7 +519,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
     }
 
     float3 normal = normalize(frag.world_normal);
-    float3 view_direction = normalize(view_world_position - frag.world_position);
+    float3 view_direction = normalize(frag.world_position - view_world_position);
     float3 reflect_direction = reflect(-view_direction, normal);   
 
     float3 metallic = frag.metallic;
@@ -658,7 +658,6 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
         default:
         case visualization_mode_t::lighting:
         case visualization_mode_t::normal:
-        case visualization_mode_t::light_probes:    
         {
             // Use standard fragment color.
             break;
@@ -707,7 +706,13 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
             ) * 0.8;
             break;
         }
-        case visualization_mode_t::light_probe_contribution:             
+        case visualization_mode_t::light_probes:  
+        {
+            // TODO: Change
+            final_color = float4(frag.albedo, 1.0f);
+            break;
+        }     
+        case visualization_mode_t::light_probe_contribution:              
         {
             float3 view_direction = normalize(view_world_position - frag.world_position);
             final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal, view_direction);

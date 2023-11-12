@@ -17,6 +17,8 @@
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.renderer/render_resource_cache.h"
 
+#include "workshop.core/math/random.h"
+
 namespace ws {
 
 render_system_light_probes::render_system_light_probes(renderer& render)
@@ -43,7 +45,7 @@ result<void> render_system_light_probes::create_resources()
     m_probe_regenerations_per_frame = options.light_probe_max_regenerations_per_frame;
     m_probe_far_z = options.light_probe_far_z;
 
-    ri_param_block_archetype* scratch_archetype = m_renderer.get_param_block_manager().get_param_block_archetype("raytrace_diffuse_probe_scrach_data");    
+    ri_param_block_archetype* scratch_archetype = m_renderer.get_param_block_manager().get_param_block_archetype("ddgi_probe_scrach_data");    
     db_assert(scratch_archetype != nullptr);
 
     // Create scratch buffer to store temporary values.
@@ -54,12 +56,7 @@ result<void> render_system_light_probes::create_resources()
     m_scratch_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "raytrach probe scratch buffer");
 
     // Create param blocks for regenerating each probe.
-    m_regeneration_param_block = m_renderer.get_param_block_manager().create_param_block("raytrace_diffuse_probe_parameters");
-
-    for (size_t i = 0; i < m_probe_regenerations_per_frame; i++)
-    {
-        m_probe_param_block.push_back(m_renderer.get_param_block_manager().create_param_block("raytrace_diffuse_probe_data"));
-    }
+    m_regeneration_param_block = m_renderer.get_param_block_manager().create_param_block("ddgi_probe_parameters");
 
     m_regeneration_instance_buffer = std::make_unique<render_batch_instance_buffer>(m_renderer);
 
@@ -87,8 +84,7 @@ void render_system_light_probes::regenerate()
 {
     m_should_regenerate = true;
     m_dirty_probes.clear();
-    m_last_dirty_view_position = vector3::zero;
-
+    
     // Mark all nodes as dirty.
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
@@ -134,7 +130,6 @@ void render_system_light_probes::build_graph(render_graph& graph, const render_w
         std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
         for (render_light_probe_grid::probe& probe : probes)
         {
-            probe.debug_param_block->set("is_valid", !probe.dirty);
             pass->instances.push_back(probe.debug_param_block.get());
         }
     }
@@ -144,6 +139,8 @@ void render_system_light_probes::build_graph(render_graph& graph, const render_w
 
 void render_system_light_probes::build_post_graph(render_graph& graph, const render_world_state& state)
 {
+    profile_marker(profile_colors::render, "Build Post Graph");
+
     render_system_lighting* lighting_system = m_renderer.get_system<render_system_lighting>();
     
     const render_options& options = m_renderer.get_options();
@@ -174,17 +171,7 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     for (size_t i = 0; i < m_probes_to_regenerate.size(); i++)
     {
         dirty_probe& probe = m_probes_to_regenerate[i];
-        ri_param_block* block = m_probe_param_block[i].get();
-
-        block->set("probe_origin", probe.probe->origin);
-        block->set("probe_index", (int)probe.probe->index);
-        block->set("irradiance_texture", ri_texture_view(&probe.grid->get_irradiance_texture(), 0), true);
-        block->set("irradiance_map_size", (int)probe.grid->get_irradiance_map_size());
-        block->set("irradiance_per_row", (int)(probe.grid->get_irradiance_texture().get_width() / (probe.grid->get_irradiance_map_size() + map_padding)));
-        block->set("occlusion_texture", ri_texture_view(&probe.grid->get_occlusion_texture(), 0), true);
-        block->set("occlusion_map_size", (int)probe.grid->get_occlusion_map_size());
-        block->set("occlusion_per_row", (int)(probe.grid->get_occlusion_texture().get_width() / (probe.grid->get_occlusion_map_size() + map_padding)));
-        block->set("probe_spacing", probe.grid->get_density());
+        ri_param_block* block = probe.probe->param_block.get();
 
         size_t table_index, table_offset;
         block->get_table(table_index, table_offset);
@@ -204,6 +191,12 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     m_regeneration_param_block->set("scratch_buffer", *m_scratch_buffer, true);
     m_regeneration_param_block->set("probe_data_buffer", m_regeneration_instance_buffer->get_buffer(), false);
     m_regeneration_param_block->set("probe_distance_exponent", options.light_probe_distance_exponent);
+    m_regeneration_param_block->set("probe_blend_hysteresis", options.light_probe_blend_hysteresis);
+    m_regeneration_param_block->set("probe_large_change_threshold", options.light_probe_large_change_threshold);
+    m_regeneration_param_block->set("probe_brightness_threshold", options.light_probe_brightness_threshold);
+    m_regeneration_param_block->set("probe_fixed_ray_backface_threshold", options.light_probe_fixed_ray_backface_threshold);
+    m_regeneration_param_block->set("probe_min_frontface_distance", options.light_probe_min_frontface_distance);
+    m_regeneration_param_block->set("random_ray_rotation", vector4(m_random_ray_direction.x, m_random_ray_direction.y, m_random_ray_direction.z, m_random_ray_direction.w));
 
     // Start timer.
     std::unique_ptr<render_pass_query> start_query_pass = std::make_unique<render_pass_query>();
@@ -216,7 +209,7 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     resolve_pass->name = "ddgi - trace";
     resolve_pass->system = this;
     resolve_pass->dispatch_size = vector3i((int)(m_probe_ray_count * m_probes_to_regenerate.size()), 1, 1);
-    resolve_pass->technique = m_renderer.get_effect_manager().get_technique("raytrace_diffuse_probe", {});
+    resolve_pass->technique = m_renderer.get_effect_manager().get_technique("ddgi_trace", {});
     resolve_pass->param_blocks.push_back(view->get_view_info_param_block());
     resolve_pass->param_blocks.push_back(m_regeneration_param_block.get());
     resolve_pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
@@ -227,7 +220,7 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     std::unique_ptr<render_pass_compute> output_irradiance_pass = std::make_unique<render_pass_compute>();
     output_irradiance_pass->name = "ddgi - irradiance output";
     output_irradiance_pass->system = this;
-    output_irradiance_pass->technique = m_renderer.get_effect_manager().get_technique("raytrace_diffuse_probe_output_irradiance", {});
+    output_irradiance_pass->technique = m_renderer.get_effect_manager().get_technique("ddgi_output_irradiance", {});
     output_irradiance_pass->dispatch_size = vector3i((int)m_probes_to_regenerate.size(), 1, 1);
     output_irradiance_pass->param_blocks.push_back(view->get_view_info_param_block());
     output_irradiance_pass->param_blocks.push_back(m_regeneration_param_block.get());
@@ -239,7 +232,7 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     std::unique_ptr<render_pass_compute> output_occlusion_pass = std::make_unique<render_pass_compute>();
     output_occlusion_pass->name = "ddgi - occlusion output";
     output_occlusion_pass->system = this;
-    output_occlusion_pass->technique = m_renderer.get_effect_manager().get_technique("raytrace_diffuse_probe_output_occlusion", {});
+    output_occlusion_pass->technique = m_renderer.get_effect_manager().get_technique("ddgi_output_occlusion", {});
     output_occlusion_pass->dispatch_size = vector3i((int)m_probes_to_regenerate.size(), 1, 1);
     output_occlusion_pass->param_blocks.push_back(view->get_view_info_param_block());
     output_occlusion_pass->param_blocks.push_back(m_regeneration_param_block.get());
@@ -247,17 +240,29 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     output_occlusion_pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(*view));
     graph.add_node(std::move(output_occlusion_pass));
 
-    // Perform relocation
+    // Perform probe relocation to move them out of geometry.
     std::unique_ptr<render_pass_compute> relocate_pass = std::make_unique<render_pass_compute>();
     relocate_pass->name = "ddgi - relocate";
     relocate_pass->system = this;
-    relocate_pass->technique = m_renderer.get_effect_manager().get_technique("raytrace_diffuse_probe_relocate", {});
+    relocate_pass->technique = m_renderer.get_effect_manager().get_technique("ddgi_relocate", {});
     relocate_pass->dispatch_size = vector3i((int)m_probes_to_regenerate.size(), 1, 1);
     relocate_pass->param_blocks.push_back(view->get_view_info_param_block());
     relocate_pass->param_blocks.push_back(m_regeneration_param_block.get());
     relocate_pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
     relocate_pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(*view));
     graph.add_node(std::move(relocate_pass));
+
+    // Perform probe classification to make invalid probes inactive.
+    std::unique_ptr<render_pass_compute> classify_pass = std::make_unique<render_pass_compute>();
+    classify_pass->name = "ddgi - classify";
+    classify_pass->system = this;
+    classify_pass->technique = m_renderer.get_effect_manager().get_technique("ddgi_classify", {});
+    classify_pass->dispatch_size = vector3i((int)m_probes_to_regenerate.size(), 1, 1);
+    classify_pass->param_blocks.push_back(view->get_view_info_param_block());
+    classify_pass->param_blocks.push_back(m_regeneration_param_block.get());
+    classify_pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
+    classify_pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(*view));
+    graph.add_node(std::move(classify_pass));
 
     // End timer.
     std::unique_ptr<render_pass_query> end_query_pass = std::make_unique<render_pass_query>();
@@ -267,7 +272,7 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
 
     m_probes_rengerated_last_frame = m_probes_to_regenerate.size();
 
-    db_log(renderer, "Regenerated %zi/%zi probes, gpu_time %.2f.", m_probes_to_regenerate.size(), m_adjusted_max_probes_per_frame, m_gpu_time);    
+    //db_log(renderer, "Regenerated %zi/%zi probes, gpu_time %.2f.", m_probes_to_regenerate.size(), m_adjusted_max_probes_per_frame, m_gpu_time);    
 }
 
 render_view* render_system_light_probes::get_main_view()
@@ -296,6 +301,16 @@ void render_system_light_probes::step(const render_world_state& state)
 
     m_probes_to_regenerate.clear();
 
+    // Keep regenerating when we run out of probes to regenerate.
+    // TODO: Do all this in a better way.
+    if (m_dirty_probes.empty())
+    {
+        regenerate();
+    }
+
+    // Generate a random ray rotation for this frame.
+    m_random_ray_direction = random::random_quat();
+
     // Get the light probe rendering time.
     {
         profile_marker(profile_colors::render, "start gpu timer");
@@ -320,7 +335,7 @@ void render_system_light_probes::step(const render_world_state& state)
                     m_adjusted_max_probes_per_frame -= options.light_probe_regeneration_step_amount;
                 }
 
-                db_log(renderer, "gpu_time:%.2f probes:%zi", m_average_gpu_time, m_adjusted_max_probes_per_frame);
+                //db_log(renderer, "gpu_time:%.2f probes:%zi", m_average_gpu_time, m_adjusted_max_probes_per_frame);
             }
         }
     }
@@ -342,6 +357,8 @@ void render_system_light_probes::step(const render_world_state& state)
         // Build list of dirty probes.
         if (m_dirty_probes.empty() && m_should_regenerate)
         {
+            profile_marker(profile_colors::render, "Build List");
+
             m_should_regenerate = false;
 
             for (render_light_probe_grid* grid : probe_grids)
@@ -360,35 +377,18 @@ void render_system_light_probes::step(const render_world_state& state)
             }
         }
 
-        // Sort by distance from camera.
-        vector3 view_location = vector3::zero;
-        if (render_view* view = get_main_view())
-        {
-            view_location = view->get_local_location();
-        }
-
-        if ((view_location - m_last_dirty_view_position).length() > options.light_probe_queue_update_distance)
-        {
-            for (dirty_probe& probe : m_dirty_probes)
-            {
-                probe.distance = (probe.probe->origin - view_location).length_squared();
-            }
-
-            std::sort(m_dirty_probes.begin(), m_dirty_probes.end(), [](const dirty_probe& a, const dirty_probe& b) {
-                return b.distance < a.distance;
-            });
-
-            m_last_dirty_view_position = view_location;
-        }
-
         // If dirty, regenerate this probe.
-        size_t probe_regeneration_limit = std::min(m_adjusted_max_probes_per_frame, m_probe_regenerations_per_frame);
-        while (!m_dirty_probes.empty() && m_probes_to_regenerate.size() < probe_regeneration_limit)
         {
-            dirty_probe probe = m_dirty_probes.back();
-            m_dirty_probes.pop_back();
+            profile_marker(profile_colors::render, "Build Regeneration List");
 
-            m_probes_to_regenerate.push_back(probe);
+            size_t probe_regeneration_limit = std::min(m_adjusted_max_probes_per_frame, m_probe_regenerations_per_frame);
+            while (!m_dirty_probes.empty() && m_probes_to_regenerate.size() < probe_regeneration_limit)
+            {
+                dirty_probe probe = m_dirty_probes.back();
+                m_dirty_probes.pop_back();
+
+                m_probes_to_regenerate.push_back(probe);
+            }
         }
     }
 }

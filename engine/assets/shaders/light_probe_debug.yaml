@@ -19,10 +19,10 @@ param_blocks:
     scope: instance
     fields:
       model_matrix: float4x4
+      scale: float3
       grid_state_table_index: int
       grid_state_table_offset: int
       grid_coord: int3
-      is_valid: bool
 
 vertex_layouts:
   light_probe_vertex: [ position, normal, color0 ]
@@ -38,4 +38,4 @@ techniques:
     render_state: default
     vertex_layout: light_probe_vertex
     output_target: light_buffer_and_depth
-    param_blocks: [ view_info, light_probe_instance_info, light_probe_grid_state ]
+    param_blocks: [ view_info, light_probe_instance_info, light_probe_grid_state, light_probe_state ]
