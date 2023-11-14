@@ -621,6 +621,7 @@ struct ri_pipeline_render_state
 
     // Raytracing state
     uint32_t            max_rt_payload_size;
+    uint32_t            max_rt_recursion;
 
 };
 
@@ -670,6 +671,7 @@ inline void stream_serialize(stream& out, ri_pipeline_render_state& state)
     stream_serialize_enum(out, state.stencil_back_face_compare_op);
 
     stream_serialize(out, state.max_rt_payload_size);
+    stream_serialize(out, state.max_rt_recursion);    
 }
 
 // ================================================================================================

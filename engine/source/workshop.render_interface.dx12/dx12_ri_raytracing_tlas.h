@@ -31,9 +31,9 @@ public:
     result<void> create_resources();
     void destroy_resources();
 
-    virtual instance_id add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata) override;
+    virtual instance_id add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata, uint32_t mask) override;
     virtual void remove_instance(instance_id id) override;
-    virtual void update_instance(instance_id id, const matrix4& transform) override;
+    virtual void update_instance(instance_id id, const matrix4& transform, uint32_t mask) override;
     virtual ri_buffer* get_metadata_buffer() override;
 
     const ri_buffer& get_tlas_buffer() const;
@@ -58,6 +58,7 @@ private:
         ri_param_block* metadata;
         bool opaque;
         bool dirty;
+        uint32_t mask;
     };
 
     std::mutex m_instance_mutex;

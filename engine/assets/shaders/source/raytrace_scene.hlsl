@@ -12,6 +12,7 @@
 #include "data:shaders/source/common/raytracing_occlusion_ray.hlsl"
 #include "data:shaders/source/common/raytracing_scene.hlsl"
 
+#ifdef SHADER_STAGE_RAY_GENERATION
 [shader("raygeneration")]
 void ray_generation()
 {
@@ -36,3 +37,4 @@ void ray_generation()
     );
     output_texture[launch_index] = result.color;
 }
+#endif

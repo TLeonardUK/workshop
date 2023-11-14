@@ -28,17 +28,15 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, dd
     {
         int ray_index = probe_offset + i;
         ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
-        if (ray_result.valid)
-        {
-            // Don't blend backfaces into the result.
-            if (ray_result.distance < 0.f)
-            {
-                continue;
-            }
 
-            float weight = max(0.0f, dot(probe_ray_direction, ray_result.normal));            
-            result += float4(ray_result.color * weight, weight);
+        // Don't blend backfaces into the result.
+        if (ray_result.distance < 0.f)
+        {
+            continue;
         }
+
+        float weight = max(0.0f, dot(probe_ray_direction, ray_result.normal));            
+        result += float4(ray_result.color * weight, weight);
     }
 
     // Fixed rays are not blended in.
@@ -48,6 +46,9 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, dd
     // Normalize the blended value. Read the RTXGI documentation to get an idea of how this works.
     result.rgb *= 1.f / (2.f * max(result.a, epsilon));
     result.a = 1.f;
+
+    // Apply tone mapping to result
+    result.rgb = pow(result.rgb, (1.0f / probe_encoding_gamma));
 
     return result;
 }
@@ -64,18 +65,16 @@ float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, ddgi_
     {
         int ray_index = ray_offset + i;
         ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
-        if (ray_result.valid)
-        {
-            // Determine contribute of ray to output texel.
-            float weight = max(0.0f, dot(probe_ray_direction, ray_result.normal));            
 
-            // Apply sharpness to weight.
-            weight = pow(weight, probe_distance_exponent);
+        // Determine contribute of ray to output texel.
+        float weight = max(0.0f, dot(probe_ray_direction, ray_result.normal));            
 
-            // Retrieve and accumulate the distance.
-            float distance = min(abs(ray_result.distance), max_distance);
-            result += float4(distance * weight, (distance * distance) * weight, 0.0f, weight);
-        }
+        // Apply sharpness to weight.
+        weight = pow(weight, probe_distance_exponent);
+
+        // Retrieve and accumulate the distance.
+        float distance = min(abs(ray_result.distance), max_distance);
+        result += float4(distance * weight, (distance * distance) * weight, 0.0f, weight);
     }
 
     // Fixed rays are not blended in.
@@ -146,6 +145,7 @@ void output_irradiance_cshader(cshader_parameters params)
         float4 result = calculate_irradiance_for_texel(int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data);
         float4 existing = irradiance_texture[irradiance_grid_location + texel_coord];
 
+#if 1
         // Blend the result with the existing value.
         float hysteresis = probe_blend_hysteresis;
         float3 delta = (result.rgb - existing.rgb);
@@ -158,9 +158,9 @@ void output_irradiance_cshader(cshader_parameters params)
         }
 
         // If large change is changed, reduce hysteresis to apply lighting effect quicker.
-        if (max3(existing.rgb - result.rgb) > probe_large_change_threshold)
+        if (maxabs3(delta) > probe_large_change_threshold)
         {
-            hysteresis = max(0.f, hysteresis - 0.75f);
+            hysteresis *= 0.75f;
         }
 
         // Clamp max brightness change per update.
@@ -170,15 +170,12 @@ void output_irradiance_cshader(cshader_parameters params)
         }
 
         // Interpolate to get the final result
-        const float threshold = 1.f / 1024.f;
-        float3 lerp_delta = (1.f - hysteresis) * delta;
-        if (max3(result.rgb) < max3(existing.rgb))
-        {
-            lerp_delta = min(max(threshold, abs(lerp_delta)), abs(delta)) * sign(lerp_delta);       
-        }
-        
+        float3 lerp_delta = (1.f - hysteresis) * delta;        
         result = float4(existing.rgb + lerp_delta, 1.f);
-        
+#else
+        result = float4(lerp(existing.rgb, result.rgb, 0.5f), 1.f);
+#endif
+
         irradiance_texture[irradiance_grid_location + texel_coord] = result;
     }
 

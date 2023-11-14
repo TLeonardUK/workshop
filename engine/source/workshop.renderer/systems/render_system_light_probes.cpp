@@ -123,6 +123,7 @@ void render_system_light_probes::build_graph(render_graph& graph, const render_w
     pass->render_model = m_renderer.get_debug_model(debug_model::sphere);
     pass->output.color_targets.push_back(&lighting_system->get_lighting_buffer());
     pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
+    pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(view));
 
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
     for (render_light_probe_grid* grid : probe_grids)

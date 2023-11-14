@@ -59,6 +59,7 @@ render_states:
   # Render state for raytracing the scene.
   raytrace_scene_render_state:
     max_rt_payload_size: 48 
+    max_rt_recursion: 2 # One for primary ray, one for shadow ray.
 
 vertex_layouts:
   # Simple layout that contains only vert position and uv. Useful
@@ -182,6 +183,7 @@ param_blocks:
       apply_direct_lighting: bool
       light_probe_grid_count: int
       light_probe_grid_buffer: byteaddressbuffer
+      probe_encoding_gamma: float
       reflection_probe_count: int
       reflection_probe_buffer: byteaddressbuffer     
       brdf_lut: texture2d 
@@ -299,28 +301,28 @@ ray_hitgroups:
     material_domain: opaque
     ray_type: primitive
     ray_closest_hit_shader: 
-      file: data:shaders/source/common/raytracing_primitive_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_opaque_closest_hit
   primitive_masked_hitgroup:
     material_domain: masked
     ray_type: primitive
     ray_closest_hit_shader: 
-      file: data:shaders/source/common/raytracing_primitive_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_masked_closest_hit    
     ray_any_hit_shader: 
-      file: data:shaders/source/common/raytracing_primitive_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_masked_any_hit
   primitive_transparent_hitgroup:
     material_domain: transparent
     ray_type: primitive
     ray_any_hit_shader: 
-      file: data:shaders/source/common/raytracing_primitive_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_transparent_any_hit      
   primitive_sky_hitgroup:
     material_domain: sky
     ray_type: primitive
     ray_closest_hit_shader: 
-      file: data:shaders/source/common/raytracing_primitive_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_sky_closest_hit
       
   # Occlusion ray types
@@ -328,28 +330,28 @@ ray_hitgroups:
     material_domain: opaque
     ray_type: occlusion
     ray_closest_hit_shader: 
-      file: data:shaders/source/common/raytracing_occlusion_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_occlusion_opaque_closest_hit
   occlusion_masked_hitgroup:
     material_domain: masked
     ray_type: occlusion
     ray_closest_hit_shader: 
-      file: data:shaders/source/common/raytracing_occlusion_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_occlusion_masked_closest_hit    
     ray_any_hit_shader: 
-      file: data:shaders/source/common/raytracing_occlusion_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_occlusion_masked_any_hit
   occlusion_transparent_hitgroup:
     material_domain: transparent
     ray_type: occlusion
     ray_any_hit_shader: 
-      file: data:shaders/source/common/raytracing_occlusion_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_occlusion_transparent_any_hit      
   occlusion_sky_hitgroup:
     material_domain: sky
     ray_type: occlusion
     ray_closest_hit_shader: 
-      file: data:shaders/source/common/raytracing_occlusion_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_occlusion_sky_closest_hit
 
 ray_missgroups:
@@ -358,14 +360,14 @@ ray_missgroups:
   primitive_missgroup:
     ray_type: primitive
     ray_miss_shader:
-      file: data:shaders/source/common/raytracing_primitive_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_primitive_miss
       
   # Occlusion ray types
   occlusion_missgroup:
     ray_type: occlusion
     ray_miss_shader:
-      file: data:shaders/source/common/raytracing_occlusion_ray.hlsl
+      file: data:shaders/source/raytrace_scene.hlsl
       entry: ray_occlusion_miss
 
 defines:

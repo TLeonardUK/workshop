@@ -17,6 +17,14 @@ enum ray_type
     count
 };
 
+enum ray_mask
+{
+    visible = 1,
+    invisible = 2,
+
+    all = visible | invisible
+};
+
 struct tlas_metadata_index
 {
     uint table_index;

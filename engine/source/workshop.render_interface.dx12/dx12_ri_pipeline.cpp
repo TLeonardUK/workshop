@@ -160,7 +160,7 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
     shader_config_desc.MaxPayloadSizeInBytes = m_create_params.render_state.max_rt_payload_size;
 
     D3D12_RAYTRACING_PIPELINE_CONFIG pipeline_config_desc;
-    pipeline_config_desc.MaxTraceRecursionDepth = 1;
+    pipeline_config_desc.MaxTraceRecursionDepth = m_create_params.render_state.max_rt_recursion;
 
     std::vector<std::unique_ptr<D3D12_DXIL_LIBRARY_DESC>> library_descs;
     std::vector<std::unique_ptr<D3D12_EXPORT_DESC>> export_descs;

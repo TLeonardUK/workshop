@@ -13,6 +13,10 @@
 #include "data:shaders/source/common/reflection_probe.hlsl"
 #include "data:shaders/source/common/consts.hlsl"
 
+#if defined(RAYTRACED_SHADOWS) && (defined(SHADER_STAGE_RAY_GENERATION) || defined(SHADER_STAGE_RAY_CLOSEST_HIT))
+#include "data:shaders/source/common/raytracing_occlusion_ray.hlsl"
+#endif
+
 // ================================================================================================
 //  Utilities to get the various states from the indirection buffers.
 // ================================================================================================
@@ -341,6 +345,53 @@ float2 calculate_shadow_spotlight(gbuffer_fragment frag, light_state light)
 }
 
 // ================================================================================================
+//  Raytraced shadow map calculation
+// ================================================================================================
+#if defined(RAYTRACED_SHADOWS) && (defined(SHADER_STAGE_RAY_GENERATION) || defined(SHADER_STAGE_RAY_CLOSEST_HIT))
+
+float calculate_raytraced_shadow(gbuffer_fragment frag, light_state light)
+{
+    // Light is not shadow mapped, so ignore.
+    if (light.shadow_map_count == 0)
+    {
+        return 1.0f;
+    }
+
+    float3 biased_position = frag.world_position + (frag.world_normal * 0.01f);
+    float3 light_position = light.position;
+
+    // If directional light generate a position to test against along the direction of the light
+    if (light.type == light_type::directional)
+    {
+        light_position = biased_position - (light.direction * light.range);
+    }
+
+    RayDesc ray;
+    ray.Origin = biased_position;
+    ray.Direction = normalize(light_position - biased_position);
+    ray.TMin = 0;
+    ray.TMax = length(light_position - biased_position);
+
+    occlusion_ray_payload occlusion_payload;
+    occlusion_payload.hit_t = -1.0f;
+    occlusion_payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
+
+    TraceRay(
+        scene_tlas,
+        RAY_FLAG_NONE,
+        ray_mask::visible,
+        ray_type::occlusion,
+        ray_type::count,
+        0,
+        ray,
+        occlusion_payload);
+
+    return (occlusion_payload.hit_t == -1.0f ? 1.0f : 0.0f);
+}
+
+#endif
+
+// ================================================================================================
 //  Attenuation calculation
 // ================================================================================================
 
@@ -446,22 +497,38 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     // Calculate radiance based on the light type.
     float attenuation = 1.0f;
     float2 shadow_attenuation_and_cascade_index = 1.0f;
-    
+
+    // Calculate attenuation from light source.
     if (light.type == light_type::directional)
     {
         attenuation = calculate_attenuation_directional(frag, light);
-        shadow_attenuation_and_cascade_index = calculate_shadow_directional(frag, light);
     }
     else if (light.type == light_type::point_)
     {
         attenuation = calculate_attenuation_point(frag, light);
-        shadow_attenuation_and_cascade_index = calculate_shadow_point(frag, light);
     }
     else if (light.type == light_type::spotlight)
     {
         attenuation = calculate_attenuation_spotlight(frag, light);
+    }
+
+    // Calculate shadow occlusion.
+#if defined(RAYTRACED_SHADOWS) && (defined(SHADER_STAGE_RAY_GENERATION) || defined(SHADER_STAGE_RAY_CLOSEST_HIT))
+    shadow_attenuation_and_cascade_index = float2(calculate_raytraced_shadow(frag, light), 0.0f);
+#else
+    if (light.type == light_type::directional)
+    {
+        shadow_attenuation_and_cascade_index = calculate_shadow_directional(frag, light);
+    }
+    else if (light.type == light_type::point_)
+    {
+        shadow_attenuation_and_cascade_index = calculate_shadow_point(frag, light);
+    }
+    else if (light.type == light_type::spotlight)
+    {
         shadow_attenuation_and_cascade_index = calculate_shadow_spotlight(frag, light);
     }
+#endif
     
     // Calculate fresnel reflection
     float3 radiance = light.color * light.intensity * attenuation * shadow_attenuation_and_cascade_index.r;
@@ -626,21 +693,21 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
             max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
         }
 #else
-    for (int i = 0; i < light_count; i++)
-    {
-        light_state light = get_light_state(i);
-
-        float distance = length(light.position - frag.world_position.xyz);
-        if (distance < light.range && distance < light.importance_distance)
+        // Go through every light.
+        for (int i = 0; i < light_count; i++)
         {
-            visible_light_count++;
+            light_state light = get_light_state(i);
 
-            direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent_or_ray);
-            direct_lighting += result.lighting;
-            max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
+            float distance = length(light.position - frag.world_position.xyz);
+            if (distance < light.range && distance < light.importance_distance)
+            {
+                visible_light_count++;
+
+                direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent_or_ray);
+                direct_lighting += result.lighting;
+                max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
+            }
         }
-    }
-
 #endif
 
         // Mix final color.
@@ -709,7 +776,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
         case visualization_mode_t::light_probes:  
         {
             // TODO: Change
-            final_color = float4(frag.albedo, 1.0f);
+            //final_color = float4(frag.albedo, 1.0f);
             break;
         }     
         case visualization_mode_t::light_probe_contribution:              

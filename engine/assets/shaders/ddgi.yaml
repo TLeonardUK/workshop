@@ -106,8 +106,8 @@ techniques:
       resolve_lighting_parameters 
     ]
     defines:    
-      #DISABLE_AMBIENT_LIGHTING: 1   # Don't want to read probe data while raytracing scene as its incomplete. 
-      DO_NOT_USE_LIGHT_CLUSTERS: 1  # As we can trace in all directions using the light clusters isn't helpful for us, so just iterate the full list, bleh. 
+      DO_NOT_USE_LIGHT_CLUSTERS: 1   # As we can trace in all directions using the light clusters isn't helpful for us, so just iterate the full list, bleh. 
+      RAYTRACED_SHADOWS: 1           # Shadow maps will give incorrect results as they are based on camera position/orientation.
       DISABLE_VISUALIZATION_MODES: 1 # Ignore any visualization modes when calculating shading.
 
   ddgi_output_irradiance:

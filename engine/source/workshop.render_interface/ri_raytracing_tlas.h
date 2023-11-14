@@ -32,13 +32,13 @@ public:
     //      domain      matches up with a ray hitgroup in a ri_pipeline to determine what shader is used when rays are tested against this tlas.
     //      opaque      flag that determines if the blas should be treated as transparent or not, this is important to set appropriate for performance.
     //      metadata    param block that contains metadata for this instance. These param blocks have their table/offset indices laid out linearly in get_metadata_buffer().
-    virtual instance_id add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata) = 0;
+    virtual instance_id add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata, uint32_t mask) = 0;
 
     // Removes an instances of a blas previously added with add_instance.
     virtual void remove_instance(instance_id id) = 0;
 
     // Updates the transform of a blas previously inserted with add_instance.
-    virtual void update_instance(instance_id id, const matrix4& transform) = 0;
+    virtual void update_instance(instance_id id, const matrix4& transform, uint32_t mask) = 0;
 
     // Returns a buffer that contains a linearly ordered set table index/offset pairs used to reference metadata param blocks passed in by add_instance.
     // This can be indexed into using the InstanceID in the raytracing shader.

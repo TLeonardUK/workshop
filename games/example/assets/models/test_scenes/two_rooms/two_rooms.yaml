@@ -1,0 +1,12 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/test_scenes/two_rooms/two_rooms.glb
+ 
+materials:
+  "ground":         "data:materials/core/solid/brown.yaml"
+  "wall":           "data:materials/core/solid/white.yaml"

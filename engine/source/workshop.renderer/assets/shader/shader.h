@@ -48,6 +48,20 @@ inline static const char* ray_type_strings[static_cast<int>(ray_type::COUNT)] = 
 DEFINE_ENUM_TO_STRING(ray_type, ray_type_strings)
 
 // ================================================================================================
+//  Defines the different maskes for TLAS instances that rays can intersect
+// ================================================================================================
+enum class ray_mask
+{
+    // TLAS instances marked as visible.
+    visible = 1,
+
+    // TLAS instances marked as invisible.
+    invisible = 2,
+
+    all = visible | invisible,
+};
+
+// ================================================================================================
 //  Shader files contain a description of the param blocks, render state, techniques
 //  and other associated rendering data required to use a shader as part of
 //  a render pass.

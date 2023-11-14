@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 25;
+constexpr size_t k_asset_compiled_version = 27;
 
 };
 
@@ -649,7 +649,7 @@ bool shader_loader::parse_render_state(const char* path, const char* name, YAML:
     ReadVariable("independent_blend_enabled",       block.state.independent_blend_enabled,          false);    
 
     ReadVariable("max_rt_payload_size",             block.state.max_rt_payload_size,                32);
-
+    ReadVariable("max_rt_recursion",                block.state.max_rt_recursion,                   1);    
 
     for (size_t i = 0; i < ri_pipeline_render_state::k_max_output_targets; i++)
     {
@@ -1642,6 +1642,10 @@ bool shader_loader::compile_shader_stage(const char* path, shader::technique& te
     {
         defines["WS_RELEASE"] = "1";
     }
+
+    std::string stage_name = ri_shader_stage_strings[(int)pipeline_stage];
+    std::string stage_define = string_format("SHADER_STAGE_%s", string_upper(stage_name).c_str());
+    defines[stage_define] = "1";
 
     // Remember this file as a compile dependency.
     asset.header.add_dependency(stage.file.c_str());

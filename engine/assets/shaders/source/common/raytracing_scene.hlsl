@@ -32,7 +32,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     TraceRay(
         tlas,
         RAY_FLAG_NONE,
-        0xFF,
+        ray_mask::visible,
         ray_type::occlusion,
         ray_type::count,
         0,
@@ -41,10 +41,11 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
 
     if (occlusion_payload.hit_t == -1.0f)
     {
+        // If we didn't hit something make a hit at maximum distance with a black color.
         raytrace_scene_result result;
         result.color = float4(0.0f, 0.0f, 0.0f, 0.0f);
-        result.depth = 0.0f;
-        result.hit = false;
+        result.depth = max_distance;
+        result.hit = true;
         result.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
         return result;
     }
@@ -62,7 +63,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     TraceRay(
         tlas,
         RAY_FLAG_NONE,
-        0xFF,
+        ray_mask::visible,
         ray_type::primitive,
         ray_type::count,
         0,

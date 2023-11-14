@@ -20,34 +20,41 @@ struct occlusion_ray_payload
     uint   hit_kind;
 };
 
+#ifdef SHADER_STAGE_RAY_MISS
 [shader("miss")]
 void ray_occlusion_miss(inout occlusion_ray_payload payload)
 {
     payload.hit_t = -1.0f;
 }
+#endif
 
 // ================================================================================================
 // Opaque geometry
 // ================================================================================================
 
+#ifdef SHADER_STAGE_RAY_CLOSEST_HIT
 [shader("closesthit")]
 void ray_occlusion_opaque_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.hit_t = RayTCurrent();
     payload.hit_kind = HitKind();
 }
+#endif
 
 // ================================================================================================
 // Masked geometry
 // ================================================================================================
 
+#ifdef SHADER_STAGE_RAY_CLOSEST_HIT
 [shader("closesthit")]
 void ray_occlusion_masked_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.hit_t = RayTCurrent();
     payload.hit_kind = HitKind();
 }
+#endif
 
+#ifdef SHADER_STAGE_RAY_ANY_HIT
 [shader("anyhit")]
 void ray_occlusion_masked_any_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
@@ -63,26 +70,31 @@ void ray_occlusion_masked_any_hit(inout occlusion_ray_payload payload, BuiltInTr
         AcceptHitAndEndSearch();
     }
 }
+#endif
 
 // ================================================================================================
 // Sky geometry
 // ================================================================================================
 
+#ifdef SHADER_STAGE_RAY_CLOSEST_HIT
 [shader("closesthit")]
 void ray_occlusion_sky_closest_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.hit_t = RayTCurrent();
     payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE; // Count all hits as frontfacing for the sky seeing as its essentially inverted.
 }
+#endif
 
 // ================================================================================================
 // Transparent geometry
 // ================================================================================================
 
+#ifdef SHADER_STAGE_RAY_ANY_HIT
 [shader("anyhit")]
 void ray_occlusion_transparent_any_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     IgnoreHit();
 }
+#endif
 
 #endif

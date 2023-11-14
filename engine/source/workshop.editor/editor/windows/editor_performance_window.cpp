@@ -14,6 +14,8 @@ namespace ws {
 
 editor_performance_window::editor_performance_window()
 {
+    m_open = false;
+
     m_stats_triangles_rendered = statistics_manager::get().find_or_create_channel("rendering/triangles_rendered");
     m_stats_draw_calls = statistics_manager::get().find_or_create_channel("rendering/draw_calls");
     m_stats_drawn_instances = statistics_manager::get().find_or_create_channel("rendering/drawn_instances");

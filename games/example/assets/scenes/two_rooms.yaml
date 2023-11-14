@@ -1,0 +1,125 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    1:
+        meta_component:
+            name: main camera
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.106619835
+                y:  0.729954004
+                z:  -0.1170507
+                w:  0.664904833
+            local_location:
+                x:  4496.32422
+                y:  1563.25513
+                z:  440.589417
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        camera_component:
+            fov: 45
+            aspect_ratio: 1.76999998
+            min_depth: 10
+            max_depth: 20000
+        fly_camera_movement_component:
+            sensitivity: 0.00100000005
+            speed: 1500
+            zoom_speed: 50000
+            pan_speed: 50
+            max_vertical_angle: 0.800000012
+    2:
+        meta_component:
+            name: sun light
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.619344711
+                y:  -0.18035163
+                z:  0.761131048
+                w:  -0.0675645098
+            local_location:
+                x:  399.999664
+                y:  99.9998093
+                z:  8.63325258e-05
+            local_scale:
+                x:  1.00000024
+                y:  0.999998987
+                z:  1.00000083
+        bounds_component:
+            {}
+        light_component:
+            intensity: 1
+            range: 100000
+            importance_range: 100000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: true
+            shadow_map_size: 2048
+            shadow_map_distance: 1000
+        directional_light_component:
+            shadow_cascades: 3
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+    3:
+        meta_component:
+            name: scene
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  10
+                y:  10
+                z:  10
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/test_scenes/two_rooms/two_rooms.yaml
+            materials:
+                -   data:materials/core/solid/brown.yaml
+                -   data:materials/core/solid/white.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    5:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  800.000244
+                z:  0
+            local_scale:
+                x:  3999.99976
+                y:  1999.99988
+                z:  3999.99976
+        bounds_component:
+            {}
+        light_probe_grid_component:
+            density: 130

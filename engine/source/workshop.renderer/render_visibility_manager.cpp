@@ -341,6 +341,13 @@ void render_visibility_manager::update_visibility()
         {
             object_state& obj_state = m_objects[existing_object_id.index];
 
+            // id has been recycled, object is gone forever.
+            if (obj_state.id == existing_object_id)
+            {
+                state.has_changed = true;
+                continue;
+            }
+
             // View is not marked as changed if the object has not physical representation.
             if (static_cast<int>(obj_state.flags & render_visibility_flags::physical) == 0)
             {

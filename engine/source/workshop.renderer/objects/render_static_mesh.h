@@ -32,6 +32,7 @@ public:
     // Overrides the normal functions to update instance data when they change.
     virtual void set_local_transform(const vector3& location, const quat& rotation, const vector3& scale) override;
     virtual void set_render_gpu_flags(render_gpu_flags flags) override;
+    virtual void set_draw_flags(render_draw_flags flags) override;
 
     // Overrides the default bounds to return the obb of the model bounds.
     virtual obb get_bounds() override;
@@ -64,6 +65,8 @@ private:
     std::unique_ptr<ri_param_block> m_geometry_instance_info;
 
     std::vector<render_batch_instance> m_registered_batches;
+
+    bool m_visible_in_rt = false;
 
     struct tlas_instance
     {

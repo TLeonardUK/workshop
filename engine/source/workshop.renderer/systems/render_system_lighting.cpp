@@ -283,6 +283,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("apply_direct_lighting", !m_renderer.get_render_flag(render_flag::disable_direct_lighting));
         resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
         resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
+        resolve_param_block->set("probe_encoding_gamma", options.light_probe_encoding_gamma);
         resolve_param_block->set("reflection_probe_count", (int)visible_reflection_probes.size());
         resolve_param_block->set("reflection_probe_buffer", reflection_probe_instance_buffer->get_buffer());
         resolve_param_block->set("brdf_lut", *m_brdf_lut_texture);

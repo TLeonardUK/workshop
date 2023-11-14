@@ -364,6 +364,11 @@ float max3(float3 input)
     return max(max(input.x, input.y), input.z);
 }
 
+float maxabs3(float3 input)
+{
+    return max(max(abs(input.x), abs(input.y)), abs(input.z));
+}
+
 // Computes a spherically distributed set of directions ont he unit sphere.
 // Based on the ray selection code in RTXGI
 float3 spherical_fibonacci(float sample_index, float num_samples)

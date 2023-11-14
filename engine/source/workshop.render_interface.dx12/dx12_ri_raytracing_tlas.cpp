@@ -105,7 +105,7 @@ result<void> dx12_ri_raytracing_tlas::create_resources()
     return true;
 }
 
-dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata)
+dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_raytracing_blas* blas, const matrix4& transform, size_t domain, bool opaque, ri_param_block* metadata, uint32_t mask)
 {
     std::scoped_lock lock(m_instance_mutex);
 
@@ -121,6 +121,7 @@ dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_ra
     inst.opaque = opaque;
     inst.metadata = metadata;
     inst.dirty = true;
+    inst.mask = mask;
 
     mark_dirty();
 
@@ -153,7 +154,7 @@ void dx12_ri_raytracing_tlas::remove_instance(instance_id id)
     mark_dirty();
 }
 
-void dx12_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& transform)
+void dx12_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& transform, uint32_t mask)
 {
     std::scoped_lock lock(m_instance_mutex);
 
@@ -161,6 +162,7 @@ void dx12_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& tra
     {
         instance& inst = m_instances[iter->second];
         inst.transform = transform;
+        inst.mask = mask;
         inst.dirty = true;
     }
 
@@ -207,7 +209,7 @@ void dx12_ri_raytracing_tlas::build(dx12_ri_command_list& cmd_list)
             desc->AccelerationStructure = inst.blas->get_gpu_address();
             memcpy(desc->Transform, &inst.transform, sizeof(desc->Transform));
             desc->Flags = inst.opaque ? D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE : D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
-            desc->InstanceMask = 0xFF;
+            desc->InstanceMask = inst.mask;
             desc->InstanceID = i;
             desc->InstanceContributionToHitGroupIndex = inst.domain * ray_type_count;
             m_instance_data->unmap(desc);

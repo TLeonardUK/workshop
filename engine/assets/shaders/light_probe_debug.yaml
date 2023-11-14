@@ -38,4 +38,4 @@ techniques:
     render_state: default
     vertex_layout: light_probe_vertex
     output_target: light_buffer_and_depth
-    param_blocks: [ view_info, light_probe_instance_info, light_probe_grid_state, light_probe_state ]
+    param_blocks: [ view_info, light_probe_instance_info, resolve_lighting_parameters, light_probe_grid_state, light_probe_state ]

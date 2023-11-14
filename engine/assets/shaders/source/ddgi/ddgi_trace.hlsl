@@ -57,7 +57,7 @@ void ray_generation()
     light_probe_state probe_state = get_light_probe_state(probe_data.probe_state_buffer_index, probe_data.probe_index);
 
     // If not active, we only need to fire the fixed rays for relocation/classification.
-    if (false)//probe_state.classification != (int)probe_classification::active && probe_ray_index >= PROBE_GRID_FIXED_RAY_COUNT)
+    if (probe_state.classification != (int)probe_classification::active && probe_ray_index >= PROBE_GRID_FIXED_RAY_COUNT)
     {
         ddgi_probe_scrach_data scratch;
         scratch.color = float3(0.0f, 0.0f, 0.0f);

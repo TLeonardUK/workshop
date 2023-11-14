@@ -22,10 +22,12 @@ struct primitive_ray_payload
     uint hit_kind;
 };
 
+#ifdef SHADER_STAGE_RAY_MISS
 [shader("miss")]
 void ray_primitive_miss(inout primitive_ray_payload payload)
 {
 }
+#endif
 
 // ================================================================================================
 // Opaque geometry
@@ -58,24 +60,30 @@ float4 ray_primitive_common(inout primitive_ray_payload payload, BuiltInTriangle
     return float4(shade_fragment(f, false).rgb, albedo.a);
 }
 
+#ifdef SHADER_STAGE_RAY_CLOSEST_HIT
 [shader("closesthit")]
 void ray_primitive_opaque_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.color = ray_primitive_common(payload, attrib).rgb;
     payload.hit_kind = HitKind();
 }
+#endif
 
 // ================================================================================================
 // Masked geometry
 // ================================================================================================
 
+
+#ifdef SHADER_STAGE_RAY_CLOSEST_HIT
 [shader("closesthit")]
 void ray_primitive_masked_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     payload.color = ray_primitive_common(payload, attrib).rgb;
     payload.hit_kind = HitKind();
 }
+#endif
 
+#ifdef SHADER_STAGE_RAY_ANY_HIT
 [shader("anyhit")]
 void ray_primitive_masked_any_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
@@ -91,11 +99,13 @@ void ray_primitive_masked_any_hit(inout primitive_ray_payload payload, BuiltInTr
         AcceptHitAndEndSearch();
     }
 }
+#endif
 
 // ================================================================================================
 // Sky geometry
 // ================================================================================================
 
+#ifdef SHADER_STAGE_RAY_CLOSEST_HIT
 [shader("closesthit")]
 void ray_primitive_sky_closest_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
@@ -105,11 +115,13 @@ void ray_primitive_sky_closest_hit(inout primitive_ray_payload payload, BuiltInT
     payload.color = mat.skybox_texture.SampleLevel(mat.skybox_sampler, WorldRayDirection(), 0.0f);    
     payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE; // Count all hits as frontfacing for the sky seeing as its essentially inverted.
 }
+#endif
 
 // ================================================================================================
 // Transparent geometry
 // ================================================================================================
 
+#ifdef SHADER_STAGE_RAY_ANY_HIT
 [shader("anyhit")]
 void ray_primitive_transparent_any_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
@@ -121,5 +133,6 @@ void ray_primitive_transparent_any_hit(inout primitive_ray_payload payload, Buil
 
     IgnoreHit();
 }
+#endif
 
 #endif

@@ -6,6 +6,7 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
+#include "workshop.renderer/assets/shader/shader.h"
 
 namespace ws {
 
@@ -66,6 +67,13 @@ void render_static_mesh::set_local_transform(const vector3& location, const quat
 void render_static_mesh::set_render_gpu_flags(render_gpu_flags flags)
 {
     render_object::set_render_gpu_flags(flags);
+
+    update_render_data();
+}
+
+void render_static_mesh::set_draw_flags(render_draw_flags flags)
+{
+    render_object::set_draw_flags(flags);
 
     update_render_data();
 }
@@ -221,7 +229,9 @@ void render_static_mesh::create_render_data()
 
             bool is_transparent = (mat->domain == material_domain::transparent || mat->domain == material_domain::masked);
 
-            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, !is_transparent, tlas->metadata.get());
+            m_visible_in_rt = has_draw_flag(render_draw_flags::geometry);
+
+            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, !is_transparent, tlas->metadata.get(), m_visible_in_rt ? (uint32_t)ray_mask::visible : (uint32_t)ray_mask::invisible);
         }
     }
 }
@@ -257,13 +267,18 @@ void render_static_mesh::update_render_data()
     changed |= m_geometry_instance_info->set("model_matrix", transform);
     changed |= m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
 
+    // Mark as changed if draw in geometry pass.
+    bool visible_in_rt = has_draw_flag(render_draw_flags::geometry);
+    changed |= (visible_in_rt != m_visible_in_rt);
+    m_visible_in_rt = visible_in_rt;
+
     // Update tlas transform and metadata.
     if (changed)
     {
         for (tlas_instance& instance : m_registered_tlas_instances)
         {
             instance.metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
-            m_renderer->get_scene_tlas().update_instance(instance.id, transform);
+            m_renderer->get_scene_tlas().update_instance(instance.id, transform, m_visible_in_rt ? (uint32_t)ray_mask::visible : (uint32_t)ray_mask::invisible);
         }
     }
 }

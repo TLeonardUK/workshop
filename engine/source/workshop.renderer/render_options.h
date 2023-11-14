@@ -27,7 +27,7 @@ public:
 	// ================================================================================================
 
 	// How many rays to cast per probe to calculate diffus lighting.
-	size_t light_probe_ray_count = 300;
+	size_t light_probe_ray_count = 256;
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
@@ -58,13 +58,13 @@ public:
     float light_probe_view_bias = 10.0f;//10.0f;
 
     // Speed at which new changes to irradiance are blended into the current value.
-    float light_probe_blend_hysteresis = 0.97f;
+    float light_probe_blend_hysteresis = 0.97f;//0.97f;
 
     // What delta of change in irradiance is considered "large" and should be blended in faster.
-    float light_probe_large_change_threshold = 0.35f;//0.25f;
+    float light_probe_large_change_threshold = 0.10f;//0.25f;
 
     // How much of a brightness change per frame is considered "large" and should be blended in more slowly.
-    float light_probe_brightness_threshold = 2.0f;//1.0f;
+    float light_probe_brightness_threshold = 10.0f;//1.0f;
 
     // Used by probe relocation to determine if a probe is inside geometry if more than this proportion
     // of the rays hit backfaces.
@@ -73,6 +73,9 @@ public:
     // Minimum distance all probes will attempt to keep from frontfacing triangles. This is limited
     // to half the distance between probes in the grid. 
     float light_probe_min_frontface_distance = 50.0f;
+
+    // Tone mapped gamma that light probe blending is performed with.
+    float light_probe_encoding_gamma = 5.0f;
 
 	// ================================================================================================
 	//  Reflection Probes

@@ -43,10 +43,6 @@ void relocate_cshader(cshader_parameters params)
     {
         int ray_index = (params.group_id.x * probe_ray_count) + i;
         ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
-        if (!ray_result.valid)
-        {
-            continue;
-        }
 
         // Backface
         if (ray_result.distance < 0.0f)

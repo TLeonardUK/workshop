@@ -262,6 +262,10 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
                 float2 irradiance_probe_texture_uv = get_probe_uv(grid_coord, grid_state.size, irradiance_octant_coords, grid_state.irradiance_map_size, grid_state.irradiance_texture_size, grid_state.irradiance_probes_per_row, grid_state);
                 float3 irradiance_sample = irradiance_texture_map.SampleLevel(map_sampler, irradiance_probe_texture_uv, 0).rgb;
 
+                // Decode tonemapping
+                float3 tone_mapping_exponent = probe_encoding_gamma * 0.5f;
+                irradiance_sample.rgb = pow(irradiance_sample.rgb, tone_mapping_exponent);
+
                 // Accumulate result.
                 irradiance += float4(irradiance_sample, 1.0f) * weight;
                 //irradiance += float4(filtered_distance.x / 150.0f, 0.0f, 0.0f, 1.0f);
@@ -275,8 +279,12 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             }
 
             // Normalize weights.
-            irradiance.rgb = irradiance.rgb / irradiance.a;
-            
+            irradiance.rgb = irradiance.rgb / irradiance.a;            
+            // Go back to linear irradiance.
+            irradiance.rgb *= irradiance.rgb;
+            // Multiply by area of integration
+            irradiance.rgb *= pi2;
+
             return irradiance.rgb;
         }    
     }

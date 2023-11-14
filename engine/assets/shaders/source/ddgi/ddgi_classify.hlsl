@@ -32,20 +32,12 @@ void classify_cshader(cshader_parameters params)
     // Count the number of backface hits.
     float hit_distances[PROBE_GRID_FIXED_RAY_COUNT];
     float3 hit_directions[PROBE_GRID_FIXED_RAY_COUNT];
-    bool hit_valid[PROBE_GRID_FIXED_RAY_COUNT];
     int backface_count = 0;
 
     for (int i = 0; i < PROBE_GRID_FIXED_RAY_COUNT; i++)
     {
         int ray_index = (params.group_id.x * probe_ray_count) + i;
         ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
-
-        hit_valid[i] = ray_result.valid;
-
-        if (!ray_result.valid)
-        {
-            continue;
-        }
 
         hit_distances[i] = ray_result.distance;
         hit_directions[i] = ray_result.normal;
@@ -65,12 +57,6 @@ void classify_cshader(cshader_parameters params)
         // Determine if there is nearby geometry in the probes voxel.
         for (int ray_index = 0; ray_index < PROBE_GRID_FIXED_RAY_COUNT; ray_index++)
         {
-            // Ignore none-hits.
-            if (!hit_valid[ray_index])
-            {
-                continue;
-            }
-
             // Ignore backfaces
             if (hit_distances[ray_index] < 0) 
             {
