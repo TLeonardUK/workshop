@@ -41,6 +41,7 @@ param_blocks:
       probe_large_change_threshold: float
       probe_brightness_threshold: float
       probe_fixed_ray_backface_threshold: float 
+      probe_random_ray_backface_threshold: float 
       probe_min_frontface_distance: float       
       random_ray_rotation: float4
 

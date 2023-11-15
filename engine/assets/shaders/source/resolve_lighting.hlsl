@@ -16,6 +16,6 @@ lightbuffer_output pshader(fullscreen_pinput input)
     gbuffer_fragment frag = read_gbuffer(input.uv0 * uv_scale);
 
     lightbuffer_output output;
-    output.color = shade_fragment(frag, false);
+    output.color = shade_fragment(frag, view_world_position, false);
     return output;
 }

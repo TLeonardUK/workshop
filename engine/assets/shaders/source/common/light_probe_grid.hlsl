@@ -171,7 +171,7 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
 
             // Find the delta position.
             //float3 delta = saturate((local_position - (min_coords * grid_state.density)) / grid_state.density);
-            float3 delta = local_position / grid_state.density - min_coords;
+            float3 delta = clamp(local_position / grid_state.density - min_coords, float3(0.0f, 0.0f, 0.0f), float3(1.0f, 1.0f, 1.0f));
 
             // Sample the 8 probes surrounding the position.
             Texture2D irradiance_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.irradiance_texture_index)];
@@ -224,7 +224,7 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
                 weight += (wrap_shading * wrap_shading) * 0.2f;
 
                 // Calculate trilinear weight from adjacency.
-                float3 trilinear_weight3 = lerp(float3(1.0f, 1.0f, 1.0f) - delta, delta, float3(probe_offset.x, probe_offset.y, probe_offset.z));
+                float3 trilinear_weight3 = max(0.001f, lerp(float3(1.0f, 1.0f, 1.0f) - delta, delta, float3(probe_offset.x, probe_offset.y, probe_offset.z)));
                 float trilinear_weight = (trilinear_weight3.x * trilinear_weight3.y * trilinear_weight3.z);
 
                 // Sample occlusion distance.

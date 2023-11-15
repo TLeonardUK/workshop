@@ -52,23 +52,27 @@ public:
     size_t light_probe_regeneration_step_amount = 30;
 
     // Offset along surface normal applied to shader surface to avoid numeric instability when calculating occlusion.
-    float light_probe_normal_bias = 20.0f;
+    float light_probe_normal_bias = 10.0f;
 
     // Offset along camera view ray applied to shader surface to avoid numeric instability when calculating occlusion.
-    float light_probe_view_bias = 10.0f;//10.0f;
+    float light_probe_view_bias = 60.0f;
 
     // Speed at which new changes to irradiance are blended into the current value.
     float light_probe_blend_hysteresis = 0.97f;//0.97f;
 
     // What delta of change in irradiance is considered "large" and should be blended in faster.
-    float light_probe_large_change_threshold = 0.10f;//0.25f;
+    float light_probe_large_change_threshold = 0.20f;//0.25f;
 
     // How much of a brightness change per frame is considered "large" and should be blended in more slowly.
-    float light_probe_brightness_threshold = 10.0f;//1.0f;
+    float light_probe_brightness_threshold = 0.22f;//1.0f;
 
     // Used by probe relocation to determine if a probe is inside geometry if more than this proportion
     // of the rays hit backfaces.
-    float light_probe_fixed_ray_backface_threshold = 0.3f;
+    float light_probe_fixed_ray_backface_threshold = 0.25f;
+
+    // Used during tracing irradiance to determine if a probe is inside geometry if more than this proportion
+    // of the rays hit backfaces.
+    float light_probe_random_ray_backface_threshold = 0.1f;
 
     // Minimum distance all probes will attempt to keep from frontfacing triangles. This is limited
     // to half the distance between probes in the grid. 

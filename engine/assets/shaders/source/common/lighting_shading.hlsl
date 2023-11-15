@@ -395,9 +395,9 @@ float calculate_raytraced_shadow(gbuffer_fragment frag, light_state light)
 //  Attenuation calculation
 // ================================================================================================
 
-float calculate_attenuation_importance(gbuffer_fragment frag, light_state light)
+float calculate_attenuation_importance(gbuffer_fragment frag, light_state light, float3 view_origin)
 {
-    float distance = length(view_world_position - light.position);
+    float distance = length(view_origin - light.position);
     float importance_fade = 1.0f;
     float start_fade_distance =  light.importance_distance * LIGHT_IMPORTANCE_FADE_DISTANCE;
     float end_fade_distance =  light.importance_distance;
@@ -409,14 +409,14 @@ float calculate_attenuation_importance(gbuffer_fragment frag, light_state light)
     return importance_fade;
 }
 
-float calculate_attenuation_directional(gbuffer_fragment frag, light_state light)
+float calculate_attenuation_directional(gbuffer_fragment frag, light_state light, float3 view_origin)
 {
-    return calculate_attenuation_importance(frag, light);
+    return calculate_attenuation_importance(frag, light, view_origin);
 }
 
-float calculate_attenuation_point(gbuffer_fragment frag, light_state light)
+float calculate_attenuation_point(gbuffer_fragment frag, light_state light, float3 view_origin)
 {
-    float importance_fade = calculate_attenuation_importance(frag, light);
+    float importance_fade = calculate_attenuation_importance(frag, light, view_origin);
 
     float frag_to_light_distance = length(light.position - frag.world_position);
 
@@ -432,7 +432,7 @@ float calculate_attenuation_point(gbuffer_fragment frag, light_state light)
 #endif
 }
 
-float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light)
+float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light, float3 view_origin)
 {
     float3 light_to_pixel = normalize(frag.world_position - light.position);
     float spot = dot(light_to_pixel, light.direction);
@@ -448,7 +448,7 @@ float calculate_attenuation_spotlight(gbuffer_fragment frag, light_state light)
         float range = inner_dot - outer_dot;
         float delta = saturate((spot - inner_dot) / range);
 
-        return calculate_attenuation_point(frag, light) * delta;
+        return calculate_attenuation_point(frag, light, view_origin) * delta;
     }
     else
     {
@@ -466,10 +466,10 @@ struct direct_lighting_result
     float2 shadow_attenuation_and_cascade_index;
 };
 
-direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light, bool is_transparent_or_ray)
+direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_state light, float3 view_origin, bool is_transparent_or_ray)
 {    
     float3 normal = normalize(frag.world_normal);
-    float3 view_direction = normalize(view_world_position - frag.world_position);
+    float3 view_direction = normalize(view_origin - frag.world_position);
     float3 metallic = frag.metallic;
 
     float3 albedo = frag.albedo;
@@ -501,15 +501,15 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     // Calculate attenuation from light source.
     if (light.type == light_type::directional)
     {
-        attenuation = calculate_attenuation_directional(frag, light);
+        attenuation = calculate_attenuation_directional(frag, light, view_origin);
     }
     else if (light.type == light_type::point_)
     {
-        attenuation = calculate_attenuation_point(frag, light);
+        attenuation = calculate_attenuation_point(frag, light, view_origin);
     }
     else if (light.type == light_type::spotlight)
     {
-        attenuation = calculate_attenuation_spotlight(frag, light);
+        attenuation = calculate_attenuation_spotlight(frag, light, view_origin);
     }
 
     // Calculate shadow occlusion.
@@ -570,7 +570,7 @@ direct_lighting_result calculate_direct_lighting(gbuffer_fragment frag, light_st
     return ret;
 }
 
-float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_ray)
+float3 calculate_ambient_lighting(gbuffer_fragment frag, float3 view_origin, bool is_transparent_or_ray)
 {    
 #ifdef DISABLE_AMBIENT_LIGHTING    
     return float3(0.0f, 0.0f, 0.0f);
@@ -586,7 +586,7 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, bool is_transparent_or_
     }
 
     float3 normal = normalize(frag.world_normal);
-    float3 view_direction = normalize(frag.world_position - view_world_position);
+    float3 view_direction = normalize(frag.world_position - view_origin);
     float3 reflect_direction = reflect(-view_direction, normal);   
 
     float3 metallic = frag.metallic;
@@ -658,7 +658,7 @@ uint get_cluster_index(float3 world_position)
 //  The all powerful shade function!
 // ================================================================================================
 
-float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
+float4 shade_fragment(gbuffer_fragment frag, float3 view_origin, bool is_transparent_or_ray)
 {
     float3 final_color = 0.0f;
     float3 ambient_lighting = 0.0f;
@@ -670,7 +670,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
     if ((frag.flags & render_gpu_flags::unlit) == 0)
     {
         // Calculate ambient lighting from our light probes.
-        ambient_lighting = calculate_ambient_lighting(frag, is_transparent_or_ray);
+        ambient_lighting = calculate_ambient_lighting(frag, view_origin, is_transparent_or_ray);
 
         // Calculate direct contribution of all lights that effect us.
         direct_lighting = float3(0.0, 0.0, 0.0);
@@ -688,7 +688,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
             uint light_index = light_cluster_visibility_buffer.Load<uint>((cluster.visible_light_offset + i) * sizeof(uint));
             light_state light = get_light_state(light_index);
             
-            direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent_or_ray);
+            direct_lighting_result result = calculate_direct_lighting(frag, light, view_origin, is_transparent_or_ray);
             direct_lighting += result.lighting;
             max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
         }
@@ -703,7 +703,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
             {
                 visible_light_count++;
 
-                direct_lighting_result result = calculate_direct_lighting(frag, light, is_transparent_or_ray);
+                direct_lighting_result result = calculate_direct_lighting(frag, light, view_origin, is_transparent_or_ray);
                 direct_lighting += result.lighting;
                 max_cascade = max(max_cascade, int(result.shadow_attenuation_and_cascade_index.g));
             }
@@ -781,7 +781,7 @@ float4 shade_fragment(gbuffer_fragment frag, bool is_transparent_or_ray)
         }     
         case visualization_mode_t::light_probe_contribution:              
         {
-            float3 view_direction = normalize(view_world_position - frag.world_position);
+            float3 view_direction = normalize(frag.world_position - view_world_position);
             final_color = sample_light_probe_grids(light_probe_grid_count, light_probe_grid_buffer, frag.world_position, frag.world_normal, view_direction);
             break;
         }

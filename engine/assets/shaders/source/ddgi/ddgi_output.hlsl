@@ -13,18 +13,20 @@
 #include "data:shaders/source/common/raytracing_occlusion_ray.hlsl"
 #include "data:shaders/source/common/raytracing_scene.hlsl"
 
-float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, ddgi_probe_data probe_data)
+bool calculate_irradiance_for_texel(inout float4 result, int2 texel_location, uint probe_offset, ddgi_probe_data probe_data)
 {
     float2 probe_octant_uv = get_normalized_octahedral_coordinates(texel_location, probe_data.irradiance_map_size);
     float3 probe_ray_direction = get_octahedral_direction(probe_octant_uv);
 
-    float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    int ray_count = probe_ray_count;
+    int ray_start_index = PROBE_GRID_FIXED_RAY_COUNT;
 
     const float probe_backface_threshold = 0.1f;
+    uint max_backfaces = uint((probe_ray_count - ray_start_index) * probe_random_ray_backface_threshold);
     uint backface_count = 0;
 
-    for (int i = 0; i < ray_count; i++)
+    result = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    for (int i = ray_start_index; i < probe_ray_count; i++)
     {
         int ray_index = probe_offset + i;
         ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
@@ -32,6 +34,13 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, dd
         // Don't blend backfaces into the result.
         if (ray_result.distance < 0.f)
         {
+            backface_count++;
+
+            if (backface_count > max_backfaces)
+            {
+                return false;
+            }
+
             continue;
         }
 
@@ -40,7 +49,7 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, dd
     }
 
     // Fixed rays are not blended in.
-    float epsilon = float(ray_count - PROBE_GRID_FIXED_RAY_COUNT);
+    float epsilon = float(probe_ray_count - PROBE_GRID_FIXED_RAY_COUNT);
     epsilon *= 1e-9f;
 
     // Normalize the blended value. Read the RTXGI documentation to get an idea of how this works.
@@ -50,7 +59,7 @@ float4 calculate_irradiance_for_texel(int2 texel_location, uint probe_offset, dd
     // Apply tone mapping to result
     result.rgb = pow(result.rgb, (1.0f / probe_encoding_gamma));
 
-    return result;
+    return true;
 }
 
 float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, ddgi_probe_data probe_data)
@@ -58,10 +67,12 @@ float4 calculate_occlusion_for_texel(int2 texel_location, uint ray_offset, ddgi_
     float2 probe_octant_uv = get_normalized_octahedral_coordinates(texel_location, probe_data.occlusion_map_size);
     float3 probe_ray_direction = get_octahedral_direction(probe_octant_uv);
 
+    int ray_start_index = PROBE_GRID_FIXED_RAY_COUNT;
+
     float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
     float max_distance = probe_data.probe_spacing * 1.5f;
 
-    for (int i = 0; i < probe_ray_count; i++)
+    for (int i = ray_start_index; i < probe_ray_count; i++)
     {
         int ray_index = ray_offset + i;
         ddgi_probe_scrach_data ray_result = scratch_buffer.Load<ddgi_probe_scrach_data>(ray_index * sizeof(ddgi_probe_scrach_data));
@@ -142,7 +153,11 @@ void output_irradiance_cshader(cshader_parameters params)
     if (!is_border)
     {
         // Calculate new distance and store off the existing distance.
-        float4 result = calculate_irradiance_for_texel(int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data);
+        float4 result;        
+        if (!calculate_irradiance_for_texel(result, int2(texel_coord.x - 1, texel_coord.y - 1), params.group_id.x * probe_ray_count, probe_data))
+        {
+            return;
+        }
         float4 existing = irradiance_texture[irradiance_grid_location + texel_coord];
 
 #if 1

@@ -196,6 +196,7 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     m_regeneration_param_block->set("probe_large_change_threshold", options.light_probe_large_change_threshold);
     m_regeneration_param_block->set("probe_brightness_threshold", options.light_probe_brightness_threshold);
     m_regeneration_param_block->set("probe_fixed_ray_backface_threshold", options.light_probe_fixed_ray_backface_threshold);
+    m_regeneration_param_block->set("probe_random_ray_backface_threshold", options.light_probe_random_ray_backface_threshold);
     m_regeneration_param_block->set("probe_min_frontface_distance", options.light_probe_min_frontface_distance);
     m_regeneration_param_block->set("random_ray_rotation", vector4(m_random_ray_direction.x, m_random_ray_direction.y, m_random_ray_direction.z, m_random_ray_direction.w));
 
