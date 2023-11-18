@@ -31,7 +31,7 @@ public:
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
-	size_t light_probe_max_regenerations_per_frame = 8192;
+	size_t light_probe_max_regenerations_per_frame = 50000;//8192;
 
 	// Far clipping plane of the view used to capture a light probes cubemap.
 	float light_probe_far_z = 100'000.0f;
@@ -46,7 +46,7 @@ public:
     // How many milliseconds per frame can be spent on regenerating
     // light probes. As many probes as possible will be run as possible
     // within this time limit up to the maximum.
-    float light_probe_regeneration_time_limit_ms = 2.0f;
+    float light_probe_regeneration_time_limit_ms = 3.5f;
     
     // Number of probes per frame to increase or decreate by to adjust to meet the time limit above.
     size_t light_probe_regeneration_step_amount = 30;
@@ -58,13 +58,13 @@ public:
     float light_probe_view_bias = 60.0f;
 
     // Speed at which new changes to irradiance are blended into the current value.
-    float light_probe_blend_hysteresis = 0.97f;//0.97f;
+    float light_probe_blend_hysteresis = 0.97f;
 
     // What delta of change in irradiance is considered "large" and should be blended in faster.
-    float light_probe_large_change_threshold = 0.20f;//0.25f;
+    float light_probe_large_change_threshold = 0.35f;
 
     // How much of a brightness change per frame is considered "large" and should be blended in more slowly.
-    float light_probe_brightness_threshold = 0.22f;//1.0f;
+    float light_probe_brightness_threshold = 0.5f;
 
     // Used by probe relocation to determine if a probe is inside geometry if more than this proportion
     // of the rays hit backfaces.

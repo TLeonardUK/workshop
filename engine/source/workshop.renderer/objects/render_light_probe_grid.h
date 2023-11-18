@@ -22,7 +22,6 @@ public:
         vector3 origin;
         vector3 extents;
         quat orientation;
-        bool dirty;
 
         std::unique_ptr<ri_param_block> param_block;
         std::unique_ptr<ri_param_block> debug_param_block;
@@ -69,6 +68,9 @@ public:
 
     // Gest the size of each probes map in the occlusion atlas.
     size_t get_occlusion_map_size();
+
+    // Gets the probes inside the given views that should be updated.
+    void get_probes_to_update(std::vector<frustum>& frustums, std::vector<size_t>& onscreen_probe_indices, std::vector<size_t>& offscreen_probe_indices);
 
 private:
     void recalculate_probes();

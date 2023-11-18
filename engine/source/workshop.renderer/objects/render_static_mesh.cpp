@@ -229,9 +229,15 @@ void render_static_mesh::create_render_data()
 
             bool is_transparent = (mat->domain == material_domain::transparent || mat->domain == material_domain::masked);
 
+            tlas->mask = ray_mask::normal;
+            if (mat->domain == material_domain::sky)
+            {
+                tlas->mask = ray_mask::sky;
+            }
+
             m_visible_in_rt = has_draw_flag(render_draw_flags::geometry);
 
-            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, !is_transparent, tlas->metadata.get(), m_visible_in_rt ? (uint32_t)ray_mask::visible : (uint32_t)ray_mask::invisible);
+            tlas->id = m_renderer->get_scene_tlas().add_instance(blas, get_transform(), (size_t)mat->domain, !is_transparent, tlas->metadata.get(), m_visible_in_rt ? (uint32_t)tlas->mask : (uint32_t)ray_mask::invisible);
         }
     }
 }
@@ -278,7 +284,7 @@ void render_static_mesh::update_render_data()
         for (tlas_instance& instance : m_registered_tlas_instances)
         {
             instance.metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
-            m_renderer->get_scene_tlas().update_instance(instance.id, transform, m_visible_in_rt ? (uint32_t)ray_mask::visible : (uint32_t)ray_mask::invisible);
+            m_renderer->get_scene_tlas().update_instance(instance.id, transform, m_visible_in_rt ? (uint32_t)instance.mask : (uint32_t)ray_mask::invisible);
         }
     }
 }

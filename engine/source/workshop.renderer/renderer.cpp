@@ -1069,11 +1069,6 @@ bool renderer::get_render_flag(render_flag flag)
     return m_render_flags[static_cast<int>(flag)];
 }
 
-void renderer::regenerate_diffuse_probes()
-{
-    get_system<render_system_light_probes>()->regenerate();
-}
-
 void renderer::regenerate_reflection_probes()
 {
     get_system<render_system_reflection_probes>()->regenerate();

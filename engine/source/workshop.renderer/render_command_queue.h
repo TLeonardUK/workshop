@@ -70,9 +70,6 @@ public:
     // Same as set_render_flag but toggles the current value of the flag.
     void toggle_render_flag(render_flag flag);
 
-    // Regenerates all diffuse light probe volumes.
-    void regenerate_diffuse_probes();
-
     // Regenerates all reflection light probes.
     void regenerate_reflection_probes();
 

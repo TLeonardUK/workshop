@@ -206,9 +206,6 @@ result<void> editor::create_main_menu(init_list& list)
     });
 
     // Build Settings
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Build/Regenerate Diffuse Probes", [this]() { 
-        m_engine.get_renderer().get_command_queue().regenerate_diffuse_probes();
-    }));
     m_main_menu_options.push_back(m_main_menu->add_menu_item("Build/Regenerate Reflection Probes", [this]() {
         m_engine.get_renderer().get_command_queue().regenerate_reflection_probes();
     }));

@@ -52,13 +52,17 @@ DEFINE_ENUM_TO_STRING(ray_type, ray_type_strings)
 // ================================================================================================
 enum class ray_mask
 {
-    // TLAS instances marked as visible.
-    visible = 1,
+    // Standard TLAS instances
+    normal = 1,
+
+    // TLAS instances which represent the sky.
+    sky = 2,
 
     // TLAS instances marked as invisible.
-    invisible = 2,
+    invisible = 4,
 
-    all = visible | invisible,
+    all = normal | sky | invisible,
+    all_visible = normal | sky,
 };
 
 // ================================================================================================

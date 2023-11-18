@@ -47,13 +47,6 @@ void render_command_queue::toggle_render_flag(render_flag flag)
     });
 }
 
-void render_command_queue::regenerate_diffuse_probes()
-{
-    queue_command("regenerate_diffuse_probes", [renderer = &m_renderer]() {
-        renderer->regenerate_diffuse_probes();
-    });
-}
-
 void render_command_queue::regenerate_reflection_probes()
 {
     queue_command("regenerate_reflection_probes", [renderer = &m_renderer]() {

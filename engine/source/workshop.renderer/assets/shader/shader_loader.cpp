@@ -1650,14 +1650,6 @@ bool shader_loader::compile_shader_stage(const char* path, shader::technique& te
     // Remember this file as a compile dependency.
     asset.header.add_dependency(stage.file.c_str());
 
-
-    db_log(renderer, "====== COMPILE SHADER: %s ======", stage.entry_point.c_str());
-    db_log(renderer, "Definse:");
-    for (auto& pair : defines)
-    {
-        db_log(renderer, "%s = %s", pair.first.c_str(), pair.second.c_str());
-    }
-
     // Compiler source.
     ri_shader_compiler_output output = compiler->compile(
         pipeline_stage, 

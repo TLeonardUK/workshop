@@ -382,23 +382,27 @@ void dx12_ri_upload_manager::free_uploads()
 
     size_t free_frame_index = (m_frame_index - pipeline_depth);
 
-    for (auto iter = m_pending_free.begin(); iter != m_pending_free.end(); /* empty */)
+    for (size_t i = 0; i < m_pending_free.size(); /* empty */)
     {
-        if (iter->freed_frame_index <= free_frame_index)
+        auto& entry = m_pending_free[i];
+
+        if (entry.freed_frame_index <= free_frame_index)
         {
             profile_marker(profile_colors::render, "free allocation");
 
 #ifdef UPLOAD_DEBUG
-            memset(iter->heap->start_ptr + iter->heap_offset, 0, iter->heap_size);
-            db_log(renderer, "Freeing: %p (%zi)", iter->heap->start_ptr + iter->heap_offset, iter->heap_size);
+            memset(entry.heap->start_ptr + entry.heap_offset, 0, entry.heap_size);
+            db_log(renderer, "Freeing: %p (%zi)", entry.heap->start_ptr + entry.heap_offset, entry.heap_size);
 #endif
 
-            iter->heap->memory_heap->free(iter->heap_offset);
-            iter = m_pending_free.erase(iter);
+            entry.heap->memory_heap->free(entry.heap_offset);
+
+            m_pending_free[i] = m_pending_free.back();
+            m_pending_free.resize(m_pending_free.size() - 1);
         }
         else
         {
-            iter++;
+            i++;
         }
     }
 

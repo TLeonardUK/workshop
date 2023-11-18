@@ -32,7 +32,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     TraceRay(
         tlas,
         RAY_FLAG_NONE,
-        ray_mask::visible,
+        ray_mask::ray_mask_all_visible,
         ray_type::occlusion,
         ray_type::count,
         0,
@@ -63,7 +63,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     TraceRay(
         tlas,
         RAY_FLAG_NONE,
-        ray_mask::visible,
+        ray_mask::ray_mask_all_visible,
         ray_type::primitive,
         ray_type::count,
         0,

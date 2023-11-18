@@ -19,10 +19,12 @@ enum ray_type
 
 enum ray_mask
 {
-    visible = 1,
-    invisible = 2,
+    ray_mask_normal = 1,
+    ray_mask_sky = 2,
+    ray_mask_invisible = 4,
 
-    all = visible | invisible
+    ray_mask_all = ray_mask_normal | ray_mask_sky | ray_mask_invisible,
+    ray_mask_all_visible = ray_mask_normal | ray_mask_sky,
 };
 
 struct tlas_metadata_index

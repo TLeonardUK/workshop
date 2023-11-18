@@ -103,6 +103,9 @@ void relocate_cshader(cshader_parameters params)
             farthest_frontface_distance *= min(farthest_frontface_distance, 1.0f);
             full_offset = probe_state.position_offset + (farthest_frontface_ray.normal * 0.25f);
 
+            //farthest_frontface_ray.normal *= min(farthest_frontface_distance, 1.0f);
+            //full_offset = probe_state.position_offset + farthest_frontface_ray.normal;
+
 
             // New code
             //full_offset = probe_state.position_offset + (farthest_frontface_ray.normal * max(0.0f, farthest_frontface_distance - probe_min_frontface_distance * 0.5f)); 

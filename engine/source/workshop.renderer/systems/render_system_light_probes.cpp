@@ -75,30 +75,6 @@ result<void> render_system_light_probes::destroy_resources()
     return true;
 }
 
-bool render_system_light_probes::is_regenerating()
-{
-    return !m_dirty_probes.empty();
-}
-
-void render_system_light_probes::regenerate()
-{
-    m_should_regenerate = true;
-    m_dirty_probes.clear();
-    
-    // Mark all nodes as dirty.
-    render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
-
-    for (render_light_probe_grid* grid : probe_grids)
-    {
-        std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
-        for (render_light_probe_grid::probe& probe : probes)
-        {
-            probe.dirty = true;
-        }
-    }
-}
-
 void render_system_light_probes::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
 {
     if (!view.has_flag(render_view_flags::normal) ||
@@ -167,8 +143,6 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     }
 
     // Add raytracing passes to calculate the probes to regenerate.
-    size_t map_padding = 2;
-
     for (size_t i = 0; i < m_probes_to_regenerate.size(); i++)
     {
         dirty_probe& probe = m_probes_to_regenerate[i];
@@ -178,9 +152,6 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
         block->get_table(table_index, table_offset);
 
         m_regeneration_instance_buffer->add(static_cast<uint32_t>(table_index), static_cast<uint32_t>(table_offset));
-
-        // Mark probe as not dirty anymore.
-        probe.probe->dirty = false;
     }
 
     m_regeneration_instance_buffer->commit();
@@ -293,6 +264,8 @@ render_view* render_system_light_probes::get_main_view()
     return nullptr;
 }
 
+#pragma optimize("", off)
+
 void render_system_light_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
@@ -301,21 +274,12 @@ void render_system_light_probes::step(const render_world_state& state)
     std::vector<render_view*> views = scene_manager.get_views();
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
 
-    m_probes_to_regenerate.clear();
-
-    // Keep regenerating when we run out of probes to regenerate.
-    // TODO: Do all this in a better way.
-    if (m_dirty_probes.empty())
-    {
-        regenerate();
-    }
-
     // Generate a random ray rotation for this frame.
     m_random_ray_direction = random::random_quat();
 
     // Get the light probe rendering time.
     {
-        profile_marker(profile_colors::render, "start gpu timer");
+        profile_marker(profile_colors::render, "collect gpu timer");
 
         if (m_gpu_time_query->are_results_ready())
         {
@@ -336,8 +300,6 @@ void render_system_light_probes::step(const render_world_state& state)
                 {
                     m_adjusted_max_probes_per_frame -= options.light_probe_regeneration_step_amount;
                 }
-
-                //db_log(renderer, "gpu_time:%.2f probes:%zi", m_average_gpu_time, m_adjusted_max_probes_per_frame);
             }
         }
     }
@@ -354,43 +316,87 @@ void render_system_light_probes::step(const render_world_state& state)
 
     // Look for light probes that need to be updated.
     {
-        profile_marker(profile_colors::render, "Light Probe Grids");
+        m_probes_to_regenerate.clear();
 
-        // Build list of dirty probes.
-        if (m_dirty_probes.empty() && m_should_regenerate)
+        // Calculate number of probes we can regenerate in our gpu budget.
+        size_t probe_regeneration_limit = std::min(m_adjusted_max_probes_per_frame, m_probe_regenerations_per_frame);
+
+        // Build list of probes to regenerate.
         {
-            profile_marker(profile_colors::render, "Build List");
+            profile_marker(profile_colors::render, "build light probe list");
 
-            m_should_regenerate = false;
+            double start_time = get_seconds();
+
+            // Create list of frustums that need up to date light probes.
+            std::vector<frustum> important_frustums;
+            for (render_view* view : views)
+            {
+                if (view->get_active() && view->get_flags() == render_view_flags::normal)
+                {
+                    important_frustums.push_back(view->get_frustum());
+                }
+            }
+
+            // Find the probes that are visible and need to update.
+            std::vector<size_t> onscreen_probes;
+            std::vector<size_t> offscreen_probes;
+
+            std::vector<dirty_probe> onscreen_dirty_probes;
+            std::vector<dirty_probe> offscreen_dirty_probes;
 
             for (render_light_probe_grid* grid : probe_grids)
             {
                 std::vector<render_light_probe_grid::probe>& probes = grid->get_probes();
-                for (render_light_probe_grid::probe& probe : probes)
+
+                onscreen_probes.clear();
+                offscreen_probes.clear();
+                grid->get_probes_to_update(important_frustums, onscreen_probes, offscreen_probes);
+
+                for (size_t i = 0; i < onscreen_probes.size(); i++)
                 {
-                    if (probe.dirty)
-                    {
-                        dirty_probe& dirty = m_dirty_probes.emplace_back();
-                        dirty.probe = &probe;
-                        dirty.grid = grid;
-                        dirty.distance = 0.0f;
-                    }
+                    dirty_probe& dirty = onscreen_dirty_probes.emplace_back();
+                    dirty.probe = &probes[onscreen_probes[i]];
+                    dirty.grid = grid;
+                    dirty.distance = 0.0f;
+                }
+
+                for (size_t i = 0; i < offscreen_probes.size(); i++)
+                {
+                    dirty_probe& dirty = offscreen_dirty_probes.emplace_back();
+                    dirty.probe = &probes[offscreen_probes[i]];
+                    dirty.grid = grid;
+                    dirty.distance = 0.0f;
                 }
             }
-        }
 
-        // If dirty, regenerate this probe.
-        {
-            profile_marker(profile_colors::render, "Build Regeneration List");
+            // Split regeneration limit between onscreen and offscreen probes, with onscreen getting priority.
+            size_t offscreen_probe_count = std::min(offscreen_dirty_probes.size(), (size_t)(probe_regeneration_limit * 0.25f));
+            size_t onscreen_probe_count = std::min(onscreen_dirty_probes.size(), (size_t)(probe_regeneration_limit * 0.75f));
 
-            size_t probe_regeneration_limit = std::min(m_adjusted_max_probes_per_frame, m_probe_regenerations_per_frame);
-            while (!m_dirty_probes.empty() && m_probes_to_regenerate.size() < probe_regeneration_limit)
+            size_t remainder = probe_regeneration_limit - (offscreen_probe_count + onscreen_probe_count);
+            if (remainder > 0 && onscreen_probe_count < onscreen_dirty_probes.size())
             {
-                dirty_probe probe = m_dirty_probes.back();
-                m_dirty_probes.pop_back();
-
-                m_probes_to_regenerate.push_back(probe);
+                onscreen_probe_count = std::min(onscreen_dirty_probes.size(), onscreen_probe_count + remainder);
             }
+
+            remainder = probe_regeneration_limit - (offscreen_probe_count + onscreen_probe_count);
+            if (remainder > 0 && offscreen_probe_count < offscreen_dirty_probes.size())
+            {
+                offscreen_probe_count = std::min(offscreen_dirty_probes.size(), offscreen_probe_count + remainder);
+            }
+
+            // Build up the regeneration list, use a constantly moving offset to stagger updates.
+            for (size_t i = 0; i< offscreen_probe_count; i++)
+            {
+                m_probes_to_regenerate.push_back(offscreen_dirty_probes[(i + m_offscreen_probe_offset) % offscreen_dirty_probes.size()]);
+            }
+            m_offscreen_probe_offset += offscreen_probe_count;
+
+            for (size_t i = 0; i < onscreen_probe_count; i++)
+            {
+                m_probes_to_regenerate.push_back(onscreen_dirty_probes[(i + m_onscreen_probe_offset) % onscreen_dirty_probes.size()]);
+            }
+            m_onscreen_probe_offset += onscreen_probe_count;
         }
     }
 }

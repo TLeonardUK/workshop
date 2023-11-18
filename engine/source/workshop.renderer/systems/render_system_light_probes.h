@@ -30,10 +30,6 @@ public:
     virtual void build_post_graph(render_graph& graph, const render_world_state& state) override;
     virtual void step(const render_world_state& state) override;
 
-    bool is_regenerating();
-
-    void regenerate();
-
 private:    
     render_view* get_main_view();
 
@@ -53,13 +49,11 @@ private:
         float distance;
     };
 
-
     std::unique_ptr<ri_buffer> m_scratch_buffer;
     std::unique_ptr<ri_param_block> m_regeneration_param_block;
 
     std::unique_ptr<render_batch_instance_buffer> m_regeneration_instance_buffer;
 
-    std::vector<dirty_probe> m_dirty_probes;
     std::vector<dirty_probe> m_probes_to_regenerate;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
@@ -68,9 +62,10 @@ private:
     double m_average_gpu_time = 0.0f;
     size_t m_probes_rengerated_last_frame = 0;
 
-    quat m_random_ray_direction;
+    size_t m_offscreen_probe_offset = 0;
+    size_t m_onscreen_probe_offset = 0;
 
-    bool m_should_regenerate = false;
+    quat m_random_ray_direction;
 
 };
 

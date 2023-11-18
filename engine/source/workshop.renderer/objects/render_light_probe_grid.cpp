@@ -180,7 +180,6 @@ void render_light_probe_grid::recalculate_probes()
                 size_t probe_index = get_probe_index(x, y, z);
 
                 probe& probe = m_probes[probe_index];
-                probe.dirty = true;
                 probe.index = probe_index;
                 probe.origin = vector3(
                     (-bounds.x * 0.5f) + ((x * m_density)),
@@ -223,7 +222,100 @@ void render_light_probe_grid::recalculate_probes()
             }
         }
     }
+}
 
+void render_light_probe_grid::get_probes_to_update(std::vector<frustum>& frustums, std::vector<size_t>& onscreen_probe_indices, std::vector<size_t>& offscreen_probe_indices)
+{
+    vector3 local_bounds = get_local_scale();
+    matrix4 grid_transform =
+        matrix4::rotation(m_local_rotation) *
+        matrix4::translate(m_local_location);
+
+    std::function<void(int, int, int, int, int, int)> check_area;
+
+    // How small an axis has to get before considering that we've gotten to the leaf quadrants.
+    constexpr int leaf_axis_threshold = 4;
+
+    // Iterate through grid breaking into into quadrants and see which are in frustum, this allows us to break updates
+    // down into small blocks of spatially relative blocks of probes, which looks more natural to update at once.
+    check_area = [this, &grid_transform, &local_bounds, &frustums, &check_area, leaf_axis_threshold, &onscreen_probe_indices, &offscreen_probe_indices](int x, int y, int z, int width, int height, int depth) mutable {
+
+        vector3 area_min = vector3(
+            (-local_bounds.x * 0.5f) + (x * m_density),
+            (-local_bounds.y * 0.5f) + (y * m_density),
+            (-local_bounds.z * 0.5f) + (z * m_density)
+        );
+        vector3 area_max = vector3(
+            (-local_bounds.x * 0.5f) + ((x + width) * m_density),
+            (-local_bounds.y * 0.5f) + ((y + height) * m_density),
+            (-local_bounds.z * 0.5f) + ((z + depth) * m_density)
+        );
+
+        aabb area_local_aabb = aabb(area_min, area_max);
+        obb area_world_bounds(area_local_aabb, grid_transform);
+        
+        bool visible = false;
+
+        // Check if area is visible in any of the frustrums
+        for (frustum& f : frustums)
+        {
+            if (f.intersects(area_world_bounds) != frustum::intersection::outside)
+            {
+                visible = true;
+                break;
+            }
+        }
+
+        // Can't break down any more, take all probes in this area.
+        if (width <= leaf_axis_threshold || height <= leaf_axis_threshold || depth <= leaf_axis_threshold)
+        {
+            for (int px = 0; px < width; px++)
+            {
+                for (int py = 0; py < height; py++)
+                {
+                    for (int pz = 0; pz < depth; pz++)
+                    {
+                        size_t probe_index = get_probe_index(x + px, y + py, z + pz);
+
+                        if (visible)
+                        {
+                            onscreen_probe_indices.push_back(probe_index);
+                        }
+                        else
+                        {
+                            offscreen_probe_indices.push_back(probe_index);
+                        }
+                    }
+                }
+            }
+        }
+        // Break into octants and check them.
+        else
+        {
+            int half_width_ceil = (int)std::ceilf(width * 0.5f);
+            int half_height_ceil = (int)std::ceilf(height * 0.5f);
+            int half_depth_ceil = (int)std::ceilf(depth * 0.5f);
+            int half_width_floor = (int)std::floorf(width * 0.5f);
+            int half_height_floor = (int)std::floorf(height * 0.5f);
+            int half_depth_floor = (int)std::floorf(depth * 0.5f);
+
+            check_area(x, y, z, half_width_floor, half_height_floor, half_depth_floor);
+            check_area(x + half_width_floor, y, z, half_width_ceil, half_height_floor, half_depth_floor);
+            check_area(x, y + half_height_floor, z, half_width_floor, half_height_ceil, half_depth_floor);
+            check_area(x + half_width_floor, y + half_height_floor, z, half_width_ceil, half_height_ceil, half_depth_floor);
+
+            check_area(x, y, z + half_depth_floor, half_width_floor, half_height_floor, half_depth_ceil);
+            check_area(x + half_width_floor, y, z + half_depth_floor, half_width_ceil, half_height_floor, half_depth_ceil);
+            check_area(x, y + half_height_floor, z + half_depth_floor, half_width_floor, half_height_ceil, half_depth_ceil);
+            check_area(x + half_width_floor, y + half_height_floor, z + half_depth_floor, half_width_ceil, half_height_ceil, half_depth_ceil);
+        }
+
+    };
+
+    // Start by checking the full area.
+    check_area(0, 0, 0, (int)m_width, (int)m_height, (int)m_depth);
+
+    //db_log(core, "visible_probes:%zi / %zi", out_probe_indices.size(), m_width * m_height * m_depth);
 }
 
 }; // namespace ws

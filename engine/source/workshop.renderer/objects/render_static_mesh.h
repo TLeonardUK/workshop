@@ -7,6 +7,7 @@
 #include "workshop.renderer/render_object.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/assets/model/model.h"
+#include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.assets/asset_manager.h"
 #include "workshop.core/utils/event.h"
 
@@ -71,6 +72,7 @@ private:
     struct tlas_instance
     {
         ri_raytracing_tlas::instance_id id;
+        ray_mask mask;
         std::unique_ptr<ri_param_block> metadata;
     };
 

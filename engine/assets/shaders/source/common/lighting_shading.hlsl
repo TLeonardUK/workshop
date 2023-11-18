@@ -379,7 +379,7 @@ float calculate_raytraced_shadow(gbuffer_fragment frag, light_state light)
     TraceRay(
         scene_tlas,
         RAY_FLAG_NONE,
-        ray_mask::visible,
+        ray_mask::ray_mask_normal,
         ray_type::occlusion,
         ray_type::count,
         0,

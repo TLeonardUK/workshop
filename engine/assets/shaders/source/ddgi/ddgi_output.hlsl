@@ -160,7 +160,6 @@ void output_irradiance_cshader(cshader_parameters params)
         }
         float4 existing = irradiance_texture[irradiance_grid_location + texel_coord];
 
-#if 1
         // Blend the result with the existing value.
         float hysteresis = probe_blend_hysteresis;
         float3 delta = (result.rgb - existing.rgb);
@@ -173,7 +172,7 @@ void output_irradiance_cshader(cshader_parameters params)
         }
 
         // If large change is changed, reduce hysteresis to apply lighting effect quicker.
-        if (maxabs3(delta) > probe_large_change_threshold)
+        if (calculate_luminance(delta) > probe_large_change_threshold)
         {
             hysteresis *= 0.75f;
         }
@@ -187,9 +186,12 @@ void output_irradiance_cshader(cshader_parameters params)
         // Interpolate to get the final result
         float3 lerp_delta = (1.f - hysteresis) * delta;        
         result = float4(existing.rgb + lerp_delta, 1.f);
-#else
-        result = float4(lerp(existing.rgb, result.rgb, 0.5f), 1.f);
-#endif
+
+        // TODO: Need to figure out where these are coming from.
+        if (isnan(result.x) || isnan(result.y) || isnan(result.z))
+        {
+            result = float4(0.0f, 0.0f, 0.0f, 1.0f);
+        }
 
         irradiance_texture[irradiance_grid_location + texel_coord] = result;
     }

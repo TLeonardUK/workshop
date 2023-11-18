@@ -247,7 +247,9 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
                 continue;
             }
         
+#if 0
             db_log(renderer, "\t%s: %s", ri_shader_stage_strings[i], stage_params.entry_point.c_str());
+#endif
 
             std::unique_ptr<D3D12_EXPORT_DESC> export_desc = std::make_unique<D3D12_EXPORT_DESC>();
             export_desc->Name = add_string(stage_params.entry_point);
