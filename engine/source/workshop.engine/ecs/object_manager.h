@@ -80,11 +80,11 @@ public:
 
     // Maximum number of objects that can exist at once. 
     // This does not imply that memory for all these objects will be created.
-    static inline constexpr size_t k_max_objects = 1'000'000;
+    static inline constexpr size_t k_max_objects = 100'000;
 
     // Maximum number of components of each type that can exist at once. 
     // This does not imply that memory for all these components will be created.
-    static inline constexpr size_t k_max_components = 1'000'000;
+    static inline constexpr size_t k_max_components = 100'000;
 
     object_manager(world& world);
     ~object_manager();

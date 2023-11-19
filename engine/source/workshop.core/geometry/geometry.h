@@ -142,7 +142,7 @@ struct geometry_mesh
     size_t material_index;
 
     // Indices to draw for this mesh.
-    std::vector<size_t> indices;
+    std::vector<uint32_t> indices;
 
     // Bounds of the vertices that contribute to this mesh.
     aabb bounds;
@@ -205,7 +205,7 @@ public:
 
     // Adds a new mesh that will render the given set of vertices.
     // Returns the index of this mesh.
-    size_t add_mesh(const char* name, size_t material_index, const std::vector<size_t>& indices, const aabb& bounds);
+    size_t add_mesh(const char* name, size_t material_index, const std::vector<uint32_t>& indices, const aabb& bounds);
 
     // How many vertices exist in the geometry.
     size_t get_vertex_count();
@@ -215,6 +215,9 @@ public:
 
 	// Gets a geometry stream with the given name.
 	geometry_vertex_stream* find_vertex_stream(geometry_vertex_stream_type type);
+    
+    // Clears out the data array for the given vertex stream when its no longer needed on the cpu.
+    void clear_vertex_stream_data(geometry_vertex_stream_type type);
 
     // Gets all the meshes in this geometry.
     std::vector<geometry_mesh>& get_meshes();

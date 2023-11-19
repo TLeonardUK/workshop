@@ -13,6 +13,7 @@ SET(SOURCES
     "filesystem/path_watcher.cpp"
     
     "memory/memory.cpp"
+    "memory/memory_hooks.cpp"
     
     "platform/platform.cpp"
     

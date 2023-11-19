@@ -158,7 +158,7 @@ size_t geometry::add_material(const char* name)
     return m_materials.size() - 1;
 }
 
-size_t geometry::add_mesh(const char* name, size_t material_index, const std::vector<size_t>& indices, const aabb& bounds)
+size_t geometry::add_mesh(const char* name, size_t material_index, const std::vector<uint32_t>& indices, const aabb& bounds)
 {
     geometry_mesh& mat = m_meshes.emplace_back();
     mat.name = name;
@@ -195,6 +195,18 @@ geometry_vertex_stream* geometry::find_vertex_stream(geometry_vertex_stream_type
         }
     }
     return nullptr;
+}
+
+void geometry::clear_vertex_stream_data(geometry_vertex_stream_type type)
+{
+    for (geometry_vertex_stream& stream : m_streams)
+    {
+        if (stream.type == type)
+        {
+            stream.data.clear();
+            stream.data.shrink_to_fit();
+        }
+    }
 }
 
 std::vector<geometry_material>& geometry::get_materials()

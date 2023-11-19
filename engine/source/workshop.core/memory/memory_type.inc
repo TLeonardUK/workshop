@@ -10,6 +10,10 @@
 //  Generic
 // ================================================================================================
 
+MEMORY_TYPE(memory_tracking__untagged,	            "memory tracking/untagged")
+MEMORY_TYPE(memory_tracking__overhead,	            "memory tracking/overhead")
+MEMORY_TYPE(memory_tracking__waste, 	            "memory tracking/waste")
+
 // This is useful as a high-level generic container for misc allocations of assets/etc which will
 // be broken down further in lower memory scopes.
 MEMORY_TYPE(asset,				"asset")

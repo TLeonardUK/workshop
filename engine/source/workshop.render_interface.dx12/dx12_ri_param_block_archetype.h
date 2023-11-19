@@ -43,7 +43,7 @@ public:
         friend class dx12_ri_param_block_archetype;
 
         size_t pool_index;
-        size_t allocation_index;
+        uint16_t allocation_index;
         bool valid = false;
     };
 
@@ -74,7 +74,7 @@ private:
     struct alloc_page
     {
         Microsoft::WRL::ComPtr<ID3D12Resource> handle = nullptr;
-        std::vector<size_t> free_list;
+        std::vector<uint16_t> free_list;
 
         uint8_t* base_address_cpu = nullptr;
         uint8_t* base_address_gpu = nullptr;

@@ -21,11 +21,11 @@ namespace ws {
 
 class task_scheduler;
 
-using task_index_t = size_t;
+using task_index_t = uint32_t;
 
 // Identifies the different queues a task can be in. Different
 // workers will prioritize different queues to balance workload.
-enum class task_queue
+enum class task_queue : uint8_t
 {
     standard,
     loading,
@@ -112,7 +112,7 @@ class task_scheduler
 {
 public:
 
-    static inline constexpr size_t k_invalid_task_index = std::numeric_limits<size_t>::max();
+    static inline constexpr uint32_t k_invalid_task_index = std::numeric_limits<uint32_t>::max();
 
     using task_function = std::function<void()>;
 
@@ -154,7 +154,7 @@ protected:
 
     friend struct task_handle;
 
-    enum class task_run_state
+    enum class task_run_state : uint8_t
     {
         unallocated,
         pending_dispatch,
@@ -166,16 +166,18 @@ protected:
 
     struct task_state
     {
-        size_t index = 0;
-        std::atomic_size_t references = 0;
-        task_queue queue = task_queue::standard;
-        task_run_state state = task_run_state::unallocated;
+        std::vector<task_index_t> dependents;
         task_function work;
 
-        std::vector<task_index_t> dependents;
+        std::atomic_size_t references = 0;
         std::atomic_size_t outstanding_dependencies = 0;
 
-        char name[128];
+        task_index_t index = 0;
+
+        task_queue queue = task_queue::standard;
+        task_run_state state = task_run_state::unallocated;
+
+        char name[64];
     };
 
     struct queue_state
@@ -255,11 +257,14 @@ private:
 
 private:
 
-    inline static constexpr size_t k_max_tasks = 1'000'000;
+    // Maximum number of tasks we can have handles to at any one time.
+    // Important to note, this isn't the maximum number of tasks pending or running, but the maximum number
+    // of handles. Tasks that have completed but have a handle to them, still take up a slot.
+    inline static constexpr size_t k_max_tasks = 50'000;
 
     std::mutex m_task_allocation_mutex;
     std::array<task_state, k_max_tasks> m_tasks;
-    std::queue<size_t> m_free_task_indices;
+    std::queue<uint32_t> m_free_task_indices;
 
     std::recursive_mutex m_task_dispatch_mutex;
 

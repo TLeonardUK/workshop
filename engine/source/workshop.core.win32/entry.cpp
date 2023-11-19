@@ -4,6 +4,13 @@
 // ================================================================================================
 #include "workshop.core/entry.h"
 #include "workshop.core.win32/utils/windows_headers.h"
+#include "workshop.core/memory/memory.h"
+#include "workshop.core/memory/memory_tracker.h"
+
+namespace ws
+{
+    void install_memory_hooks();
+};
 
 #if 0
 int main(int argc, char* argv[])
@@ -17,6 +24,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     AllocConsole();
     freopen("CONOUT$", "w", stdout);
 #endif
+
+    // Hook memory functions as early as possible.
+    ws::memory_tracker mem_tracker;
+    ws::install_memory_hooks();
 
     // Magic mystery symbols that only exist on microsoft compilers...
     return ws::entry_point(__argc, __argv);

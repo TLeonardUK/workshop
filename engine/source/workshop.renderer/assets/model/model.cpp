@@ -60,7 +60,7 @@ bool model::load_dependencies()
         {
 #endif
             indices_32.reserve(info.indices.size());
-            for (size_t index : info.indices)
+            for (uint32_t index : info.indices)
             {
                 indices_32.push_back(static_cast<uint32_t>(index));
             }
@@ -72,7 +72,7 @@ bool model::load_dependencies()
         else
         {
             indices_16.reserve(info.indices.size());
-            for (size_t index : info.indices)
+            for (uint32_t index : info.indices)
             {
                 indices_16.push_back(static_cast<uint16_t>(index));
             }
@@ -127,6 +127,12 @@ bool model::load_dependencies()
             param_block->set(field_name.c_str(), *buf->vertex_buffer, false);
         }
         m_vertex_streams[i] = std::move(buf);
+
+        // We can clear out the cpu information for all streams except position (we use position for picking).
+        if (stream_type != geometry_vertex_stream_type::position)
+        {
+            geometry->clear_vertex_stream_data(stream_type);
+        }
     }
 
     return true;

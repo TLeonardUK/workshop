@@ -31,7 +31,7 @@ public:
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
-	size_t light_probe_max_regenerations_per_frame = 50000;//8192;
+	size_t light_probe_max_regenerations_per_frame = 8192;
 
 	// Far clipping plane of the view used to capture a light probes cubemap.
 	float light_probe_far_z = 100'000.0f;

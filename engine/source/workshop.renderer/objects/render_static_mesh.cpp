@@ -107,9 +107,11 @@ void render_static_mesh::register_asset_change_callbacks()
     for (size_t i = 0; i < m_override_materials.size(); i++)
     {
         auto& mat = m_override_materials[i];
-
-        auto callback_key = mat.register_changed_callback(callback);
-        m_material_change_callback_keys.push_back({ mat, callback_key });
+        if (mat.is_valid())
+        {
+            auto callback_key = mat.register_changed_callback(callback);
+            m_material_change_callback_keys.push_back({ mat, callback_key });
+        }
     }
 }
 

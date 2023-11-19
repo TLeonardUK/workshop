@@ -6,6 +6,7 @@
 
 #include "workshop.render_interface/ri_raytracing_tlas.h"
 #include "workshop.core/utils/result.h"
+#include "workshop.core/utils/event.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include <array>
@@ -36,6 +37,8 @@ public:
     virtual void update_instance(instance_id id, const matrix4& transform, uint32_t mask) override;
     virtual ri_buffer* get_metadata_buffer() override;
 
+    void mark_instance_dirty(instance_id id);
+
     const ri_buffer& get_tlas_buffer() const;
 
     // Called by interface each frame if building is required.
@@ -53,6 +56,7 @@ private:
     struct instance
     {
         dx12_ri_raytracing_blas* blas;
+        event<>::delegate_ptr blas_dirtied_key;
         matrix4 transform;
         size_t domain;
         ri_param_block* metadata;

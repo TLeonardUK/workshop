@@ -36,7 +36,7 @@ struct import_context
     {
         std::string name;
         size_t material_index;
-        std::vector<size_t> indices;
+        std::vector<uint32_t> indices;
     };
 
     size_t uv_channel_count = 0;
@@ -183,9 +183,9 @@ bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, ma
     for (size_t i = 0; i < node->mNumFaces; i++)
     {
         const aiFace& face = node->mFaces[i];
-        mesh.indices.push_back(start_vertex_index + face.mIndices[0]);
-        mesh.indices.push_back(start_vertex_index + face.mIndices[1]);
-        mesh.indices.push_back(start_vertex_index + face.mIndices[2]);
+        mesh.indices.push_back((uint32_t)(start_vertex_index + face.mIndices[0]));
+        mesh.indices.push_back((uint32_t)(start_vertex_index + face.mIndices[1]));
+        mesh.indices.push_back((uint32_t)(start_vertex_index + face.mIndices[2]));
     }
 
     return true;
@@ -385,7 +385,7 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         vector3 mesh_bounds_min = vector3::zero;
         vector3 mesh_bounds_max = vector3::zero;
 
-        for (size_t index : mesh.indices)
+        for (uint32_t index : mesh.indices)
         {
             vector3& pos = context.positions[index];
 

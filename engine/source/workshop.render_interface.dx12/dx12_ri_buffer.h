@@ -81,6 +81,7 @@ private:
         size_t offset;
         size_t size;
         std::vector<uint8_t> data;
+        void* ptr;
     };
 
     std::mutex m_buffers_mutex;

@@ -84,7 +84,7 @@ dx12_ri_param_block_archetype::allocation dx12_ri_param_block_archetype::allocat
             alloc_page& instance = m_pages[i];
             if (instance.free_list.size() > 0)
             {
-                size_t index = instance.free_list.back();
+                uint16_t index = instance.free_list.back();
                 instance.free_list.pop_back();
 
                 allocation result;
@@ -192,7 +192,7 @@ void dx12_ri_param_block_archetype::add_page()
     instance.free_list.resize(k_page_size);
     for (size_t i = 0; i < k_page_size; i++)
     {
-        instance.free_list[i] = (k_page_size - 1) - i;
+        instance.free_list[i] = (uint16_t)((k_page_size - 1) - i);
     }
 
     // If using this param block as instance data, we need to create an SRV in the buffer

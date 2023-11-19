@@ -756,6 +756,20 @@ result<void> dx12_ri_pipeline::create_resources()
     for (auto& stage : m_create_params.stages)
     {
         stage.bytecode.clear();
+        stage.bytecode.shrink_to_fit();
+    }
+    for (auto& group : m_create_params.ray_hitgroups)
+    {
+        for (auto& stage : group.stages)
+        {
+            stage.bytecode.clear();
+            stage.bytecode.shrink_to_fit();
+        }
+    }
+    for (auto& group : m_create_params.ray_missgroups)
+    {
+        group.ray_miss_stage.bytecode.clear();
+        group.ray_miss_stage.bytecode.shrink_to_fit();
     }
 
     return ret;

@@ -121,11 +121,6 @@ void engine::step()
 void engine::register_init(init_list& list)
 {
     list.add_step(
-        "Memory Tracker",
-        [this, &list]() -> result<void> { return create_memory_tracker(list); },
-        [this, &list]() -> result<void> { return destroy_memory_tracker(); }
-    );
-    list.add_step(
         "Task Scheduler",
         [this, &list]() -> result<void> { return create_task_scheduler(list); },
         [this, &list]() -> result<void> { return destroy_task_scheduler(); }
@@ -329,20 +324,6 @@ result<void> engine::register_asset_loaders(init_list& list)
 
 result<void> engine::unregister_asset_loaders()
 {
-    return true;
-}
-
-result<void> engine::create_memory_tracker(init_list& list)
-{
-    m_memory_tracker = std::make_unique<memory_tracker>();
-
-    return true;
-}
-
-result<void> engine::destroy_memory_tracker()
-{
-    m_memory_tracker = nullptr;
-
     return true;
 }
 

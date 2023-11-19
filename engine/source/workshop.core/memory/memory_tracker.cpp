@@ -4,6 +4,8 @@
 // ================================================================================================
 #include "workshop.core/memory/memory_tracker.h"
 
+#include <Windows.h>
+
 namespace ws {
 namespace {
 
@@ -81,6 +83,16 @@ std::unique_ptr<memory_allocation> memory_scope::record_alloc(size_t size)
 	return nullptr;
 }
 
+memory_type memory_scope::get_type()
+{
+    return m_type;
+}
+
+string_hash memory_scope::get_asset_id()
+{
+    return m_asset_id;
+}
+
 size_t memory_tracker::get_memory_allocation_count(memory_type type)
 {
 	type_bucket& bucket = m_types[static_cast<int>(type)];
@@ -142,6 +154,11 @@ void memory_tracker::record_alloc(memory_type type, string_hash asset_id, size_t
 {
 	type_bucket& bucket = m_types[static_cast<int>(type)];
 
+    if (size == 0)
+    {
+        return;
+    }
+
 	bucket.allocation_count.fetch_add(1);
 	bucket.allocation_bytes.fetch_add(size);
 
@@ -158,6 +175,11 @@ void memory_tracker::record_alloc(memory_type type, string_hash asset_id, size_t
 void memory_tracker::record_free(memory_type type, string_hash asset_id, size_t size)
 {
 	type_bucket& bucket = m_types[static_cast<int>(type)];
+
+    if (size == 0)
+    {
+        return;
+    }
 
 	bucket.allocation_count.fetch_sub(1);
 	bucket.allocation_bytes.fetch_sub(size);
@@ -177,6 +199,51 @@ void memory_tracker::record_free(memory_type type, string_hash asset_id, size_t 
 			bucket.assets.erase(iter);
 		}
 	}
+}
+
+#pragma optimize("", off)
+
+void memory_tracker::record_raw_alloc(void* ptr, size_t size)
+{
+    memory_scope* scope = memory_scope::get_current_scope();
+
+    size_t buffer_size = _msize(ptr);
+    raw_alloc_tag* tag = reinterpret_cast<raw_alloc_tag*>((uint8_t*)ptr + buffer_size - sizeof(raw_alloc_tag));
+    tag->magic = k_raw_alloc_tag_magic;
+    tag->type = (decltype(tag->type))(scope ? scope->get_type() : memory_type::memory_tracking__untagged);
+    tag->asset_id = scope ? scope->get_asset_id() : string_hash::empty;
+    tag->size = (uint32_t)size;
+
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "[alloc] %p, 0x%08x\n", ptr, tag->size);
+    OutputDebugStringA(buffer);
+
+    record_alloc((memory_type)tag->type, tag->asset_id, tag->size - sizeof(raw_alloc_tag));
+    record_alloc(memory_type::memory_tracking__overhead, string_hash::empty, sizeof(raw_alloc_tag));
+    record_alloc(memory_type::memory_tracking__waste, string_hash::empty, buffer_size - tag->size);
+}
+
+void memory_tracker::record_raw_free(void* ptr)
+{
+    size_t buffer_size = _msize(ptr);
+    if (buffer_size < sizeof(raw_alloc_tag))
+    {
+        return;
+    }
+
+    raw_alloc_tag* tag = reinterpret_cast<raw_alloc_tag*>((uint8_t*)ptr + buffer_size - sizeof(raw_alloc_tag));
+    if (tag->magic != k_raw_alloc_tag_magic)
+    {
+        return;
+    }
+
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "[free] %p, 0x%08x\n", ptr, tag->size);
+    OutputDebugStringA(buffer);
+
+    record_free((memory_type)tag->type, tag->asset_id, tag->size - sizeof(raw_alloc_tag));
+    record_free(memory_type::memory_tracking__overhead, string_hash::empty, sizeof(raw_alloc_tag));
+    record_free(memory_type::memory_tracking__waste, string_hash::empty, buffer_size - tag->size);
 }
 
 }; // namespace workshop

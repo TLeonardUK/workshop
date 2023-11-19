@@ -434,7 +434,6 @@ void dx12_ri_upload_manager::free_uploads()
         }
     }
 }
-#pragma optimize("", off)
 
 void dx12_ri_upload_manager::perform_uploads()
 {

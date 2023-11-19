@@ -170,9 +170,6 @@ private:
     result<void> register_asset_loaders(init_list& list);
     result<void> unregister_asset_loaders();
 
-    result<void> create_memory_tracker(init_list& list);
-    result<void> destroy_memory_tracker();
-
     result<void> create_task_scheduler(init_list& list);
     result<void> destroy_task_scheduler();
 

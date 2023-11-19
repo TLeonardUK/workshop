@@ -45,7 +45,7 @@ public:
     struct mesh_info
     {
         std::string name;
-        std::vector<size_t> indices;
+        std::vector<uint32_t> indices;
         std::unique_ptr<ri_buffer> index_buffer;
         std::unique_ptr<ri_raytracing_blas> blas;
 

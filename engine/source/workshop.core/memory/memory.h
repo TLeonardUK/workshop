@@ -24,4 +24,7 @@ void decommit_virtual_memory(void* ptr, size_t size);
 // Gets the memory page size used on the platform, as is used by the virtual memory functions.
 size_t get_page_size();
 
+// Installs memory allocation hooks to force all allocations to go through the memory tracker.
+extern void install_memory_hooks();
+
 }; // namespace ws::math

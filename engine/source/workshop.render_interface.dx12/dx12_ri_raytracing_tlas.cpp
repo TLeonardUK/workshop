@@ -122,6 +122,9 @@ dx12_ri_raytracing_tlas::instance_id dx12_ri_raytracing_tlas::add_instance(ri_ra
     inst.metadata = metadata;
     inst.dirty = true;
     inst.mask = mask;
+    inst.blas_dirtied_key = inst.blas->on_modified.add_shared([this, id]() {
+        mark_instance_dirty(id);
+    });
 
     mark_dirty();
 
@@ -149,6 +152,19 @@ void dx12_ri_raytracing_tlas::remove_instance(instance_id id)
                 m_instances[pair.second].dirty = true;
             }
         }
+    }
+
+    mark_dirty();
+}
+
+void dx12_ri_raytracing_tlas::mark_instance_dirty(instance_id id)
+{
+    std::scoped_lock lock(m_instance_mutex);
+
+    if (auto iter = m_id_to_index_map.find(id); iter != m_id_to_index_map.end())
+    {
+        instance& inst = m_instances[iter->second];
+        inst.dirty = true;
     }
 
     mark_dirty();

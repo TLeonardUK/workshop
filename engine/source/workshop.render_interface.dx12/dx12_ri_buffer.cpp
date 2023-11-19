@@ -21,7 +21,7 @@ dx12_ri_buffer::dx12_ri_buffer(dx12_render_interface& renderer, const char* debu
 
 dx12_ri_buffer::~dx12_ri_buffer()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav, srv_table = m_srv_table, uav_table = m_uav_table]()
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav, srv_table = m_srv_table, uav_table = m_uav_table, is_small = m_is_small_buffer, small_handle = m_small_buffer_allocation]() mutable
     {
         if (srv.is_valid())
         {
@@ -30,6 +30,11 @@ dx12_ri_buffer::~dx12_ri_buffer()
         if (uav.is_valid())
         {
             renderer->get_descriptor_table(uav_table).free(uav);
+        }
+        if (is_small)
+        {
+            dx12_ri_small_buffer_allocator& small_allocator = renderer->get_small_buffer_allocator();
+            small_allocator.free(small_handle);
         }
         //CheckedRelease(handle);    
     });
@@ -76,6 +81,7 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
         break;
     }
     case ri_buffer_usage::generic:
+    case ri_buffer_usage::readback:
     default:
     {
         mem_type = memory_type::rendering__vram__generic_buffer;
@@ -91,6 +97,11 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
     heap_properties.CreationNodeMask = 0;
     heap_properties.VisibleNodeMask = 0;
+
+    if (m_create_params.usage == ri_buffer_usage::readback)
+    {
+        heap_properties.Type = D3D12_HEAP_TYPE_READBACK;
+    }
 
     D3D12_RESOURCE_DESC desc;
     desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
@@ -180,6 +191,11 @@ result<void> dx12_ri_buffer::create_resources()
     case ri_buffer_usage::generic:
         {
             m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
+    case ri_buffer_usage::readback:
+        {
+            m_common_state = ri_resource_state::copy_dest;
             break;
         }
     default:
@@ -344,15 +360,33 @@ void* dx12_ri_buffer::map(size_t offset, size_t size)
     else
     {
         std::scoped_lock lock(m_buffers_mutex);
-
         db_assert(offset >= 0 && offset + size <= (m_create_params.element_count * m_create_params.element_size));
 
         mapped_buffer& buf = m_buffers.emplace_back();
         buf.offset = offset;
         buf.size = size;
-        buf.data.resize(size);
 
-        return buf.data.data();
+        if (m_create_params.usage == ri_buffer_usage::readback)
+        {
+            D3D12_RANGE range;
+            range.Begin = offset;
+            range.End = offset + size;
+
+            buf.ptr = nullptr;
+            if (HRESULT hr = m_handle->Map(0, &range, &buf.ptr); FAILED(hr))
+            {
+                db_error(renderer, "Map failed with error 0x%08x", hr);
+            }
+
+            buf.ptr = reinterpret_cast<uint8_t*>(buf.ptr) + offset;
+
+            return buf.ptr;
+        }
+        else
+        {
+            buf.data.resize(size);
+            return buf.data.data();
+        }
     }
 }
 
@@ -368,13 +402,24 @@ void dx12_ri_buffer::unmap(void* pointer)
 
         for (auto iter = m_buffers.begin(); iter != m_buffers.end(); iter++)
         {
-            if (iter->data.data() == pointer)
+            if (iter->data.data() == pointer || iter->ptr == pointer)
             {
-                m_renderer.get_upload_manager().upload(
-                    *this,
-                    iter->data,
-                    iter->offset
-                );
+                if (m_create_params.usage == ri_buffer_usage::readback)
+                {
+                    D3D12_RANGE range;
+                    range.Begin = 0;        // GPU cannot see cpu writes to readback resources, so range should always be empty.
+                    range.End = 0;
+
+                    m_handle->Unmap(0, &range);
+                }
+                else
+                {
+                    m_renderer.get_upload_manager().upload(
+                        *this,
+                        iter->data,
+                        iter->offset
+                    );
+                }
 
                 m_buffers.erase(iter);
                 return;

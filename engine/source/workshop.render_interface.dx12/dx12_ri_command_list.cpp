@@ -230,10 +230,10 @@ void dx12_ri_command_list::set_pipeline(ri_pipeline& pipeline)
     UINT table_index = 0;
 
     // Bind all the bindless descriptor tables.
-    ri_pipeline::create_params create_params = pipeline.get_create_params();
+    const ri_pipeline::create_params& create_params = pipeline.get_create_params();
     for (size_t i = 0; i < create_params.descriptor_tables.size(); i++)
     {
-        ri_descriptor_table& table = create_params.descriptor_tables[i];        
+        const ri_descriptor_table& table = create_params.descriptor_tables[i];        
 
         dx12_ri_descriptor_table& descriptor_table = m_renderer.get_descriptor_table(table);
 

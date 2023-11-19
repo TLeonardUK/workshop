@@ -61,6 +61,12 @@ public:
 	// Records allocation in this scope.
 	std::unique_ptr<memory_allocation> record_alloc(size_t size);
 
+    // Gets type of memory this scope is allocating.
+    memory_type get_type();
+
+    // Gets the id of the asset this scope is allocating memory for.
+    string_hash get_asset_id();
+
 private:
 	memory_type m_type;
 	string_hash m_asset_id;
@@ -75,6 +81,22 @@ class memory_tracker
 	: public singleton<memory_tracker>
 {
 public:
+
+#pragma pack(push, 1)
+    struct raw_alloc_tag
+    {
+        uint16_t    magic;
+        uint16_t    type;
+        string_hash asset_id;
+        uint32_t    size;
+    };
+#pragma pack(pop)
+
+    // Size of the tag placed at the end of allocated blocks by record_raw_alloc.
+    static constexpr size_t k_raw_alloc_tag_size = sizeof(raw_alloc_tag);
+
+    // Magic number for sanity checking allocation tags.
+    static constexpr uint16_t k_raw_alloc_tag_magic = 0xBEAD;
 
 	// State of a given asset, as provided by get_assets.
 	struct asset_state
@@ -104,6 +126,14 @@ public:
 	// Gets all assets with their memory usage broken down by type.
 	std::unordered_map<string_hash, asset_breakdown> get_asset_breakdown();
 
+    // Records a raw malloc allocation by placing the memory type at the end of the allocation.
+    // This shouldn't be called directly, its here for memory hooks to invoke.
+    // Size of allocation should always include raw_alloc_tag_size 
+    void record_raw_alloc(void* ptr, size_t size);
+
+    // Records a raw free of an allocation previously record with record_raw_alloc.
+    void record_raw_free(void* ptr);
+
 private:
 
 	friend class memory_scope;
@@ -132,16 +162,10 @@ private:
 		std::unordered_map<string_hash, asset_bucket> assets;
 	};
 
-	std::mutex m_asset_mutex;
+	std::recursive_mutex m_asset_mutex;
 
 	std::array<type_bucket, static_cast<int>(memory_type::COUNT)> m_types;
 
 };
 
 }; // namespace ws
-
-
-
-//memory_scope scope(memory_type::vertex_buffer, "assets/models/something.yaml");
-//scope.record_alloc(12024); 
-//scope.record_free(1024);

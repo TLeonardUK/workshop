@@ -18,6 +18,9 @@ enum class ri_buffer_usage
     index_buffer,
     vertex_buffer,
 
+    // Buffer for reading data back from gpu.
+    readback,
+
     // raytracing acceleration structure (either blas or tlas)
     raytracing_as,
 

@@ -86,9 +86,9 @@ void object_pick_system::model_ray_intersects(object handle, const ray& target_r
         // *shudder*
         for (size_t i = 0; i < mesh->indices.size(); i += 3)
         {
-            size_t i1 = mesh->indices[i];
-            size_t i2 = mesh->indices[i + 1];
-            size_t i3 = mesh->indices[i + 2];
+            uint32_t i1 = mesh->indices[i];
+            uint32_t i2 = mesh->indices[i + 1];
+            uint32_t i3 = mesh->indices[i + 2];
 
             triangle tri(transformed_verts[i1], transformed_verts[i2], transformed_verts[i3]);
 

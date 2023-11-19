@@ -72,7 +72,7 @@ private:
     uint8_t* m_memory_base;
     std::vector<page> m_pages;
 
-    std::vector<size_t> m_free_indices;
+    std::vector<uint32_t> m_free_indices;
 
     std::vector<bool> m_active_indices;
 
@@ -91,7 +91,7 @@ inline sparse_vector<element_type, mem_type>::sparse_vector(size_t max_elements)
 
     for (size_t i = 0; i < max_elements; i++)
     {
-        m_free_indices.push_back(max_elements - (i + 1));
+        m_free_indices.push_back((uint32_t)(max_elements - (i + 1)));
     }
 
     m_active_indices.resize(max_elements);
@@ -222,7 +222,7 @@ inline void sparse_vector<element_type, mem_type>::remove(size_t index)
 
     decommit_region(index);
 
-    m_free_indices.push_back(index);
+    m_free_indices.push_back((uint32_t)index);
 }
 
 template <typename element_type, memory_type mem_type>

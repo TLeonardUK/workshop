@@ -8,6 +8,9 @@
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/perf/profile.h"
 
+#include "workshop.core/memory/memory.h"
+#include "workshop.core/memory/memory_tracker.h"
+
 #include "workshop.core/app/app.h"
 
 #include <filesystem>

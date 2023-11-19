@@ -118,6 +118,11 @@ void task_handle::reset()
 
 task_handle& task_handle::operator=(const task_handle& other)
 {
+    if (is_valid())
+    {
+        decrement_ref();
+    }
+
     m_task_scheduler = other.m_task_scheduler;
     m_index = other.m_index;
     
@@ -131,6 +136,11 @@ task_handle& task_handle::operator=(const task_handle& other)
 
 task_handle& task_handle::operator=(task_handle&& other)
 {
+    if (is_valid())
+    {
+        decrement_ref();
+    }
+
     m_task_scheduler = std::move(other.m_task_scheduler);
     other.m_task_scheduler = nullptr;
 
@@ -180,7 +190,7 @@ task_scheduler::task_scheduler(init_state& states)
     // Mark all task indices as free.
     for (size_t i = 0; i < k_max_tasks; i++)
     {
-        m_free_task_indices.push(i);
+        m_free_task_indices.push((uint32_t)i);
     }
 
     // Assign queues to workers.
@@ -211,6 +221,8 @@ task_scheduler::task_scheduler(init_state& states)
 
         });
     }
+
+    db_log(core, "Task scheduler memory usage: %.2f mb", sizeof(*this) / (1024.0f * 1024.0f));
 }
 
 task_scheduler::~task_scheduler()
@@ -306,7 +318,15 @@ task_index_t task_scheduler::alloc_task_index_lockless()
 {
     db_assert(!m_free_task_indices.empty());
 
-    size_t index = m_free_task_indices.front();
+    static size_t peak_in_use = 0;
+    size_t in_use = k_max_tasks - m_free_task_indices.size();
+    if (in_use > peak_in_use)
+    {
+        peak_in_use = in_use;
+        db_log(renderer, "in-use:%zi", in_use);
+    }
+
+    task_index_t index = m_free_task_indices.front();
     m_free_task_indices.pop();
 
     return index;

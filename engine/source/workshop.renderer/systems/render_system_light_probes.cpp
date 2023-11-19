@@ -264,8 +264,6 @@ render_view* render_system_light_probes::get_main_view()
     return nullptr;
 }
 
-#pragma optimize("", off)
-
 void render_system_light_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();

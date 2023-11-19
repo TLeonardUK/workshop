@@ -666,7 +666,9 @@ void dx12_render_interface::begin_frame()
     m_copy_queue->begin_frame();
     m_query_manager->begin_frame();
 
-    process_as_build_requests();
+    process_blas_build_requests();
+    process_blas_compact_requests();
+    process_tlas_build_requests();
 }
 
 void dx12_render_interface::end_frame()
@@ -692,13 +694,14 @@ void dx12_render_interface::queue_as_build(dx12_ri_raytracing_blas* blas)
 {
     std::scoped_lock lock(m_pending_as_build_mutex);
     m_pending_blas_builds.insert(blas);
+    m_pending_blas_compacts.erase(blas);
 }
 
-void dx12_render_interface::process_as_build_requests()
+void dx12_render_interface::process_blas_build_requests()
 {
     std::scoped_lock lock(m_pending_as_build_mutex);
 
-    if (m_pending_blas_builds.empty() && m_pending_tlas_builds.empty())
+    if (m_pending_blas_builds.empty())
     {
         return;
     }
@@ -707,12 +710,45 @@ void dx12_render_interface::process_as_build_requests()
     build_list.open();
 
     // Order is important, blas should be built before tlas.
-    //db_log(renderer, "Building raytracing AS: Bottom=%zi Top=%zi", m_pending_blas_builds.size(), m_pending_tlas_builds.size());
+    db_log(renderer, "[%zi] Building raytracing BLAS: %zi", m_frame_index, m_pending_blas_builds.size());
 
     for (dx12_ri_raytracing_blas* blas : m_pending_blas_builds)
     {
         blas->build(build_list);
+
+        if (blas->is_pending_compaction())
+        {
+            m_pending_blas_compacts.insert(blas);
+        }
     }
+
+    build_list.close();
+
+    m_pending_blas_builds.clear();
+
+    // We flush uploads here before dispatching the builds as we will likely
+    // have updated various tlas/blas buffers that we want to be reflected on the gpu
+    // when the build occurs.
+    flush_uploads();
+
+    profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "build raytracing blas");
+    m_graphics_queue->execute(build_list);
+}
+
+void dx12_render_interface::process_tlas_build_requests()
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+
+    if (m_pending_tlas_builds.empty())
+    {
+        return;
+    }
+
+    dx12_ri_command_list& build_list = static_cast<dx12_ri_command_list&>(m_graphics_queue->alloc_command_list());
+    build_list.open();
+
+    // Order is important, blas should be built before tlas.
+    db_log(renderer, "[%zi] Building raytracing TLAS: Top=%zi", m_frame_index, m_pending_tlas_builds.size());
 
     for (dx12_ri_raytracing_tlas* tlas : m_pending_tlas_builds)
     {
@@ -722,14 +758,72 @@ void dx12_render_interface::process_as_build_requests()
     build_list.close();
 
     m_pending_tlas_builds.clear();
-    m_pending_blas_builds.clear();
+    
+    // We flush uploads here before dispatching the builds as we will likely
+    // have updated various tlas/blas buffers that we want to be reflected on the gpu
+    // when the build occurs.
+    flush_uploads();
+
+    profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "build raytracing tlas");
+    m_graphics_queue->execute(build_list);
+}
+
+void dx12_render_interface::process_blas_compact_requests()
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+
+    if (m_pending_blas_compacts.empty())
+    {
+        return;
+    }
+
+    // Check if any compactions are available, or if they are no longer pending compaction.
+    std::vector<dx12_ri_raytracing_blas*> to_compact;
+
+    for (auto iter = m_pending_blas_compacts.begin(); iter != m_pending_blas_compacts.end(); /* empty */)
+    {
+        if ((*iter)->can_compact())
+        {
+            to_compact.push_back(*iter);
+            iter = m_pending_blas_compacts.erase(iter);
+        }    
+        else if (!(*iter)->is_pending_compaction())
+        {
+            iter = m_pending_blas_compacts.erase(iter);
+        }
+        else
+        {
+            iter++;
+        }
+    }
+
+    if (to_compact.empty())
+    {
+        return;
+    }
+
+    // Build compaction list.
+    dx12_ri_command_list& build_list = static_cast<dx12_ri_command_list&>(m_graphics_queue->alloc_command_list());
+    build_list.open();
+
+    db_log(renderer, "[%zi] Compacting Raytracing BLAS: %zi", m_frame_index, to_compact.size());
+
+    for (dx12_ri_raytracing_blas* blas : to_compact)
+    {
+        if (blas->can_compact())
+        {
+            blas->compact(build_list);
+        }
+    }
+
+    build_list.close();
 
     // We flush uploads here before dispatching the builds as we will likely
     // have updated various tlas/blas buffers that we want to be reflected on the gpu
     // when the build occurs.
     flush_uploads();
 
-    profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "build raytracing structures");
+    profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "compact raytracing structures");
     m_graphics_queue->execute(build_list);
 }
 

@@ -53,7 +53,7 @@ result<void> render_system_reflection_probes::create_resources()
     params.mip_levels = m_probe_cubemap_mips;
     params.dimensions = ri_texture_dimension::texture_cube;
     params.is_render_target = true;
-    params.format = ri_texture_format::R32G32B32A32_FLOAT;
+    params.format = ri_texture_format::R16G16B16A16_FLOAT;
     params.allow_unordered_access = true;
     params.allow_individual_image_access = true;
 

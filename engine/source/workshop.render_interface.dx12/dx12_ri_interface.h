@@ -136,7 +136,9 @@ private:
 
     void process_pending_deletes();
 
-    void process_as_build_requests();
+    void process_tlas_build_requests();
+    void process_blas_build_requests();
+    void process_blas_compact_requests();
 
 private:
 
@@ -173,9 +175,11 @@ private:
     std::mutex m_pending_deletion_mutex;
     std::array<std::vector<deferred_delete_function_t>, k_max_pipeline_depth> m_pending_deletions;
 
-    std::mutex m_pending_as_build_mutex;
+    std::recursive_mutex m_pending_as_build_mutex;
     std::unordered_set<dx12_ri_raytracing_blas*> m_pending_blas_builds;
     std::unordered_set<dx12_ri_raytracing_tlas*> m_pending_tlas_builds;
+
+    std::unordered_set<dx12_ri_raytracing_blas*> m_pending_blas_compacts;
 
     std::array<bool, (int)ri_feature::COUNT> m_feature_support;
 
