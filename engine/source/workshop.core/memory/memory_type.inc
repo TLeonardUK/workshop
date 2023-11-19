@@ -14,6 +14,9 @@ MEMORY_TYPE(memory_tracking__untagged,	            "memory tracking/untagged")
 MEMORY_TYPE(memory_tracking__overhead,	            "memory tracking/overhead")
 MEMORY_TYPE(memory_tracking__waste, 	            "memory tracking/waste")
 
+// Used for debugging the memory tracking system, shouldn't normally have any value.
+MEMORY_TYPE(memory_tracking__debug, 	            "memory tracking/debug")
+
 // This is useful as a high-level generic container for misc allocations of assets/etc which will
 // be broken down further in lower memory scopes.
 MEMORY_TYPE(asset,				"asset")

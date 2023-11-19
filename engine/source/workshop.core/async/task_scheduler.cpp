@@ -318,14 +318,6 @@ task_index_t task_scheduler::alloc_task_index_lockless()
 {
     db_assert(!m_free_task_indices.empty());
 
-    static size_t peak_in_use = 0;
-    size_t in_use = k_max_tasks - m_free_task_indices.size();
-    if (in_use > peak_in_use)
-    {
-        peak_in_use = in_use;
-        db_log(renderer, "in-use:%zi", in_use);
-    }
-
     task_index_t index = m_free_task_indices.front();
     m_free_task_indices.pop();
 
@@ -336,6 +328,9 @@ void task_scheduler::free_task_index(task_index_t task_index)
 {
     std::unique_lock lock(m_task_allocation_mutex);
     m_tasks[task_index].state = task_run_state::unallocated;
+    // TODO: Change this to a linked list, with a pool of preallocated nodes, to save the memory churn.
+    m_tasks[task_index].dependents.clear();
+    m_tasks[task_index].dependents.shrink_to_fit();
     m_free_task_indices.push(task_index);
 }
 

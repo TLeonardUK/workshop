@@ -42,6 +42,8 @@ public:
 
 public:
 
+    virtual ~render_pass() {}
+
     // Gets an opaque value that can be used to uniquely identify this pass within its render system.
     // This can be used for storing and retrieving values from render_resource_cache's
     void* get_cache_key(render_view& view);

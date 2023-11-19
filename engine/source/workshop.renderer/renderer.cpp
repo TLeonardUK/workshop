@@ -60,6 +60,7 @@
 #include "workshop.core/drawing/pixmap.h"
 #include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/utils/time.h"
+#include "workshop.core/memory/memory_tracker.h"
 #include "workshop.core/platform/platform.h"
 
 namespace ws {
@@ -886,8 +887,9 @@ void renderer::render_post_views(render_world_state& state, std::vector<render_p
 {
     profile_marker(profile_colors::render, "render post view");
 
-    // Generate a render graph for rendering this graph.
     render_graph graph;
+
+    // Generate a render graph for rendering this graph.
     {
         profile_marker(profile_colors::render, "build graph");
 

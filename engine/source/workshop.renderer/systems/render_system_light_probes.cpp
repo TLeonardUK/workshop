@@ -18,6 +18,7 @@
 #include "workshop.renderer/render_resource_cache.h"
 
 #include "workshop.core/math/random.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 

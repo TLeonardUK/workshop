@@ -7,6 +7,7 @@
 #include "workshop.render_interface/ri_layout_factory.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.core/utils/result.h"
+#include "workshop.core/hashing/string_hash.h"
 
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
@@ -60,7 +61,7 @@ private:
 
 private:
 
-    std::unordered_map<std::string, field> m_fields;
+    std::unordered_map<string_hash, field> m_fields;
 
     dx12_render_interface& m_renderer;
     ri_data_layout m_layout;

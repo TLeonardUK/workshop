@@ -201,8 +201,6 @@ void memory_tracker::record_free(memory_type type, string_hash asset_id, size_t 
 	}
 }
 
-#pragma optimize("", off)
-
 void memory_tracker::record_raw_alloc(void* ptr, size_t size)
 {
     memory_scope* scope = memory_scope::get_current_scope();
@@ -213,10 +211,6 @@ void memory_tracker::record_raw_alloc(void* ptr, size_t size)
     tag->type = (decltype(tag->type))(scope ? scope->get_type() : memory_type::memory_tracking__untagged);
     tag->asset_id = scope ? scope->get_asset_id() : string_hash::empty;
     tag->size = (uint32_t)size;
-
-    char buffer[128];
-    snprintf(buffer, sizeof(buffer), "[alloc] %p, 0x%08x\n", ptr, tag->size);
-    OutputDebugStringA(buffer);
 
     record_alloc((memory_type)tag->type, tag->asset_id, tag->size - sizeof(raw_alloc_tag));
     record_alloc(memory_type::memory_tracking__overhead, string_hash::empty, sizeof(raw_alloc_tag));
@@ -236,10 +230,6 @@ void memory_tracker::record_raw_free(void* ptr)
     {
         return;
     }
-
-    char buffer[128];
-    snprintf(buffer, sizeof(buffer), "[free] %p, 0x%08x\n", ptr, tag->size);
-    OutputDebugStringA(buffer);
 
     record_free((memory_type)tag->type, tag->asset_id, tag->size - sizeof(raw_alloc_tag));
     record_free(memory_type::memory_tracking__overhead, string_hash::empty, sizeof(raw_alloc_tag));
