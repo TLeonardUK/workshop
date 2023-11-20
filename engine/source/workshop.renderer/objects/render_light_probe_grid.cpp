@@ -9,12 +9,15 @@
 #include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.render_interface/ri_interface.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 
 render_light_probe_grid::render_light_probe_grid(render_object_id id, renderer& in_renderer)
     : render_object(id, &in_renderer, render_visibility_flags::physical)
 {
+    memory_scope scope(memory_type::rendering__light_probe_grid, memory_scope::k_ignore_asset);
+
     m_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_grid_state");
 
     render_effect::technique* main_technique = m_renderer->get_effect_manager().get_technique("ddgi_output_irradiance", {});
@@ -102,6 +105,8 @@ size_t render_light_probe_grid::get_occlusion_map_size()
 
 void render_light_probe_grid::recalculate_probes()
 {
+    memory_scope scope(memory_type::rendering__light_probe_grid, memory_scope::k_ignore_asset);
+
     const render_options& options = m_renderer->get_options();
 
     vector3 bounds = get_local_scale();
@@ -226,6 +231,8 @@ void render_light_probe_grid::recalculate_probes()
 
 void render_light_probe_grid::get_probes_to_update(std::vector<frustum>& frustums, std::vector<size_t>& onscreen_probe_indices, std::vector<size_t>& offscreen_probe_indices)
 {
+    memory_scope scope(memory_type::rendering__light_probe_grid, memory_scope::k_ignore_asset);
+
     vector3 local_bounds = get_local_scale();
     matrix4 grid_transform =
         matrix4::rotation(m_local_rotation) *

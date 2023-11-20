@@ -13,6 +13,7 @@
 #include "workshop.render_interface/ri_interface.h"
 
 #include "workshop.core/drawing/imgui.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 
@@ -61,7 +62,8 @@ void render_imgui_manager::register_init(init_list& list)
 void render_imgui_manager::step(frame_time& time)
 {
     std::scoped_lock lock(m_scope_mutex);
-    
+
+    memory_scope scope(memory_type::rendering__systems__imgui, memory_scope::k_ignore_asset);
     profile_marker(profile_colors::render, "Step ImGui");
 
     m_last_frame_time = time;
@@ -185,6 +187,8 @@ void render_imgui_manager::leave_scope()
 
 render_imgui_manager::context* render_imgui_manager::create_context(const char* name)
 {
+    memory_scope scope(memory_type::rendering__systems__imgui, memory_scope::k_ignore_asset);
+
     auto iter = std::find_if(m_contexts.begin(), m_contexts.end(), [&name](auto& context) {
         return context->free && context->name == name;
     });

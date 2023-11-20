@@ -339,7 +339,10 @@ result<void> engine::create_task_scheduler(init_list& list)
 
     db_log(engine, "Creating task scheduler with %zi workers.", init_state.worker_count);
 
-    m_task_scheduler = std::make_unique<task_scheduler>(init_state);
+    {
+        memory_scope scope(memory_type::engine__task_scheduler, memory_scope::k_ignore_asset);
+        m_task_scheduler = std::make_unique<task_scheduler>(init_state);
+    }
 
     return true;
 }

@@ -87,7 +87,7 @@ protected:
 
 protected:
 
-    static inline constexpr size_t k_command_queue_capacity = 4 * 1024 * 1024;
+    static inline constexpr size_t k_command_queue_capacity = 1 * 1024 * 1024;
 
     object_manager& m_manager;
 

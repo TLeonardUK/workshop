@@ -40,7 +40,11 @@ memory_scope::memory_scope(memory_type type, string_hash asset_id, string_hash f
 	g_tls_memory_scope = this;
 
 	// If asset_id = nullptr, we inhert whatever is further up in the stack.
-	if (m_asset_id == string_hash::empty)
+    if (m_asset_id == k_ignore_asset)
+    {
+        m_asset_id = string_hash::empty;
+    }
+	else if (m_asset_id == string_hash::empty)
 	{
 		memory_scope* scope = g_tls_memory_scope;
 		while (scope)
@@ -159,6 +163,11 @@ void memory_tracker::record_alloc(memory_type type, string_hash asset_id, size_t
         return;
     }
 
+    if (type == memory_type::engine__command_queue && asset_id != string_hash::empty)
+    {
+        __debugbreak();
+    }
+
 	bucket.allocation_count.fetch_add(1);
 	bucket.allocation_bytes.fetch_add(size);
 
@@ -200,6 +209,8 @@ void memory_tracker::record_free(memory_type type, string_hash asset_id, size_t 
 		}
 	}
 }
+
+#pragma optimize("", off)
 
 void memory_tracker::record_raw_alloc(void* ptr, size_t size)
 {

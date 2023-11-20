@@ -50,6 +50,8 @@ private:
 class memory_scope
 {
 public:
+    inline static string_hash k_ignore_asset = string_hash("ignore_asset");
+
 	memory_scope(memory_type type, string_hash asset_id = string_hash::empty, string_hash fallback_asset_id = string_hash::empty);
 	~memory_scope();
 

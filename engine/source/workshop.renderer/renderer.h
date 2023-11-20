@@ -411,7 +411,7 @@ private:
     constexpr static inline size_t k_frame_depth = 3;
 
     // How much data we need to store in each command queue per frame.
-    constexpr static inline size_t k_command_queue_size = 32'000'000;
+    constexpr static inline size_t k_command_queue_size = 16'000'000;
 
     ri_interface& m_render_interface;
     input_interface& m_input_interface;

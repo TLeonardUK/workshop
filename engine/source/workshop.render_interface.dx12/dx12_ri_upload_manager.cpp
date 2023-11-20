@@ -113,6 +113,8 @@ result<void> dx12_ri_upload_manager::create_resources()
 
 void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uint8_t>& data)
 {
+    memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
+
     ri_command_queue& queue = m_renderer.get_copy_queue();
 
     // Calculate the offsets of each face in the stored data.
@@ -281,6 +283,8 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
 
 void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint8_t>& data, size_t offset)
 {
+    memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
+
     ri_command_queue& queue = m_renderer.get_copy_queue();
 
     upload_state upload = allocate_upload(data.size(), source.get_element_size());
@@ -362,6 +366,8 @@ void dx12_ri_upload_manager::queue_upload(upload_state state)
 
 void dx12_ri_upload_manager::new_frame(size_t index)
 {
+    memory_scope mem_scope(memory_type::rendering__upload_heap);
+
     std::scoped_lock lock(m_pending_upload_mutex);
 
     perform_uploads();

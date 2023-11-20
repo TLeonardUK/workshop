@@ -3,11 +3,13 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/containers/command_queue.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 
 command_queue::command_queue(size_t capacity)
 {
+    memory_scope scope(memory_type::engine__command_queue, memory_scope::k_ignore_asset);
     m_buffer.resize(capacity);
 }
 

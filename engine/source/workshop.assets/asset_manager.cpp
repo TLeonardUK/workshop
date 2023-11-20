@@ -1019,7 +1019,7 @@ void asset_manager::set_load_state(asset_state* state, asset_loading_state new_s
     {
         state->load_timer.stop();
         
-        db_verbose(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
+        db_log(asset, "[%s] Loaded in %.2f ms", state->path.c_str(), state->load_timer.get_elapsed_ms());
     }
 
     if (!state->is_for_hot_reload)

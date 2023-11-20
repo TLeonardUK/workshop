@@ -61,6 +61,8 @@ private:
     size_t m_window_height = 0;
     window_mode m_window_mode = window_mode::windowed;
 
+    std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
+
 };
 
 }; // namespace ws

@@ -82,6 +82,8 @@ template <typename element_type, memory_type mem_type>
 inline sparse_vector<element_type, mem_type>::sparse_vector(size_t max_elements)
     : m_max_elements(max_elements)
 {
+    memory_scope scope(mem_type, memory_scope::k_ignore_asset);
+
     m_page_size = get_page_size();
 
     size_t size = max_elements * sizeof(element_type);
@@ -133,7 +135,7 @@ inline void sparse_vector<element_type, mem_type>::commit_region(size_t index)
         {
             commit_virtual_memory(m_pages[i].memory, m_page_size);
 
-            memory_scope scope(mem_type);
+            memory_scope scope(mem_type, memory_scope::k_ignore_asset);
             m_pages[i].alloc_record = scope.record_alloc(m_page_size);
         }
         m_pages[i].commit_count++;

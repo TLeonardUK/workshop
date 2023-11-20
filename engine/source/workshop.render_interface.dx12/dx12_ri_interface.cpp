@@ -556,6 +556,8 @@ result<void> dx12_render_interface::destroy_command_queues()
 
 result<void> dx12_render_interface::create_heaps()
 {
+    memory_scope scope(memory_type::rendering__descriptor_heap);
+
     size_t srv_heap_size = 0;
     size_t sampler_heap_size = 0;
     size_t rtv_heap_size = 0;
@@ -710,7 +712,7 @@ void dx12_render_interface::process_blas_build_requests()
     build_list.open();
 
     // Order is important, blas should be built before tlas.
-    db_log(renderer, "[%zi] Building raytracing BLAS: %zi", m_frame_index, m_pending_blas_builds.size());
+    //db_log(renderer, "[%zi] Building raytracing BLAS: %zi", m_frame_index, m_pending_blas_builds.size());
 
     for (dx12_ri_raytracing_blas* blas : m_pending_blas_builds)
     {
@@ -748,7 +750,7 @@ void dx12_render_interface::process_tlas_build_requests()
     build_list.open();
 
     // Order is important, blas should be built before tlas.
-    db_log(renderer, "[%zi] Building raytracing TLAS: Top=%zi", m_frame_index, m_pending_tlas_builds.size());
+    //db_log(renderer, "[%zi] Building raytracing TLAS: Top=%zi", m_frame_index, m_pending_tlas_builds.size());
 
     for (dx12_ri_raytracing_tlas* tlas : m_pending_tlas_builds)
     {
@@ -806,7 +808,7 @@ void dx12_render_interface::process_blas_compact_requests()
     dx12_ri_command_list& build_list = static_cast<dx12_ri_command_list&>(m_graphics_queue->alloc_command_list());
     build_list.open();
 
-    db_log(renderer, "[%zi] Compacting Raytracing BLAS: %zi", m_frame_index, to_compact.size());
+    //db_log(renderer, "[%zi] Compacting Raytracing BLAS: %zi", m_frame_index, to_compact.size());
 
     for (dx12_ri_raytracing_blas* blas : to_compact)
     {

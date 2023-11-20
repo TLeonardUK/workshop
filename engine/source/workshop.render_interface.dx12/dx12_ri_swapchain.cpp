@@ -41,6 +41,8 @@ void dx12_ri_swapchain::destroy_resources()
 
 result<void> dx12_ri_swapchain::create_resources()
 {
+    memory_scope mem_scope(memory_type::rendering__vram__swapchain, string_hash::empty, string_hash(m_debug_name));
+
     HRESULT hr;
 
     m_window_width = m_window.get_width();
@@ -115,6 +117,8 @@ result<void> dx12_ri_swapchain::create_resources()
 
 result<void> dx12_ri_swapchain::create_render_targets()
 {
+    memory_scope mem_scope(memory_type::rendering__vram__swapchain, string_hash::empty, string_hash(m_debug_name));
+
     for (size_t i = 0; i < k_buffer_count; i++)
     {
         Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
@@ -141,6 +145,8 @@ result<void> dx12_ri_swapchain::create_render_targets()
             buffer,
             ri_resource_state::present);
     }
+
+    m_memory_allocation_info = mem_scope.record_alloc(m_window_width * m_window_height * 4 * k_buffer_count);
 
     return true;
 }
