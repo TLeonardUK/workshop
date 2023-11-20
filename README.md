@@ -13,7 +13,7 @@ The renderer uses a modern DX12/Vulkan deferred bindless architecture and will, 
 - Full pbr pipeline
 - Clustered deferred pipeline
 - Compute-based light culling
-- Diffuse light probe volumes
+- Dynamic diffuse global illumination
 - Specular reflection probes
 - Automatic exposure
 - Blended weighted order independent transparency
