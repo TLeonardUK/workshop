@@ -37,8 +37,6 @@ void render_pass_primitives::generate(renderer& renderer, generated_state& state
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "primitives");
-
         list.barrier(*output.color_targets[0].texture, ri_resource_state::initial, ri_resource_state::render_target);
         list.barrier(*output.depth_target.texture, ri_resource_state::initial, ri_resource_state::depth_read);
         list.set_pipeline(*technique->pipeline.get());

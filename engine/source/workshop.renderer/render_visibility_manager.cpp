@@ -342,7 +342,7 @@ void render_visibility_manager::update_visibility()
             object_state& obj_state = m_objects[existing_object_id.index];
 
             // id has been recycled, object is gone forever.
-            if (obj_state.id == existing_object_id)
+            if (obj_state.id != existing_object_id)
             {
                 state.has_changed = true;
                 continue;

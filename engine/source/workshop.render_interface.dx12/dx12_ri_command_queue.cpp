@@ -182,6 +182,17 @@ void dx12_ri_command_queue::execute(ri_command_list& list)
     m_queue->ExecuteCommandLists(1, commandLists);
 }
 
+void dx12_ri_command_queue::execute(const std::vector<ri_command_list*>& lists)
+{
+    std::vector<ID3D12CommandList*> command_lists;
+    command_lists.reserve(lists.size());
+    for (ri_command_list* list : lists)
+    {
+        command_lists.push_back(static_cast<dx12_ri_command_list*>(list)->get_dx_command_list().Get());
+    }
+    m_queue->ExecuteCommandLists((UINT)command_lists.size(), command_lists.data());
+}
+
 void dx12_ri_command_queue::begin_event(const color& color, const char* format, ...)
 {
     uint8_t r, g, b, a;

@@ -31,6 +31,7 @@ public:
 
     virtual ri_command_list& alloc_command_list() override;
     virtual void execute(ri_command_list& list) override;
+    virtual void execute(const std::vector<ri_command_list*>& list) override;
     virtual void begin_event(const color& color, const char* name, ...) override;
     virtual void end_event() override;
 

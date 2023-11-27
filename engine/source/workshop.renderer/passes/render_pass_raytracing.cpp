@@ -22,8 +22,6 @@ void render_pass_raytracing::generate(renderer& renderer, generated_state& state
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
-        profile_gpu_marker(list, profile_colors::gpu_compute, "%s", name.c_str());
-
         for (ri_texture* texture : unordered_access_textures)
         {
             list.barrier(*texture, ri_resource_state::initial, ri_resource_state::unordered_access);

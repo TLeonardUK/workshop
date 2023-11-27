@@ -726,10 +726,9 @@ void renderer::render_state(render_world_state& state)
 
             for (render_pass::generated_state& state : pre_generated_states)
             {
-                for (auto& graphics_list : state.graphics_command_lists)
-                {
-                    graphics_command_queue.execute(*graphics_list);
-                }
+                profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "%s", state.pass_name.c_str());
+
+                graphics_command_queue.execute(state.graphics_command_lists);
             }
         }
 
@@ -742,11 +741,10 @@ void renderer::render_state(render_world_state& state)
 
             for (render_pass::generated_state& state : generated_state_list.states)
             {
-                for (auto& graphics_list : state.graphics_command_lists)
-                {
-                    graphics_command_queue.execute(*graphics_list);
-                }
-            }
+                profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "%s", state.pass_name.c_str());
+
+                graphics_command_queue.execute(state.graphics_command_lists);
+           }
         }
 
         // Dispatch all post work.
@@ -755,10 +753,9 @@ void renderer::render_state(render_world_state& state)
 
             for (render_pass::generated_state& state : post_generated_states)
             {
-                for (auto& graphics_list : state.graphics_command_lists)
-                {
-                    graphics_command_queue.execute(*graphics_list);
-                }
+                profile_gpu_marker(graphics_command_queue, profile_colors::gpu_view, "%s", state.pass_name.c_str());
+
+                graphics_command_queue.execute(state.graphics_command_lists);
             }
         }
     }
@@ -846,6 +843,7 @@ void renderer::render_single_view(render_world_state& state, render_view& view, 
         profile_marker(profile_colors::render, "generate render pass: %s", node->pass->name.c_str());        
         //get_technique(node->pass->effect_name.c_str(), node->pass->effect_variations);
 
+        output[index].pass_name = node->pass->name;
         node->pass->generate(*this, output[index], &view);
     });
 }
@@ -879,6 +877,7 @@ void renderer::render_pre_views(render_world_state& state, std::vector<render_pa
         
         profile_marker(profile_colors::render, "generate render pass: %s", node->pass->name.c_str());        
 
+        output[index].pass_name = node->pass->name;
         node->pass->generate(*this, output[index], nullptr);
     });
 }
@@ -913,6 +912,7 @@ void renderer::render_post_views(render_world_state& state, std::vector<render_p
         
         profile_marker(profile_colors::render, "generate render pass: %s", node->pass->name.c_str());        
 
+        output[index].pass_name = node->pass->name;
         node->pass->generate(*this, output[index], nullptr);
     });
 }

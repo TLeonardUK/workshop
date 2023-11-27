@@ -9,7 +9,6 @@
 
 #include "workshop.core/filesystem/virtual_file_system_types.h"
 
-#include <filesystem>
 #include <string>
 
 namespace ws {

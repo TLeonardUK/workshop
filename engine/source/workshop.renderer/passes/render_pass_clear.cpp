@@ -22,8 +22,6 @@ void render_pass_clear::generate(renderer& renderer, generated_state& state_outp
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
-
         // Transition targets to the relevant state.
         for (ri_texture_view texture : output.color_targets)
         {

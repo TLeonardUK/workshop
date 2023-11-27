@@ -29,6 +29,7 @@ public:
     // list for execution this frame.
     struct generated_state
     {
+        std::string pass_name;
         std::vector<ri_command_list*> graphics_command_lists;
     };
 

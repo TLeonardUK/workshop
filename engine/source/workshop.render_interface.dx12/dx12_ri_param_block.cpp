@@ -36,6 +36,8 @@ dx12_ri_param_block::~dx12_ri_param_block()
 
 void dx12_ri_param_block::mutate()
 {
+    std::scoped_lock lock(m_consume_mutex);
+
     if (m_use_count == m_last_mutate_use_count)
     {
         return;
@@ -64,6 +66,8 @@ void dx12_ri_param_block::mutate()
 
 void* dx12_ri_param_block::consume()
 {
+    std::scoped_lock lock(m_consume_mutex);
+
     // Warn if not all fields are set.
     for (size_t i = 0; i < m_fields_set.size(); i++)
     {
@@ -101,6 +105,8 @@ ri_param_block_archetype* dx12_ri_param_block::get_archetype()
 
 void dx12_ri_param_block::get_table(size_t& index, size_t& offset)
 {
+    std::scoped_lock lock(m_consume_mutex);
+
     // If no param block has been allocated yet, we need to allocate one to return the table information.
     if (!m_allocation.is_valid())
     {

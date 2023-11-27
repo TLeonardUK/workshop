@@ -38,8 +38,6 @@ void render_pass_calculate_mips::generate(renderer& renderer, generated_state& s
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
-        profile_gpu_marker(list, profile_colors::gpu_compute, "%s", name.c_str());
-
         list.set_pipeline(*technique->pipeline);
 
         list.barrier(*texture, texture->get_initial_state(), ri_resource_state::unordered_access);

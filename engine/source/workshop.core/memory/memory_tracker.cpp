@@ -210,8 +210,6 @@ void memory_tracker::record_free(memory_type type, string_hash asset_id, size_t 
 	}
 }
 
-#pragma optimize("", off)
-
 void memory_tracker::record_raw_alloc(void* ptr, size_t size)
 {
     memory_scope* scope = memory_scope::get_current_scope();

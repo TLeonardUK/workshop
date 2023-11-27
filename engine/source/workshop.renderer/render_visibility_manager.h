@@ -52,6 +52,16 @@ public:
             return h;
         }
 
+        size_t get_index() const
+        {
+            return index;
+        }
+
+        size_t get_generation() const
+        {
+            return generation;
+        }
+
         bool operator==(const object_id& other) const
         {
             return index == other.index && generation == other.generation;

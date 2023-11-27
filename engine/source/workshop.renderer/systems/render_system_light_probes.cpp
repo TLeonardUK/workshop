@@ -117,7 +117,7 @@ void render_system_light_probes::build_graph(render_graph& graph, const render_w
 
 void render_system_light_probes::build_post_graph(render_graph& graph, const render_world_state& state)
 {
-    profile_marker(profile_colors::render, "Build Post Graph");
+    profile_marker(profile_colors::render, "build light probe post graph");
 
     render_system_lighting* lighting_system = m_renderer.get_system<render_system_lighting>();
     

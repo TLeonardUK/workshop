@@ -16,8 +16,6 @@
 
 // Be careful modifying this if your not aware how it works, its fragile.
 
-#pragma optimize("", off)
-
 namespace ws {
 
 class memory_hook_base

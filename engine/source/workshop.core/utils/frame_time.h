@@ -4,8 +4,6 @@
 // ================================================================================================
 #pragma once
 
-#include <chrono>
-
 namespace ws {
 
 // ================================================================================================
@@ -17,7 +15,7 @@ public:
 
     frame_time();
 
-    static const inline float k_max_step_delta = 1.0f / 15.0f;
+    static const inline double k_max_step_delta = 1.0f / 10.0f;
 
     // Time between last frame and this frame in seconds. This is clamped to k_max_step_delta.
     float delta_seconds = 0.0f;
@@ -35,9 +33,9 @@ public:
     void step();
 
 private:
-    
-    std::chrono::high_resolution_clock::time_point m_last_frame_time;
 
+    double m_last_frame_time = 0.0;
+    
 };
 
 }; // namespace ws

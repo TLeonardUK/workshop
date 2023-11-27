@@ -4,8 +4,6 @@
 // ================================================================================================
 #pragma once
 
-#include <chrono>
-
 namespace ws {
 
 // ================================================================================================
@@ -33,7 +31,7 @@ public:
 
 private:
 
-    std::chrono::high_resolution_clock::time_point m_start_time;
+    double m_start_time;
 
     double m_elapsed_seconds = 0.0;
     bool m_started = false;

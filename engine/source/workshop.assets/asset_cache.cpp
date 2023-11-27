@@ -17,11 +17,11 @@ std::string asset_cache_key::hash() const
     // Generate hash from key source material.
     size_t hash = 0;
     hash_combine(hash, source.path);
-    hash_combine(hash, source.modified_time.time_since_epoch().count());
+    hash_combine(hash, source.modified_time);
     for (const asset_cache_key_file& dep : dependencies)
     {
         hash_combine(hash, dep.path);
-        hash_combine(hash, dep.modified_time.time_since_epoch().count());
+        hash_combine(hash, dep.modified_time);
     }
     hash_combine(hash, version);
     hash_combine(hash, static_cast<size_t>(platform));

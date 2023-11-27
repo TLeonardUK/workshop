@@ -27,6 +27,9 @@ public:
     // Inserts a command list for execution on this queue.
     virtual void execute(ri_command_list& list) = 0;
 
+    // Inserts a block of command lists for execution on this queue.
+    virtual void execute(const std::vector<ri_command_list*>& list) = 0;
+
     // Begins a profiling scope within the queue.
     virtual void begin_event(const color& color, const char* name, ...) = 0;
 

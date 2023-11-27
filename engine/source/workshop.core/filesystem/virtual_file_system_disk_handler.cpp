@@ -186,7 +186,7 @@ bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_f
     if (std::filesystem::exists(fspath))
     {
         std::filesystem::file_time_type time = std::filesystem::last_write_time(fspath);
-        timepoint = std::chrono::file_clock::to_utc(time);
+        timepoint = std::chrono::file_clock::to_utc(time).time_since_epoch().count();
 
         return true;
     }

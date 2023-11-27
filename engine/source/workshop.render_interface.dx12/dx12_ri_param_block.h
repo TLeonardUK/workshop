@@ -62,6 +62,8 @@ private:
 
     std::vector<bool> m_fields_set;
 
+    std::recursive_mutex m_consume_mutex;
+
 };
 
 }; // namespace ws

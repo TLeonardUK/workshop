@@ -38,8 +38,6 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "imgui");
-
         list.barrier(*output.color_targets[0].texture, ri_resource_state::initial, ri_resource_state::render_target);
         list.set_pipeline(*technique->pipeline.get());
         list.set_render_targets(output.color_targets, nullptr);

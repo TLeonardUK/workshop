@@ -4,7 +4,9 @@
 // ================================================================================================
 #pragma once
 
-#include <chrono>
+//#include <chrono>
+#include <vector>
+#include <memory>
 #include <functional>
 
 namespace ws {
@@ -19,8 +21,8 @@ enum class virtual_file_system_path_type
 };
 
 
-using virtual_file_system_time_clock = std::chrono::utc_clock;
-using virtual_file_system_time_point = std::chrono::time_point<virtual_file_system_time_clock>;
+//using virtual_file_system_time_clock = std::chrono::utc_clock;
+using virtual_file_system_time_point = uint64_t;//std::chrono::time_point<virtual_file_system_time_clock>;
 
 // ================================================================================================
 //  This is the base class for a path watcher which invokes a callback if the given 

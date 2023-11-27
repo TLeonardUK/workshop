@@ -44,8 +44,6 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
     size_t culled_instances = 0;
     
     {
-        profile_gpu_marker(list, profile_colors::gpu_pass, "%s", name.c_str());
-
         // Transition targets to the relevant state.
         for (ri_texture_view texture : output.color_targets)
         {

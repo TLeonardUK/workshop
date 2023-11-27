@@ -3,13 +3,14 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/perf/timer.h"
+#include "workshop.core/utils/time.h"
 #include "workshop.core/debug/debug.h"
 
 namespace ws {
 
 void timer::start()
 {
-    m_start_time = std::chrono::high_resolution_clock::now();
+    m_start_time = get_seconds();
     m_started = true;
 }
 
@@ -17,8 +18,8 @@ void timer::stop()
 {
     db_assert(m_started);
 
-    auto current_time = std::chrono::high_resolution_clock::now();
-    double elapsed = std::chrono::duration<double, std::chrono::seconds::period>(current_time - m_start_time).count();
+    double current_time = get_seconds();
+    double elapsed = (current_time - m_start_time);
     m_elapsed_seconds += elapsed;
     m_started = false;
 }
@@ -38,8 +39,8 @@ double timer::get_elapsed_seconds()
 {
     if (m_started)
     {
-        auto current_time = std::chrono::high_resolution_clock::now();
-        double elapsed = std::chrono::duration<double, std::chrono::seconds::period>(current_time - m_start_time).count();
+        auto current_time = get_seconds();
+        double elapsed = (current_time - m_start_time);
         return elapsed;
     }
     else
@@ -47,6 +48,5 @@ double timer::get_elapsed_seconds()
         return m_elapsed_seconds;
     }
 }
-
 
 }; // namespace ws

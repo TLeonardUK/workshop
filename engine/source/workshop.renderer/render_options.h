@@ -27,7 +27,7 @@ public:
 	// ================================================================================================
 
 	// How many rays to cast per probe to calculate diffus lighting.
-	size_t light_probe_ray_count = 256;
+	size_t light_probe_ray_count = 200;
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.
@@ -46,7 +46,7 @@ public:
     // How many milliseconds per frame can be spent on regenerating
     // light probes. As many probes as possible will be run as possible
     // within this time limit up to the maximum.
-    float light_probe_regeneration_time_limit_ms = 3.5f;
+    float light_probe_regeneration_time_limit_ms = 2.0f;
     
     // Number of probes per frame to increase or decreate by to adjust to meet the time limit above.
     size_t light_probe_regeneration_step_amount = 30;

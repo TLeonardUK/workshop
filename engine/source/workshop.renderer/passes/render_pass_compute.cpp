@@ -61,8 +61,6 @@ void render_pass_compute::generate(renderer& renderer, generated_state& state_ou
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();
     {
-        profile_gpu_marker(list, profile_colors::gpu_compute, "%s", name.c_str());
-
         // Resolve all the param blocks we are going to use.
         std::vector<ri_param_block*> blocks = param_blocks; 
         if (view)
