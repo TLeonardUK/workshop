@@ -12,6 +12,8 @@
 #include "workshop.window_interface/window.h"
 #include "workshop.core/statistics/statistics_manager.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 dx12_ri_upload_manager::dx12_ri_upload_manager(dx12_render_interface& renderer)
@@ -111,16 +113,14 @@ result<void> dx12_ri_upload_manager::create_resources()
     return true;
 }
 
-void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uint8_t>& data)
+void dx12_ri_upload_manager::upload(dx12_ri_texture& source, size_t array_index, size_t mip_index, const std::span<uint8_t>& data)
 {
     memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
 
     ri_command_queue& queue = m_renderer.get_copy_queue();
 
     // Calculate the offsets of each face in the stored data.
-    size_t block_size = ri_format_block_size(source.get_format());
     size_t face_count = source.get_depth();
-    size_t slice_count = source.get_depth();
     size_t mip_count = source.get_mip_levels();
     size_t dropped_mip_count = source.get_dropped_mips();
     size_t array_count = 1;
@@ -128,15 +128,112 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     {
         face_count = 6;
         array_count = 6;
-        slice_count = 1;
     }
 
-    size_t undropped_width = source.get_width();
-    size_t undropped_height = source.get_height();
-    for (size_t i = 0; i < dropped_mip_count; i++)
+    uint64_t total_memory = 0;
+
+    UINT row_count;
+    UINT64 row_size;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+
+    UINT subresource_index = (UINT)((array_index * mip_count) + mip_index);
+
+    D3D12_RESOURCE_DESC desc = source.get_resource()->GetDesc();
+
+    m_renderer.get_device()->GetCopyableFootprints(
+        &desc,
+        subresource_index,
+        1,
+        0u,
+        &footprint,
+        &row_count,
+        &row_size,
+        &total_memory
+    );
+
+    db_assert(total_memory >= data.size());
+
+    upload_state upload = allocate_upload(total_memory, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+    upload.resource = source.get_resource();
+    upload.resource_initial_state = source.get_initial_state();
+    upload.name = source.get_debug_name();
+
+    // Zero out upload space as parts of it may be padding.
+    memset(upload.heap->start_ptr + upload.heap_offset, 0, upload.heap_size);
+
+    // TODO: All the below is pretty grim, this needs cleaning up and simplifying.
+
+    // Copy the source data into each subresource.
+    size_t height = row_count;
+    size_t pitch = math::round_up_multiple((size_t)footprint.Footprint.RowPitch, (size_t)D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+    size_t depth = footprint.Footprint.Depth;
+    uint8_t* destination = (upload.heap->start_ptr + upload.heap_offset) + footprint.Offset;
+
+    size_t source_data_offset = 0;
+
+    // Copy source data into each row.
+    size_t dest_offset = 0;
+    for (size_t height_index = 0; height_index < height; height_index++)
     {
-        undropped_width *= 2;
-        undropped_height *= 2;
+        size_t source_row_size = footprint.Footprint.Width * ri_bytes_per_texel(source.get_format());
+        db_assert(source_row_size == row_size);
+
+#ifdef UPLOAD_DEBUG
+        if (footprint.Offset + dest_offset + source_row_size > upload.heap_size)
+        {
+            __debugbreak();
+        }
+#endif
+
+        memcpy(destination, data.data() + source_data_offset, source_row_size);
+
+        source_data_offset += source_row_size;
+        destination += pitch;
+        dest_offset += pitch;
+    }
+
+    // Generate copy command list.
+    upload.build_command_list = [source_ptr=source.get_resource(), footprint, subresource_index, mip_index, debug_name=source.get_debug_name(), heap_ptr=upload.heap->handle.Get(), heap_offset=upload.heap_offset](dx12_ri_command_list& list)
+    {
+        D3D12_TEXTURE_COPY_LOCATION dest = {};
+        dest.pResource = source_ptr;
+        dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        dest.SubresourceIndex = subresource_index;
+
+        D3D12_TEXTURE_COPY_LOCATION src = {};
+        src.pResource = heap_ptr;
+        src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        src.PlacedFootprint = footprint;
+        src.PlacedFootprint.Offset += heap_offset;
+
+        list.get_dx_command_list()->CopyTextureRegion(
+            &dest,
+            0,
+            0,
+            0,
+            &src,
+            nullptr
+        );
+    };
+    
+    queue_upload(upload);
+}
+
+void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uint8_t>& data)
+{
+    memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
+
+    ri_command_queue& queue = m_renderer.get_copy_queue();
+
+    // Calculate the offsets of each face in the stored data.
+    size_t face_count = source.get_depth();
+    size_t mip_count = source.get_mip_levels();
+    size_t dropped_mip_count = source.get_dropped_mips();
+    size_t array_count = 1;
+    if (source.get_dimensions() == ri_texture_dimension::texture_cube)
+    {
+        face_count = 6;
+        array_count = 6;
     }
 
     size_t sub_resource_count = mip_count * array_count;
@@ -181,27 +278,17 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
     std::vector<uint8_t*> face_mip_data;
     face_mip_data.resize(face_count * mip_count);
 
-    size_t data_offset = 0;
     for (size_t face = 0; face < face_count; face++)
     {   
-        size_t mip_width  = undropped_width;
-        size_t mip_height = undropped_height;
-
-        for (size_t mip = 0; mip < mip_count + dropped_mip_count; mip++)
+        for (size_t mip = 0; mip < mip_count; mip++)
         {
-            const size_t mip_size = (ri_bytes_per_texel(source.get_format()) * mip_width * mip_height) / block_size;
+            size_t mip_data_offset = 0;
+            size_t mip_data_size = 0;
 
-            // Skip over the dropped mips in the source data until we get to the ones we care about.
-            if (mip >= dropped_mip_count)
-            {
-                const size_t mip_index = (mip - dropped_mip_count) + (face * mip_count);
-                face_mip_data[mip_index] = source_data + data_offset;
-            }
+            source.calculate_linear_data_mip_range(face, mip, mip_data_offset, mip_data_size);
 
-            data_offset += mip_size;
-
-            mip_width = std::max(1llu, mip_width / 2);
-            mip_height = std::max(1llu, mip_height / 2);
+            const size_t mip_index = (mip) + (face * mip_count);
+            face_mip_data[mip_index] = source_data + mip_data_offset; 
         }
     }
 

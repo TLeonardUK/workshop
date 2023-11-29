@@ -8,6 +8,7 @@ version: 1
 group: world
 
 usage: color
+streamed: false
 
 faces:
     - data:materials/core/solid/textures/grid.png

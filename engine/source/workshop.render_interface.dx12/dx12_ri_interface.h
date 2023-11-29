@@ -15,6 +15,7 @@ namespace ws {
 
 class dx12_ri_command_queue;
 class dx12_ri_upload_manager;
+class dx12_ri_tile_manager;
 class dx12_ri_query_manager;
 class dx12_ri_descriptor_table;
 class dx12_ri_small_buffer_allocator;
@@ -93,6 +94,7 @@ public:
     void drain_deferred();
 
     dx12_ri_upload_manager& get_upload_manager();
+    dx12_ri_tile_manager& get_tile_manager();
     dx12_ri_query_manager& get_query_manager();
 
     bool is_tearing_allowed();
@@ -148,6 +150,7 @@ private:
     std::unique_ptr<dx12_ri_command_queue> m_graphics_queue = nullptr;
     std::unique_ptr<dx12_ri_command_queue> m_copy_queue = nullptr;
     std::unique_ptr<dx12_ri_upload_manager> m_upload_manager = nullptr;
+    std::unique_ptr<dx12_ri_tile_manager> m_tile_manager = nullptr;
     std::unique_ptr<dx12_ri_query_manager> m_query_manager = nullptr;
 
     std::unique_ptr<dx12_ri_descriptor_heap> m_srv_descriptor_heap = nullptr;

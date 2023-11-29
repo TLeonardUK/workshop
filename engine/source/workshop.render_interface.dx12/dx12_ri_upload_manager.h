@@ -40,6 +40,7 @@ public:
     result<void> create_resources();
 
     void upload(dx12_ri_texture& source, const std::span<uint8_t>& data);
+    void upload(dx12_ri_texture& source, size_t array_index, size_t mip_index, const std::span<uint8_t>& data);
     void upload(dx12_ri_buffer& source, const std::span<uint8_t>& data, size_t offset);
 
     void new_frame(size_t index);

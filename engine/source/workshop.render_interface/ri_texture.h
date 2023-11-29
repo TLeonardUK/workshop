@@ -51,6 +51,12 @@ public:
         // Number of mips to drop. This is only relevant if initial data has been provided.
         size_t drop_mips = 0;
 
+        // If texture should be partially resident.
+        bool is_partially_resident = false;
+        
+        // How many mips should be initially resident.
+        size_t resident_mips = 0;
+
         // Data that we will upload into the texture on construction.
         // This must be in the format returned by ri_texture_compiler.
         std::span<uint8_t> data;
@@ -76,6 +82,10 @@ public:
 
     virtual bool is_render_target() = 0;
     virtual bool is_depth_stencil() = 0;
+
+    virtual size_t get_resident_mips() = 0;
+    virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) = 0;
+    virtual void make_mip_non_resident(size_t mip_index) = 0;
 
     virtual ri_resource_state get_initial_state() = 0;
 

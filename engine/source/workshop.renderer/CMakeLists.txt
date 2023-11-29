@@ -42,6 +42,8 @@ SET(SOURCES
     "render_visibility_manager.cpp"
     "render_imgui_manager.h"
     "render_imgui_manager.cpp"
+    "render_texture_streamer.h"
+    "render_texture_streamer.cpp"
     
     "render_command_queue.h"
     "render_command_queue.cpp"

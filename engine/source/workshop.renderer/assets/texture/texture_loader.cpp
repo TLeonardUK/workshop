@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 23;
+constexpr size_t k_asset_compiled_version = 24;
 
 };
 
@@ -105,6 +105,7 @@ bool texture_loader::serialize(const char* path, texture& asset, bool isSaving)
     stream_serialize(*stream, asset.height);
     stream_serialize(*stream, asset.depth);
     stream_serialize(*stream, asset.mipmapped);
+    stream_serialize(*stream, asset.streamed);
     stream_serialize(*stream, asset.mip_levels);
     stream_serialize_list(*stream, asset.data);
 
@@ -201,6 +202,11 @@ bool texture_loader::parse_properties(const char* path, YAML::Node& node, textur
     }
 
     if (!parse_property(path, "mipmapped", node["mipmapped"], asset.mipmapped, false))
+    {
+        return false;
+    }
+
+    if (!parse_property(path, "streamed", node["streamed"], asset.streamed, false))
     {
         return false;
     }

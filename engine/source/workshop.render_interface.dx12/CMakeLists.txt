@@ -44,6 +44,8 @@ SET(SOURCES
     "dx12_ri_param_block_archetype.cpp"
     "dx12_ri_upload_manager.h"
     "dx12_ri_upload_manager.cpp"
+    "dx12_ri_tile_manager.h"
+    "dx12_ri_tile_manager.cpp"
     "dx12_ri_small_buffer_allocator.h"
     "dx12_ri_small_buffer_allocator.cpp"
     

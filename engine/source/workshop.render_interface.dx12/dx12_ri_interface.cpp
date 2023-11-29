@@ -15,6 +15,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_ri_sampler.h"
 #include "workshop.render_interface.dx12/dx12_ri_upload_manager.h"
+#include "workshop.render_interface.dx12/dx12_ri_tile_manager.h"
 #include "workshop.render_interface.dx12/dx12_ri_query_manager.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.render_interface.dx12/dx12_ri_layout_factory.h"
@@ -262,6 +263,11 @@ size_t dx12_render_interface::get_pipeline_depth()
 dx12_ri_upload_manager& dx12_render_interface::get_upload_manager()
 {
     return *m_upload_manager;
+}
+
+dx12_ri_tile_manager& dx12_render_interface::get_tile_manager()
+{
+    return *m_tile_manager;
 }
 
 dx12_ri_query_manager& dx12_render_interface::get_query_manager()
@@ -626,11 +632,16 @@ result<void> dx12_render_interface::destroy_heaps()
     return true;
 }
 
-
 result<void> dx12_render_interface::create_misc()
 {
     m_upload_manager = std::make_unique<dx12_ri_upload_manager>(*this);
     if (!m_upload_manager->create_resources())
+    {
+        return false;
+    }
+
+    m_tile_manager = std::make_unique<dx12_ri_tile_manager>(*this);
+    if (!m_tile_manager->create_resources())
     {
         return false;
     }
@@ -653,6 +664,7 @@ result<void> dx12_render_interface::create_misc()
 result<void> dx12_render_interface::destroy_misc()
 {
     m_query_manager = nullptr;
+    m_tile_manager = nullptr;
     m_upload_manager = nullptr;
 
     return true;
@@ -682,6 +694,10 @@ void dx12_render_interface::end_frame()
 void dx12_render_interface::flush_uploads()
 {
     profile_marker(profile_colors::render, "flush uploads");
+
+    // Always flush the tile manager before the upload manager as it will likely
+    // be trying to update mappings to upload to.
+    m_tile_manager->new_frame(m_frame_index);
 
     m_upload_manager->new_frame(m_frame_index);
 }

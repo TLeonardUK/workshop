@@ -18,6 +18,7 @@
 #include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/render_imgui_manager.h"
+#include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/render_options.h"
 #include "workshop.render_interface/ri_types.h"
@@ -41,6 +42,7 @@ class render_view;
 class render_param_block_manager;
 class render_effect_manager;
 class render_batch_manager;
+class render_texture_streamer;
 class asset_manager;
 class window;
 class shader;
@@ -277,6 +279,9 @@ public:
     // Gets the manager that handles the objects contained in the render scene.
     render_scene_manager& get_scene_manager();
 
+    // Gets the texture streamer that handles loading in textures dynamically.
+    render_texture_streamer& get_texture_streamer();
+
     // Gets the manager that handles the visibility of objects
     render_visibility_manager& get_visibility_manager();
 
@@ -428,6 +433,7 @@ private:
     std::unique_ptr<render_visibility_manager> m_visibility_manager;
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
+    std::unique_ptr<render_texture_streamer> m_texture_streamer;
 
     std::array<bool, static_cast<int>(render_flag::COUNT)> m_render_flags = { 0 };
 
@@ -459,7 +465,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::light_probe_contribution;
+    visualization_mode m_visualization_mode = visualization_mode::albedo;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

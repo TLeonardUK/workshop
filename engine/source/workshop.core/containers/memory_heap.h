@@ -40,6 +40,9 @@ public:
     // Returns true if there are no allocations in the heap.
     bool empty();
 
+    // Gets remaining size to be allocated.
+    size_t get_remaining();
+
 private:
     bool get_block_index(size_t offset, size_t& index);
 
@@ -53,6 +56,8 @@ private:
     };
 
     std::vector<block> m_blocks;
+
+    size_t m_remaining = 0;
 
 };
 

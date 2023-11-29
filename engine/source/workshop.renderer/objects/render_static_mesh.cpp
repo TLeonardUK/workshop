@@ -41,7 +41,7 @@ void render_static_mesh::set_model(const asset_ptr<model>& model)
     recreate_render_data();
 }
 
-std::vector<asset_ptr<material>> render_static_mesh::get_materials()
+const std::vector<asset_ptr<material>>& render_static_mesh::get_materials()
 {
     return m_override_materials;
 }

@@ -10,6 +10,7 @@
 #include "workshop.core/memory/memory_tracker.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
+#include "workshop.render_interface.dx12/dx12_ri_tile_manager.h"
 #include <array>
 #include <string>
 
@@ -44,13 +45,34 @@ public:
     virtual bool is_render_target() override;
     virtual bool is_depth_stencil() override;
 
+    virtual size_t get_resident_mips() override;
+    virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) override;
+    virtual void make_mip_non_resident(size_t mip_index) override;
+
     virtual ri_resource_state get_initial_state() override;
 
     virtual const char* get_debug_name() override;
 
     virtual void swap(ri_texture* other) override;
 
+    // Calculates the data range for an individual mip in the
+    // packed source data that the texture_compiler generates.
+    bool calculate_linear_data_mip_range(size_t array_index, size_t mip_index, size_t& offset, size_t& size);
+
 public:
+    struct mip_residency
+    {
+        size_t index = 0; 
+
+        bool is_resident = false;
+        bool is_packed = false;
+
+        D3D12_TILED_RESOURCE_COORDINATE tile_coordinate;
+        D3D12_TILE_REGION_SIZE tile_size;
+
+        dx12_ri_tile_manager::tile_allocation tile_allocation;
+    };
+
     dx12_ri_descriptor_table::allocation get_main_srv() const;
     dx12_ri_descriptor_table::allocation get_srv(size_t slice, size_t mip) const;
     dx12_ri_descriptor_table::allocation get_rtv(size_t slice, size_t mip) const;
@@ -59,13 +81,26 @@ public:
 
     ID3D12Resource* get_resource();
 
-    void calculate_formats();
-    void create_views();
+    const mip_residency& get_mip_residency(size_t index);
 
-private:
+    size_t get_max_resident_mip();
+
+    void recreate_views();
+    void calculate_dropped_mips();
+    void calculate_formats();
+    void create_views(bool overwrite_descriptors = false);
+
+private:        
+    mip_residency* get_first_packed_mip_residency();
+
+public:
+    
     dx12_render_interface& m_renderer;
     std::string m_debug_name;
     ri_texture::create_params m_create_params;
+
+    size_t m_resident_mips = 0;
+    std::vector<mip_residency> m_mip_residency;
 
     std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
 

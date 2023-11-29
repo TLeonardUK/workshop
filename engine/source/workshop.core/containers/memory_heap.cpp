@@ -8,6 +8,7 @@ namespace ws {
 
 memory_heap::memory_heap(size_t size)
 {
+    m_remaining = size;
     m_blocks.push_back({ 0, size, false });
 }
 
@@ -40,6 +41,8 @@ bool memory_heap::alloc(size_t size, size_t alignment, size_t& offset)
 
                     m_blocks.insert(m_blocks.begin() + i + 1, new_block);
                 }
+
+                m_remaining -= size_required;
 
                 return true;
             }
@@ -110,9 +113,16 @@ void memory_heap::free(size_t offset)
     size_t index;
     if (get_block_index(offset, index))
     {
+        m_remaining += m_blocks[index].size;
+
         m_blocks[index].used = false;
         coalesce(index);
     }
+}
+
+size_t memory_heap::get_remaining()
+{
+    return m_remaining;
 }
 
 }; // namespace workshop

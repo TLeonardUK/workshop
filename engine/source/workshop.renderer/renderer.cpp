@@ -161,6 +161,7 @@ result<void> renderer::create_managers(init_list& list)
     m_visibility_manager = std::make_unique<render_visibility_manager>(*this);
     m_batch_manager = std::make_unique<render_batch_manager>(*this);
     m_imgui_manager = std::make_unique<render_imgui_manager>(*this, m_input_interface);
+    m_texture_streamer = std::make_unique<render_texture_streamer>(*this);
 
     m_param_block_manager->register_init(list);
     m_effect_manager->register_init(list);
@@ -168,6 +169,7 @@ result<void> renderer::create_managers(init_list& list)
     m_visibility_manager->register_init(list);
     m_batch_manager->register_init(list);
     m_imgui_manager->register_init(list);
+    m_texture_streamer->register_init(list);
 
     return true;
 }
@@ -180,6 +182,7 @@ result<void> renderer::destroy_managers()
     m_visibility_manager = nullptr;
     m_batch_manager = nullptr;
     m_imgui_manager = nullptr;
+    m_texture_streamer = nullptr;
 
     return true;
 }
@@ -470,6 +473,11 @@ render_effect_manager& renderer::get_effect_manager()
     return *m_effect_manager;
 }
 
+render_texture_streamer& renderer::get_texture_streamer()
+{
+    return *m_texture_streamer;
+}
+
 render_scene_manager& renderer::get_scene_manager()
 {
     return *m_scene_manager;
@@ -590,6 +598,9 @@ void renderer::render_state(render_world_state& state)
         m_stats_frame_time_present_wait->submit(wait_timer.get_elapsed_seconds());
     }
 
+    // Finish off texture streaming tasks.
+    m_texture_streamer->end_frame();
+
     // Execute any callbacks that have been queued.
     run_callbacks();
 
@@ -649,6 +660,7 @@ void renderer::render_state(render_world_state& state)
     // Begin the new frame.
     m_render_interface.begin_frame();
     m_batch_manager->begin_frame();
+    m_texture_streamer->begin_frame();
 
     // Perform frustum culling for all views.
     if (!get_render_flag(render_flag::freeze_rendering))

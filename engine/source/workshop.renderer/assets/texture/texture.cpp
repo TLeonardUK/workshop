@@ -19,10 +19,14 @@ texture::texture(ri_interface& ri_interface, renderer& renderer)
 
 texture::~texture()
 {
+    m_renderer.get_texture_streamer().unregister_texture(this);
 }
 
 bool texture::load_dependencies()
 {
+    render_texture_streamer& streamer = m_renderer.get_texture_streamer();
+    const render_options& options = m_renderer.get_options();
+
     ri_texture::create_params params;
     params.width = width;
     params.height = height;
@@ -30,9 +34,34 @@ bool texture::load_dependencies()
     params.format = ri_convert_pixmap_format(format);
     params.dimensions = dimensions;
     params.is_render_target = false;
-    params.mip_levels = mip_levels;
     params.data = data;
-    params.drop_mips = m_renderer.get_options().textures_dropped_mips;
+
+    if (std::max(params.width, params.height) < options.texture_streaming_min_dimension)
+    {
+        db_warning(renderer, "Disabled streaming for texture as it is smaller than minimum dimensions, consider turning off streaming in the asset: %s", name.c_str());
+        streamed = false;
+    }
+
+    if (params.dimensions != ri_texture_dimension::texture_2d)
+    {
+        db_warning(renderer, "Disabled streaming for texture as only 2d textures support streaming, consider turning off streaming in the asset: %s", name.c_str());
+        streamed = false;
+    }
+
+    if (streamed)
+    {
+        params.is_partially_resident = true;
+        params.mip_levels = mip_levels;
+        params.resident_mips = streamer.get_resident_mip_count(this);
+        params.drop_mips = options.textures_dropped_mips;
+    }
+    else
+    {
+        params.is_partially_resident = false;
+        params.mip_levels = mip_levels;
+        params.resident_mips = mip_levels;
+        params.drop_mips = options.textures_dropped_mips;
+    }
 
     ri_instance = m_ri_interface.create_texture(params, name.c_str());
     if (!ri_instance)
@@ -49,6 +78,13 @@ bool texture::load_dependencies()
     return true;
 }
 
+bool texture::post_load()
+{
+    m_renderer.get_texture_streamer().register_texture(this);
+
+    return true;
+}
+
 void texture::swap(texture* other)
 {
     std::swap(usage, other->usage);
@@ -58,6 +94,7 @@ void texture::swap(texture* other)
     std::swap(height, other->height);
     std::swap(depth, other->depth);
     std::swap(mipmapped, other->mipmapped);
+    std::swap(streamed, other->streamed);
     std::swap(faces, other->faces);
     std::swap(mip_levels, other->mip_levels);
     std::swap(data, other->data);

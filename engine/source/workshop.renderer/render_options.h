@@ -20,14 +20,27 @@ public:
 
 	// How many mips to drop of a texture as its loaded. This can be used to quickly strim down the 
 	// maximum memory being used. In general texture streaming/etc should be used rather than this.
-	size_t textures_dropped_mips = 0;
+	size_t textures_dropped_mips = 8;
+
+    // Maximum number of mips that can be resident in a texture. In general leave this uncapped.
+    // If you want to force the streamer to drop top level mips consider using the texture_dropped_mips
+    // value instead.
+    size_t texture_streaming_max_resident_mips = 1000;
+
+    // Minimum number of mips that can be resident in a texture. Ideally this should be set
+    // to the maximum number of mips that fit into a memory page. Any less and you save no memory
+    // but waste streaming time.
+    size_t texture_streaming_min_resident_mips = 7;         // ~128x128
+
+    // Minimum dimension of a texture for it to be considered for streaming.
+    size_t texture_streaming_min_dimension = 64;
 
 	// ================================================================================================
 	//  Light Probes
 	// ================================================================================================
 
 	// How many rays to cast per probe to calculate diffus lighting.
-	size_t light_probe_ray_count = 200;
+	size_t light_probe_ray_count = 256;
 
 	// How many probes can be regenerated per frame. Each regeneration can cost as much as an entire
 	// scene render, so keep limited to remain responsive.

@@ -27,7 +27,7 @@ public:
     void set_model(const asset_ptr<model>& model);
 
     // Gets/sets the materials the overridden materials the static mesh renders with.
-    std::vector<asset_ptr<material>> get_materials();
+    const std::vector<asset_ptr<material>>& get_materials();
     void set_materials(const std::vector<asset_ptr<material>>& materials);
 
     // Overrides the normal functions to update instance data when they change.
