@@ -6,13 +6,18 @@
 
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/utils/frame_time.h"
+#include "workshop.core/async/task_scheduler.h"
+#include "workshop.core/math/obb.h"
 
-#include "workshop.renderer/assets/texture/texture.h"
+#include <shared_mutex>
+#include <vector>
+#include <array>
 
 namespace ws {
 
 class renderer;
 class texture;
+class render_view;
 class input_interface;
 
 // ================================================================================================
@@ -36,7 +41,7 @@ public:
     void end_frame();
 
     // Gets the current number of mips the texture wants to be resident.
-    size_t get_wanted_resident_mip_count(texture* tex);
+    size_t get_current_resident_mip_count(texture* tex);
 
     // Gets the current number of mips the texture nees for ideal rendering.
     size_t get_ideal_resident_mip_count(texture* tex);
@@ -48,12 +53,25 @@ public:
     void unregister_texture(texture* tex);
 
 private:
+    friend class texture;
+
+    enum class texture_state
+    {
+        pending_upgrade,
+        pending_downgrade,
+        waiting_for_mips,
+        idle,
+
+        COUNT
+    };
 
     struct texture_streaming_info
     {
-        texture* instance;
-        size_t   wanted_resident_mips;
-        size_t   ideal_resident_mips;
+        texture*        instance;
+        texture_state   state;
+        size_t          current_resident_mips;
+        size_t          ideal_resident_mips;
+        bool            can_decay = false;
     };
 
     struct texture_bounds
@@ -84,6 +102,24 @@ private:
     // Gathers the textures and the bounds of the objects they are applied to from the scene.
     void gather_texture_bounds(std::vector<render_view*>& views, std::vector<texture_bounds>& texture_bounds);
 
+    // Changes the state of the texture.
+    void set_texture_state(texture_streaming_info& streaming_info, texture_state new_state);
+
+    // Removes a texture from the state array.
+    void remove_from_state_array(texture_streaming_info& streaming_info);
+
+    // Adds a texture from the state array.
+    void add_to_state_array(texture_streaming_info& streaming_info);
+
+    // Calculates the texture we should begin upgrading/downgrading.
+    void calculate_textures_to_change(std::vector<texture_streaming_info*>& to_upgrade, std::vector<texture_streaming_info*>& to_downgrade);
+   
+    // Starts streaming in mip data for the texture to upgrade it.
+    void start_upgrade(texture_streaming_info& streaming_info);
+
+    // Starts dropping resident mips until texture is at its ideal mips.
+    void start_downgrade(texture_streaming_info& streaming_info);
+
 private:
     renderer& m_renderer;
 
@@ -91,8 +127,14 @@ private:
 
     std::vector<texture_bounds> m_texture_bounds;
 
-    std::vector<std::unique_ptr<texture_streaming_info>> m_pending_register_textures;
-    std::unordered_map<texture*, std::unique_ptr<texture_streaming_info>> m_streaming_textures;
+    std::array<std::vector<texture_streaming_info*>, (int)texture_state::COUNT> m_state_array;
+
+    int64_t m_current_memory_pressure = 0;
+
+    std::shared_mutex m_access_mutex;
+    std::unordered_map<texture*, std::shared_ptr<texture_streaming_info>> m_streaming_textures;
+
+    bool m_pool_overcomitted = false;
 };
 
 }; // namespace ws

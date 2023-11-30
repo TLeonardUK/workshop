@@ -10,6 +10,8 @@
 
 #include "workshop.render_interface/ri_types.h"
 
+#include "workshop.renderer/render_texture_streamer.h"
+
 #include "workshop.renderer/renderer.h"
 #include <array>
 #include <unordered_map>
@@ -99,6 +101,11 @@ public:
     std::array<texture_channel_flags, 4> channel_flags = { texture_channel_flags::none, texture_channel_flags::none, texture_channel_flags::none, texture_channel_flags::none };
 
     std::unique_ptr<ri_texture> ri_instance;
+
+private:
+    friend class render_texture_streamer;
+
+    std::shared_ptr<render_texture_streamer::texture_streaming_info> streaming_info;
 
 protected:
     virtual bool load_dependencies() override;

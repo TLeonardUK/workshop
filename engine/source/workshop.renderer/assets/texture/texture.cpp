@@ -52,7 +52,7 @@ bool texture::load_dependencies()
     {
         params.is_partially_resident = true;
         params.mip_levels = mip_levels;
-        params.resident_mips = streamer.get_wanted_resident_mip_count(this);
+        params.resident_mips = streamer.get_current_resident_mip_count(this);
         params.drop_mips = options.textures_dropped_mips;
     }
     else

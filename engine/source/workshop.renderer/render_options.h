@@ -37,6 +37,9 @@ public:
     // Minimum dimension of a texture for it to be considered for streaming.
     size_t texture_streaming_min_dimension = 64;
 
+    // Maximum size of the streamed texture pool in bytes.
+    size_t texture_streaming_pool_size = 512 * 1024 * 1024;
+
 	// ================================================================================================
 	//  Light Probes
 	// ================================================================================================

@@ -43,7 +43,7 @@ void sdl_window::handle_event(const SDL_Event* event)
         SDL_GetWindowPosition(m_window, &x, &y);
         SDL_GetWindowSize(m_window, &width, &height);
 
-        db_move_console(x, y + height, width, 0);        
+        db_move_console(x, y + height, width, 200);        
 
         m_width = width;
         m_height = height;

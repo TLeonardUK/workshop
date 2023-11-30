@@ -35,11 +35,13 @@ void render_texture_streamer::register_init(init_list& list)
 {
 }
 
-size_t render_texture_streamer::get_wanted_resident_mip_count(texture* tex)
+size_t render_texture_streamer::get_current_resident_mip_count(texture* tex)
 {
+    std::shared_lock lock(m_access_mutex);
+
     if (auto iter = m_streaming_textures.find(tex); iter != m_streaming_textures.end())
     {
-        return iter->second->wanted_resident_mips;
+        return iter->second->current_resident_mips;
     }
 
     const render_options& options = m_renderer.get_options();
@@ -48,6 +50,8 @@ size_t render_texture_streamer::get_wanted_resident_mip_count(texture* tex)
 
 size_t render_texture_streamer::get_ideal_resident_mip_count(texture* tex)
 {
+    std::shared_lock lock(m_access_mutex);
+
     if (auto iter = m_streaming_textures.find(tex); iter != m_streaming_textures.end())
     {
         return iter->second->ideal_resident_mips;
@@ -59,23 +63,31 @@ size_t render_texture_streamer::get_ideal_resident_mip_count(texture* tex)
 
 void render_texture_streamer::register_texture(texture* tex)
 {
-    // TODO: Might want to defer this so streaming_textures is not modified while calculating ideal mips.
+    std::unique_lock lock(m_access_mutex);
 
     const render_options& options = m_renderer.get_options();
 
-    std::unique_ptr<texture_streaming_info> info = std::make_unique<texture_streaming_info>();
+    std::shared_ptr<texture_streaming_info> info = std::make_shared<texture_streaming_info>();
     info->instance = tex;
-    info->wanted_resident_mips = tex->ri_instance->get_mip_levels();
-    info->ideal_resident_mips = info->wanted_resident_mips;
+    info->current_resident_mips = tex->ri_instance->get_resident_mips();
+    info->ideal_resident_mips = info->current_resident_mips;
+    info->state = texture_state::idle;
+    tex->streaming_info = info;
+
+    m_current_memory_pressure += tex->ri_instance->get_memory_usage_with_residency(info->current_resident_mips);
+
+    add_to_state_array(*tex->streaming_info);
 
     m_streaming_textures[tex] = std::move(info);
 }
 
 void render_texture_streamer::unregister_texture(texture* tex)
 {
-    // TODO: Might want to defer this so streaming_textures is not modified while calculating ideal mips.
+    std::unique_lock lock(m_access_mutex);
 
     m_streaming_textures.erase(tex);
+
+    remove_from_state_array(*tex->streaming_info);
 }
 
 void render_texture_streamer::begin_frame()
@@ -104,8 +116,52 @@ void render_texture_streamer::set_ideal_resident_mip_count(texture_streaming_inf
         return;
     }
 
-    db_log(renderer, "[Streaming] Ideal mip changed to %zi for %s", new_ideal_mips, streaming_info.instance->name.c_str());
+    db_log(renderer, "[Streaming] Ideal mip changed to %zi (current mips %zi) for %s", new_ideal_mips, streaming_info.current_resident_mips, streaming_info.instance->name.c_str());
     streaming_info.ideal_resident_mips = new_ideal_mips;
+
+    // Switch state based on the delta between current and ideal mips.
+    if (streaming_info.ideal_resident_mips > streaming_info.current_resident_mips)
+    {
+        set_texture_state(streaming_info, texture_state::pending_upgrade);
+    }
+    else if (streaming_info.ideal_resident_mips < streaming_info.current_resident_mips)
+    {
+        set_texture_state(streaming_info, texture_state::pending_downgrade);
+    }
+    else
+    {
+        set_texture_state(streaming_info, texture_state::idle);
+    }
+}
+
+void render_texture_streamer::set_texture_state(texture_streaming_info& streaming_info, texture_state new_state)
+{
+    if (streaming_info.state == new_state)
+    {
+        return;
+    }
+
+    db_log(renderer, "[Streaming] Changed state to %zi for %s", (size_t)new_state, streaming_info.instance->name.c_str());
+
+    remove_from_state_array(streaming_info);
+    streaming_info.state = new_state;
+    add_to_state_array(streaming_info);
+}
+
+void render_texture_streamer::remove_from_state_array(texture_streaming_info& streaming_info)
+{
+    auto& state_array = m_state_array[(int)streaming_info.state];
+    auto iter = std::find(state_array.begin(), state_array.end(), &streaming_info);
+    if (iter != state_array.end())
+    {
+        state_array.erase(iter);
+    }
+}
+
+void render_texture_streamer::add_to_state_array(texture_streaming_info& streaming_info)
+{
+    auto& state_array = m_state_array[(int)streaming_info.state];
+    state_array.push_back(&streaming_info);
 }
 
 size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& tex_bounds)
@@ -141,7 +197,7 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
     // Clamp to minimum and maximum mip bounds.
     ideal_mip_count = std::clamp(
         ideal_mip_count,
-        options.texture_streaming_min_resident_mips,
+        std::min(mip_count, options.texture_streaming_min_resident_mips),
         options.texture_streaming_max_resident_mips
     );
 
@@ -203,8 +259,73 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
     }
 }
 
+void render_texture_streamer::start_upgrade(texture_streaming_info& streaming_info)
+{
+    // TODO: Get mip data offset/size and kick off an async read.
+
+    set_texture_state(streaming_info, texture_state::waiting_for_mips);
+
+}
+
+void render_texture_streamer::start_downgrade(texture_streaming_info& streaming_info)
+{
+    // TODO
+}
+
+void render_texture_streamer::calculate_textures_to_change(std::vector<texture_streaming_info*>& to_upgrade, std::vector<texture_streaming_info*>& to_downgrade)
+{
+    const render_options& options = m_renderer.get_options();
+
+    int64_t bytes_available = (int64_t)options.texture_streaming_pool_size - (int64_t)m_current_memory_pressure;
+
+    // Try to upgrade as many textures as fit into the remaining pool space.
+    for (texture_streaming_info* texture : m_state_array[(int)texture_state::pending_upgrade])
+    {
+        size_t current_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->current_resident_mips);
+        size_t ideal_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->ideal_resident_mips);
+        size_t memory_delta = ideal_size - current_size;
+
+        if ((int64_t)memory_delta < bytes_available)
+        {
+            to_upgrade.push_back(texture);
+        }
+
+        bytes_available -= memory_delta;
+    }
+
+    // If we need more space for other textures to upgrade, downgrade unneeded textures.
+    if (bytes_available < 0)
+    {
+        for (texture_streaming_info* texture : m_state_array[(int)texture_state::pending_downgrade])
+        {
+            size_t current_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->current_resident_mips);
+            size_t ideal_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->ideal_resident_mips);
+            size_t memory_delta = current_size - ideal_size;
+
+            to_downgrade.push_back(texture);
+            bytes_available += memory_delta;
+        }
+    }
+
+    if (bytes_available < 0)
+    {
+        if (!m_pool_overcomitted)
+        {
+            db_warning(renderer, "Texture streamer is overcommitted, ideal mips for all active textures are larger than the pool size. Consider increasing the pool size.");
+            m_pool_overcomitted = true;
+        }
+    }
+    else
+    {
+        m_pool_overcomitted = false;
+    }
+}
+
 void render_texture_streamer::calculate_in_view_mips()
 {
+    std::shared_lock lock(m_access_mutex);
+
+    const render_options& options = m_renderer.get_options();
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
 
     // Gather all views that can determine streaming state.
@@ -223,22 +344,55 @@ void render_texture_streamer::calculate_in_view_mips()
     // TODO: Do this in parallel.
     for (texture_bounds& bounds : m_texture_bounds)
     {
-        // TODO: Put an intrusive pointer in the texture asset to avoid this lookup.
-        auto iter = m_streaming_textures.find(bounds.texture);
-        if (iter == m_streaming_textures.end())
+        // Don't update any textures that are currently awaiting mip downloads.
+        if (bounds.texture->streaming_info->state == texture_state::waiting_for_mips)
         {
             continue;
         }
 
-        auto& info = *iter->second;
         size_t new_ideal_mips = calculate_ideal_mip_count(bounds);
+        set_ideal_resident_mip_count(*bounds.texture->streaming_info.get(), new_ideal_mips);
 
-        set_ideal_resident_mip_count(info, new_ideal_mips);
+        // Don't allow this texture to decay as its been seen this frame.
+        bounds.texture->streaming_info->can_decay = false;
     }
 
-    // If we have space, upgrade textures.
+    // If we didn't see a texture this frame, decay it.
+    // (This won't actually stream the texture out unless the texture pool is under heavy pressure).
+    for (auto& [ texture, info ] : m_streaming_textures)
+    {
+        // Don't decay textures which are currently in the process of streaming.
+        if (info->state == texture_state::waiting_for_mips)
+        {
+            continue;
+        }
 
-    // If we need more space for other textures to upgrade, downgrade unneeded textures.
+        // Check the texture wasn't seen this frame.
+        if (info->can_decay)
+        {
+            size_t mip_count = texture->ri_instance->get_mip_levels();
+            set_ideal_resident_mip_count(*info, std::min(mip_count, options.texture_streaming_min_resident_mips));
+        }
+
+        info->can_decay = true;
+    }
+
+    // Calculate the changes we should make this frame.
+    std::vector<texture_streaming_info*> to_upgrade;
+    std::vector<texture_streaming_info*> to_downgrade;
+    calculate_textures_to_change(to_upgrade, to_downgrade);
+
+    // Kick off streaming in mip data.
+    for (texture_streaming_info* info : to_upgrade)
+    {
+        start_upgrade(info);
+    }
+
+    // Kick off downgrades
+    for (texture_streaming_info* info : to_downgrade)
+    {
+        start_downgrade(info);
+    }
 }
 
 void render_texture_streamer::async_update()

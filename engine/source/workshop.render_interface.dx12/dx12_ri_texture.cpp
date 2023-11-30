@@ -467,6 +467,33 @@ void dx12_ri_texture::update_packed_mip_chain_residency()
     m_packed_mips_resident = should_packed_mips_be_resident;
 }
 
+size_t dx12_ri_texture::get_memory_usage_with_residency(size_t mip_count)
+{
+    size_t total_tiles = 0;
+    bool added_packed_tiles = false;
+
+    if (mip_count > m_mip_residency.size())
+    {
+        mip_count = m_mip_residency.size();
+    }
+
+    for (size_t i = m_mip_residency.size() - mip_count; i < m_mip_residency.size(); i++)
+    {
+        mip_residency& mip = m_mip_residency[i];
+        if (!mip.is_packed || !added_packed_tiles)
+        {
+            total_tiles += mip.tile_size.NumTiles;
+
+            if (mip.is_packed)
+            {
+                added_packed_tiles = true;
+            }
+        }
+    }
+
+    return total_tiles * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+}
+
 void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data)
 {
     db_assert(m_create_params.is_partially_resident);

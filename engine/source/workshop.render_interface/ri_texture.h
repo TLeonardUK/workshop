@@ -86,6 +86,7 @@ public:
     virtual size_t get_resident_mips() = 0;
     virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) = 0;
     virtual void make_mip_non_resident(size_t mip_index) = 0;
+    virtual size_t get_memory_usage_with_residency(size_t mip_count) = 0;
 
     virtual ri_resource_state get_initial_state() = 0;
 
