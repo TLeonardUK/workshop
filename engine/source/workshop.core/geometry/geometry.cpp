@@ -158,13 +158,18 @@ size_t geometry::add_material(const char* name)
     return m_materials.size() - 1;
 }
 
-size_t geometry::add_mesh(const char* name, size_t material_index, const std::vector<uint32_t>& indices, const aabb& bounds)
+size_t geometry::add_mesh(const char* name, size_t material_index, const std::vector<uint32_t>& indices, const aabb& bounds, float min_texel_area, float max_texel_area, float min_world_area, float max_world_area)
 {
     geometry_mesh& mat = m_meshes.emplace_back();
     mat.name = name;
     mat.indices = indices;
     mat.bounds = bounds;
     mat.material_index = material_index;
+
+    mat.min_texel_area = min_texel_area;
+    mat.max_texel_area = max_texel_area;
+    mat.min_world_area = min_world_area;
+    mat.max_world_area = max_world_area;
 
     return m_meshes.size() - 1;
 }

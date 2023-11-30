@@ -433,7 +433,7 @@ void asset_manager::request_unload_lockless(asset_state* state)
     }
 }
 
-void asset_manager::wait_for_load(asset_state* state)
+void asset_manager::wait_for_load(const asset_state* state)
 {
     std::unique_lock lock(m_states_mutex);
 

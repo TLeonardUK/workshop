@@ -146,6 +146,13 @@ struct geometry_mesh
 
     // Bounds of the vertices that contribute to this mesh.
     aabb bounds;
+
+    // Various metrics aggregated from the triangles in this mesh, used
+    // mostly for texture streaming.
+    float min_texel_area;
+    float max_texel_area;
+    float min_world_area;
+    float max_world_area;
 };
 
 // ================================================================================================
@@ -205,7 +212,7 @@ public:
 
     // Adds a new mesh that will render the given set of vertices.
     // Returns the index of this mesh.
-    size_t add_mesh(const char* name, size_t material_index, const std::vector<uint32_t>& indices, const aabb& bounds);
+    size_t add_mesh(const char* name, size_t material_index, const std::vector<uint32_t>& indices, const aabb& bounds, float min_texel_area, float max_texel_area, float min_world_area, float max_world_area);
 
     // How many vertices exist in the geometry.
     size_t get_vertex_count();

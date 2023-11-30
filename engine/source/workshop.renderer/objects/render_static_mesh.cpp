@@ -43,6 +43,7 @@ void render_static_mesh::set_model(const asset_ptr<model>& model)
 
 const std::vector<asset_ptr<material>>& render_static_mesh::get_materials()
 {
+    // TODO: What happens if we have no overrides?
     return m_override_materials;
 }
 
@@ -149,6 +150,19 @@ void render_static_mesh::set_visibility(bool visible)
     {
         m_renderer->get_visibility_manager().set_object_manual_visibility(visibility.id, visible);
     }
+}
+
+render_visibility_manager::object_id render_static_mesh::get_submesh_visibility_id(size_t submesh_index)
+{
+    for (mesh_visibility& v : m_mesh_visibility)
+    {
+        if (v.mesh_index == submesh_index)
+        {
+            return v.id;
+        }
+    }
+
+    return {};
 }
 
 void render_static_mesh::create_render_data()

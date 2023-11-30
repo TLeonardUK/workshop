@@ -83,15 +83,21 @@ public:
 
     const mip_residency& get_mip_residency(size_t index);
 
+    size_t calculate_resident_mip_used_bytes();
+
     size_t get_max_resident_mip();
 
+    void create_views(bool overwrite_descriptors = false);
+    void free_views();
     void recreate_views();
+
     void calculate_dropped_mips();
     void calculate_formats();
-    void create_views(bool overwrite_descriptors = false);
 
 private:        
     mip_residency* get_first_packed_mip_residency();
+
+    void update_packed_mip_chain_residency();
 
 public:
     
@@ -102,6 +108,10 @@ public:
     size_t m_resident_mips = 0;
     std::vector<mip_residency> m_mip_residency;
 
+    dx12_ri_tile_manager::tile_allocation m_packed_mip_tile_allocation;
+    bool m_packed_mips_resident = false;    
+
+    memory_type m_memory_type;
     std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_handle = nullptr;

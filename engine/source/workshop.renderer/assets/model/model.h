@@ -50,6 +50,10 @@ public:
         std::unique_ptr<ri_raytracing_blas> blas;
 
         size_t material_index;
+        float min_texel_area;
+        float max_texel_area;
+        float min_world_area;
+        float max_world_area;
         aabb bounds;
     };
 

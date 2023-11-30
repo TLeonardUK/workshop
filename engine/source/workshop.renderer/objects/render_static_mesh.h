@@ -44,6 +44,9 @@ public:
     // Gets or sets the visibility of the object.
     virtual void set_visibility(bool flags) override;
 
+    // Gets the id of the models submesh in the visibility system.
+    render_visibility_manager::object_id get_submesh_visibility_id(size_t submesh_index);    
+
 protected:
 
     // Creates/destroys data required to render this mesh - instance data/etc.

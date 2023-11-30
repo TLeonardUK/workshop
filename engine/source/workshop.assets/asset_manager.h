@@ -102,22 +102,22 @@ public:
     asset_ptr_base(asset_manager* manager, asset_state* state, const std::type_info* type);
 
     // Gets the path to the asset being loaded.
-    std::string get_path();
+    std::string get_path() const;
 
     // If this asset_ptr is valid and points to an asset.
-    bool is_valid();
+    bool is_valid() const;
 
     // If the asset has been loaded.
-    bool is_loaded();
+    bool is_loaded() const;
 
     // Gets the version of the asset. Each time the asset changes the version is bumped.
-    size_t get_version();
+    size_t get_version() const;
 
     // Gets the current loading state of this asset.
     asset_loading_state get_state();
 
     // Blocks until the asset has been loaded.
-    void wait_for_load();
+    void wait_for_load() const;
 
     // Forces the asset to be reloaded from disk, this is used to support hot reloading.
     //void reload();
@@ -168,11 +168,11 @@ public:
     ~asset_ptr();
 
     // Gets the asset or asserts if not loaded.
-    asset_type* get();
+    asset_type* get() const;
 
     // Operator overloads for all the standard ptr behaviour.
-    asset_type& operator*();
-    asset_type* operator->();
+    asset_type& operator*() const;
+    asset_type* operator->() const;
 
     asset_ptr& operator=(const asset_ptr& other);
     asset_ptr& operator=(asset_ptr&& other);
@@ -352,7 +352,7 @@ protected:
     void request_unload_lockless(asset_state* state);
 
     // Blocks until the given asset is either loaded or load has failed.
-    void wait_for_load(asset_state* state);
+    void wait_for_load(const asset_state* state);
 
     // Runs on the load thread, queues up new loads and unloads.
     void do_work();
@@ -522,7 +522,7 @@ private:
 
 };
 
-inline std::string asset_ptr_base::get_path()
+inline std::string asset_ptr_base::get_path() const
 {
     if (m_state)
     {
@@ -531,17 +531,17 @@ inline std::string asset_ptr_base::get_path()
     return "";
 }
 
-inline bool asset_ptr_base::is_valid()
+inline bool asset_ptr_base::is_valid() const
 {
     return m_state != nullptr;
 }
 
-inline bool asset_ptr_base::is_loaded()
+inline bool asset_ptr_base::is_loaded() const
 {
     return m_state != nullptr && m_state->loading_state == asset_loading_state::loaded;
 }
 
-inline size_t asset_ptr_base::get_version()
+inline size_t asset_ptr_base::get_version() const
 {
     return m_state != nullptr ? m_state->version.load() : 0llu;
 }
@@ -551,7 +551,7 @@ inline asset_loading_state asset_ptr_base::get_state()
     return m_state->loading_state;
 }
 
-inline void asset_ptr_base::wait_for_load()
+inline void asset_ptr_base::wait_for_load() const
 {
     return m_asset_manager->wait_for_load(m_state);
 }
@@ -684,7 +684,7 @@ inline asset_ptr<asset_type>::~asset_ptr()
 }
 
 template <typename asset_type>
-asset_type* asset_ptr<asset_type>::get()
+asset_type* asset_ptr<asset_type>::get() const
 {
     if (m_state->loading_state == asset_loading_state::failed)
     {
@@ -706,13 +706,13 @@ asset_type* asset_ptr<asset_type>::get()
 }
 
 template <typename asset_type>
-inline asset_type& asset_ptr<asset_type>::operator*()
+inline asset_type& asset_ptr<asset_type>::operator*() const
 {
     return *get();
 }
 
 template <typename asset_type>
-inline asset_type* asset_ptr<asset_type>::operator->()
+inline asset_type* asset_ptr<asset_type>::operator->() const
 {
     return get();
 }

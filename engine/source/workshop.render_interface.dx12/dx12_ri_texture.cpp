@@ -38,50 +38,33 @@ dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* de
 
 dx12_ri_texture::~dx12_ri_texture()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv_table = m_srv_table, main_srv = m_main_srv, srvs = m_srvs, rtvs = m_rtvs, uavs = m_uavs, dsvs = m_dsvs]()
+    // Deallocate all tiles (these are already defered, we don't need to put it in defer_delete).
+    if (m_create_params.is_partially_resident)
     {
-        if (main_srv.is_valid())
+        dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
+        
+        if (m_packed_mips_resident)
         {
-            renderer->get_descriptor_table(srv_table).free(main_srv);
+            tile_manager.free_tiles(m_packed_mip_tile_allocation);
+            m_packed_mip_tile_allocation = {};
         }
-        for (auto& mip_srvs : srvs)
+
+        for (mip_residency& mip : m_mip_residency)
         {
-            for (auto& srv : mip_srvs)
+            if (mip.is_resident && !mip.is_packed)
             {
-                if (srv.is_valid())
-                {
-                    renderer->get_descriptor_table(ri_descriptor_table::texture_2d).free(srv);
-                }
+                tile_manager.free_tiles(mip.tile_allocation);
+                mip.tile_allocation = {};
+                mip.is_resident = false;
             }
         }
-        for (auto& mip_rtvs : rtvs)
-        {
-            for (auto& rtv : mip_rtvs)
-            {
-                if (rtv.is_valid())
-                {
-                    renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
-                }
-            }
-        }
-        for (auto& mip_uavs : uavs)
-        {
-            for (auto& uav : mip_uavs)
-            {
-                if (uav.is_valid())
-                {
-                    renderer->get_descriptor_table(ri_descriptor_table::rwtexture_2d).free(uav);
-                }
-            }
-        }
-        for (auto& dsv : dsvs)
-        {
-            if (dsv.is_valid())
-            {
-                renderer->get_descriptor_table(ri_descriptor_table::depth_stencil).free(dsv);
-            }
-        }
-        //CheckedRelease(handle);    
+    }
+
+    free_views();
+
+    m_renderer.defer_delete([handle = m_handle]()
+    {
+        // Don't need to do anything here, this is just here to maintain a handle reference.
     });
 }
 
@@ -139,20 +122,20 @@ bool dx12_ri_texture::calculate_linear_data_mip_range(size_t array_index, size_t
 
 result<void> dx12_ri_texture::create_resources()
 {
-    memory_type mem_type = memory_type::rendering__vram__texture;
+    m_memory_type = memory_type::rendering__vram__texture;
     if (m_create_params.is_render_target)
     {
         if (ri_is_format_depth_target(m_create_params.format))
         {
-            mem_type = memory_type::rendering__vram__render_target_depth;
+            m_memory_type = memory_type::rendering__vram__render_target_depth;
         }
         else
         {
-            mem_type = memory_type::rendering__vram__render_target_color;
+            m_memory_type = memory_type::rendering__vram__render_target_color;
         }
     }
 
-    memory_scope mem_scope(mem_type, string_hash::empty, string_hash(m_debug_name));
+    memory_scope mem_scope(m_memory_type, string_hash::empty, string_hash(m_debug_name));
 
     db_assert_message(!m_create_params.is_partially_resident || m_create_params.dimensions == ri_texture_dimension::texture_2d, "Only 2d textures supported partial residency (for now).");
 
@@ -319,6 +302,11 @@ result<void> dx12_ri_texture::create_resources()
 
             make_mip_resident(mip_index, mip_data);
         }
+
+        m_memory_allocation_info = mem_scope.record_alloc(calculate_resident_mip_used_bytes());
+
+        // Recalculate view formats so the resident mip cap is set.
+        calculate_formats();
     }
     else
     {
@@ -384,7 +372,7 @@ size_t dx12_ri_texture::get_max_resident_mip()
     }
 
     // Look for the maximum mip where all the precending mips are also resident.
-    for (size_t i = m_mip_residency.size() - 1; i >= 0; i--)
+    for (int32_t i = (int32_t)m_mip_residency.size() - 1; i >= 0; i--)
     {
         if (!m_mip_residency[i].is_resident)
         {
@@ -392,7 +380,7 @@ size_t dx12_ri_texture::get_max_resident_mip()
         }
     }
 
-    return m_mip_residency.size() - 1;
+    return 0;
 }
 
 dx12_ri_texture::mip_residency* dx12_ri_texture::get_first_packed_mip_residency()
@@ -407,6 +395,78 @@ dx12_ri_texture::mip_residency* dx12_ri_texture::get_first_packed_mip_residency(
     return nullptr;
 }
 
+size_t dx12_ri_texture::calculate_resident_mip_used_bytes()
+{
+    size_t total = 0;
+    bool added_packed_tiles = false;
+
+    for (mip_residency& mip : m_mip_residency)
+    {
+        if (mip.is_resident)
+        {
+            if (!mip.is_packed || !added_packed_tiles)
+            {
+                total += mip.tile_size.NumTiles * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+                if (mip.is_packed)
+                {
+                    added_packed_tiles = true;
+                }
+            }
+        }
+    }
+
+    return total;
+}
+
+void dx12_ri_texture::update_packed_mip_chain_residency()
+{
+    dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
+
+    bool should_packed_mips_be_resident = false;
+    size_t packed_tile_count = 0;
+    size_t first_packed_mip_index = std::numeric_limits<size_t>::max();
+
+    for (mip_residency& mip : m_mip_residency)
+    {
+        if (mip.is_resident && mip.is_packed)
+        {
+            should_packed_mips_be_resident = true;
+            packed_tile_count = mip.tile_size.NumTiles;
+        }
+
+        if (mip.is_packed && first_packed_mip_index == std::numeric_limits<size_t>::max())
+        {
+            first_packed_mip_index = mip.index;
+        }
+    }
+
+    if (should_packed_mips_be_resident == m_packed_mips_resident)
+    {
+        return;
+    }
+
+    if (should_packed_mips_be_resident)
+    {        
+        // Allocate tiles for packed mip chain.
+        m_packed_mip_tile_allocation = tile_manager.allocate_tiles(packed_tile_count);
+
+        // Map to first packed mip index.
+        tile_manager.queue_map(*this, m_packed_mip_tile_allocation, first_packed_mip_index);        
+    }
+    else
+    {
+        // Unmap the existing tiles.
+        dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
+        tile_manager.queue_unmap(*this, first_packed_mip_index);
+
+        // Free the tile allocation we were using.
+        tile_manager.free_tiles(m_packed_mip_tile_allocation);
+        m_packed_mip_tile_allocation = {};
+    }
+
+    m_packed_mips_resident = should_packed_mips_be_resident;
+}
+
 void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data)
 {
     db_assert(m_create_params.is_partially_resident);
@@ -416,22 +476,23 @@ void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_
     dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
     dx12_ri_upload_manager& upload_manager = m_renderer.get_upload_manager();
 
-    // If we are dealing with a packed mip we keep all the data in the first packed mip entry.
-    if (residency->is_packed)
-    {
-        residency = get_first_packed_mip_residency();
-    }
-
     // Only allocate tiles if none-resident.
     if (!residency->is_resident)
     {
         residency->is_resident = true;
 
-        // Allocate tiles for this mip.
-        residency->tile_allocation = tile_manager.allocate_tiles(residency->tile_size.NumTiles);
+        if (residency->is_packed)
+        {
+            update_packed_mip_chain_residency();
+        }
+        else
+        {
+            // Allocate tiles for this mip.
+            residency->tile_allocation = tile_manager.allocate_tiles(residency->tile_size.NumTiles);
 
-        // Map the new tiles to the textures resource.
-        tile_manager.queue_map(*this, residency->tile_allocation, residency->index);
+            // Map the new tiles to the textures resource.            
+            tile_manager.queue_map(*this, residency->tile_allocation, residency->index);
+        }
     }
 
     // Queue an upload for the tiles new data.
@@ -446,6 +507,10 @@ void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_
     {
         recreate_views();
     }
+
+    // Update memory allocation.
+    memory_scope mem_scope(m_memory_type, string_hash::empty, string_hash(m_debug_name));
+    m_memory_allocation_info = mem_scope.record_alloc(calculate_resident_mip_used_bytes());
 }
 
 void dx12_ri_texture::make_mip_non_resident(size_t mip_index)
@@ -454,34 +519,28 @@ void dx12_ri_texture::make_mip_non_resident(size_t mip_index)
 
     mip_residency& residency = m_mip_residency[mip_index];
 
-    // If we are dealing with a packed mip we keep all the data in the first packed mip entry.
-    if (residency.is_packed)
-    {
-        residency = *get_first_packed_mip_residency();
-    }
-
     // Don't do anything if already non-resident.
     if (!residency.is_resident)
     {
         return;
     }
-
-    // Can't make packed mips non-resident, they always exist in memory, there
-    // is no real point making them non-resident.
-    if (residency.is_packed)
-    {
-        return;
-    }
-
+    
     residency.is_resident = false;
 
-    // Unmap the existing tiles.
-    dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
-    tile_manager.queue_unmap(*this, mip_index);
+    if (residency.is_packed)
+    {
+        update_packed_mip_chain_residency();
+    }
+    else
+    {
+        // Unmap the existing tiles.
+        dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
+        tile_manager.queue_unmap(*this, mip_index);
 
-    // Free the tile allocation we were using.
-    tile_manager.free_tiles(residency.tile_allocation);
-    residency.tile_allocation = {};
+        // Free the tile allocation we were using.
+        tile_manager.free_tiles(residency.tile_allocation);
+        residency.tile_allocation = {};
+    }
 
     // Recreate the texture views, they need to be modified to point to the correct max mip level.
     // Don't need to do this if views haven't been created yet (doing initial residency changes)
@@ -489,6 +548,10 @@ void dx12_ri_texture::make_mip_non_resident(size_t mip_index)
     {
         recreate_views();
     }
+
+    // Update memory allocation.
+    memory_scope mem_scope(m_memory_type, string_hash::empty, string_hash(m_debug_name));
+    m_memory_allocation_info = mem_scope.record_alloc(calculate_resident_mip_used_bytes());
 }
 
 void dx12_ri_texture::calculate_dropped_mips()
@@ -517,6 +580,7 @@ void dx12_ri_texture::calculate_dropped_mips()
         m_create_params.drop_mips = 0;
     }
 
+    // Clamp resident mips based on what mips have been entirely dropped.
     m_create_params.resident_mips = std::min(m_create_params.resident_mips, m_create_params.mip_levels);
 }
 
@@ -586,7 +650,7 @@ void dx12_ri_texture::calculate_formats()
             m_srv_table = ri_descriptor_table::texture_1d;
 
             m_main_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-            m_main_srv_view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_main_srv_view_desc.Texture1D.MipLevels = static_cast<UINT16>(mip_levels - most_detailed_mip);
             m_main_srv_view_desc.Texture1D.MostDetailedMip = most_detailed_mip;
             m_main_srv_view_desc.Texture1D.ResourceMinLODClamp = 0;
 
@@ -621,7 +685,7 @@ void dx12_ri_texture::calculate_formats()
             m_srv_table = ri_descriptor_table::texture_2d;
 
             m_main_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-            m_main_srv_view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_main_srv_view_desc.Texture2D.MipLevels = static_cast<UINT16>(mip_levels - most_detailed_mip);
             m_main_srv_view_desc.Texture2D.MostDetailedMip = most_detailed_mip;
             m_main_srv_view_desc.Texture2D.ResourceMinLODClamp = 0;
             m_main_srv_view_desc.Texture2D.PlaneSlice = 0;
@@ -683,7 +747,7 @@ void dx12_ri_texture::calculate_formats()
             m_srv_table = ri_descriptor_table::texture_3d;
 
             m_main_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-            m_main_srv_view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels);
+            m_main_srv_view_desc.Texture3D.MipLevels = static_cast<UINT16>(mip_levels - most_detailed_mip);
             m_main_srv_view_desc.Texture3D.MostDetailedMip = most_detailed_mip;
             m_main_srv_view_desc.Texture3D.ResourceMinLODClamp = 0;
 
@@ -765,7 +829,7 @@ void dx12_ri_texture::calculate_formats()
             m_srv_table = ri_descriptor_table::texture_cube;
 
             m_main_srv_view_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            m_main_srv_view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels);
+            m_main_srv_view_desc.TextureCube.MipLevels = static_cast<UINT16>(mip_levels - most_detailed_mip);
             m_main_srv_view_desc.TextureCube.MostDetailedMip = most_detailed_mip;
             m_main_srv_view_desc.TextureCube.ResourceMinLODClamp = 0;
 
@@ -857,6 +921,9 @@ void dx12_ri_texture::recreate_views()
 
 void dx12_ri_texture::create_views(bool overwrite_descriptors)
 {
+    // TODO: Overwriting descriptors is dicey as fuck, the gpu may be using them.
+    //       We need to find a ncier way to handle this.
+
     // Set a debug name.
     m_handle->SetName(widen_string(m_debug_name).c_str());
 
@@ -926,6 +993,54 @@ void dx12_ri_texture::create_views(bool overwrite_descriptors)
         m_main_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
     }
     m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_main_srv_view_desc, m_main_srv.cpu_handle);
+}
+
+void dx12_ri_texture::free_views()
+{
+    m_renderer.defer_delete([renderer = &m_renderer, srv_table = m_srv_table, main_srv = m_main_srv, srvs = m_srvs, rtvs = m_rtvs, uavs = m_uavs, dsvs = m_dsvs]()
+    {
+        if (main_srv.is_valid())
+        {
+            renderer->get_descriptor_table(srv_table).free(main_srv);
+        }
+        for (auto& mip_srvs : srvs)
+        {
+            for (auto& srv : mip_srvs)
+            {
+                if (srv.is_valid())
+                {
+                    renderer->get_descriptor_table(ri_descriptor_table::texture_2d).free(srv);
+                }
+            }
+        }
+        for (auto& mip_rtvs : rtvs)
+        {
+            for (auto& rtv : mip_rtvs)
+            {
+                if (rtv.is_valid())
+                {
+                    renderer->get_descriptor_table(ri_descriptor_table::render_target).free(rtv);
+                }
+            }
+        }
+        for (auto& mip_uavs : uavs)
+        {
+            for (auto& uav : mip_uavs)
+            {
+                if (uav.is_valid())
+                {
+                    renderer->get_descriptor_table(ri_descriptor_table::rwtexture_2d).free(uav);
+                }
+            }
+        }
+        for (auto& dsv : dsvs)
+        {
+            if (dsv.is_valid())
+            {
+                renderer->get_descriptor_table(ri_descriptor_table::depth_stencil).free(dsv);
+            }
+        }
+    });
 }
 
 dx12_ri_descriptor_table::allocation dx12_ri_texture::get_main_srv() const

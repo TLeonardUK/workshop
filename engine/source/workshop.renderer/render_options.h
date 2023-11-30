@@ -4,6 +4,8 @@
 // ================================================================================================
 #pragma once
 
+#include <limits>
+
 namespace ws {
 
 // ================================================================================================
@@ -20,17 +22,17 @@ public:
 
 	// How many mips to drop of a texture as its loaded. This can be used to quickly strim down the 
 	// maximum memory being used. In general texture streaming/etc should be used rather than this.
-	size_t textures_dropped_mips = 8;
+	size_t textures_dropped_mips = 0;
 
     // Maximum number of mips that can be resident in a texture. In general leave this uncapped.
     // If you want to force the streamer to drop top level mips consider using the texture_dropped_mips
     // value instead.
-    size_t texture_streaming_max_resident_mips = 1000;
+    size_t texture_streaming_max_resident_mips = std::numeric_limits<size_t>::max();
 
     // Minimum number of mips that can be resident in a texture. Ideally this should be set
     // to the maximum number of mips that fit into a memory page. Any less and you save no memory
-    // but waste streaming time.
-    size_t texture_streaming_min_resident_mips = 7;         // ~128x128
+    // but waste streaming time and potentially cause other issues.
+    size_t texture_streaming_min_resident_mips = 5; // ~64x64
 
     // Minimum dimension of a texture for it to be considered for streaming.
     size_t texture_streaming_min_dimension = 64;

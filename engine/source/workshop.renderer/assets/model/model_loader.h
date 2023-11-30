@@ -46,6 +46,8 @@ private:
     bool parse_materials(const char* path, YAML::Node& node, model& asset);
     bool parse_file(const char* path, model& asset);
 
+    void calculate_streaming_info(model& asset);
+
 private:
     ri_interface& m_ri_interface;
     renderer& m_renderer;

@@ -43,6 +43,8 @@ public:
 	void get_corners(vector3 corners[obb::k_corner_count]) const;
 	aabb get_aligned_bounds() const;
 
+    vector3 get_closest_point(const vector3& other) const;
+
     obb combine(const obb& other) const;
 };
 
@@ -66,17 +68,17 @@ inline vector3 obb::get_extents() const
 
 inline vector3 obb::get_up_vector() const
 {
-	return transform.transform_direction(vector3::up);
+	return transform.transform_direction(vector3::up).normalize();      // TODO: Fix this, direction transformation shouldn't take scale into account.
 }
 
 inline vector3 obb::get_right_vector() const
 {
-	return transform.transform_direction(vector3::right);
+	return transform.transform_direction(vector3::right).normalize();
 }
 
 inline vector3 obb::get_forward_vector() const
 {
-	return transform.transform_direction(vector3::forward);
+	return transform.transform_direction(vector3::forward).normalize();
 }
 
 inline void obb::get_corners(vector3 corners[obb::k_corner_count]) const
@@ -110,6 +112,38 @@ inline obb obb::combine(const obb& other) const
     aabb this_aabb = get_aligned_bounds();
     aabb other_aabb = other.get_aligned_bounds();
     return obb(this_aabb.combine(other_aabb), matrix4::identity);
+}
+
+inline vector3 obb::get_closest_point(const vector3& other) const
+{
+    // From realtime collision detection.
+
+    vector3 e = get_extents();
+    vector3 c = get_center();
+    vector3 d = other - c;
+    vector3 q = c;
+
+    vector3 axis[3] = {
+        get_right_vector(),
+        get_up_vector(),
+        get_forward_vector()
+    };
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        float dist = vector3::dot(d, axis[i]);
+        if (dist > e[i]) 
+        {
+            dist = e[i];
+        }
+        if (dist < -e[i])
+        {
+            dist = -e[i];
+        }
+        q += dist * axis[i];
+    }
+
+    return q;
 }
 
 }; // namespace ws

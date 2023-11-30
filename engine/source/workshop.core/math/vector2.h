@@ -32,6 +32,7 @@ public:
 	base_vector2& operator*=(const base_vector2& vector);
 	base_vector2& operator/=(element_type scalar);
 	base_vector2& operator/=(const base_vector2& vector);
+    element_type& operator[](size_t index);
 
 	element_type length() const;
 	element_type length_squared() const;
@@ -64,6 +65,21 @@ inline base_vector2<element_type>::base_vector2(element_type in_x, element_type 
 	: x(in_x)
 	, y(in_y)
 {
+}
+
+template <typename element_type>
+element_type& base_vector2<element_type>::operator[](size_t index)
+{
+    switch (index)
+    {
+    case 0: return x;
+    case 1: return y;
+    default:
+    {
+        db_assert(false);
+        return x;
+    }
+    }
 }
 
 template <typename element_type>

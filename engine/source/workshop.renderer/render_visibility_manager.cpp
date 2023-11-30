@@ -369,7 +369,7 @@ void render_visibility_manager::update_visibility()
         // Store visible objects to compare against next frame.
         state.visible_objects = visible_objects.elements;
     
-    });
+    }, false, false); // Do not allow helping while waiting for task to complete - we hold a mutex during this that can lead to deadlocks if visibility is queried by tasks being helped with.
 
     // Clear dirty flag from all dirty objects.
     for (object_id object_id : m_dirty_objects)

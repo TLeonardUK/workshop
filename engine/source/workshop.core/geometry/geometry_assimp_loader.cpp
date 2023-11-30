@@ -5,6 +5,7 @@
 #include "workshop.core/geometry/geometry_assimp_loader.h"
 #include "workshop.core/geometry/geometry.h"
 #include "workshop.core/debug/log.h"
+#include "workshop.core/math/triangle.h"
 
 #include "thirdparty/assimp/include/assimp/Importer.hpp"
 #include "thirdparty/assimp/include/assimp/scene.h"
@@ -15,6 +16,8 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include <sstream>
 #endif
+
+#pragma optimize("", off)
 
 namespace ws {
 
@@ -389,11 +392,57 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
         {
             vector3& pos = context.positions[index];
 
+            // Calcualte bounds.
             mesh_bounds_min = vector3::min(mesh_bounds_min, pos);
             mesh_bounds_max = vector3::max(mesh_bounds_max, pos);
         }
 
-        result->add_mesh(mesh.name.c_str(), mesh.material_index, mesh.indices, aabb(mesh_bounds_min, mesh_bounds_max));
+        float min_texel_area = std::numeric_limits<float>::max();
+        float max_texel_area = std::numeric_limits<float>::min();
+
+        float min_world_area = std::numeric_limits<float>::max();
+        float max_world_area = std::numeric_limits<float>::min();
+
+        // Calculate texel factor of each triangle and use the minimum as our streaming bias.
+        if (!context.uvs.empty())
+        {
+            for (size_t i = 0; i < mesh.indices.size(); i += 3)
+            {
+                size_t i0 = mesh.indices[i + 0];
+                size_t i1 = mesh.indices[i + 1];
+                size_t i2 = mesh.indices[i + 2];
+
+                vector3& a = context.positions[i0];
+                vector3& b = context.positions[i1];
+                vector3& c = context.positions[i2];
+
+                vector2& a_uv = context.uvs[0][i0];
+                vector2& b_uv = context.uvs[0][i1];
+                vector2& c_uv = context.uvs[0][i2];
+
+                triangle tri(a, b, c);
+                triangle2d tri_uv(a_uv, b_uv, c_uv);
+
+                float world_area = tri.get_area();
+                float texel_area = tri_uv.get_area();
+
+                min_texel_area = std::min(texel_area, min_texel_area);
+                max_texel_area = std::max(texel_area, max_texel_area);
+
+                min_world_area = std::min(world_area, min_world_area);
+                max_world_area = std::max(world_area, max_world_area);
+            }
+        }
+
+        result->add_mesh(
+            mesh.name.c_str(), 
+            mesh.material_index, 
+            mesh.indices, 
+            aabb(mesh_bounds_min, mesh_bounds_max), 
+            min_texel_area,
+            max_texel_area,
+            min_world_area,
+            max_world_area);
     }
 
     // Insert all the vertex streams.

@@ -28,7 +28,7 @@ dx12_ri_tile_manager::~dx12_ri_tile_manager()
 
 void dx12_ri_tile_manager::allocate_new_heap(size_t minimum_size_in_tiles)
 {
-    memory_scope mem_scope(memory_type::rendering__vram__tile_heap);
+    memory_scope mem_scope(memory_type::rendering__vram__tile_heap, memory_scope::k_ignore_asset);
 
     std::unique_ptr<heap_state> state = std::make_unique<heap_state>();
     state->size_in_tiles = math::round_up_multiple(minimum_size_in_tiles, k_heap_granularity_in_tiles);
@@ -94,6 +94,8 @@ dx12_ri_tile_manager::tile_allocation dx12_ri_tile_manager::allocate_tiles(size_
 {
     std::scoped_lock lock(m_mutex);
 
+    memory_scope mem_scope(memory_type::rendering__vram__tile_heap, memory_scope::k_ignore_asset);
+
     dx12_ri_tile_manager::tile_allocation allocation;
     size_t tiles_remaining = count;
 
@@ -111,7 +113,6 @@ dx12_ri_tile_manager::tile_allocation dx12_ri_tile_manager::allocate_tiles(size_
                 tiles_remaining -= heap_allocation.tile_count;
 
                 // Update the heaps slack allocation.
-                memory_scope mem_scope(memory_type::rendering__vram__tile_heap);
                 heap->slack_memory_allocation_info = mem_scope.record_alloc(heap->memory_heap->get_remaining() * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
 
                 break;
@@ -187,7 +188,7 @@ void dx12_ri_tile_manager::queue_unmap(dx12_ri_texture& texture, size_t mip_inde
 
 void dx12_ri_tile_manager::new_frame(size_t index)
 {
-    memory_scope mem_scope(memory_type::rendering__tile_heap);
+    memory_scope mem_scope(memory_type::rendering__tile_heap, memory_scope::k_ignore_asset);
 
     std::scoped_lock lock(m_mutex);
 
@@ -212,7 +213,7 @@ void dx12_ri_tile_manager::perform_operation(operation& op)
                 heap->memory_heap->free(allocation.tile_offset);
 
                 // Update the heaps slack allocation.
-                memory_scope mem_scope(memory_type::rendering__vram__tile_heap);
+                memory_scope mem_scope(memory_type::rendering__vram__tile_heap, memory_scope::k_ignore_asset);
                 heap->slack_memory_allocation_info = mem_scope.record_alloc(heap->memory_heap->get_remaining() * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
 
                 if (heap->memory_heap->empty())

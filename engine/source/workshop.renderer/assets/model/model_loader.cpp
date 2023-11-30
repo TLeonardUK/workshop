@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 35;
+constexpr size_t k_asset_compiled_version = 39;
 
 };
 
@@ -41,6 +41,12 @@ inline void stream_serialize(stream& out, model::mesh_info& mat)
     stream_serialize(out, mat.name);
     stream_serialize(out, mat.bounds);
     stream_serialize(out, mat.material_index);
+
+    stream_serialize(out, mat.min_texel_area);
+    stream_serialize(out, mat.max_texel_area);
+    stream_serialize(out, mat.min_world_area);
+    stream_serialize(out, mat.max_world_area);
+
     stream_serialize_list(out, mat.indices);
 }
 
@@ -230,6 +236,10 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
                         info.material_index = asset.materials.size() - 1;
                         info.indices = mesh.indices;
                         info.bounds = mesh.bounds;
+                        info.min_texel_area = mesh.min_texel_area;
+                        info.max_texel_area = mesh.max_texel_area;
+                        info.min_world_area = mesh.min_world_area;
+                        info.max_world_area = mesh.max_world_area;
                     }
                 }
             }

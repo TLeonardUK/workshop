@@ -20,7 +20,7 @@ task_handle async(const char* name, task_queue queue, task_scheduler::task_funct
 //  Work is expected to be homogenous to spread the execution optimally.
 // ================================================================================================
 template <typename work_t>
-void parallel_for(const char* name, task_queue queue, size_t count, work_t work, bool do_not_chunk = false)
+void parallel_for(const char* name, task_queue queue, size_t count, work_t work, bool do_not_chunk = false, bool can_help_while_waiting = true)
 {
     profile_marker(profile_colors::task, "%s [parallel]", name);
 
@@ -77,7 +77,7 @@ void parallel_for(const char* name, task_queue queue, size_t count, work_t work,
     // Wait for all tasks to complete.
     {
         profile_marker(profile_colors::task, "waiting for tasks");
-        scheduler.wait_for_tasks(handles, true);
+        scheduler.wait_for_tasks(handles, can_help_while_waiting);
     }
 }
 
