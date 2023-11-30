@@ -15,6 +15,7 @@ The renderer uses a modern DX12/Vulkan deferred bindless architecture and will, 
 - Compute-based light culling
 - Dynamic diffuse global illumination
 - Specular reflection probes
+- Raytracing support
 - Automatic exposure
 - Blended weighted order independent transparency
 - Screen space ambient occlusion
