@@ -20,6 +20,8 @@ result<void> disk_stream::open(const std::filesystem::path& path, bool for_writi
 
     m_can_write = for_writing;
 
+    m_path = path;
+
     m_file = fopen(path.string().c_str(), for_writing ? "wb" : "rb");
     if (m_file == nullptr)
     {
@@ -88,5 +90,16 @@ size_t disk_stream::read(char* data, size_t size)
 
     return fread(data, size, 1, m_file) * size;
 }
+
+std::string disk_stream::get_async_path()
+{
+    return m_path.string().c_str();
+}
+
+size_t disk_stream::get_async_offset()
+{
+    return position();
+}
+
 
 }; // namespace workshop

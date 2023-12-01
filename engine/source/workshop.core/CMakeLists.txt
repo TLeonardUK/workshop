@@ -113,6 +113,8 @@ SET(SOURCES
     "math/vector4.h"
     "math/ray.h"
     "math/triangle.h"
+    "math/rolling_average.h"
+    "math/rolling_rate.h"
     
     "drawing/color.h"
     "drawing/pixmap.h"

@@ -89,4 +89,16 @@ size_t ram_stream::read(char* data, size_t size)
     return size;
 }
 
+std::string ram_stream::get_async_path()
+{
+    db_assert_message(false, "ram streams do not support async reading.");
+    return "";
+}
+
+size_t ram_stream::get_async_offset()
+{
+    db_assert_message(false, "ram streams do not support async reading.");
+    return 0;
+}
+
 }; // namespace workshop

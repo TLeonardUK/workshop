@@ -32,8 +32,13 @@ public:
     virtual size_t write(const char* data, size_t size) override;
     virtual size_t read(char* data, size_t size) override;
 
+    virtual std::string get_async_path() override;
+    virtual size_t get_async_offset() override;
+
 private:
     FILE* m_file;
+
+    std::filesystem::path m_path;
 
     bool m_can_write = false;
 

@@ -33,6 +33,7 @@ class renderer;
 class asset_manager;
 class asset_database;
 class virtual_file_system;
+class async_io_manager;
 class statistics_manager;
 class task_scheduler;
 class statistics_channel;
@@ -98,6 +99,9 @@ public:
 
     // Gets the main filesystem.
     virtual_file_system& get_filesystem();
+
+    // Gets the main filesystem
+    async_io_manager& get_async_io_manager();
 
     // Gets the root folder that contains the engines assets.
     std::filesystem::path get_engine_asset_dir();
@@ -230,6 +234,8 @@ protected:
     std::unique_ptr<window> m_window;
     std::unique_ptr<presenter> m_presenter;
     std::unique_ptr<virtual_file_system> m_filesystem;
+    std::unique_ptr<async_io_manager> m_async_io_manager;
+
     std::unique_ptr<statistics_manager> m_statistics;
     std::unique_ptr<asset_manager> m_asset_manager;
     std::unique_ptr<asset_database> m_asset_database;

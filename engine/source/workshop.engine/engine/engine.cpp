@@ -17,6 +17,7 @@
 #include "workshop.core/filesystem/virtual_file_system_redirect_handler.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
+#include "workshop.core/filesystem/async_io_manager.h"
 #include "workshop.core/app/app.h"
 #include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/perf/timer.h"
@@ -257,6 +258,11 @@ virtual_file_system& engine::get_filesystem()
     return *m_filesystem.get();
 }
 
+async_io_manager& engine::get_async_io_manager()
+{
+    return *m_async_io_manager.get();
+}
+
 std::filesystem::path engine::get_engine_asset_dir()
 {
     return m_engine_asset_dir;
@@ -356,6 +362,7 @@ result<void> engine::destroy_task_scheduler()
 
 result<void> engine::create_filesystem(init_list& list)
 {
+    m_async_io_manager = async_io_manager::create();
     m_filesystem = std::make_unique<virtual_file_system>();
 
     // Figure out what folders the engine and game assets are stored in.
@@ -453,6 +460,7 @@ result<void> engine::create_filesystem(init_list& list)
 result<void> engine::destroy_filesystem()
 {
     m_filesystem = nullptr;
+    m_async_io_manager = nullptr;
 
     return true;
 }

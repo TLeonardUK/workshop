@@ -8,6 +8,7 @@
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/math/obb.h"
+#include "workshop.core/filesystem/async_io_manager.h"
 
 #include <shared_mutex>
 #include <vector>
@@ -60,9 +61,16 @@ private:
         pending_upgrade,
         pending_downgrade,
         waiting_for_mips,
+        waiting_for_downgrade,
         idle,
 
         COUNT
+    };
+
+    struct texture_mip_request
+    {
+        size_t mip_index;
+        async_io_request::ptr async_request;
     };
 
     struct texture_streaming_info
@@ -72,6 +80,8 @@ private:
         size_t          current_resident_mips;
         size_t          ideal_resident_mips;
         bool            can_decay = false;
+
+        std::vector<texture_mip_request> mip_requests;
     };
 
     struct texture_bounds
@@ -119,6 +129,13 @@ private:
 
     // Starts dropping resident mips until texture is at its ideal mips.
     void start_downgrade(texture_streaming_info& streaming_info);
+
+    // Checks textures that are currently streaming mips, if they have completed
+    // it makes the mips resident and returns the texture to the idle state.
+    void make_completed_mips_resident();
+
+    // Makes all downgraded textures non-resident.
+    void make_downgrades_non_resident();
 
 private:
     renderer& m_renderer;

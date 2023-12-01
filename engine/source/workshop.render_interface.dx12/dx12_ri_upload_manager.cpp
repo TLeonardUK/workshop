@@ -158,8 +158,10 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, size_t array_index,
     upload.resource_initial_state = source.get_initial_state();
     upload.name = source.get_debug_name();
 
+#ifdef UPLOAD_DEBUG
     // Zero out upload space as parts of it may be padding.
     memset(upload.heap->start_ptr + upload.heap_offset, 0, upload.heap_size);
+#endif
 
     // TODO: All the below is pretty grim, this needs cleaning up and simplifying.
 
@@ -172,24 +174,33 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, size_t array_index,
     size_t source_data_offset = 0;
 
     // Copy source data into each row.
-    size_t dest_offset = 0;
-    for (size_t height_index = 0; height_index < height; height_index++)
+    size_t source_row_size = footprint.Footprint.Width * ri_bytes_per_texel(source.get_format());
+
+    // If pitch and row size are identical, coalesce into a single memcpy.
+    if (pitch == source_row_size)
     {
-        size_t source_row_size = footprint.Footprint.Width * ri_bytes_per_texel(source.get_format());
-        db_assert(source_row_size == row_size);
-
-#ifdef UPLOAD_DEBUG
-        if (footprint.Offset + dest_offset + source_row_size > upload.heap_size)
+        memcpy(destination, data.data(), source_row_size * height);
+    }
+    else
+    {
+        size_t dest_offset = 0;
+        for (size_t height_index = 0; height_index < height; height_index++)
         {
-            __debugbreak();
+            db_assert(source_row_size == row_size);
+
+    #ifdef UPLOAD_DEBUG
+            if (footprint.Offset + dest_offset + source_row_size > upload.heap_size)
+            {
+                __debugbreak();
+            }
+    #endif
+
+            memcpy(destination, data.data() + source_data_offset, source_row_size);
+
+            source_data_offset += source_row_size;
+            destination += pitch;
+            dest_offset += pitch;
         }
-#endif
-
-        memcpy(destination, data.data() + source_data_offset, source_row_size);
-
-        source_data_offset += source_row_size;
-        destination += pitch;
-        dest_offset += pitch;
     }
 
     // Generate copy command list.

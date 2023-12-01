@@ -6,5 +6,4 @@
 
 namespace ws {
 
-
 }; // namespace workshop

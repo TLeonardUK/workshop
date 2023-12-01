@@ -297,6 +297,7 @@ result<void> dx12_ri_texture::create_resources()
             if (!m_create_params.data.empty())
             {
                 calculate_linear_data_mip_range(0, mip_index, mip_offset, mip_size);
+                //db_log(renderer, "mip[%zi] offset=%zi size=%zi path=%s", mip_index, mip_offset, mip_size, m_debug_name.c_str());
                 mip_data.assign(m_create_params.data.begin() + mip_offset, m_create_params.data.begin() + mip_offset + mip_size);
             }
 
@@ -621,7 +622,6 @@ void dx12_ri_texture::calculate_formats()
     m_dsv_format = m_resource_format;
     m_rtv_format = m_resource_format;
     m_uav_format = m_resource_format;
-    m_resident_mips = std::min(mip_levels, m_create_params.resident_mips);
 
     // We use typeless formats for depth as we will specialize with the views.
     if (ri_is_format_depth_target(m_create_params.format))
@@ -1167,9 +1167,32 @@ bool dx12_ri_texture::is_depth_stencil()
     return ri_is_format_depth_target(m_create_params.format);
 }
 
+bool dx12_ri_texture::is_partially_resident()
+{
+    return m_create_params.is_partially_resident;
+}
+
 size_t dx12_ri_texture::get_resident_mips()
 {
-    return m_resident_mips;
+    for (size_t i = 0; m_mip_residency.size(); i++)
+    {
+        size_t mip_index = m_mip_residency.size() - (i + 1);
+        if (!m_mip_residency[mip_index].is_resident)
+        {
+            return i;
+        }
+    }
+    return m_mip_residency.size();
+}
+
+bool dx12_ri_texture::is_mip_resident(size_t mip_index)
+{
+    return m_mip_residency[mip_index].is_resident;
+}
+
+void dx12_ri_texture::get_mip_source_data_range(size_t mip_index, size_t& offset, size_t& size)
+{
+    calculate_linear_data_mip_range(0, mip_index, offset, size);
 }
 
 ID3D12Resource* dx12_ri_texture::get_resource()

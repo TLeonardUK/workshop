@@ -102,6 +102,10 @@ public:
 
     std::unique_ptr<ri_texture> ri_instance;
 
+    // Path and offset on disk to retrieve texture data from with async io.
+    std::string async_data_path;
+    size_t async_data_offset;
+
 private:
     friend class render_texture_streamer;
 

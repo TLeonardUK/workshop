@@ -44,11 +44,14 @@ public:
     virtual uint8_t get_optimal_clear_stencil() override;
     virtual bool is_render_target() override;
     virtual bool is_depth_stencil() override;
+    virtual bool is_partially_resident() override;
 
     virtual size_t get_resident_mips() override;
     virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) override;
     virtual void make_mip_non_resident(size_t mip_index) override;
     virtual size_t get_memory_usage_with_residency(size_t mip_count) override;
+    virtual bool is_mip_resident(size_t mip_index) override;
+    virtual void get_mip_source_data_range(size_t mip_index, size_t& offset, size_t& size) override;
 
     virtual ri_resource_state get_initial_state() override;
 
@@ -106,7 +109,6 @@ public:
     std::string m_debug_name;
     ri_texture::create_params m_create_params;
 
-    size_t m_resident_mips = 0;
     std::vector<mip_residency> m_mip_residency;
 
     dx12_ri_tile_manager::tile_allocation m_packed_mip_tile_allocation;

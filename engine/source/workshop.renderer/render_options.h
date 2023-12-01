@@ -40,6 +40,14 @@ public:
     // Maximum size of the streamed texture pool in bytes.
     size_t texture_streaming_pool_size = 512 * 1024 * 1024;
 
+    // Forces texture mips to be unstreamed even when not under memory pressure. Useful
+    // for debugging, unwise to use in production.
+    bool texture_streaming_force_unstream = false;
+
+    // Maximum number of ms per frame to spend on the render thread making mips resident. Mips
+    // will be spread across frames if this time limit is exceeded.
+    float texture_streaming_time_limit_ms = 1.0f;
+
 	// ================================================================================================
 	//  Light Probes
 	// ================================================================================================

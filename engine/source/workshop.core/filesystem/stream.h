@@ -49,6 +49,14 @@ public:
     // Returns the number of bytes read.
     virtual size_t read(char* data, size_t size) = 0;
 
+    // Gets the on-disk path this stream is reading from that would be used
+    // if we want to async-read raw data.
+    virtual std::string get_async_path() = 0;
+
+    // Gets the offset in the file returned from get_async_path to the data
+    // at the current stream position.
+    virtual size_t get_async_offset() = 0;
+
 public:
 
     // Helper functions

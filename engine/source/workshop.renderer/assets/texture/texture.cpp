@@ -19,7 +19,10 @@ texture::texture(ri_interface& ri_interface, renderer& renderer)
 
 texture::~texture()
 {
-    m_renderer.get_texture_streamer().unregister_texture(this);
+    if (streamed)
+    {
+        m_renderer.get_texture_streamer().unregister_texture(this);
+    }
 }
 
 bool texture::load_dependencies()
@@ -80,7 +83,10 @@ bool texture::load_dependencies()
 
 bool texture::post_load()
 {
-    m_renderer.get_texture_streamer().register_texture(this);
+    if (streamed)
+    {
+        m_renderer.get_texture_streamer().register_texture(this);
+    }
 
     return true;
 }

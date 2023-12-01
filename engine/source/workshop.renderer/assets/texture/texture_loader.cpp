@@ -107,7 +107,14 @@ bool texture_loader::serialize(const char* path, texture& asset, bool isSaving)
     stream_serialize(*stream, asset.mipmapped);
     stream_serialize(*stream, asset.streamed);
     stream_serialize(*stream, asset.mip_levels);
+
     stream_serialize_list(*stream, asset.data);
+
+    if (!isSaving)
+    {
+        asset.async_data_path = stream->get_async_path();
+        asset.async_data_offset = stream->get_async_offset() - asset.data.size();
+    }
 
     return true;
 }

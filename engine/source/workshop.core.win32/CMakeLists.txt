@@ -10,6 +10,8 @@ SET(SOURCES
     "debug/debug.cpp"
 
     "filesystem/file.cpp"
+    "filesystem/async_io_manager.cpp"
+    "filesystem/async_io_manager.h"
     "filesystem/path_watcher.cpp"
     
     "memory/memory.cpp"

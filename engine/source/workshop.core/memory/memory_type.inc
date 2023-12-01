@@ -29,6 +29,7 @@ MEMORY_TYPE(low_level__misc_sparse_vector,	        "low level/misc sparse vector
 
 MEMORY_TYPE(engine__ecs,	                        "engine/ecs")
 MEMORY_TYPE(engine__task_scheduler,	                "engine/task scheduler")
+MEMORY_TYPE(engine__async_io,   	                "engine/async io")
 MEMORY_TYPE(engine__command_queue,	                "engine/command queue")
 
 // ================================================================================================
