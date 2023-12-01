@@ -708,9 +708,6 @@ void renderer::render_state(render_world_state& state)
     std::vector<render_pass::generated_state> post_generated_states;
     render_post_views(state, post_generated_states);
 
-    // Before dispatching command lists flush any uploads that may have been queued as part of generation.
-    m_render_interface.flush_uploads();
-
     // Start querying gpu timer.
     {
         profile_marker(profile_colors::render, "start gpu timer");

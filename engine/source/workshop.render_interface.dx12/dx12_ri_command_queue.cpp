@@ -176,6 +176,10 @@ ri_command_list& dx12_ri_command_queue::alloc_command_list()
 
 void dx12_ri_command_queue::execute(ri_command_list& list)
 {
+    // We flush any pending uploads before running a command list, as the commands
+    // may needs access to param blocks/data/etc that is pending upload.
+    m_renderer.flush_uploads();
+
     ID3D12CommandList* const commandLists[] = {
         static_cast<dx12_ri_command_list&>(list).get_dx_command_list().Get()
     };
@@ -184,12 +188,17 @@ void dx12_ri_command_queue::execute(ri_command_list& list)
 
 void dx12_ri_command_queue::execute(const std::vector<ri_command_list*>& lists)
 {
+    // We flush any pending uploads before running a command list, as the commands
+    // may needs access to param blocks/data/etc that is pending upload.
+    m_renderer.flush_uploads();
+
     std::vector<ID3D12CommandList*> command_lists;
     command_lists.reserve(lists.size());
     for (ri_command_list* list : lists)
     {
         command_lists.push_back(static_cast<dx12_ri_command_list*>(list)->get_dx_command_list().Get());
     }
+
     m_queue->ExecuteCommandLists((UINT)command_lists.size(), command_lists.data());
 }
 

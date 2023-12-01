@@ -18,6 +18,9 @@ enum class ri_buffer_usage
     index_buffer,
     vertex_buffer,
 
+    // Stores param block information.
+    param_block,
+
     // Buffer for reading data back from gpu.
     readback,
 

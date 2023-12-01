@@ -83,7 +83,7 @@ public:
     virtual bool is_render_target() = 0;
     virtual bool is_depth_stencil() = 0;
 
-    virtual bool is_partially_resident() = 0;
+    virtual bool is_partially_resident() const = 0;
 
     virtual size_t get_resident_mips() = 0;
     virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) = 0;

@@ -19,7 +19,7 @@ texture::texture(ri_interface& ri_interface, renderer& renderer)
 
 texture::~texture()
 {
-    if (streamed)
+    if (streamed && streaming_info)
     {
         m_renderer.get_texture_streamer().unregister_texture(this);
     }

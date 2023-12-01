@@ -44,8 +44,11 @@ public:
     // for the param block, the next set will cause it to mutate.
     void* consume();
 
+    // Called by renderer to upload the state of a dirty param block.
+    void upload_state();
+
 private:
-    void mutate();
+    void mark_dirty();
 
     virtual bool set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
 
@@ -55,14 +58,15 @@ private:
     dx12_render_interface& m_renderer;
     dx12_ri_param_block_archetype& m_archetype;
 
+    std::atomic_bool m_cpu_dirty = false;
+    std::vector<uint8_t> m_cpu_shadow_data;
+
     size_t m_use_count = 0;
     size_t m_last_mutate_use_count = std::numeric_limits<size_t>::max();
 
     dx12_ri_param_block_archetype::allocation m_allocation;
 
     std::vector<bool> m_fields_set;
-
-    std::recursive_mutex m_consume_mutex;
 
 };
 

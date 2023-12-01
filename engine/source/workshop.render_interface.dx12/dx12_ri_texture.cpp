@@ -1167,7 +1167,7 @@ bool dx12_ri_texture::is_depth_stencil()
     return ri_is_format_depth_target(m_create_params.format);
 }
 
-bool dx12_ri_texture::is_partially_resident()
+bool dx12_ri_texture::is_partially_resident() const
 {
     return m_create_params.is_partially_resident;
 }

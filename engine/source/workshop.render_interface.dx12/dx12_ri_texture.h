@@ -44,7 +44,7 @@ public:
     virtual uint8_t get_optimal_clear_stencil() override;
     virtual bool is_render_target() override;
     virtual bool is_depth_stencil() override;
-    virtual bool is_partially_resident() override;
+    virtual bool is_partially_resident() const override;
 
     virtual size_t get_resident_mips() override;
     virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) override;

@@ -21,6 +21,7 @@ class dx12_ri_descriptor_table;
 class dx12_ri_small_buffer_allocator;
 class dx12_ri_raytracing_tlas;
 class dx12_ri_raytracing_blas;
+class dx12_ri_param_block;
 
 // ================================================================================================
 //  Implementation of a renderer using DirectX 12.
@@ -87,6 +88,12 @@ public:
     virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) override;
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
     virtual bool check_feature(ri_feature feature) override;
+
+    // Marks a param block as dirty and tells the param block to upload its state
+    // the next time uploads are flushed.
+    void queue_dirty_param_block(dx12_ri_param_block* block);
+    void dequeue_dirty_param_block(dx12_ri_param_block* block);
+    std::recursive_mutex& get_dirty_param_block_mutex();
 
     // Drains all of the defered deletes without regard for which frame they should
     // be destroyed on. Be -very- careful with this, the only real usecase is when we are
@@ -185,6 +192,10 @@ private:
     std::unordered_set<dx12_ri_raytracing_blas*> m_pending_blas_compacts;
 
     std::array<bool, (int)ri_feature::COUNT> m_feature_support;
+
+    std::recursive_mutex m_dirty_param_block_mutex;
+    std::unordered_set<dx12_ri_param_block*> m_dirty_param_blocks;
+    bool m_flush_upload_reentry = false;
 
     size_t m_ray_type_count;
     size_t m_ray_domain_count;

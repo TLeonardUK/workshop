@@ -27,7 +27,8 @@ D3D12_RESOURCE_STATES ri_to_dx12(ri_resource_state value)
         D3D12_RESOURCE_STATE_DEPTH_READ,                        // depth_read
         D3D12_RESOURCE_STATE_INDEX_BUFFER,                      // index_buffer
         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,                  // unordered_access
-        D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, // raytracing_acceleration_structure
+        D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, // raytracing_accelration_structure
+        D3D12_RESOURCE_STATE_GENERIC_READ,                      // generic_read
     };
 
     if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))

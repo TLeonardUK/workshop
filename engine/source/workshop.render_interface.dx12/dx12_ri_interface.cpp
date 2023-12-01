@@ -23,6 +23,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_small_buffer_allocator.h"
 #include "workshop.render_interface.dx12/dx12_ri_raytracing_tlas.h"
 #include "workshop.render_interface.dx12/dx12_ri_raytracing_blas.h"
+#include "workshop.render_interface.dx12/dx12_ri_param_block.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/filesystem/file.h"
@@ -695,11 +696,37 @@ void dx12_render_interface::flush_uploads()
 {
     profile_marker(profile_colors::render, "flush uploads");
 
+    // Don't allow re-entry.
+    if (m_flush_upload_reentry)
+    {
+        return;
+    }
+
+    m_flush_upload_reentry = true;
+
+    // Upload the state of any dirty param blocks.
+    {
+        std::scoped_lock lock(m_dirty_param_block_mutex);
+        for (dx12_ri_param_block* block : m_dirty_param_blocks)
+        {
+            block->upload_state();
+        }
+
+        //if (!m_dirty_param_blocks.empty())
+        //{
+        //    db_log(core, "dirty-pb: %zi", m_dirty_param_blocks.size());
+        //}
+
+        m_dirty_param_blocks.clear();
+    }
+
     // Always flush the tile manager before the upload manager as it will likely
     // be trying to update mappings to upload to.
     m_tile_manager->new_frame(m_frame_index);
 
     m_upload_manager->new_frame(m_frame_index);
+
+    m_flush_upload_reentry = false;
 }
 
 void dx12_render_interface::queue_as_build(dx12_ri_raytracing_tlas* tlas)
@@ -744,11 +771,6 @@ void dx12_render_interface::process_blas_build_requests()
 
     m_pending_blas_builds.clear();
 
-    // We flush uploads here before dispatching the builds as we will likely
-    // have updated various tlas/blas buffers that we want to be reflected on the gpu
-    // when the build occurs.
-    flush_uploads();
-
     profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "build raytracing blas");
     m_graphics_queue->execute(build_list);
 }
@@ -777,11 +799,6 @@ void dx12_render_interface::process_tlas_build_requests()
 
     m_pending_tlas_builds.clear();
     
-    // We flush uploads here before dispatching the builds as we will likely
-    // have updated various tlas/blas buffers that we want to be reflected on the gpu
-    // when the build occurs.
-    flush_uploads();
-
     profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "build raytracing tlas");
     m_graphics_queue->execute(build_list);
 }
@@ -836,13 +853,25 @@ void dx12_render_interface::process_blas_compact_requests()
 
     build_list.close();
 
-    // We flush uploads here before dispatching the builds as we will likely
-    // have updated various tlas/blas buffers that we want to be reflected on the gpu
-    // when the build occurs.
-    flush_uploads();
-
     profile_gpu_marker(*m_graphics_queue, profile_colors::gpu_view, "compact raytracing structures");
     m_graphics_queue->execute(build_list);
+}
+
+void dx12_render_interface::queue_dirty_param_block(dx12_ri_param_block* block)
+{
+    std::scoped_lock lock(m_dirty_param_block_mutex);
+    m_dirty_param_blocks.insert(block);
+}
+
+void dx12_render_interface::dequeue_dirty_param_block(dx12_ri_param_block* block)
+{
+    std::scoped_lock lock(m_dirty_param_block_mutex);
+    m_dirty_param_blocks.erase(block);
+}
+
+std::recursive_mutex& dx12_render_interface::get_dirty_param_block_mutex()
+{
+    return m_dirty_param_block_mutex;
 }
 
 void dx12_render_interface::drain_deferred()

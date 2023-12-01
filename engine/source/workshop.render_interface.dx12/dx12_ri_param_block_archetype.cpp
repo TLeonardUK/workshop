@@ -56,12 +56,7 @@ dx12_ri_param_block_archetype::~dx12_ri_param_block_archetype()
             });            
         }
 
-        D3D12_RANGE range;
-        range.Begin = 0;
-        range.End = m_instance_stride * k_page_size;
-        instance.handle->Unmap(0, &range);
-
-        instance.handle = nullptr;
+        instance.buffer = nullptr;
     }
 
     m_pages.clear();
@@ -88,8 +83,9 @@ dx12_ri_param_block_archetype::allocation dx12_ri_param_block_archetype::allocat
                 instance.free_list.pop_back();
 
                 allocation result;
-                result.cpu_address = instance.base_address_cpu + (index * m_instance_stride);
-                result.gpu_address = instance.base_address_gpu + (index * m_instance_stride);
+                result.offset = (index * m_instance_stride);
+                result.address_gpu = instance.base_address_gpu + (result.offset);
+                result.buffer = static_cast<dx12_ri_buffer*>(instance.buffer.get());
                 result.pool_index = i;
                 result.allocation_index = index;
                 result.size = m_instance_stride;
@@ -133,60 +129,18 @@ void dx12_ri_param_block_archetype::add_page()
 
     alloc_page& instance = m_pages.emplace_back();
 
-    D3D12_HEAP_PROPERTIES heap_properties;
-    heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    heap_properties.CreationNodeMask = 0;
-    heap_properties.VisibleNodeMask = 0;
+    std::string debug_name = string_format("Param Block Page [%s]", m_debug_name.c_str());
 
-    D3D12_RESOURCE_DESC desc;
-    desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    desc.DepthOrArraySize = 1;
-    desc.Width = m_instance_stride * k_page_size;
-    desc.Height = 1;
-    desc.MipLevels = 1;
-    desc.Format = DXGI_FORMAT_UNKNOWN;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    desc.SampleDesc.Count = 1;
-    desc.SampleDesc.Quality = 0;
+    ri_buffer::create_params params;
+    params.element_count = k_page_size;
+    params.element_size = m_instance_stride;
+    params.usage = ri_buffer_usage::param_block;
+    instance.buffer = m_renderer.create_buffer(params, debug_name.c_str());
 
-    HRESULT hr = m_renderer.get_device()->CreateCommittedResource(
-        &heap_properties,
-        D3D12_HEAP_FLAG_NONE,
-        &desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&instance.handle)
-    );
-    if (FAILED(hr))
-    {
-        db_fatal(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
-    }
-
-    // Record the memory allocation.
-    D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
-    instance.memory_allocation_info = mem_scope.record_alloc(info.SizeInBytes);
+    dx12_ri_buffer* dx12_buffer = static_cast<dx12_ri_buffer*>(instance.buffer.get());
 
     // Set a debug name.
-    std::string debug_name = string_format("Param Block Page [%s]", m_debug_name.c_str());
-    instance.handle->SetName(widen_string(debug_name).c_str());
-    instance.base_address_gpu = reinterpret_cast<uint8_t*>(instance.handle->GetGPUVirtualAddress());
-
-    // TODO: We should copy to default heap after modifying.
-    D3D12_RANGE range;
-    range.Begin = 0;
-    range.End = desc.Width;
-    hr = instance.handle->Map(0, &range, reinterpret_cast<void**>(&instance.base_address_cpu));
-    if (FAILED(hr))
-    {
-        db_fatal(render_interface, "Failed to map param block memory with error 0x%08x.", hr);
-    }
-
-    // Zero out the entire param block memory.
-    memset(instance.base_address_cpu, 0, desc.Width);
+    instance.base_address_gpu = reinterpret_cast<uint8_t*>(dx12_buffer->get_gpu_address());
 
     // Fill page free list with all instances in the heap.
     instance.free_list.resize(k_page_size);
@@ -204,12 +158,12 @@ void dx12_ri_param_block_archetype::add_page()
         view_desc.Format = DXGI_FORMAT_R32_TYPELESS;
         view_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
         view_desc.Buffer.FirstElement = 0;
-        view_desc.Buffer.NumElements = static_cast<UINT>(desc.Width / 4);
+        view_desc.Buffer.NumElements = static_cast<UINT>((k_page_size * m_instance_stride) / 4);
         view_desc.Buffer.StructureByteStride = 0;
         view_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 
         instance.srv = m_renderer.get_descriptor_table(ri_descriptor_table::buffer).allocate();
-        m_renderer.get_device()->CreateShaderResourceView(instance.handle.Get(), &view_desc, instance.srv.cpu_handle);
+        m_renderer.get_device()->CreateShaderResourceView(dx12_buffer->get_resource(), &view_desc, instance.srv.cpu_handle);
     }
 }
 

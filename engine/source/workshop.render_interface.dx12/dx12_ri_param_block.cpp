@@ -21,10 +21,15 @@ dx12_ri_param_block::dx12_ri_param_block(dx12_render_interface& renderer, dx12_r
     , m_archetype(archetype)
 {
     m_fields_set.resize(m_archetype.get_layout_factory().get_field_count());
+    m_allocation = m_archetype.allocate();
+
+    m_cpu_shadow_data.resize(m_allocation.size, 0);
 }
 
 dx12_ri_param_block::~dx12_ri_param_block()
 {
+    m_renderer.dequeue_dirty_param_block(this);
+
     if (m_allocation.is_valid())
     {
         m_renderer.defer_delete([allocation = m_allocation, archetype = &m_archetype]()
@@ -34,40 +39,29 @@ dx12_ri_param_block::~dx12_ri_param_block()
     }
 }
 
-void dx12_ri_param_block::mutate()
+void dx12_ri_param_block::mark_dirty()
 {
-    std::scoped_lock lock(m_consume_mutex);
+    std::scoped_lock lock(m_renderer.get_dirty_param_block_mutex());
 
-    if (m_use_count == m_last_mutate_use_count)
+    if (m_cpu_dirty)
     {
         return;
     }
 
-    m_last_mutate_use_count = m_use_count;
+    m_cpu_dirty = true;
+    m_renderer.queue_dirty_param_block(this);
+}
 
-    // Free up existing allocation.
-    dx12_ri_param_block_archetype::allocation old_allocation = m_allocation;
+void dx12_ri_param_block::upload_state()
+{
+    std::scoped_lock lock(m_renderer.get_dirty_param_block_mutex());
 
-    // Allocate new param block.
-    m_allocation = m_archetype.allocate();
-
-    if (old_allocation.is_valid())
-    {
-        // Copy existing data over to new param block.
-        memcpy(m_allocation.cpu_address, old_allocation.cpu_address, old_allocation.size);
-
-        // Free old allocation.
-        m_renderer.defer_delete([allocation = old_allocation, archetype = &m_archetype]()
-        {
-            archetype->free(allocation);
-        });
-    }
+    m_renderer.get_upload_manager().upload(*m_allocation.buffer, m_cpu_shadow_data, m_allocation.buffer->get_buffer_offset() + m_allocation.offset);
+    m_cpu_dirty = false;
 }
 
 void* dx12_ri_param_block::consume()
 {
-    std::scoped_lock lock(m_consume_mutex);
-
     // Warn if not all fields are set.
     for (size_t i = 0; i < m_fields_set.size(); i++)
     {
@@ -87,15 +81,7 @@ void* dx12_ri_param_block::consume()
         }
     }
 
-    m_use_count++;
-
-    // If no param block has been allocated yet, allocate one now.
-    if (!m_allocation.is_valid())
-    {
-        mutate();
-    }
-
-    return m_allocation.gpu_address;
+    return m_allocation.address_gpu;
 }
 
 ri_param_block_archetype* dx12_ri_param_block::get_archetype()
@@ -105,18 +91,6 @@ ri_param_block_archetype* dx12_ri_param_block::get_archetype()
 
 void dx12_ri_param_block::get_table(size_t& index, size_t& offset)
 {
-    std::scoped_lock lock(m_consume_mutex);
-
-    // If no param block has been allocated yet, we need to allocate one to return the table information.
-    if (!m_allocation.is_valid())
-    {
-        mutate();
-    }
-
-    // We need to consume the param block if we are referencing the table indices. Otherwise indirect references
-    // to param blocks will never increase the use count and never mutate.
-    consume();
-
     m_archetype.get_table(m_allocation, index, offset);
 }
 
@@ -159,22 +133,22 @@ bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
     // Early out if nothing has changed, to avoid the cost of mutating.
     if (m_allocation.is_valid() && m_fields_set[field_info.index])
     {
-        void* field_ptr = static_cast<uint8_t*>(m_allocation.cpu_address) + field_info.offset;
+        void* field_ptr = static_cast<uint8_t*>(m_cpu_shadow_data.data()) + field_info.offset;
         if (memcmp(field_ptr, values.data(), values.size()) == 0)
         {
             return false;
         }
     }
-
-    mutate();
-
+    
     m_fields_set[field_info.index] = true;
 
-    void* field_ptr = static_cast<uint8_t*>(m_allocation.cpu_address) + field_info.offset;
+    void* field_ptr = static_cast<uint8_t*>(m_cpu_shadow_data.data()) + field_info.offset;
     memcpy(field_ptr, values.data(), values.size());
 
     // Matrices are stored column-major but HLSL expects them in row-major, so transpose them.
     transpose_matrices(field_ptr, type);
+
+    mark_dirty();
 
     return true;
 }

@@ -7,6 +7,7 @@
 #include "workshop.render_interface/ri_param_block_archetype.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
+#include "workshop.render_interface.dx12/dx12_ri_buffer.h"
 #include "workshop.core/utils/result.h"
 
 #include <memory>
@@ -33,9 +34,11 @@ public:
     struct allocation
     {
     public:
-        void* cpu_address;
-        void* gpu_address;
+        dx12_ri_buffer* buffer;
+        size_t offset;
         size_t size;
+
+        uint8_t* address_gpu = nullptr;
 
         bool is_valid() const;
 
@@ -73,10 +76,10 @@ private:
 
     struct alloc_page
     {
-        Microsoft::WRL::ComPtr<ID3D12Resource> handle = nullptr;
+        std::unique_ptr<ri_buffer> buffer;
+
         std::vector<uint16_t> free_list;
 
-        uint8_t* base_address_cpu = nullptr;
         uint8_t* base_address_gpu = nullptr;
 
         dx12_ri_descriptor_table::allocation srv;
@@ -90,7 +93,6 @@ private:
     std::string m_debug_name;
 
     ri_param_block_archetype::create_params m_create_params;
-
 
     std::unique_ptr<ri_layout_factory> m_layout_factory;
     size_t m_instance_size;

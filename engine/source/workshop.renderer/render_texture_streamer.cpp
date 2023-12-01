@@ -95,6 +95,12 @@ void render_texture_streamer::unregister_texture(texture* tex)
 
 void render_texture_streamer::begin_frame()
 {
+    const render_options& options = m_renderer.get_options();
+    if (!options.texture_streaming_enabled)
+    {
+        return;
+    }
+
     m_async_update_task = async("texture streamer update", task_queue::standard, [this]() {
         async_update();
     });
@@ -102,6 +108,12 @@ void render_texture_streamer::begin_frame()
 
 void render_texture_streamer::end_frame()
 {
+    const render_options& options = m_renderer.get_options();
+    if (!options.texture_streaming_enabled)
+    {
+        return;
+    }
+
     // Wait for current update task to complete.
     if (m_async_update_task.is_valid())
     {

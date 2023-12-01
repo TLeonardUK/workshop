@@ -95,6 +95,9 @@ enum class ri_resource_state
     // ray tracing pipeline.
     raytracing_acceleration_structure,
 
+    // Generic read state.
+    generic_read,
+
     COUNT
 };
 

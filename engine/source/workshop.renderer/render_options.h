@@ -20,6 +20,9 @@ public:
 	//  Textures
 	// ================================================================================================
 
+    // Toggles texture streaming on/off.
+    bool texture_streaming_enabled = false;
+
 	// How many mips to drop of a texture as its loaded. This can be used to quickly strim down the 
 	// maximum memory being used. In general texture streaming/etc should be used rather than this.
 	size_t textures_dropped_mips = 0;

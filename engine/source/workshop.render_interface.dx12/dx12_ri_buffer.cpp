@@ -80,6 +80,11 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
         mem_type = memory_type::rendering__vram__raytracing_buffer;
         break;
     }
+    case ri_buffer_usage::param_block:
+    {
+        mem_type = memory_type::rendering__vram__param_blocks;
+        break;
+    }
     case ri_buffer_usage::generic:
     case ri_buffer_usage::readback:
     default:
@@ -117,6 +122,7 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     desc.SampleDesc.Quality = 0;
 
     if (m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::param_block ||
         m_create_params.usage == ri_buffer_usage::raytracing_as_instance_data ||
         m_create_params.usage == ri_buffer_usage::raytracing_as_scratch ||
         m_create_params.usage == ri_buffer_usage::raytracing_as ||
@@ -150,11 +156,22 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
 }
 
 result<void> dx12_ri_buffer::create_resources()
-{
+{    
     // Either create an exclusive buffer or sub-allocate into the small buffer allocator.
     dx12_ri_small_buffer_allocator& small_allocator = m_renderer.get_small_buffer_allocator();
     size_t total_size = m_create_params.element_size * m_create_params.element_count;
-    m_is_small_buffer = (total_size < small_allocator.get_max_size());
+
+    // Param blocks expect to be linearly indexable inside its buffer
+    // so we don't currently support small buffer optimization.
+    // TODO: Maybe resolve in future?
+    if (m_create_params.usage == ri_buffer_usage::param_block)
+    {
+        m_is_small_buffer = false;
+    }
+    else
+    {
+        m_is_small_buffer = (total_size < small_allocator.get_max_size());
+    }
 
     m_uav_table = ri_descriptor_table::rwbuffer;
     m_srv_table = ri_descriptor_table::buffer;
@@ -191,6 +208,11 @@ result<void> dx12_ri_buffer::create_resources()
     case ri_buffer_usage::generic:
         {
             m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
+    case ri_buffer_usage::param_block:
+        {
+            m_common_state = ri_resource_state::generic_read;
             break;
         }
     case ri_buffer_usage::readback:
@@ -268,6 +290,7 @@ result<void> dx12_ri_buffer::create_resources()
 
     // Create a UAV view for the buffer as well incase we need unordered access later.
     if (m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::param_block ||
         m_create_params.usage == ri_buffer_usage::raytracing_as ||
         m_create_params.usage == ri_buffer_usage::raytracing_as_scratch ||
         m_create_params.usage == ri_buffer_usage::raytracing_as_instance_data ||
