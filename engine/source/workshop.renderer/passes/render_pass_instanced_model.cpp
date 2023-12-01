@@ -85,8 +85,11 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
             }
             instance_buffer->commit();
 
+            std::size_t vertex_info_hash = reinterpret_cast<std::size_t>(get_cache_key(*view));
+            hash_combine(vertex_info_hash, i);
+
             // Generate the vertex info buffer for this batch.
-            ri_param_block* vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info", {});
+            ri_param_block* vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(reinterpret_cast<void*>(vertex_info_hash), "vertex_info", {});
 
             size_t model_info_table_index;
             size_t model_info_table_offset;

@@ -46,6 +46,7 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
         list.set_primitive_topology(ri_primitive::triangle_list);
         list.set_index_buffer(*index_buffer);
 
+        size_t cmd_index = 0;
         for (render_system_imgui::draw_command& cmd : draw_commands)
         {
             if ((int)cmd.scissor.width == 0 || (int)cmd.scissor.height == 0)
@@ -59,7 +60,10 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
                 texture = default_texture;
             }
 
-            ri_param_block* imgui_params = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "imgui_params");
+            std::size_t imgui_params_hash = reinterpret_cast<std::size_t>(get_cache_key(*view));
+            hash_combine(imgui_params_hash, cmd_index++);
+
+            ri_param_block* imgui_params = view->get_resource_cache().find_or_create_param_block(reinterpret_cast<void*>(imgui_params_hash), "imgui_params");
             imgui_params->set("color_texture", *texture);
             imgui_params->set("color_sampler", *renderer.get_default_sampler(default_sampler_type::color));
             imgui_params->set("projection_matrix", matrix4::orthographic(
