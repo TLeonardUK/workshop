@@ -18,6 +18,7 @@ namespace ws {
 
 class engine;
 class dx12_render_interface;
+class dx12_ri_param_block;
 
 // ================================================================================================
 //  Implementation of a texture buffer using DirectX 12.
@@ -63,6 +64,9 @@ public:
     // packed source data that the texture_compiler generates.
     bool calculate_linear_data_mip_range(size_t array_index, size_t mip_index, size_t& offset, size_t& size);
 
+    void add_param_block_reference(dx12_ri_param_block* block);
+    void remove_param_block_reference(dx12_ri_param_block* block);
+
 public:
     struct mip_residency
     {
@@ -91,7 +95,7 @@ public:
 
     size_t get_max_resident_mip();
 
-    void create_views(bool overwrite_descriptors = false);
+    void create_views();
     void free_views();
     void recreate_views();
 
@@ -137,6 +141,9 @@ public:
     std::vector<std::vector<dx12_ri_descriptor_table::allocation>> m_srvs;
     std::vector<dx12_ri_descriptor_table::allocation> m_dsvs;
     dx12_ri_descriptor_table::allocation m_main_srv;
+
+    std::mutex m_reference_mutex;
+    std::vector<dx12_ri_param_block*> m_referencing_param_blocks;
 
     ri_descriptor_table m_srv_table;
 

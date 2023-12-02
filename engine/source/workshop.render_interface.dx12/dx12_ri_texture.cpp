@@ -7,6 +7,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_command_queue.h"
 #include "workshop.render_interface.dx12/dx12_ri_upload_manager.h"
 #include "workshop.render_interface.dx12/dx12_ri_tile_manager.h"
+#include "workshop.render_interface.dx12/dx12_ri_param_block.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/memory/memory_tracker.h"
@@ -38,6 +39,16 @@ dx12_ri_texture::dx12_ri_texture(dx12_render_interface& renderer, const char* de
 
 dx12_ri_texture::~dx12_ri_texture()
 {
+    // If any param blocks are still referencing this texture, tell them to remove their references.
+    {
+        std::scoped_lock lock(m_reference_mutex);
+
+        for (dx12_ri_param_block* ref : m_referencing_param_blocks)
+        {
+            ref->clear_texture_references(this);
+        }
+    }
+
     // Deallocate all tiles (these are already defered, we don't need to put it in defer_delete).
     if (m_create_params.is_partially_resident)
     {
@@ -66,6 +77,23 @@ dx12_ri_texture::~dx12_ri_texture()
     {
         // Don't need to do anything here, this is just here to maintain a handle reference.
     });
+}
+
+void dx12_ri_texture::add_param_block_reference(dx12_ri_param_block* block)
+{
+    std::scoped_lock lock(m_reference_mutex);
+
+    m_referencing_param_blocks.push_back(block);
+}
+
+void dx12_ri_texture::remove_param_block_reference(dx12_ri_param_block* block)
+{
+    std::scoped_lock lock(m_reference_mutex);
+
+    if (auto iter = std::find(m_referencing_param_blocks.begin(), m_referencing_param_blocks.end(), block); iter != m_referencing_param_blocks.end())
+    {
+        m_referencing_param_blocks.erase(iter);
+    }
 }
 
 bool dx12_ri_texture::calculate_linear_data_mip_range(size_t array_index, size_t mip_index, size_t& offset, size_t& size)
@@ -943,14 +971,12 @@ void dx12_ri_texture::calculate_formats()
 void dx12_ri_texture::recreate_views()
 {
     calculate_formats();
-    create_views(true);
+    free_views();
+    create_views();
 }
 
-void dx12_ri_texture::create_views(bool overwrite_descriptors)
+void dx12_ri_texture::create_views()
 {
-    // TODO: Overwriting descriptors is dicey as fuck, the gpu may be using them.
-    //       We need to find a ncier way to handle this.
-
     // Set a debug name.
     m_handle->SetName(widen_string(m_debug_name).c_str());
 
@@ -961,10 +987,7 @@ void dx12_ri_texture::create_views(bool overwrite_descriptors)
         {
             for (size_t i = 0; i < m_dsvs.size(); i++)
             {
-                if (!overwrite_descriptors)
-                {
-                    m_dsvs[i] = m_renderer.get_descriptor_table(ri_descriptor_table::depth_stencil).allocate();
-                }
+                m_dsvs[i] = m_renderer.get_descriptor_table(ri_descriptor_table::depth_stencil).allocate();
                 m_renderer.get_device()->CreateDepthStencilView(m_handle.Get(), &m_dsv_view_descs[i], m_dsvs[i].cpu_handle);
             }
         }
@@ -974,10 +997,7 @@ void dx12_ri_texture::create_views(bool overwrite_descriptors)
             {
                 for (size_t slice = 0; slice < m_rtvs[mip].size(); slice++)
                 {
-                    if (!overwrite_descriptors)
-                    {
-                        m_rtvs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
-                    }
+                    m_rtvs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::render_target).allocate();
                     m_renderer.get_device()->CreateRenderTargetView(m_handle.Get(), &m_rtv_view_descs[mip][slice], m_rtvs[mip][slice].cpu_handle);
                 }
             }
@@ -990,10 +1010,7 @@ void dx12_ri_texture::create_views(bool overwrite_descriptors)
         {
             for (size_t slice = 0; slice < m_uavs[mip].size(); slice++)
             {
-                if (!overwrite_descriptors)
-                {
-                    m_uavs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::rwtexture_2d).allocate();
-                }
+                m_uavs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::rwtexture_2d).allocate();
                 m_renderer.get_device()->CreateUnorderedAccessView(m_handle.Get(), nullptr, &m_uav_view_descs[mip][slice], m_uavs[mip][slice].cpu_handle);
             }
         }
@@ -1005,21 +1022,25 @@ void dx12_ri_texture::create_views(bool overwrite_descriptors)
         {
             for (size_t slice = 0; slice < m_srvs[mip].size(); slice++)
             {
-                if (!overwrite_descriptors)
-                {
-                    m_srvs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::texture_2d).allocate();
-                }
+                m_srvs[mip][slice] = m_renderer.get_descriptor_table(ri_descriptor_table::texture_2d).allocate();
                 m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_srv_view_descs[mip][slice], m_srvs[mip][slice].cpu_handle);
             }
         }
     }
 
     // Depth targets need to be interpreted differently for srvs.
-    if (!overwrite_descriptors)
-    {
-        m_main_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
-    }
+    m_main_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
     m_renderer.get_device()->CreateShaderResourceView(m_handle.Get(), &m_main_srv_view_desc, m_main_srv.cpu_handle);
+
+    // Notify any param blocks that reference us that they need to update their references.
+    {
+        std::scoped_lock lock(m_reference_mutex);
+
+        for (dx12_ri_param_block* ref : m_referencing_param_blocks)
+        {
+            ref->referenced_texture_modified(this);
+        }
+    }
 }
 
 void dx12_ri_texture::free_views()

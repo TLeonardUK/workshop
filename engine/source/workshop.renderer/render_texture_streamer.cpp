@@ -139,6 +139,8 @@ void render_texture_streamer::make_completed_mips_resident()
     bool time_elapsed = false;
     size_t mips_made_resident = 0;
 
+    size_t original_waiting_list_size = waiting_list.size();
+
     for (texture_streaming_info* info : waiting_list)
     {
         bool any_mips_failed = false;
@@ -194,11 +196,6 @@ void render_texture_streamer::make_completed_mips_resident()
         }
     }
 
-    if (!success_upgrades.empty())
-    {
-        db_log(core, "mips:%zi time:%.2f memory:%.2f mb", mips_made_resident, (get_seconds()-start) * 1000.0f, m_current_memory_pressure / (1024.0f * 1024.0f));
-    }
-
     // Switch states of completed (or failed) textures.
     for (texture_streaming_info* info : failed_upgrades)
     {
@@ -215,6 +212,11 @@ void render_texture_streamer::make_completed_mips_resident()
         m_current_memory_pressure += info->instance->ri_instance->get_memory_usage_with_residency(info->current_resident_mips);
 
         set_texture_state(*info, texture_state::idle);
+    }
+    
+    if (!success_upgrades.empty())
+    {
+        db_log(core, "mips:%zi time:%.2f completed:%zi remaining:%zi memory:%.2f mb", mips_made_resident, (get_seconds() - start) * 1000.0f, original_waiting_list_size, waiting_list.size(), m_current_memory_pressure / (1024.0f * 1024.0f));
     }
 }
 

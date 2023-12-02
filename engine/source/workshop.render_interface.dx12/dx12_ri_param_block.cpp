@@ -30,6 +30,11 @@ dx12_ri_param_block::~dx12_ri_param_block()
 {
     m_renderer.dequeue_dirty_param_block(this);
 
+    for (auto& [field_index, ref] : m_referenced_textures)
+    {
+        static_cast<dx12_ri_texture*>(ref.view.texture)->remove_param_block_reference(this);
+    }
+
     if (m_allocation.is_valid())
     {
         m_renderer.defer_delete([allocation = m_allocation, archetype = &m_archetype]()
@@ -107,14 +112,10 @@ void dx12_ri_param_block::transpose_matrices(void* field, ri_data_type type)
     }
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
+
+bool dx12_ri_param_block::set(size_t field_index, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
 {
-    dx12_ri_layout_factory::field field_info;
-    if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
-    {
-        //db_error(renderer, "Attempting to set unknown field '%s' on param block.", field_name);
-        return false;
-    }
+    dx12_ri_layout_factory::field field_info = m_archetype.get_layout_factory().get_field(field_index);
 
     if (field_info.type != type)
     {
@@ -124,7 +125,7 @@ bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
 
     if (field_info.size != value_size)
     {
-        db_error(renderer, "Value size missmatch for field '%s' on param block. Got '%zi' expected '%zi'.", field_name, value_size, field_info.size);
+        db_error(renderer, "Value size missmatch for field '%s' on param block. Got '%zi' expected '%zi'.", field_info.name.c_str(), value_size, field_info.size);
         return false;
     }
 
@@ -139,7 +140,7 @@ bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
             return false;
         }
     }
-    
+
     m_fields_set[field_info.index] = true;
 
     void* field_ptr = static_cast<uint8_t*>(m_cpu_shadow_data.data()) + field_info.offset;
@@ -153,45 +154,24 @@ bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
     return true;
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
-{    
-    const dx12_ri_texture& dx12_resource = static_cast<const dx12_ri_texture&>(resource);
-    uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_main_srv().get_table_index());
-
-    ri_data_type expected_data_type = ri_data_type::t_texture1d;
-    switch (dx12_resource.get_dimensions())
+bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
+{
+    dx12_ri_layout_factory::field field_info;
+    if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
     {
-    case ri_texture_dimension::texture_1d:
-        {
-            expected_data_type = ri_data_type::t_texture1d;
-            break;
-        }
-    case ri_texture_dimension::texture_2d:
-        {
-            expected_data_type = ri_data_type::t_texture2d;
-            break;
-        }
-    case ri_texture_dimension::texture_3d:
-        {
-            expected_data_type = ri_data_type::t_texture3d;
-            break;
-        }
-    case ri_texture_dimension::texture_cube:
-        {
-            expected_data_type = ri_data_type::t_texturecube;
-            break;
-        }
-    default:
-        {
-            db_assert(false);
-            break;
-        }
+        //db_error(renderer, "Attempting to set unknown field '%s' on param block.", field_name);
+        return false;
     }
 
-    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
+    return set(field_info.index, values, value_size, type);
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_texture_view& resource, bool writable)
+bool dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
+{ 
+    return set(field_name, ri_texture_view(const_cast<ri_texture*>(&resource), ri_texture_view::k_unset, ri_texture_view::k_unset), false);
+}
+
+bool dx12_ri_param_block::set(size_t field_index, const ri_texture_view& resource, bool writable, bool do_not_add_references)
 {
     const dx12_ri_texture& dx12_resource = static_cast<const dx12_ri_texture&>(*resource.texture);
     uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_main_srv().get_table_index());
@@ -267,7 +247,97 @@ bool dx12_ri_param_block::set(const char* field_name, const ri_texture_view& res
         }
     }
 
-    return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type);
+    if (set(field_index, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), expected_data_type))
+    {
+        if (!do_not_add_references)
+        {
+            add_texture_reference(field_index, resource, writable);
+        }
+        return true;
+    }
+
+    return false;
+}
+
+bool dx12_ri_param_block::set(const char* field_name, const ri_texture_view& resource, bool writable)
+{
+    dx12_ri_layout_factory::field field_info;
+    if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
+    {
+        //db_error(renderer, "Attempting to set unknown field '%s' on param block.", field_name);
+        return false;
+    }
+
+    return set(field_info.index, resource, writable, false);
+}
+
+void dx12_ri_param_block::add_texture_reference(size_t field_index, const ri_texture_view& view, bool writable)
+{
+    std::scoped_lock lock(m_reference_mutex);
+
+    // We only need to store references to partially resident textures, as they are the ones where
+    // the view may be arbitrarily changed.
+    if (!view.texture->is_partially_resident())
+    {
+        return;
+    }
+
+    // Store reference to texture so we can patch if the views are regenerated (eg. by texture streaming).
+    dx12_ri_layout_factory::field field_info = m_archetype.get_layout_factory().get_field(field_index);
+
+    referenced_texture ref;
+    ref.view = view;
+    ref.writable = writable;
+
+    // Remove old reference (if one exists).
+    if (auto iter = m_referenced_textures.find(field_info.index); iter != m_referenced_textures.end())
+    {
+        static_cast<dx12_ri_texture*>(iter->second.view.texture)->remove_param_block_reference(this);
+    }
+
+    // Add new textur reference.
+    static_cast<dx12_ri_texture*>(view.texture)->add_param_block_reference(this);
+
+    m_referenced_textures[field_info.index] = ref;
+}
+
+void dx12_ri_param_block::clear_texture_references(dx12_ri_texture* texture)
+{
+    std::scoped_lock lock(m_reference_mutex);
+
+    for (auto iter = m_referenced_textures.begin(); iter != m_referenced_textures.end(); /*empty*/)
+    {
+        if (iter->second.view.texture == texture)
+        {
+            dx12_ri_layout_factory::field field_info = m_archetype.get_layout_factory().get_field(iter->first);
+
+            // Clear out the fields that refernce this texture.
+            size_t table_index = 0;
+            set(iter->first, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), field_info.type);
+
+            iter = m_referenced_textures.erase(iter);
+        }
+        else
+        {
+            iter++;
+        }
+    }
+}
+
+void dx12_ri_param_block::referenced_texture_modified(dx12_ri_texture* texture)
+{
+    std::scoped_lock lock(m_reference_mutex);
+
+    for (auto iter = m_referenced_textures.begin(); iter != m_referenced_textures.end(); iter++)
+    {
+        if (iter->second.view.texture == texture)
+        {
+            dx12_ri_layout_factory::field field_info = m_archetype.get_layout_factory().get_field(iter->first);
+
+            // Update the reference to point to the new texture srv's/etc
+            set(field_info.index, iter->second.view, iter->second.writable, true);
+        }
+    }
 }
 
 bool dx12_ri_param_block::set(const char* field_name, const ri_sampler& resource)
