@@ -25,6 +25,7 @@ class dx12_render_interface;
 class dx12_ri_texture;
 class dx12_ri_buffer;
 class dx12_ri_command_list;
+class dx12_ri_staging_buffer;
 class statistics_channel;
 class ri_fence;
 
@@ -41,11 +42,14 @@ public:
 
     void upload(dx12_ri_texture& source, const std::span<uint8_t>& data);
     void upload(dx12_ri_texture& source, size_t array_index, size_t mip_index, const std::span<uint8_t>& data);
+    void upload(dx12_ri_texture& source, size_t array_index, size_t mip_index, dx12_ri_staging_buffer& data_buffer);
     void upload(dx12_ri_buffer& source, const std::span<uint8_t>& data, size_t offset);
 
     void new_frame(size_t index);
 
 private:
+    friend class dx12_ri_staging_buffer;
+
     using build_command_list_callback_t = std::function<void(dx12_ri_command_list& list)>;
 
     struct heap_state
@@ -81,6 +85,10 @@ private:
     // Granularity of heap size. The actual heap size is based on the size of the data to be uploaded.
     static constexpr size_t k_heap_granularity = 32 * 1024 * 1024;
 
+    // Don't deallocate memory if all heaps are below this size.
+    static constexpr size_t k_persist_heap_memory = 256 * 1024 * 1024;
+
+
 private:
     void allocate_new_heap(size_t minimum_size);
     
@@ -89,6 +97,8 @@ private:
 
     void perform_uploads();
     void free_uploads();
+
+    size_t get_heap_size();
 
 private:
     std::recursive_mutex m_pending_upload_mutex;

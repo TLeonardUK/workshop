@@ -49,10 +49,13 @@ public:
 
     virtual size_t get_resident_mips() override;
     virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) override;
+    virtual void make_mip_resident(size_t mip_index, ri_staging_buffer& data_buffer) override;
     virtual void make_mip_non_resident(size_t mip_index) override;
     virtual size_t get_memory_usage_with_residency(size_t mip_count) override;
     virtual bool is_mip_resident(size_t mip_index) override;
     virtual void get_mip_source_data_range(size_t mip_index, size_t& offset, size_t& size) override;
+    virtual void begin_mip_residency_change() override;
+    virtual void end_mip_residency_change() override;
 
     virtual ri_resource_state get_initial_state() override;
 
@@ -117,6 +120,9 @@ public:
 
     dx12_ri_tile_manager::tile_allocation m_packed_mip_tile_allocation;
     bool m_packed_mips_resident = false;    
+
+    bool m_in_mip_residency_change = false;
+    bool m_views_pending_recreate = false;
 
     memory_type m_memory_type;
     std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;

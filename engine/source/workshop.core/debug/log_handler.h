@@ -90,9 +90,11 @@ public:
     static void set_max_log_level(log_level level);
     static log_level get_max_log_level();
 
-protected:
+public:
 
+    // Internal functions which ~generally~ shouldn't be called directly.
     static void static_write_formatted(log_level level, log_source source, const char* log);
+    static void static_write_formatted_to_handlers(log_level level, log_source source, const char* log);
 
 private:
 

@@ -8,11 +8,11 @@
 #include "workshop.render_interface.dx12/dx12_ri_upload_manager.h"
 #include "workshop.render_interface.dx12/dx12_ri_tile_manager.h"
 #include "workshop.render_interface.dx12/dx12_ri_param_block.h"
+#include "workshop.render_interface.dx12/dx12_ri_staging_buffer.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/memory/memory_tracker.h"
-
-#pragma optimize("", off)
+#include "workshop.core/utils/time.h"
 
 namespace ws {
 
@@ -315,6 +315,8 @@ result<void> dx12_ri_texture::create_resources()
         }    
         
         // Make initial mips resident.
+        begin_mip_residency_change();
+
         for (size_t i = 0; i < m_create_params.resident_mips; i++)
         {
             std::vector<uint8_t> mip_data;
@@ -332,6 +334,8 @@ result<void> dx12_ri_texture::create_resources()
             make_mip_resident(mip_index, mip_data);
         }
 
+        end_mip_residency_change();
+        
         m_memory_allocation_info = mem_scope.record_alloc(calculate_resident_mip_used_bytes());
 
         // Recalculate view formats so the resident mip cap is set.
@@ -523,8 +527,81 @@ size_t dx12_ri_texture::get_memory_usage_with_residency(size_t mip_count)
     return total_tiles * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 }
 
+void dx12_ri_texture::begin_mip_residency_change()
+{
+    m_in_mip_residency_change = true;
+}
+
+void dx12_ri_texture::end_mip_residency_change()
+{
+    m_in_mip_residency_change = false;
+
+    if (m_views_pending_recreate)
+    {
+        m_views_pending_recreate = false;
+
+        // Recreate the texture views, they need to be modified to point to the correct max mip level.
+        // Don't need to do this if views haven't been created yet (doing initial residency changes)
+        if (m_main_srv.is_valid())
+        {
+            recreate_views();
+        }
+    }
+}
+
 void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data)
 {
+    profile_marker(profile_colors::render, "dx12_ri_texture::make_mip_resident");
+
+    db_assert(m_in_mip_residency_change);
+    db_assert(m_create_params.is_partially_resident);
+
+    mip_residency* residency = &m_mip_residency[mip_index];
+
+    dx12_ri_tile_manager& tile_manager = m_renderer.get_tile_manager();
+    dx12_ri_upload_manager& upload_manager = m_renderer.get_upload_manager();
+
+    //double start = get_seconds();
+
+    // Only allocate tiles if none-resident.
+    if (!residency->is_resident)
+    {
+        residency->is_resident = true;
+
+        if (residency->is_packed)
+        {
+            update_packed_mip_chain_residency();
+        }
+        else
+        {
+            // Allocate tiles for this mip.
+            residency->tile_allocation = tile_manager.allocate_tiles(residency->tile_size.NumTiles);
+
+            // Map the new tiles to the textures resource.            
+            tile_manager.queue_map(*this, residency->tile_allocation, residency->index);
+        }
+    }
+
+    // Queue an upload for the tiles new data.
+    if (!linear_data.empty())
+    {   
+        upload_manager.upload(*this, 0, mip_index, linear_data);
+    }
+
+    //db_log(core, "upload of mip %zi took %.2f ms", mip_index, (get_seconds() - start) * 1000.0f);
+
+    m_views_pending_recreate = true;
+
+    // Update memory allocation.
+    memory_scope mem_scope(m_memory_type, string_hash::empty, string_hash(m_debug_name));
+    m_memory_allocation_info = mem_scope.record_alloc(calculate_resident_mip_used_bytes());
+}
+
+void dx12_ri_texture::make_mip_resident(size_t mip_index, ri_staging_buffer& data_buffer)
+{
+    profile_marker(profile_colors::render, "dx12_ri_texture::make_mip_resident");
+
+    db_assert(m_in_mip_residency_change);
     db_assert(m_create_params.is_partially_resident);
 
     mip_residency* residency = &m_mip_residency[mip_index];
@@ -552,17 +629,11 @@ void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_
     }
 
     // Queue an upload for the tiles new data.
-    if (!linear_data.empty())
-    {
-        upload_manager.upload(*this, 0, mip_index, linear_data);
-    }
+    //double start = get_seconds();
+    upload_manager.upload(*this, 0, mip_index, static_cast<dx12_ri_staging_buffer&>(data_buffer));
+    //db_log(core, "upload of mip %zi took %.2f ms", mip_index, (get_seconds() - start) * 1000.0f);
 
-    // Recreate the texture views, they need to be modified to point to the correct max mip level.
-    // Don't need to do this if views haven't been created yet (doing initial residency changes)
-    if (m_main_srv.is_valid())
-    {
-        recreate_views();
-    }
+    m_views_pending_recreate = true;
 
     // Update memory allocation.
     memory_scope mem_scope(m_memory_type, string_hash::empty, string_hash(m_debug_name));
@@ -571,6 +642,9 @@ void dx12_ri_texture::make_mip_resident(size_t mip_index, const std::span<uint8_
 
 void dx12_ri_texture::make_mip_non_resident(size_t mip_index)
 {
+    profile_marker(profile_colors::render, "dx12_ri_texture::make_mip_non_resident");
+
+    db_assert(m_in_mip_residency_change);
     db_assert(m_create_params.is_partially_resident);
 
     mip_residency& residency = m_mip_residency[mip_index];
@@ -598,12 +672,7 @@ void dx12_ri_texture::make_mip_non_resident(size_t mip_index)
         residency.tile_allocation = {};
     }
 
-    // Recreate the texture views, they need to be modified to point to the correct max mip level.
-    // Don't need to do this if views haven't been created yet (doing initial residency changes)
-    if (m_main_srv.is_valid())
-    {
-        recreate_views();
-    }
+    m_views_pending_recreate = true;
 
     // Update memory allocation.
     memory_scope mem_scope(m_memory_type, string_hash::empty, string_hash(m_debug_name));
@@ -970,6 +1039,8 @@ void dx12_ri_texture::calculate_formats()
 
 void dx12_ri_texture::recreate_views()
 {
+    profile_marker(profile_colors::render, "dx12_ri_texture::recreate_views");
+
     calculate_formats();
     free_views();
     create_views();

@@ -39,7 +39,7 @@ public:
 
     // Gets the that was loaded from disk.
     virtual std::span<uint8_t> data() = 0;
-  
+
 };
 
 // ================================================================================================

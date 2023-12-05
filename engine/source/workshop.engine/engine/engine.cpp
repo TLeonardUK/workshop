@@ -363,6 +363,7 @@ result<void> engine::destroy_task_scheduler()
 result<void> engine::create_filesystem(init_list& list)
 {
     m_async_io_manager = async_io_manager::create();
+    m_async_copy_manager = std::make_unique<async_copy_manager>();
     m_filesystem = std::make_unique<virtual_file_system>();
 
     // Figure out what folders the engine and game assets are stored in.

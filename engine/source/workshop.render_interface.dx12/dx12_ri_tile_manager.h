@@ -72,7 +72,7 @@ private:
     };
 
     // Granularity of heap size in tiles. Each tile is typically 64kb.
-    static constexpr size_t k_heap_granularity_in_tiles = 128;
+    static constexpr size_t k_heap_granularity_in_tiles = 4096; // 256mb
 
 private:
     enum class operation_type

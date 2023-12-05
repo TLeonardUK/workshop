@@ -38,18 +38,25 @@ public:
     size_t texture_streaming_min_resident_mips = 5; // ~64x64
 
     // Minimum dimension of a texture for it to be considered for streaming.
-    size_t texture_streaming_min_dimension = 64;
+    size_t texture_streaming_min_dimension = 128;
 
     // Maximum size of the streamed texture pool in bytes.
-    size_t texture_streaming_pool_size = 2048llu * 1024llu * 1024llu;
+    size_t texture_streaming_pool_size = 1024llu * 1024llu * 1024llu;
 
     // Forces texture mips to be unstreamed even when not under memory pressure. Useful
     // for debugging, unwise to use in production.
-    bool texture_streaming_force_unstream = true;
+    bool texture_streaming_force_unstream = false;
 
     // Maximum number of ms per frame to spend on the render thread making mips resident. Mips
     // will be spread across frames if this time limit is exceeded.
-    float texture_streaming_time_limit_ms = 1000.0f;
+    float texture_streaming_time_limit_ms = 1.0f;
+
+    // Maximum amount of memory that should be used for staging buffers at any given time. Contrains
+    // number of mips that can be concurrently staged. Reduces memory and processing spikes.
+    size_t texture_streaming_max_staged_memory = 64llu * 1024llu * 1024llu;
+
+    // Biases the ideal mip for textures higher or lower than what was calculated.
+    int texture_streaming_mip_bias = -1;
 
 	// ================================================================================================
 	//  Light Probes

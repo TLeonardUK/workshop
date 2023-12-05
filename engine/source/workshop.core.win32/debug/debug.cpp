@@ -7,6 +7,10 @@
 #include "workshop.core.win32/utils/windows_headers.h"
 
 #include <array>
+#include <queue>
+
+// If se async writing will happen on a background thread to avoid spikes when writing to output.
+#define USE_ASYNC_CONSOLE_LOGGING 1
 
 namespace {
 

@@ -51,6 +51,16 @@ bool texture::load_dependencies()
         streamed = false;
     }
 
+#if 1
+    // DEBUG DEBUG DEBUG
+    //if (name.find("wood_tile") == std::string::npos)
+    if (name.find("lion") == std::string::npos)
+    {
+    //    streamed = false;
+    }
+    // DEBUG DEBUG DEBUG
+#endif
+
     if (streamed)
     {
         params.is_partially_resident = true;

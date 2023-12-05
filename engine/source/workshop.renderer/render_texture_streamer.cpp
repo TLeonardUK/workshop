@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/objects/render_view.h"
 
@@ -11,9 +12,9 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/memory/memory_tracker.h"
 
-#include "workshop.render_interface/ri_interface.h"
+#include "workshop.core/math/plane.h"
 
-#pragma optimize("", off)
+#include "workshop.render_interface/ri_interface.h"
 
 namespace ws {
 
@@ -88,6 +89,15 @@ void render_texture_streamer::unregister_texture(texture* tex)
 {
     std::unique_lock lock(m_access_mutex);
 
+    // Ensure all mip staging is complete before we unregister the texture.
+    for (texture_mip_request& request : tex->streaming_info->mip_requests)
+    {
+        if (request.staging_buffer)
+        {
+            request.staging_buffer->wait();
+        }
+    }
+
     m_streaming_textures.erase(tex);
 
     remove_from_state_array(*tex->streaming_info);
@@ -102,12 +112,15 @@ void render_texture_streamer::begin_frame()
     }
 
     m_async_update_task = async("texture streamer update", task_queue::standard, [this]() {
+        profile_marker(profile_colors::render, "texture streaming update");
         async_update();
     });
 }
 
 void render_texture_streamer::end_frame()
 {
+    profile_marker(profile_colors::render, "texture streaming integration");
+
     const render_options& options = m_renderer.get_options();
     if (!options.texture_streaming_enabled)
     {
@@ -123,6 +136,21 @@ void render_texture_streamer::end_frame()
 
     make_completed_mips_resident();
     make_downgrades_non_resident();
+}
+
+void render_texture_streamer::visit_textures(visit_callback_t callback)
+{
+    std::unique_lock lock(m_access_mutex);
+
+    for (auto& info : m_streaming_textures)
+    {
+        callback(*info.second);
+    }
+}
+
+size_t render_texture_streamer::get_memory_pressure()
+{
+    return m_current_memory_pressure;
 }
 
 void render_texture_streamer::make_completed_mips_resident()
@@ -154,16 +182,40 @@ void render_texture_streamer::make_completed_mips_resident()
                 {
                     any_mips_failed = true;
                 }
+                else if (!mip_iter->staging_buffer)
+                {
+                    if (m_total_staging_buffer_size < options.texture_streaming_max_staged_memory)
+                    {
+                        // Asyncronously copy data to an upload buffer.
+                        ri_staging_buffer::create_params params;
+                        params.destination = info->instance->ri_instance.get();
+                        params.mip_index = mip_iter->mip_index;
+                        params.array_index = 0;
+
+                        mip_iter->staging_buffer = m_renderer.get_render_interface().create_staging_buffer(params, mip_iter->async_request->data());
+                        m_total_staging_buffer_size += mip_iter->async_request->data().size();
+                    }
+                    else
+                    {
+                        mip_iter++;
+                    }
+                }
+                else if (mip_iter->staging_buffer->is_staged())
+                {
+                    info->instance->ri_instance->begin_mip_residency_change();
+                    info->instance->ri_instance->make_mip_resident(mip_iter->mip_index, *mip_iter->staging_buffer);
+                    info->instance->ri_instance->end_mip_residency_change();
+
+                    m_total_staging_buffer_size -= mip_iter->async_request->data().size();
+                    mip_iter->staging_buffer = nullptr;
+
+                    mips_made_resident++;
+                    mip_iter = info->mip_requests.erase(mip_iter);
+                }
                 else
                 {
-                    //db_log(renderer, "Made mip %zi resident for %s", mip_iter->mip_index, info->instance->name.c_str());
-
-                    std::span<uint8_t> mip_data = mip_iter->async_request->data();
-                    info->instance->ri_instance->make_mip_resident(mip_iter->mip_index, mip_data);
-                    mips_made_resident++;
+                    mip_iter++;
                 }
-
-                mip_iter = info->mip_requests.erase(mip_iter);
             }
             else
             {
@@ -214,9 +266,10 @@ void render_texture_streamer::make_completed_mips_resident()
         set_texture_state(*info, texture_state::idle);
     }
     
-    if (!success_upgrades.empty())
+    double elapsed = (get_seconds() - start) * 1000.0f;
+    if (!success_upgrades.empty() && elapsed > 2.0f)
     {
-        db_log(core, "mips:%zi time:%.2f completed:%zi remaining:%zi memory:%.2f mb", mips_made_resident, (get_seconds() - start) * 1000.0f, original_waiting_list_size, waiting_list.size(), m_current_memory_pressure / (1024.0f * 1024.0f));
+        db_log(core, "mips:%zi time:%.2f completed:%zi remaining:%zi memory:%.2f mb", mips_made_resident, elapsed, original_waiting_list_size, waiting_list.size(), m_current_memory_pressure / (1024.0f * 1024.0f));
     }
 }
 
@@ -226,6 +279,8 @@ void render_texture_streamer::make_downgrades_non_resident()
 
     for (texture_streaming_info* info : to_downgrade)
     {
+        info->instance->ri_instance->begin_mip_residency_change();
+
         for (size_t i = info->ideal_resident_mips; i <= info->current_resident_mips; i++)
         {
             size_t mip_index = info->instance->ri_instance->get_mip_levels() - i;
@@ -234,6 +289,8 @@ void render_texture_streamer::make_downgrades_non_resident()
 
             info->instance->ri_instance->make_mip_non_resident(mip_index);
         }
+
+        info->instance->ri_instance->end_mip_residency_change();
 
         m_current_memory_pressure -= info->instance->ri_instance->get_memory_usage_with_residency(info->current_resident_mips);
         info->current_resident_mips = info->ideal_resident_mips;
@@ -302,6 +359,78 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
 {
     const render_options& options = m_renderer.get_options();
 
+#if 1
+
+    // More janky and more expensive, but at least this produces the results that are desired ...
+
+    matrix4 view_matrix = tex_bounds.view->get_view_matrix() * tex_bounds.view->get_projection_matrix();
+
+    vector3 view_normal = tex_bounds.view->get_transform().transform_direction(vector3::forward).normalize();
+    plane view_plane(view_normal, tex_bounds.view->get_local_location());
+
+    // Calculate the bounds of the OOB in screen space.
+    vector3 screen_space_corners[8];
+    tex_bounds.bounds.get_corners(screen_space_corners);
+    for (size_t i = 0; i < 8; i++)
+    {
+        vector3& corner = screen_space_corners[i];
+
+        /// huuuum, calculate world space area and convert that view space area?
+        // Right now this gets very squirrely when its partially offscreen.
+
+        // Project corners onto view plane.
+        corner = view_plane.project(corner);
+
+        // Convert to clip space coordinates.
+        corner = corner * view_matrix;
+
+        // Perspective divide.
+        corner = vector3(
+            corner.x / corner.z,
+            corner.y / corner.z,
+            1.0f
+        );
+
+        /*
+        // Convert to NDC
+#if 1
+        corner = vector3(
+            (corner.x + 1.0f) * 0.5f,
+            (-corner.y + 1.0f) * 0.5f,
+            0.0f
+        );  
+#else
+        corner = vector3(
+            std::clamp((corner.x + 1.0f) * 0.5f, 0.0f, 1.0f),
+            std::clamp((-corner.y + 1.0f) * 0.5f, 0.0f, 1.0f),
+            0.0f
+        );
+#endif
+        */
+
+        // Convert to viewport position
+        corner *= vector3(
+            (float)tex_bounds.view->get_viewport().width, 
+            (float)tex_bounds.view->get_viewport().height, 
+            1.0f
+        );
+    }
+
+    aabb screen_space_bounds(screen_space_corners, 8);
+    vector3 screen_space_extents = screen_space_bounds.get_extents() * 2.0f;
+    float screen_space_area = std::pow(std::max(screen_space_extents.x, screen_space_extents.y), 2.0f);
+
+    // Calculate the texel density of the mesh.
+    float texel_density = (tex_bounds.max_texel_area) / (tex_bounds.min_world_area);
+
+    // Calculate the ideal mip count.
+    size_t mip_count = tex_bounds.texture->ri_instance->get_mip_levels();
+    float ideal_mip_float = 0.5f * log2(screen_space_area / texel_density);
+    size_t ideal_mip_count = (size_t)std::clamp((int)std::truncf(ideal_mip_float) + options.texture_streaming_mip_bias, 0, (int)mip_count);
+
+    //db_log(core, "screen_space_area=%.2f texel_density=%.2f mip=%zi", screen_space_area, texel_density, ideal_mip_count);
+
+#else
     // Calculations here are based roughly on this:
     // http://web.cse.ohio-state.edu/~crawfis.3/cse781/Readings/MipMapLevels-Blog.html
 
@@ -309,16 +438,24 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
     vector3 view_location = tex_bounds.view->get_local_location();
     vector3 closet_point = tex_bounds.bounds.get_closest_point(view_location);
 
+    aabb bounds = tex_bounds.bounds.get_aligned_bounds();
+
+#if 0
+    m_renderer.get_command_queue().draw_sphere(sphere(closet_point, 50.0f), color::red);
+    m_renderer.get_command_queue().draw_obb(tex_bounds.bounds, color::green);
+#endif
+
     // Find the screen space area.
-    float p = (float)tex_bounds.view->get_viewport().width;
-    float d = (closet_point - view_location).length() + 0.001f; // small epsilon to avoid issues when inside meshes.
-    float f = tex_bounds.view->get_fov();
-    float q = std::powf((p / (d * std::tanf(f))), 2);
+    float view_width = (float)tex_bounds.view->get_viewport().width;
+    float distance = ((closet_point - view_location).length() + 0.001f); // small epsilon to avoid issues when inside meshes.
+    float fov = tex_bounds.view->get_fov();
+    float a = distance * std::tanf(math::radians(fov));
+    float q = std::powf(view_width / a, 2);
 
     // Determine how many mips to drop based on the texel density of the mesh.
-    float world_scale = std::sqrt(tex_bounds.bounds.transform.extract_scale().max_component()); // TODO: Fix this up it gives us some wierd results with the mips to drop going negative.
-    float factor = (tex_bounds.min_texel_area * tex_bounds.texture->width) / (tex_bounds.max_world_area * world_scale);
-    float mips_to_drop = 0.5f * log2(factor / q);
+    float world_scale = tex_bounds.bounds.transform.extract_scale().max_component();
+    float texel_factor = (tex_bounds.min_texel_area * tex_bounds.texture->width) / (tex_bounds.min_world_area * world_scale);
+    float mips_to_drop = 0.5f * log2(texel_factor / q);
 
     // Calculate the ideal mip count.
     size_t mip_count = tex_bounds.texture->ri_instance->get_mip_levels();
@@ -326,7 +463,10 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
     // We always add 1 to the ideal mip count for trilinear filtering.
     size_t ideal_mip_count = (size_t)std::clamp(((int)mip_count - (int)std::truncf(mips_to_drop)) + 1, 0, (int)mip_count); 
 
-    //db_log(core, "q=%.2f factor=%.2f ideal=%zi", q, mips_to_drop, ideal_mip_count);
+#if 1
+    db_log(core, "a=%.2f q=%.2f factor=%.2f ideal=%zi", a, q, mips_to_drop, ideal_mip_count);
+#endif
+#endif
 
     // Clamp to minimum and maximum mip bounds.
     ideal_mip_count = std::clamp(
@@ -351,7 +491,7 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
         {
             if (visible_manager.is_object_visibile(view->get_visibility_view_id(), static_mesh->get_visibility_id()))
             {
-                obb bounds = static_mesh->get_bounds();
+                //obb bounds = static_mesh->get_bounds();
                 const asset_ptr<model>& mesh_model = static_mesh->get_model();
                 if (!mesh_model.is_loaded())
                 {
@@ -370,6 +510,8 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
 
                     if (visible_manager.is_object_visibile(view->get_visibility_view_id(), static_mesh->get_submesh_visibility_id(i)))
                     {
+                        obb mesh_bounds = obb(mesh_info.bounds, static_mesh->get_transform());
+
                         for (const material::texture_info& tex : mat->textures)
                         {
                             if (!tex.texture.is_loaded())
@@ -382,11 +524,13 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
                                 texture_bounds.emplace_back(
                                     tex.texture.get(), 
                                     view, 
-                                    bounds, 
+                                    mesh_bounds,
                                     mesh_info.min_texel_area,
                                     mesh_info.max_texel_area,
+                                    mesh_info.avg_texel_area,
                                     mesh_info.min_world_area,
-                                    mesh_info.max_world_area
+                                    mesh_info.max_world_area,
+                                    mesh_info.avg_world_area
                                 );
                             }
                         }

@@ -8,11 +8,10 @@
 #include "workshop.render_interface.dx12/dx12_ri_fence.h"
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_ri_buffer.h"
+#include "workshop.render_interface.dx12/dx12_ri_staging_buffer.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/statistics/statistics_manager.h"
-
-#pragma optimize("", off)
 
 namespace ws {
 
@@ -115,6 +114,8 @@ result<void> dx12_ri_upload_manager::create_resources()
 
 void dx12_ri_upload_manager::upload(dx12_ri_texture& source, size_t array_index, size_t mip_index, const std::span<uint8_t>& data)
 {
+    profile_marker(profile_colors::render, "dx12_ri_upload_manager::upload");
+
     memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
 
     ri_command_queue& queue = m_renderer.get_copy_queue();
@@ -230,8 +231,69 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, size_t array_index,
     queue_upload(upload);
 }
 
+void dx12_ri_upload_manager::upload(dx12_ri_texture& source, size_t array_index, size_t mip_index, dx12_ri_staging_buffer& data_buffer)
+{
+    profile_marker(profile_colors::render, "dx12_ri_upload_manager::upload");
+
+    size_t mip_count = source.get_mip_levels();
+
+    uint64_t total_memory = 0;
+    UINT row_count;
+    UINT64 row_size;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint;
+
+    UINT subresource_index = (UINT)((array_index * mip_count) + mip_index);
+
+    D3D12_RESOURCE_DESC desc = source.get_resource()->GetDesc();
+
+    m_renderer.get_device()->GetCopyableFootprints(
+        &desc,
+        subresource_index,
+        1,
+        0u,
+        &footprint,
+        &row_count,
+        &row_size,
+        &total_memory
+    );
+
+    upload_state upload = data_buffer.take_upload_state();
+    upload.resource = source.get_resource();
+    upload.resource_initial_state = source.get_initial_state();
+    upload.name = source.get_debug_name();
+
+    // Generate copy command list.
+    upload.build_command_list = [source_ptr=source.get_resource(), footprint, subresource_index, mip_index, debug_name=source.get_debug_name(), heap_ptr=upload.heap->handle.Get(), heap_offset=upload.heap_offset](dx12_ri_command_list& list)
+    {
+        D3D12_TEXTURE_COPY_LOCATION dest = {};
+        dest.pResource = source_ptr;
+        dest.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        dest.SubresourceIndex = subresource_index;
+
+        D3D12_TEXTURE_COPY_LOCATION src = {};
+        src.pResource = heap_ptr;
+        src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        src.PlacedFootprint = footprint;
+        src.PlacedFootprint.Offset += heap_offset;
+
+        list.get_dx_command_list()->CopyTextureRegion(
+            &dest,
+            0,
+            0,
+            0,
+            &src,
+            nullptr
+        );
+    };
+    
+    queue_upload(upload);
+}
+
+
 void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uint8_t>& data)
 {
+    profile_marker(profile_colors::render, "dx12_ri_upload_manager::upload");
+
     memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
 
     ri_command_queue& queue = m_renderer.get_copy_queue();
@@ -381,6 +443,8 @@ void dx12_ri_upload_manager::upload(dx12_ri_texture& source, const std::span<uin
 
 void dx12_ri_upload_manager::upload(dx12_ri_buffer& source, const std::span<uint8_t>& data, size_t offset)
 {
+    profile_marker(profile_colors::render, "dx12_ri_upload_manager::upload");
+
     memory_scope scope(memory_type::rendering__upload_heap, memory_scope::k_ignore_asset);
 
     ri_command_queue& queue = m_renderer.get_copy_queue();
@@ -474,6 +538,19 @@ void dx12_ri_upload_manager::new_frame(size_t index)
     m_frame_index = index;
 }
 
+size_t dx12_ri_upload_manager::get_heap_size()
+{
+    size_t total = 0;
+
+    for (size_t i = 1; i < m_heaps.size(); i++)
+    {
+        heap_state* heap = m_heaps[i].get();
+        total += heap->size;
+    }
+    
+    return total;
+}
+
 void dx12_ri_upload_manager::free_uploads()
 {
     profile_marker(profile_colors::render, "free uploads");
@@ -511,7 +588,7 @@ void dx12_ri_upload_manager::free_uploads()
     }
 
     // Nuke any heaps (apart from first) that haven't contained uploads in the full frame depth.
-    if (m_heaps.size() > 1)
+    if (m_heaps.size() > 1 && get_heap_size() > k_persist_heap_memory)
     {
         for (size_t i = 1; i < m_heaps.size(); /* empty */)
         {

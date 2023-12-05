@@ -17,6 +17,8 @@
 
 namespace ws {
 
+class win32_async_io_manager;
+
 // Win32 implementation of async io request.
 class win32_async_io_request : public async_io_request
 {
@@ -24,18 +26,13 @@ public:
 
     using ptr = std::shared_ptr<win32_async_io_request>;
 
-    win32_async_io_request(const char* path, size_t offset, size_t size, async_io_request_options options);
+    win32_async_io_request(win32_async_io_manager* manager, const char* path, size_t offset, size_t size, async_io_request_options options);
     virtual ~win32_async_io_request();
 
-    // Returns true once this request has completed.
     virtual bool is_complete() override;
-
-    // Returns true if the request failed for any reason.
     virtual bool has_failed() override;
-
-    // Gets the that was loaded from disk.
     virtual std::span<uint8_t> data() override;
-  
+
 private:
     friend class win32_async_io_manager;
 
@@ -54,6 +51,8 @@ private:
     size_t m_offset;
     size_t m_size;
     async_io_request_options m_options;
+
+    win32_async_io_manager* m_manager;
 
     // Size and offset aligned to sector sizes.
     size_t m_read_offset;
@@ -90,6 +89,11 @@ public:
     async_io_request::ptr request(const char* path, size_t offset, size_t size, async_io_request_options options);
 
 private:
+    friend class win32_async_io_request;
+
+    void free_buffer(void* ptr);
+    void* alloc_buffer(size_t size);
+    
     void worker_thread();
 
     bool start_request(win32_async_io_request::ptr request);
@@ -104,6 +108,8 @@ private:
     
     std::list<win32_async_io_request::ptr> m_outstanding_requests;
     std::list<win32_async_io_request::ptr> m_pending_requests;
+    std::list<win32_async_io_request::ptr> m_new_requests;
+    std::list<void*> m_pending_free;
 
     std::unique_ptr<std::thread> m_thread;
     bool m_active = true;

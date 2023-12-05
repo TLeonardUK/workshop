@@ -93,6 +93,32 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
     raytrace_scene_parameters->set("scene_tlas_metadata", *m_renderer.get_scene_tlas().get_metadata_buffer());
     raytrace_scene_parameters->set("output_texture", ri_texture_view(m_scene_texture.get(), 0, 0), true);
 
+#if 0
+    // Fake view
+    vector3 fake_position = vector3(1028.73f, 222.09f, -798.79f);
+    quat fake_rotation = quat(-0.01f, 0.69f, -0.01f, 0.72f);
+
+    matrix4 view_matrix = matrix4::look_at(
+        fake_position,
+        fake_position + (vector3::forward * fake_rotation),
+        vector3::up);
+    matrix4 projection_matrix = matrix4::perspective(
+        math::radians(45.0f),
+        1920.0f / 1080.0f,
+        0.1f,
+        100000.0f);
+
+    static std::unique_ptr<ri_param_block> fake_view_info = m_renderer.get_param_block_manager().create_param_block("view_info");
+    fake_view_info->set("view_z_near", 0.1f);
+    fake_view_info->set("view_z_far", 100000.0f);
+    fake_view_info->set("view_world_position", fake_position);
+    fake_view_info->set("view_dimensions", vector2((float)m_scene_texture->get_width(), (float)m_scene_texture->get_height()));
+    fake_view_info->set("view_matrix", view_matrix);
+    fake_view_info->set("projection_matrix", projection_matrix);
+    fake_view_info->set("inverse_view_matrix", view_matrix.inverse());
+    fake_view_info->set("inverse_projection_matrix", projection_matrix.inverse());
+#endif
+
     // Composite the transparent geometry onto the light buffer.
     std::unique_ptr<render_pass_raytracing> resolve_pass = std::make_unique<render_pass_raytracing>();
     resolve_pass->name = "raytrace scene";
@@ -100,7 +126,11 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
     resolve_pass->unordered_access_textures.push_back(m_scene_texture.get());
     resolve_pass->dispatch_size = vector3i((int)m_scene_texture->get_width(), (int)m_scene_texture->get_height(), 1);
     resolve_pass->technique = m_renderer.get_effect_manager().get_technique("raytrace_scene", {});
+#if 0
+    resolve_pass->param_blocks.push_back(fake_view_info.get());
+#else
     resolve_pass->param_blocks.push_back(view.get_view_info_param_block());
+#endif
     resolve_pass->param_blocks.push_back(raytrace_scene_parameters);
     resolve_pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
     resolve_pass->param_blocks.push_back(&lighting_system->get_resolve_param_block(view));

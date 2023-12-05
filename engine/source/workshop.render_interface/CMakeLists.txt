@@ -28,6 +28,7 @@ SET(SOURCES
     "ri_param_block_archetype.h"
     "ri_layout_factory.h"
     "ri_layout_factory.cpp"
+    "ri_staging_buffer.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

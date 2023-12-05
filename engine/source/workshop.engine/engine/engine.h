@@ -17,6 +17,7 @@
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/utils/event.h"
 #include "workshop.core/memory/memory_tracker.h"
+#include "workshop.core/memory/async_copy_manager.h"
 #include "workshop.engine/assets/scene/scene.h"
 
 #include <vector>
@@ -235,6 +236,7 @@ protected:
     std::unique_ptr<presenter> m_presenter;
     std::unique_ptr<virtual_file_system> m_filesystem;
     std::unique_ptr<async_io_manager> m_async_io_manager;
+    std::unique_ptr<async_copy_manager> m_async_copy_manager;
 
     std::unique_ptr<statistics_manager> m_statistics;
     std::unique_ptr<asset_manager> m_asset_manager;

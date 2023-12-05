@@ -9,6 +9,7 @@
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/math/obb.h"
 #include "workshop.core/filesystem/async_io_manager.h"
+#include "workshop.render_interface/ri_staging_buffer.h"
 
 #include <shared_mutex>
 #include <vector>
@@ -26,6 +27,45 @@ class input_interface;
 // ================================================================================================
 class render_texture_streamer
 {
+public:
+
+    enum class texture_state
+    {
+        pending_upgrade,
+        pending_downgrade,
+        waiting_for_mips,
+        waiting_for_downgrade,
+        idle,
+
+        COUNT
+    };
+
+    inline static const char* texture_state_strings[static_cast<int>(texture_state::COUNT)] = {
+        "pending upgrade",
+        "pending downgrade",
+        "streaming",
+        "waiting for downgrade",
+        "idle"
+    };
+
+    struct texture_mip_request
+    {
+        size_t mip_index;
+        async_io_request::ptr async_request;
+        std::unique_ptr<ri_staging_buffer> staging_buffer;
+    };
+
+    struct texture_streaming_info
+    {
+        texture*        instance;
+        texture_state   state;
+        size_t          current_resident_mips;
+        size_t          ideal_resident_mips;
+        bool            can_decay = false;
+
+        std::vector<texture_mip_request> mip_requests;
+    };
+
 public:
     render_texture_streamer(renderer& renderer);
     ~render_texture_streamer();
@@ -53,36 +93,18 @@ public:
     // Unregisters a texture that was previously registered with register_texture.
     void unregister_texture(texture* tex);
 
+    // Runs callback for every texture state the manager is currently handling. 
+    // This is mostly here for debugging, its not fast and will block loading, so don't use it anywhere time critical.
+    using visit_callback_t = std::function<void(const texture_streaming_info& state)>;
+    void visit_textures(visit_callback_t callback);
+
+    // Gets the number of bytes currently being used by streamed textures.
+    // This is not perfectly accurate, tile pooling and fragmentation will effect this. But
+    // it will be in the rough ballpark and is used for streaming heuristics.
+    size_t get_memory_pressure();
+
 private:
     friend class texture;
-
-    enum class texture_state
-    {
-        pending_upgrade,
-        pending_downgrade,
-        waiting_for_mips,
-        waiting_for_downgrade,
-        idle,
-
-        COUNT
-    };
-
-    struct texture_mip_request
-    {
-        size_t mip_index;
-        async_io_request::ptr async_request;
-    };
-
-    struct texture_streaming_info
-    {
-        texture*        instance;
-        texture_state   state;
-        size_t          current_resident_mips;
-        size_t          ideal_resident_mips;
-        bool            can_decay = false;
-
-        std::vector<texture_mip_request> mip_requests;
-    };
 
     struct texture_bounds
     {
@@ -92,8 +114,10 @@ private:
 
         float           min_texel_area;
         float           max_texel_area;
+        float           avg_texel_area;
         float           min_world_area;
         float           max_world_area;
+        float           avg_world_area;
     };
 
     // Called from a background thread to calculate which mips are needed and kick off any 
@@ -147,6 +171,8 @@ private:
     std::array<std::vector<texture_streaming_info*>, (int)texture_state::COUNT> m_state_array;
 
     int64_t m_current_memory_pressure = 0;
+
+    size_t m_total_staging_buffer_size = 0;
 
     std::shared_mutex m_access_mutex;
     std::unordered_map<texture*, std::shared_ptr<texture_streaming_info>> m_streaming_textures;

@@ -81,6 +81,7 @@ public:
     virtual std::unique_ptr<ri_query> create_query(const ri_query::create_params& params, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_raytracing_blas> create_raytracing_blas(const char* debug_name) override;
     virtual std::unique_ptr<ri_raytracing_tlas> create_raytracing_tlas(const char* debug_name) override;
+    virtual std::unique_ptr<ri_staging_buffer> create_staging_buffer(const ri_staging_buffer::create_params& params, std::span<uint8_t> linear_data) override;
     virtual ri_command_queue& get_graphics_queue() override;
     virtual ri_command_queue& get_copy_queue() override;
     virtual size_t get_pipeline_depth() override;

@@ -11,8 +11,13 @@
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/statistics/statistics_manager.h"
+#include "workshop.core/utils/time.h"
 
-#pragma optimize("", off)
+// If set whenever a tile heap is empty it will be deallocate.
+// This reduces memory usage but can lead to spikes if heaps need to be reallocate due to texture streaming.
+// The tile memory usage is generally handled higher by the texture streaming pool size, so allocating up
+// to the max and persisting at it should be fine.
+//#define DEALLOCATE_EMPTY_TILE_HEAPS 1
 
 namespace ws {
 
@@ -92,6 +97,8 @@ result<void> dx12_ri_tile_manager::create_resources()
 
 dx12_ri_tile_manager::tile_allocation dx12_ri_tile_manager::allocate_tiles(size_t count)
 {
+    profile_marker(profile_colors::render, "dx12_ri_tile_manager::allocate_tiles");
+
     std::scoped_lock lock(m_mutex);
 
     memory_scope mem_scope(memory_type::rendering__vram__tile_heap, memory_scope::k_ignore_asset);
@@ -121,6 +128,7 @@ dx12_ri_tile_manager::tile_allocation dx12_ri_tile_manager::allocate_tiles(size_
 
         if (tiles_remaining > 0)
         {
+            db_log(core, "Allocating new tile heap.");
             allocate_new_heap(tiles_remaining);
         }
         else
@@ -134,6 +142,8 @@ dx12_ri_tile_manager::tile_allocation dx12_ri_tile_manager::allocate_tiles(size_
 
 void dx12_ri_tile_manager::free_tiles(tile_allocation allocation)
 {
+    profile_marker(profile_colors::render, "dx12_ri_tile_manager::free_tiles");
+
     std::scoped_lock lock(m_mutex);
 
     operation& op = m_operations.emplace_back();
@@ -145,6 +155,8 @@ void dx12_ri_tile_manager::free_tiles(tile_allocation allocation)
 
 void dx12_ri_tile_manager::queue_map(dx12_ri_texture& texture, tile_allocation allocation, size_t mip_index)
 {
+    profile_marker(profile_colors::render, "dx12_ri_tile_manager::queue_map");
+
     std::scoped_lock lock(m_mutex);
 
     // Remove any pending maps or unmaps from the operation queue to keep things coherent.
@@ -167,6 +179,8 @@ void dx12_ri_tile_manager::queue_map(dx12_ri_texture& texture, tile_allocation a
 
 void dx12_ri_tile_manager::queue_unmap(dx12_ri_texture& texture, size_t mip_index)
 {
+    profile_marker(profile_colors::render, "dx12_ri_tile_manager::queue_unmap");
+
     std::scoped_lock lock(m_mutex);
 
     // Remove any pending maps or unmaps from the operation queue to keep things coherent.
@@ -188,6 +202,8 @@ void dx12_ri_tile_manager::queue_unmap(dx12_ri_texture& texture, size_t mip_inde
 
 void dx12_ri_tile_manager::new_frame(size_t index)
 {
+    profile_marker(profile_colors::render, "dx12_ri_tile_manager::new_frame");
+
     memory_scope mem_scope(memory_type::rendering__tile_heap, memory_scope::k_ignore_asset);
 
     std::scoped_lock lock(m_mutex);
@@ -216,10 +232,13 @@ void dx12_ri_tile_manager::perform_operation(operation& op)
                 memory_scope mem_scope(memory_type::rendering__vram__tile_heap, memory_scope::k_ignore_asset);
                 heap->slack_memory_allocation_info = mem_scope.record_alloc(heap->memory_heap->get_remaining() * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT);
 
+#ifdef DEALLOCATE_EMPTY_TILE_HEAPS
                 if (heap->memory_heap->empty())
                 {
+                    db_log(core, "Freeing tile heap.");
                     free_heap(heap);
                 }
+#endif
             }
             break;
         }

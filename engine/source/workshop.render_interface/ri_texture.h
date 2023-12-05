@@ -12,6 +12,7 @@
 namespace ws {
 
 class ri_texture;
+class ri_staging_buffer;
 
 // ================================================================================================
 //  Represents a block of texture memory, which can optionally be flagged for use
@@ -87,10 +88,13 @@ public:
 
     virtual size_t get_resident_mips() = 0;
     virtual void make_mip_resident(size_t mip_index, const std::span<uint8_t>& linear_data) = 0;
+    virtual void make_mip_resident(size_t mip_index, ri_staging_buffer& data_buffer) = 0;
     virtual void make_mip_non_resident(size_t mip_index) = 0;
     virtual size_t get_memory_usage_with_residency(size_t mip_count) = 0;
     virtual bool is_mip_resident(size_t mip_index) = 0;
     virtual void get_mip_source_data_range(size_t mip_index, size_t& offset, size_t& size) = 0;
+    virtual void begin_mip_residency_change() = 0;
+    virtual void end_mip_residency_change() = 0;
 
     virtual ri_resource_state get_initial_state() = 0;
 

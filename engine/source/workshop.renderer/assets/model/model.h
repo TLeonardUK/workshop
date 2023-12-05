@@ -52,8 +52,10 @@ public:
         size_t material_index;
         float min_texel_area;
         float max_texel_area;
+        float avg_texel_area;
         float min_world_area;
         float max_world_area;
+        float avg_world_area;
         aabb bounds;
     };
 

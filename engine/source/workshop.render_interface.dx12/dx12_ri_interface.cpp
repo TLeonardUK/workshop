@@ -24,6 +24,7 @@
 #include "workshop.render_interface.dx12/dx12_ri_raytracing_tlas.h"
 #include "workshop.render_interface.dx12/dx12_ri_raytracing_blas.h"
 #include "workshop.render_interface.dx12/dx12_ri_param_block.h"
+#include "workshop.render_interface.dx12/dx12_ri_staging_buffer.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
 #include "workshop.window_interface/window.h"
 #include "workshop.core/filesystem/file.h"
@@ -193,6 +194,17 @@ std::unique_ptr<ri_raytracing_blas> dx12_render_interface::create_raytracing_bla
 std::unique_ptr<ri_raytracing_tlas> dx12_render_interface::create_raytracing_tlas(const char* debug_name)
 {
     std::unique_ptr<dx12_ri_raytracing_tlas> instance = std::make_unique<dx12_ri_raytracing_tlas>(*this, debug_name);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
+}
+
+std::unique_ptr<ri_staging_buffer> dx12_render_interface::create_staging_buffer(const ri_staging_buffer::create_params& params, std::span<uint8_t> linear_data)
+{
+    std::unique_ptr<dx12_ri_staging_buffer> instance = std::make_unique<dx12_ri_staging_buffer>(*this, *m_upload_manager, params, linear_data);
     if (!instance->create_resources())
     {
         return nullptr;

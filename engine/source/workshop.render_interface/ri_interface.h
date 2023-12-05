@@ -11,6 +11,7 @@
 #include "workshop.render_interface/ri_texture.h"
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_buffer.h"
+#include "workshop.render_interface/ri_staging_buffer.h"
 #include "workshop.render_interface/ri_layout_factory.h"
 #include "workshop.render_interface/ri_query.h"
 
@@ -29,6 +30,7 @@ class ri_layout_factory;
 class ri_query;
 class ri_raytracing_blas;
 class ri_raytracing_tlas;
+class ri_staging_buffer;
 
 // ================================================================================================
 //  Types of renderer implementations available. Make sure to update if you add new ones.
@@ -106,6 +108,9 @@ public:
     // Creates a top level acceleration structure for raytracing.
     virtual std::unique_ptr<ri_raytracing_tlas> create_raytracing_tlas(const char* debug_name = nullptr) = 0;
 
+    // Creates a new staging buffer to use for upload data to the gpu.
+    virtual std::unique_ptr<ri_staging_buffer> create_staging_buffer(const ri_staging_buffer::create_params& params, std::span<uint8_t> linear_data) = 0;
+    
     // Gets the main graphics command queue responsible for raster ops.
     virtual ri_command_queue& get_graphics_queue() = 0;
 

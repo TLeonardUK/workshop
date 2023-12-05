@@ -8,13 +8,12 @@
 #include "workshop.core.win32/utils/windows_headers.h"
 #include "workshop.core.win32/filesystem/async_io_manager.h"
 #include "workshop.core/memory/memory_tracker.h"
+#include "workshop.core/perf/profile.h"
 
 #include <filesystem>
 #include <span>
 #include <mutex>
 #include <cstddef>
-
-#pragma optimize("", off)
 
 namespace ws {
 
@@ -23,8 +22,9 @@ std::unique_ptr<async_io_manager> async_io_manager::create()
     return std::make_unique<win32_async_io_manager>();
 }
 
-win32_async_io_request::win32_async_io_request(const char* path, size_t offset, size_t size, async_io_request_options options)
-    : m_path(path)
+win32_async_io_request::win32_async_io_request(win32_async_io_manager* manager, const char* path, size_t offset, size_t size, async_io_request_options options)
+    : m_manager(manager)
+    , m_path(path)
     , m_offset(offset)
     , m_size(size)
     , m_options(options)
@@ -35,7 +35,7 @@ win32_async_io_request::~win32_async_io_request()
 {
     if (m_buffer)
     {
-        _aligned_free(m_buffer);
+        m_manager->free_buffer(m_buffer);
         m_buffer = nullptr;
     }
 }
@@ -99,6 +99,19 @@ void win32_async_io_manager::worker_thread()
         {
             std::unique_lock lock(m_request_mutex);
 
+            // Insert new requests.
+            m_pending_requests.insert(m_pending_requests.end(), m_new_requests.begin(), m_new_requests.end());
+            m_new_requests.clear();
+
+            // Free any pending buffers.
+            for (void* ptr : m_pending_free)
+            {
+                _aligned_free(ptr);
+            }
+            m_pending_free.clear();
+        }
+
+        {
             // If there are any pending requests and we have space in the queue, push it in.
             while (m_outstanding_requests.size() < k_ideal_queue_depth && !m_pending_requests.empty())
             {
@@ -126,10 +139,13 @@ void win32_async_io_manager::worker_thread()
                     iter++;
                 }
             }
+
+            //db_log(core, "Sleeping async io: %zi.", m_pending_requests.size());
         }
 
         // Wait for either the semaphore to be singled or for an IO alert.
-        WaitForSingleObjectEx(m_request_sempahore, INFINITE, true);
+        //WaitForSingleObjectEx(m_request_sempahore, INFINITE, true);
+        Sleep(1);
     }
 }
 
@@ -144,12 +160,26 @@ async_io_request::ptr win32_async_io_manager::request(const char* path, size_t o
 {
     std::unique_lock lock(m_request_mutex);
 
-    win32_async_io_request::ptr request = std::make_shared<win32_async_io_request>(path, offset, size, options);
+    win32_async_io_request::ptr request = std::make_shared<win32_async_io_request>(this, path, offset, size, options);
 
-    m_pending_requests.push_back(request);
+    m_new_requests.push_back(request);
     ReleaseSemaphore(m_request_sempahore, 1, nullptr);
 
     return request;
+}
+
+
+void win32_async_io_manager::free_buffer(void* ptr)
+{
+    std::unique_lock lock(m_request_mutex);
+
+    m_pending_free.push_back(ptr);
+    ReleaseSemaphore(m_request_sempahore, 1, nullptr);
+}
+
+void* win32_async_io_manager::alloc_buffer(size_t size)
+{
+    return _aligned_malloc(size, m_sector_size);
 }
 
 bool win32_async_io_manager::start_request(win32_async_io_request::ptr request)
@@ -184,7 +214,7 @@ bool win32_async_io_manager::start_request(win32_async_io_request::ptr request)
     }
 
     // Request aligned buffer to store results.
-    request->m_buffer = _aligned_malloc(request->m_read_size, m_sector_size);
+    request->m_buffer = alloc_buffer(request->m_read_size);
 
     // And finally dispatch the read request.
     DWORD bytes_read = 0;
@@ -194,6 +224,8 @@ bool win32_async_io_manager::start_request(win32_async_io_request::ptr request)
     request->m_overlapped.OffsetHigh = (DWORD)((request->m_read_offset >> 32) & 0x00000000FFFFFFFF);
 
     request->m_start_time = get_seconds();
+
+    profile_marker(profile_colors::task, "Read File");
 
     if (!ReadFile(
         request->m_file_handle,
@@ -244,7 +276,11 @@ bool win32_async_io_manager::poll_request(win32_async_io_request::ptr request)
         {
             // Track our average bandwidth.
             double elapsed = get_seconds() - request->m_start_time;
-            m_bandwidth_average.add((double)bytes_read, elapsed);
+
+            {
+                std::unique_lock lock(m_request_mutex);
+                m_bandwidth_average.add((double)bytes_read, elapsed);
+            }
 
             request->set_state(win32_async_io_request::state::completed);
         }
@@ -267,6 +303,8 @@ HANDLE win32_async_io_manager::open_file(const char* path)
     {
         return iter->second;
     }
+
+    profile_marker(profile_colors::task, "Open File");
 
     db_log(core,  "Opening file for async io: %s", path);
 

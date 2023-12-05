@@ -22,6 +22,8 @@ public:
     base_triangle(const vector_type& a, const vector_type& b, const vector_type& c);
 
     float get_area();
+    float get_longest_side();
+    float get_shortest_side();
 };
 
 using triangle = base_triangle<vector3>;
@@ -44,6 +46,26 @@ inline float base_triangle<vector_type>::get_area()
 
     float s = (len_a + len_b + len_c) * 0.5f;
     return sqrt(s * (s - len_a) * (s - len_b) * (s - len_c));
+}
+
+template <typename vector_type>
+inline float base_triangle<vector_type>::get_longest_side()
+{
+    float len_a = (a - b).length();
+    float len_b = (b - c).length();
+    float len_c = (c - a).length();
+
+    return std::max(len_a, std::max(len_b, len_c));
+}
+
+template <typename vector_type>
+inline float base_triangle<vector_type>::get_shortest_side()
+{
+    float len_a = (a - b).length();
+    float len_b = (b - c).length();
+    float len_c = (c - a).length();
+
+    return std::min(len_a, std::min(len_b, len_c));
 }
 
 }; // namespace ws

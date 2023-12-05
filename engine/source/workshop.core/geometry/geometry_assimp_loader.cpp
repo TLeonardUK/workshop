@@ -17,8 +17,6 @@
 #include <sstream>
 #endif
 
-#pragma optimize("", off)
-
 namespace ws {
 
 namespace {
@@ -385,8 +383,8 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     // Insert meshes into the geometry.
     for (import_context::mesh& mesh : context.meshes)
     {
-        vector3 mesh_bounds_min = vector3::zero;
-        vector3 mesh_bounds_max = vector3::zero;
+        vector3 mesh_bounds_min = vector3(FLT_MAX, FLT_MAX, FLT_MAX);
+        vector3 mesh_bounds_max = vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
         for (uint32_t index : mesh.indices)
         {
@@ -402,6 +400,9 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
 
         float min_world_area = std::numeric_limits<float>::max();
         float max_world_area = std::numeric_limits<float>::min();
+
+        float avg_texel_area = 0.0f;
+        float avg_world_area = 0.0f;
 
         // Calculate texel factor of each triangle and use the minimum as our streaming bias.
         if (!context.uvs.empty())
@@ -423,15 +424,26 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
                 triangle tri(a, b, c);
                 triangle2d tri_uv(a_uv, b_uv, c_uv);
 
-                float world_area = tri.get_area();
-                float texel_area = tri_uv.get_area();
+                // Rather than the area, we take the longest side and square it, this gives a better
+                // texel density calculation and avoids garbage results from very thin polys.
+                float original_world_area = tri.get_area();
+                float original_texel_area = tri_uv.get_area();
+                float world_area = tri.get_longest_side();//tri.get_area();
+                float texel_area = tri_uv.get_longest_side();//tri_uv.get_area();
 
                 min_texel_area = std::min(texel_area, min_texel_area);
                 max_texel_area = std::max(texel_area, max_texel_area);
 
                 min_world_area = std::min(world_area, min_world_area);
                 max_world_area = std::max(world_area, max_world_area);
+
+                avg_texel_area += texel_area;
+                avg_world_area += world_area;
             }
+
+            float triangle_count = (mesh.indices.size() / 3.0f);
+            avg_texel_area /= triangle_count;
+            avg_world_area /= triangle_count;
         }
 
         result->add_mesh(
@@ -441,8 +453,10 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
             aabb(mesh_bounds_min, mesh_bounds_max), 
             min_texel_area,
             max_texel_area,
+            avg_texel_area,
             min_world_area,
-            max_world_area);
+            max_world_area,
+            avg_world_area);
     }
 
     // Insert all the vertex streams.
