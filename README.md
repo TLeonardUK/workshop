@@ -21,6 +21,7 @@ The renderer uses a modern DX12/Vulkan deferred bindless architecture and will, 
 - Screen space ambient occlusion
 - Standard shadow mapping features
 - Standard light features
+- Texture streaming
 
 # Screenshots
 ![Screenshot 1](./docs/screenshots/1.png?raw=true)
