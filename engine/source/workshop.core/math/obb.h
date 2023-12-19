@@ -6,6 +6,7 @@
 
 #include "workshop.core/math/aabb.h"
 #include "workshop.core/math/matrix4.h"
+#include "workshop.core/math/sphere.h"
 
 namespace ws {
 
@@ -42,6 +43,7 @@ public:
 
 	void get_corners(vector3 corners[obb::k_corner_count]) const;
 	aabb get_aligned_bounds() const;
+    sphere get_sphere() const;
 
     vector3 get_closest_point(const vector3& other) const;
 
@@ -105,6 +107,29 @@ inline aabb obb::get_aligned_bounds() const
 	}
 
 	return aabb(points);
+}
+
+inline sphere obb::get_sphere() const
+{
+    vector3 extents = bounds.get_extents();
+
+    vector3 worldCorners[obb::k_corner_count];
+    bounds.get_corners(worldCorners);
+
+    float radius = FLT_MIN;
+    vector3 center = get_center();
+
+    for (int i = 0; i < obb::k_corner_count; i++)
+    {
+        vector3 corner = transform.transform_location(worldCorners[i]);
+        float length = (corner - center).length();
+        radius = std::max(radius, length);
+    }
+
+    return sphere(
+        center,
+        radius
+    );
 }
 
 inline obb obb::combine(const obb& other) const

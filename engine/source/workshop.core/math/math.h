@@ -7,6 +7,7 @@
 #include <math.h>
 #include <cmath>
 #include <algorithm>
+#include <numeric>
 
 namespace ws::math {
 
@@ -140,6 +141,29 @@ template <typename T>
 inline bool in_range_inclusive(T value, T min, T max)
 {
 	return (value >= min && value <= max);
+}
+
+template <typename T>
+inline T calculate_standard_deviation(auto begin_iter, auto end_iter)
+{
+    size_t count = std::distance(begin_iter, end_iter);
+    T mean = std::accumulate(begin_iter, end_iter, (T)0.0) / count;
+    
+    auto variance = [&mean, &count](T accumulator, const T& value) {
+        return accumulator + ((value - mean) * (value - mean));
+    };
+
+    T sum = std::accumulate(begin_iter, end_iter, (T)0.0, variance);
+    sum /= count;
+
+    return (T)sqrtf((float)sum);
+}
+
+template <typename T>
+inline T calculate_mean(auto begin_iter, auto end_iter)
+{
+    size_t count = std::distance(begin_iter, end_iter);
+    return std::accumulate(begin_iter, end_iter, (T)0.0) / count;
 }
 
 // To/from IEE-754 16-bit floating point values, as used by most image formats.

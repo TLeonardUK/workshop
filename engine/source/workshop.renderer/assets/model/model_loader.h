@@ -44,6 +44,8 @@ private:
 
     bool parse_properties(const char* path, YAML::Node& node, model& asset);
     bool parse_materials(const char* path, YAML::Node& node, model& asset);
+    bool parse_mesh_namelist(const char* path, YAML::Node& node, model& asset, const char* key, std::vector<std::string>& output);
+    bool parse_blacklist(const char* path, YAML::Node& node, model& asset);
     bool parse_file(const char* path, model& asset);
 
     void calculate_streaming_info(model& asset);

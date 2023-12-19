@@ -1,0 +1,303 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2023 Tim Leonard
+# ================================================================================================
+
+type: scene
+version: 1
+objects:
+
+    1:
+        meta_component:
+            name: main camera
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.0524493866
+                y:  -0.414361835
+                z:  0.0239275526
+                w:  0.908284545
+            local_location:
+                x:  -955.829773
+                y:  280.257324
+                z:  -755.612183
+            local_scale:
+                x:  1
+                y:  1
+                z:  1
+        bounds_component:
+            {}
+        camera_component:
+            fov: 45
+            aspect_ratio: 1.76999998
+            min_depth: 10
+            max_depth: 50000
+        fly_camera_movement_component:
+            sensitivity: 0.00100000005
+            speed: 1500
+            zoom_speed: 50000
+            pan_speed: 50
+            max_vertical_angle: 0.800000012
+    2:
+        meta_component:
+            name: sun light
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0.0353328064
+                y:  0.63123852
+                z:  -0.746996522
+                w:  0.205634743
+            local_location:
+                x:  0.000328757538
+                y:  299.999756
+                z:  3.65970664e-05
+            local_scale:
+                x:  1.00000012
+                y:  1.00000012
+                z:  1.00000036
+        bounds_component:
+            {}
+        directional_light_component:
+            shadow_cascades: 3
+            shadow_cascade_exponent: 0.600000024
+            shadow_cascade_blend: 0.100000001
+        light_component:
+            intensity: 1
+            range: 1000000
+            importance_range: 1000000
+            color:
+                r:  1
+                g:  1
+                b:  1
+                a:  1
+            shadow_casting: true
+            shadow_map_size: 2048
+            shadow_map_distance: 10000
+    3:
+        meta_component:
+            name: skybox
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  10000
+                y:  10000
+                z:  10000
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/skyboxs/skybox_3.yaml
+            materials:
+                -   data:models/skyboxs/materials/skybox_3.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0
+    4:
+        meta_component:
+            name: light probe grid
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  2193.57959
+                y:  2102.88281
+                z:  2125.82544
+            local_scale:
+                x:  21227.7754
+                y:  4365.36279
+                z:  14213.917
+        bounds_component:
+            {}
+        light_probe_grid_component:
+            density: 350
+    5:
+        meta_component:
+            name: reflection probe
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -607.104675
+                y:  265.957245
+                z:  -1052.90991
+            local_scale:
+                x:  3999.99976
+                y:  3999.99976
+                z:  3999.99976
+        bounds_component:
+            {}
+        reflection_probe_component:
+            {}
+    7:
+        meta_component:
+            name: bistro exterior
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  -0.0024147802
+                y:  -0.331708193
+                z:  -0.00458681025
+                w:  0.943367839
+            local_location:
+                x:  0
+                y:  0
+                z:  0
+            local_scale:
+                x:  1.00000024
+                y:  0.99999994
+                z:  0.999999642
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/test_scenes/bistro/bistro_exterior.yaml
+            materials:
+                -   data:models/test_scenes/bistro/materials/Stringlights.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_Orange_Color_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_Blue_Color_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_White_Color_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_Pink_Color_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_Red_Color_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_Green_Color_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Bistro_Main_Door.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Curbstones.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Manhole_Cover.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobblestone_Wet_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Focus.yaml
+                -   data:models/test_scenes/bistro/materials/Emissive_StreetLight.yaml
+                -   data:models/test_scenes/bistro/materials/Spotlight_Glass_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/LanternEmissive.yaml
+                -   data:models/test_scenes/bistro/materials/Trashcan.yaml
+                -   data:models/test_scenes/bistro/materials/Banner_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/Spotlight_Main.yaml
+                -   data:models/test_scenes/bistro/materials/Spotlight_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_TrafficSign_A.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_Table_Terrace.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StreetSign_01.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StreetPivot.yaml
+                -   data:models/test_scenes/bistro/materials/Streetlight_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_StringLights_01_White_Color.yaml
+                -   data:models/test_scenes/bistro/materials/Streetlight_Support_Bulb.yaml
+                -   data:models/test_scenes/bistro/materials/Streetlight_Chains.yaml
+                -   data:models/test_scenes/bistro/materials/Concrete3.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Brick_Small_Red_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Ground_Wet.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobble_Leaves_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobblestone_01_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobblestone_Wet_Leaves_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobblestone_Small_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobblestone_Big_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Brick_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/Pavement_Cobblestone_02.yaml
+                -   data:models/test_scenes/bistro/materials/Sidewalkbarrier.yaml
+                -   data:models/test_scenes/bistro/materials/Shopsign_Pharmacy_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Shopsign_Book_Store_Emissive.yaml
+                -   data:models/test_scenes/bistro/materials/Antenna_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/Shopsign_Bakery.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/Shopsign_Ties_Shop.yaml
+                -   data:models/test_scenes/bistro/materials/Plantpots.yaml
+                -   data:models/test_scenes/bistro/materials/NapkinHolder.yaml
+                -   data:models/test_scenes/bistro/materials/MenuSign_02_Mesh.yaml
+                -   data:models/test_scenes/bistro/materials/MenuSign_02_Glass.yaml
+                -   data:models/test_scenes/bistro/materials/MenuSign_01.yaml
+                -   data:models/test_scenes/bistro/materials/Balcony_Concrete.yaml
+                -   data:models/test_scenes/bistro/materials/Balcony_Trims.yaml
+                -   data:models/test_scenes/bistro/materials/Balcony_Ornaments.yaml
+                -   data:models/test_scenes/bistro/materials/Balcony_Green_Wood.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Glass_Dirty_MASKED.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_LiquorBottle_01_Glass_Wine.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_LiquorBottle_01_Caps.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_LiquorBottle_01_Labels.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Paris_Flowers.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Flowers.DoubleSided.yaml
+                -   data:models/test_scenes/bistro/materials/ElectricBox.yaml
+                -   data:models/test_scenes/bistro/materials/Concrete.yaml
+                -   data:models/test_scenes/bistro/materials/Concrete_Striped.yaml
+                -   data:models/test_scenes/bistro/materials/Concrete2.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Black_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/Chimneys_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/Plaster.yaml
+                -   data:models/test_scenes/bistro/materials/Paris_Chair_01.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Grain_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Curtains.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_Plaster.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Roofing_Shingle_Grey.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Wood_Painted_Green.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Room_Interior.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Brick_Large_Beige_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Doors.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Forge_Metal.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Wood_Brown.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_Grooved.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_Smooth.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_Plaster1_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Plastic.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Frosted_Glass.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Awning_Fabric_Red.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Boulangerie.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Awning_Beams.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Roofing_Metal_01.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Details_Dark.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Rollup_Door.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Building_Details.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Wood_Painted_Cyan.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Glass_Dirty.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Awning_Fabric_Cyan.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Wood_Painted3.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Bronze_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Wood_Painted_Green_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_Smooth_BLENDSHADER.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Book_Covers.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_White.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Brick_Small_Red.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Brick_Large_White.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Light_Bulb.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Glass_Exterior.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Side_Letters.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete1.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Focus_Ornament.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Metal_Pipe.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Wood_Polished.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Concrete_Yellow.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Roofing_Shingle_Green.yaml
+                -   data:models/test_scenes/bistro/materials/MASTER_Trim_Cornice.yaml
+                -   data:models/test_scenes/bistro/materials/Bollards.yaml
+                -   data:models/test_scenes/bistro/materials/Bistro_Sign_Main.yaml
+                -   data:models/test_scenes/bistro/materials/Bistro_Sign_Letters.yaml
+                -   data:models/test_scenes/bistro/materials/Awnings_Hotel_Fabric.yaml
+                -   data:models/test_scenes/bistro/materials/Awnings_Fabric.yaml
+                -   data:models/test_scenes/bistro/materials/Awnings_Beams.yaml
+                -   data:models/test_scenes/bistro/materials/Ashtray.yaml
+                -   data:models/test_scenes/bistro/materials/Antenna_Plastic_Blue.yaml
+                -   data:models/test_scenes/bistro/materials/Antenna_Plastic.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Linde_Tree_Large_Trunk.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Linde_Tree_Large_Orange_Leaves.DoubleSided.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Linde_Tree_Large_Green_Leaves.DoubleSided.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Ivy_branches.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Ivy_leaf_a.DoubleSided.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Bux_Hedges46.DoubleSided.yaml
+                -   data:models/test_scenes/bistro/materials/Vespa.yaml
+                -   data:models/test_scenes/bistro/materials/Vespa_Odometer.yaml
+                -   data:models/test_scenes/bistro/materials/Vespa_Odometer_Glass.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Leaves.DoubleSided.yaml
+                -   data:models/test_scenes/bistro/materials/Foliage_Trunk.yaml
+                -   data:models/test_scenes/bistro/materials/Vespa_Headlight.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0

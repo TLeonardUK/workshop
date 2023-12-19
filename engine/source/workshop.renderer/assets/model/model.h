@@ -56,6 +56,7 @@ public:
         float min_world_area;
         float max_world_area;
         float avg_world_area;
+        float uv_density;
         aabb bounds;
     };
 

@@ -5,8 +5,8 @@
 type: model
 version: 1
 
-source: data:models/test_scenes/sponza/sponza.fbx
-
+source: data:models/test_scenes/sponza/sponza.original.fbx
+ 
 materials:
   "stone_trims_01":           "data:models/test_scenes/sponza/materials/stone_trims_01.yaml"
   "arch_stone_wall_01":       "data:models/test_scenes/sponza/materials/arch_stone_wall_01.yaml"
@@ -36,3 +36,6 @@ materials:
   "ceiling_plaster_01":       "data:models/test_scenes/sponza/materials/ceiling_plaster_01.yaml"
   "roof_tiles_01":            "data:models/test_scenes/sponza/materials/roof_tiles_01.yaml"
   "ornament_01":              "data:models/test_scenes/sponza/materials/ornament_01.yaml"
+
+mesh_blacklist: [ "master_material" ]
+#mesh_whitelist: [ "lionhead" ]

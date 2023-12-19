@@ -56,7 +56,7 @@ public:
     size_t texture_streaming_max_staged_memory = 64llu * 1024llu * 1024llu;
 
     // Biases the ideal mip for textures higher or lower than what was calculated.
-    int texture_streaming_mip_bias = -1;
+    int texture_streaming_mip_bias = 0;
 
 	// ================================================================================================
 	//  Light Probes

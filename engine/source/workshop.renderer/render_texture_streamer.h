@@ -62,6 +62,7 @@ public:
         size_t          current_resident_mips;
         size_t          ideal_resident_mips;
         bool            can_decay = false;
+        size_t          last_seen_frame = 0;
 
         std::vector<texture_mip_request> mip_requests;
     };
@@ -118,6 +119,7 @@ private:
         float           min_world_area;
         float           max_world_area;
         float           avg_world_area;
+        float           uv_density;
     };
 
     // Called from a background thread to calculate which mips are needed and kick off any 
@@ -160,6 +162,10 @@ private:
 
     // Makes all downgraded textures non-resident.
     void make_downgrades_non_resident();
+
+    // Calculates the number of resident mips in the given texture. Not the same as
+    // get_current_resident_mip_count which just returns a cached value.
+    size_t calculate_current_resident_mip_count(texture_streaming_info& streaming_info);
 
 private:
     renderer& m_renderer;

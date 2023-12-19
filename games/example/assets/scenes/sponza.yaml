@@ -13,14 +13,14 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  -0.0897613391
-                y:  -0.684591055
-                z:  0.0855485722
-                w:  0.718303204
+                x:  0.0950089023
+                y:  0.605535388
+                z:  0.0731265545
+                w:  0.786735475
             local_location:
-                x:  101.719772
-                y:  1528.17688
-                z:  -129.934906
+                x:  994.177002
+                y:  27.4882565
+                z:  -214.872208
             local_scale:
                 x:  1
                 y:  1
@@ -44,18 +44,18 @@ objects:
         transform_component:
             parent: 0
             local_rotation:
-                x:  0.119857408
-                y:  0.63182348
-                z:  -0.758278072
-                w:  0.106994092
+                x:  0.119857334
+                y:  0.631823301
+                z:  -0.758278251
+                w:  0.106993996
             local_location:
-                x:  -0.00187549344
-                y:  399.99884
-                z:  0.000175490291
+                x:  -0.00187585456
+                y:  399.998688
+                z:  -899.999756
             local_scale:
                 x:  0.999999344
-                y:  0.999999464
-                z:  1.00000072
+                y:  0.999999285
+                z:  0.99999994
         bounds_component:
             {}
         directional_light_component:
@@ -128,7 +128,7 @@ objects:
         bounds_component:
             {}
         light_probe_grid_component:
-            density: 100
+            density: 200
     5:
         meta_component:
             name: reflection probe
@@ -322,3 +322,29 @@ objects:
             shadow_map_distance: 302
         point_light_component:
             {}
+    11:
+        meta_component:
+            name: unnamed object
+        transform_component:
+            parent: 0
+            local_rotation:
+                x:  0
+                y:  0
+                z:  0
+                w:  1
+            local_location:
+                x:  -95.0000839
+                y:  505
+                z:  -14.0000458
+            local_scale:
+                x:  2700.00024
+                y:  35.9999847
+                z:  1050.00012
+        bounds_component:
+            {}
+        static_mesh_component:
+            model: data:models/core/primitives/cube.yaml
+            materials:
+                -   data:materials/core/solid/black.yaml
+            render_draw_flags: 1
+            render_gpu_flags: 0

@@ -260,10 +260,18 @@ void render_texture_streamer::make_completed_mips_resident()
         info->mip_requests.clear();
 
         m_current_memory_pressure -= info->instance->ri_instance->get_memory_usage_with_residency(info->current_resident_mips);
-        info->current_resident_mips = info->ideal_resident_mips;
+        info->current_resident_mips = calculate_current_resident_mip_count(*info);
         m_current_memory_pressure += info->instance->ri_instance->get_memory_usage_with_residency(info->current_resident_mips);
 
-        set_texture_state(*info, texture_state::idle);
+        // Still got further mips we want to stream so keep going.
+        if (info->current_resident_mips < info->ideal_resident_mips)
+        {
+            set_texture_state(*info, texture_state::pending_upgrade);
+        }
+        else
+        {
+            set_texture_state(*info, texture_state::idle);
+        }
     }
     
     double elapsed = (get_seconds() - start) * 1000.0f;
@@ -298,6 +306,25 @@ void render_texture_streamer::make_downgrades_non_resident()
 
         set_texture_state(*info, texture_state::idle);
     }
+}
+
+size_t render_texture_streamer::calculate_current_resident_mip_count(texture_streaming_info& streaming_info)
+{
+    size_t resident = 0;
+    for (size_t i = 0; i < streaming_info.instance->ri_instance->get_mip_levels(); i++)
+    {
+        size_t mip_index = streaming_info.instance->ri_instance->get_mip_levels() - (i + 1);
+
+        if (streaming_info.instance->ri_instance->is_mip_resident(mip_index))
+        {
+            resident++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return resident;
 }
 
 void render_texture_streamer::set_ideal_resident_mip_count(texture_streaming_info& streaming_info, size_t new_ideal_mips)
@@ -359,114 +386,34 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
 {
     const render_options& options = m_renderer.get_options();
 
-#if 1
+    sphere sphere_bounds = tex_bounds.bounds.get_sphere();
 
-    // More janky and more expensive, but at least this produces the results that are desired ...
-
-    matrix4 view_matrix = tex_bounds.view->get_view_matrix() * tex_bounds.view->get_projection_matrix();
-
-    vector3 view_normal = tex_bounds.view->get_transform().transform_direction(vector3::forward).normalize();
-    plane view_plane(view_normal, tex_bounds.view->get_local_location());
-
-    // Calculate the bounds of the OOB in screen space.
-    vector3 screen_space_corners[8];
-    tex_bounds.bounds.get_corners(screen_space_corners);
-    for (size_t i = 0; i < 8; i++)
-    {
-        vector3& corner = screen_space_corners[i];
-
-        /// huuuum, calculate world space area and convert that view space area?
-        // Right now this gets very squirrely when its partially offscreen.
-
-        // Project corners onto view plane.
-        corner = view_plane.project(corner);
-
-        // Convert to clip space coordinates.
-        corner = corner * view_matrix;
-
-        // Perspective divide.
-        corner = vector3(
-            corner.x / corner.z,
-            corner.y / corner.z,
-            1.0f
-        );
-
-        /*
-        // Convert to NDC
-#if 1
-        corner = vector3(
-            (corner.x + 1.0f) * 0.5f,
-            (-corner.y + 1.0f) * 0.5f,
-            0.0f
-        );  
-#else
-        corner = vector3(
-            std::clamp((corner.x + 1.0f) * 0.5f, 0.0f, 1.0f),
-            std::clamp((-corner.y + 1.0f) * 0.5f, 0.0f, 1.0f),
-            0.0f
-        );
-#endif
-        */
-
-        // Convert to viewport position
-        corner *= vector3(
-            (float)tex_bounds.view->get_viewport().width, 
-            (float)tex_bounds.view->get_viewport().height, 
-            1.0f
-        );
-    }
-
-    aabb screen_space_bounds(screen_space_corners, 8);
-    vector3 screen_space_extents = screen_space_bounds.get_extents() * 2.0f;
-    float screen_space_area = std::pow(std::max(screen_space_extents.x, screen_space_extents.y), 2.0f);
+    float vertical_fov = tex_bounds.view->get_fov();
+    float radius = sphere_bounds.radius;
+    float distance = (sphere_bounds.origin - tex_bounds.view->get_local_location()).length();
 
     // Calculate the texel density of the mesh.
-    float texel_density = (tex_bounds.max_texel_area) / (tex_bounds.min_world_area);
+    float texture_size = (float)std::max(tex_bounds.texture->width, tex_bounds.texture->height);
+    float uv_density = tex_bounds.uv_density;
+
+    // Clamp distance to radius to avoid inf results in projected sphere calulation.
+    if (distance <= radius)
+    {
+        distance = radius + 0.1f;
+    }
+
+    // Get projected radius of sphere in screen spcae.
+    float adjusted_fov = vertical_fov / 2.0f * math::pi / 180.0f;
+    float projected_radius = 1.0f / tanf(adjusted_fov) * radius / sqrtf(distance * distance - radius * radius);
+    float projected_radius_viewport = tex_bounds.view->get_viewport().height * projected_radius;
+    float screen_space_area = projected_radius_viewport * projected_radius_viewport;
 
     // Calculate the ideal mip count.
     size_t mip_count = tex_bounds.texture->ri_instance->get_mip_levels();
-    float ideal_mip_float = 0.5f * log2(screen_space_area / texel_density);
-    size_t ideal_mip_count = (size_t)std::clamp((int)std::truncf(ideal_mip_float) + options.texture_streaming_mip_bias, 0, (int)mip_count);
-
-    //db_log(core, "screen_space_area=%.2f texel_density=%.2f mip=%zi", screen_space_area, texel_density, ideal_mip_count);
-
-#else
-    // Calculations here are based roughly on this:
-    // http://web.cse.ohio-state.edu/~crawfis.3/cse781/Readings/MipMapLevels-Blog.html
-
-    // Find closest point on bounds to camera.
-    vector3 view_location = tex_bounds.view->get_local_location();
-    vector3 closet_point = tex_bounds.bounds.get_closest_point(view_location);
-
-    aabb bounds = tex_bounds.bounds.get_aligned_bounds();
-
-#if 0
-    m_renderer.get_command_queue().draw_sphere(sphere(closet_point, 50.0f), color::red);
-    m_renderer.get_command_queue().draw_obb(tex_bounds.bounds, color::green);
-#endif
-
-    // Find the screen space area.
-    float view_width = (float)tex_bounds.view->get_viewport().width;
-    float distance = ((closet_point - view_location).length() + 0.001f); // small epsilon to avoid issues when inside meshes.
-    float fov = tex_bounds.view->get_fov();
-    float a = distance * std::tanf(math::radians(fov));
-    float q = std::powf(view_width / a, 2);
-
-    // Determine how many mips to drop based on the texel density of the mesh.
-    float world_scale = tex_bounds.bounds.transform.extract_scale().max_component();
-    float texel_factor = (tex_bounds.min_texel_area * tex_bounds.texture->width) / (tex_bounds.min_world_area * world_scale);
-    float mips_to_drop = 0.5f * log2(texel_factor / q);
-
-    // Calculate the ideal mip count.
-    size_t mip_count = tex_bounds.texture->ri_instance->get_mip_levels();
-
-    // We always add 1 to the ideal mip count for trilinear filtering.
-    size_t ideal_mip_count = (size_t)std::clamp(((int)mip_count - (int)std::truncf(mips_to_drop)) + 1, 0, (int)mip_count); 
-
-#if 1
-    db_log(core, "a=%.2f q=%.2f factor=%.2f ideal=%zi", a, q, mips_to_drop, ideal_mip_count);
-#endif
-#endif
+    float ideal_mip_float = 0.5f * log2(screen_space_area / uv_density);
+                                                                                    // The -1 is because the algorithm we use overestimates the texture usage
+                                                                                    // this brings it down to a more accurate value.
+    size_t ideal_mip_count = (size_t)std::clamp((int)std::truncf(ideal_mip_float) - 1 + options.texture_streaming_mip_bias, 0, (int)mip_count);
 
     // Clamp to minimum and maximum mip bounds.
     ideal_mip_count = std::clamp(
@@ -530,7 +477,8 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
                                     mesh_info.avg_texel_area,
                                     mesh_info.min_world_area,
                                     mesh_info.max_world_area,
-                                    mesh_info.avg_world_area
+                                    mesh_info.avg_world_area,
+                                    mesh_info.uv_density
                                 );
                             }
                         }
@@ -546,7 +494,7 @@ void render_texture_streamer::start_upgrade(texture_streaming_info& streaming_in
     //db_log(renderer, "Started streaming texture mips for: %s", streaming_info.instance->name.c_str());
 
     // Queue up requests for each mip we are missing.
-    for (size_t i = 0; i < streaming_info.ideal_resident_mips; i++)
+    for (size_t i = 0; i < streaming_info.current_resident_mips + 1; i++)
     {
         size_t mip_index = streaming_info.instance->ri_instance->get_mip_levels() - (i + 1);
 
@@ -567,6 +515,11 @@ void render_texture_streamer::start_upgrade(texture_streaming_info& streaming_in
                 mip_data_size,
                 async_io_request_options::none
             );
+
+            // Only stream in the first mip thats required, we do each mip individually to allow the streamer to spread
+            // memory across all textures that want to upgrade evenly, rather than just whatever large textures tries to load
+            // all its mips at once.
+            break;
         }
     }
 
@@ -590,14 +543,28 @@ void render_texture_streamer::calculate_textures_to_change(std::vector<texture_s
     for (texture_streaming_info* texture : m_state_array[(int)texture_state::waiting_for_mips])
     {
         size_t current_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->current_resident_mips);
-        size_t ideal_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->ideal_resident_mips);
+        size_t ideal_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->current_resident_mips + 1);
         size_t memory_delta = ideal_size - current_size;
 
         bytes_available -= memory_delta;
     }
 
+    // Sort pending upgrade list by priority.
+    auto& upgrade_array = m_state_array[(int)texture_state::pending_upgrade];
+
+    std::sort(upgrade_array.begin(), upgrade_array.end(), [](texture_streaming_info* a, texture_streaming_info* b) {
+
+        // Priority goes to textures with the largest delta between their current and wanted level.
+
+        size_t a_mip_delta = a->ideal_resident_mips - a->current_resident_mips;
+        size_t b_mip_delta = b->ideal_resident_mips - b->current_resident_mips;
+
+        return a_mip_delta > b_mip_delta;
+
+    });
+
     // Try to upgrade as many textures as fit into the remaining pool space.
-    for (texture_streaming_info* texture : m_state_array[(int)texture_state::pending_upgrade])
+    for (texture_streaming_info* texture : upgrade_array)
     {
         size_t current_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->current_resident_mips);
         size_t ideal_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->ideal_resident_mips);
@@ -614,7 +581,19 @@ void render_texture_streamer::calculate_textures_to_change(std::vector<texture_s
     // If we need more space for other textures to upgrade, downgrade unneeded textures.
     if (bytes_available < 0 || options.texture_streaming_force_unstream)
     {
-        for (texture_streaming_info* texture : m_state_array[(int)texture_state::pending_downgrade])
+        // Sort the downgrade list by priority.
+        auto& downgrade_array = m_state_array[(int)texture_state::pending_downgrade];
+
+        std::sort(downgrade_array.begin(), downgrade_array.end(), [](texture_streaming_info* a, texture_streaming_info* b) {
+
+            // Priority goes to the textures that haven't been seen for the most number of frames, this prevents
+            // streaming flicker when moving something frequently in and out of view when under memory pressure.
+            
+            return a->last_seen_frame < b->last_seen_frame;
+
+        });
+
+        for (texture_streaming_info* texture : downgrade_array)
         {
             size_t current_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->current_resident_mips);
             size_t ideal_size = texture->instance->ri_instance->get_memory_usage_with_residency(texture->ideal_resident_mips);
@@ -684,6 +663,7 @@ void render_texture_streamer::calculate_in_view_mips()
         set_ideal_resident_mip_count(*texture->streaming_info.get(), highest_mip);
 
         // Don't allow this texture to decay as its been seen this frame.
+        texture->streaming_info->last_seen_frame = m_renderer.get_frame_index();
         texture->streaming_info->can_decay = false;
     }
 

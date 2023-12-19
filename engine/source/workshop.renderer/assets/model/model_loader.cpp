@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 48;
+constexpr size_t k_asset_compiled_version = 76;
 
 };
 
@@ -48,6 +48,7 @@ inline void stream_serialize(stream& out, model::mesh_info& mat)
     stream_serialize(out, mat.min_world_area);
     stream_serialize(out, mat.max_world_area);
     stream_serialize(out, mat.avg_world_area);
+    stream_serialize(out, mat.uv_density);
 
     stream_serialize_list(out, mat.indices);
 }
@@ -186,6 +187,9 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
         return false;
     }
 
+    // Strip out any meshes we dont' care about.
+
+
     return true;
 }
 
@@ -244,11 +248,78 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
                         info.min_world_area = mesh.min_world_area;
                         info.max_world_area = mesh.max_world_area;
                         info.avg_world_area = mesh.avg_world_area;
+                        info.uv_density = mesh.uv_density;
                     }
                 }
             }
         }
     }
+
+    return true;
+}
+
+bool model_loader::parse_mesh_namelist(const char* path, YAML::Node& node, model& asset, const char* key, std::vector<std::string>& output)
+{
+    YAML::Node this_node = node[key];
+
+    if (!this_node.IsDefined())
+    {
+        return true;
+    }
+
+    if (this_node.Type() != YAML::NodeType::Sequence)
+    {
+        db_error(asset, "[%s] %s node is invalid data type.", path, key);
+        return false;
+    }
+
+    for (auto iter = this_node.begin(); iter != this_node.end(); iter++)
+    {
+        if (!iter->IsScalar())
+        {
+            db_error(asset, "[%s] %s value was not scalar value.", path, key);
+            return false;
+        }
+        else
+        {
+            std::string name = iter->as<std::string>();
+            output.push_back(name);
+        }
+    }
+
+    return true;
+}
+
+bool model_loader::parse_blacklist(const char* path, YAML::Node& node, model& asset)
+{
+    std::vector<std::string> mesh_blacklist;
+    std::vector<std::string> mesh_whitelist;
+
+    if (!parse_mesh_namelist(path, node, asset, "mesh_blacklist", mesh_blacklist) ||
+        !parse_mesh_namelist(path, node, asset, "mesh_whitelist", mesh_whitelist))
+    {
+        return false;
+    }
+
+    std::erase_if(asset.meshes, [&mesh_blacklist, &mesh_whitelist](model::mesh_info& mesh) {
+
+        // Explicitly whitelisted, don't erase.
+        if (std::find(mesh_whitelist.begin(), mesh_whitelist.end(), mesh.name) != mesh_whitelist.end())
+        {
+            return false;
+        }
+
+        // Explicitly blacklisted, erase.
+        if (std::find(mesh_blacklist.begin(), mesh_blacklist.end(), mesh.name) != mesh_blacklist.end())
+        {
+            return true;
+        }
+
+        // Default depends on if we have an explicit whitelist, if we do then blacklist by defualt, otherwise
+        // whitelist by default.
+        return mesh_whitelist.empty() ? false : true;
+
+    });
 
     return true;
 }
@@ -271,6 +342,11 @@ bool model_loader::parse_file(const char* path, model& asset)
     if (!parse_materials(path, node, asset))
     {
         return false;
+    }
+
+    if (!parse_blacklist(path, node, asset))
+    {
+       return false;
     }
 
     return true;
