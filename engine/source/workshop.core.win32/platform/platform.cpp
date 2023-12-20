@@ -135,4 +135,15 @@ std::string save_file_dialog(const char* text, const std::vector<file_dialog_fil
     return result;
 }
 
+std::string get_username()
+{
+    char buffer[256];
+    DWORD buffer_length = sizeof(buffer);
+    if (GetUserNameA(buffer, &buffer_length) != 0)
+    {
+        return buffer;
+    }
+    return "unknown";
+}
+
 }; // namespace workshop

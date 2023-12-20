@@ -153,6 +153,17 @@ SET(SOURCES
     "reflection/reflect_constraint.cpp"
     "reflection/reflect_constraint.h"
 
+    "cvar/cvar.cpp"
+    "cvar/cvar.h"
+    "cvar/cvar_manager.cpp"
+    "cvar/cvar_manager.h"    
+    "cvar/cvar_config_file.cpp"
+    "cvar/cvar_config_file.h"
+    "cvar/cvar_config_lexer.cpp"
+    "cvar/cvar_config_lexer.h"
+    "cvar/cvar_config_parser.cpp"
+    "cvar/cvar_config_parser.h"
+
     "entry.cpp"
     "entry.h"
 )

@@ -309,8 +309,8 @@ render_imgui_manager::context* render_imgui_manager::create_context(const char* 
 
     // Setup input keymap.
     ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = "save:imgui.ini";
-    io.LogFilename = "save:imgui.log";
+    io.IniFilename = "machine-save:imgui.ini";
+    io.LogFilename = "machine-save:imgui.log";
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;

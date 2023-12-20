@@ -214,6 +214,8 @@ private:
     result<void> create_default_world(init_list& list);
     result<void> destroy_default_world();
 
+    result<void> load_config(init_list& list);
+
 protected:
 
     std::vector<std::unique_ptr<world>> m_worlds;
@@ -261,7 +263,8 @@ protected:
     std::filesystem::path m_game_asset_dir;
     std::filesystem::path m_asset_cache_dir;
     std::filesystem::path m_thumbnail_asset_cache_dir;
-    std::filesystem::path m_saved_asset_cache_dir;
+    std::filesystem::path m_saved_data_dir;
+    std::filesystem::path m_saved_machine_data_dir;
 
     statistics_channel* m_stats_frame_time_game;
     statistics_channel* m_stats_frame_rate;

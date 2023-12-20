@@ -61,8 +61,14 @@ void editor_texture_streaming_window::draw()
             float pool_size_mb = options.texture_streaming_pool_size / (1024.0f * 1024.0f);
 
             char buffer[256];
+
             snprintf(buffer, sizeof(buffer), "%.2f mb / %.2f mb", pool_usage_mb, pool_size_mb);
-            ImGui::ProgressBar(pool_usage_mb / pool_size_mb, ImVec2(-FLT_MIN, 0), buffer);
+            ImGui::SetNextItemWidth(250); ImGui::Text("Current Usage"); ImGui::SameLine(); ImGui::ProgressBar(pool_usage_mb / pool_size_mb, ImVec2(-FLT_MIN, 0), buffer);
+
+            pool_usage_mb = streamer.get_ideal_memory_usage() / (1024.0f * 1024.0f);
+
+            snprintf(buffer, sizeof(buffer), "%.2f mb / %.2f mb", pool_usage_mb, pool_size_mb);
+            ImGui::SetNextItemWidth(250); ImGui::Text("Ideal Usage"); ImGui::SameLine(); ImGui::ProgressBar(pool_usage_mb / pool_size_mb, ImVec2(-FLT_MIN, 0), buffer);
 
             // Draw table showing how many textures for each mip.
             static const size_t k_mip_count = 12;

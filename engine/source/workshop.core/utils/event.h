@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <memory>
 #include <unordered_set>
+#include <mutex>
 
 namespace ws {
 

@@ -91,11 +91,11 @@ public:
     // to determine if an asset needs to be recompiled.
     bool load_header(const char* path, compiled_asset_header& header);
 
-protected:
-
     // Helper function, reads the YAML asset descriptor from
     // the filesystem, does basic error processing and return it.
     static bool load_asset_descriptor(const char* path, YAML::Node& node, const char* expected_type, size_t min_version, size_t max_version);
+
+protected:
 
     // Serializes an asset header into or out of the given stream.
     // When reading header the values read are validated to match those in the passed in header

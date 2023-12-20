@@ -79,6 +79,7 @@ void render_texture_streamer::register_texture(texture* tex)
     db_assert(tex->ri_instance->is_partially_resident());
 
     m_current_memory_pressure += tex->ri_instance->get_memory_usage_with_residency(info->current_resident_mips);
+    m_ideal_memory_pressure += tex->ri_instance->get_memory_usage_with_residency(info->ideal_resident_mips);
 
     add_to_state_array(*tex->streaming_info);
 
@@ -97,6 +98,9 @@ void render_texture_streamer::unregister_texture(texture* tex)
             request.staging_buffer->wait();
         }
     }
+
+    m_current_memory_pressure -= tex->ri_instance->get_memory_usage_with_residency(tex->streaming_info->current_resident_mips);
+    m_ideal_memory_pressure -= tex->ri_instance->get_memory_usage_with_residency(tex->streaming_info->ideal_resident_mips);
 
     m_streaming_textures.erase(tex);
 
@@ -151,6 +155,11 @@ void render_texture_streamer::visit_textures(visit_callback_t callback)
 size_t render_texture_streamer::get_memory_pressure()
 {
     return m_current_memory_pressure;
+}
+
+size_t render_texture_streamer::get_ideal_memory_usage()
+{
+    return m_ideal_memory_pressure;
 }
 
 void render_texture_streamer::make_completed_mips_resident()
@@ -335,7 +344,9 @@ void render_texture_streamer::set_ideal_resident_mip_count(texture_streaming_inf
     }
 
     //db_log(renderer, "[Streaming] Ideal mip changed to %zi (current mips %zi) for %s", new_ideal_mips, streaming_info.current_resident_mips, streaming_info.instance->name.c_str());
+    m_ideal_memory_pressure -= streaming_info.instance->ri_instance->get_memory_usage_with_residency(streaming_info.ideal_resident_mips);
     streaming_info.ideal_resident_mips = new_ideal_mips;
+    m_ideal_memory_pressure += streaming_info.instance->ri_instance->get_memory_usage_with_residency(streaming_info.ideal_resident_mips);
 
     // Switch state based on the delta between current and ideal mips.
     if (streaming_info.ideal_resident_mips > streaming_info.current_resident_mips)

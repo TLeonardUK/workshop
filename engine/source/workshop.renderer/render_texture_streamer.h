@@ -104,6 +104,9 @@ public:
     // it will be in the rough ballpark and is used for streaming heuristics.
     size_t get_memory_pressure();
 
+    // Gets the ideal memory usage if all textures were at their ideal mip levels.
+    size_t get_ideal_memory_usage();
+
 private:
     friend class texture;
 
@@ -177,6 +180,7 @@ private:
     std::array<std::vector<texture_streaming_info*>, (int)texture_state::COUNT> m_state_array;
 
     int64_t m_current_memory_pressure = 0;
+    int64_t m_ideal_memory_pressure = 0;
 
     size_t m_total_staging_buffer_size = 0;
 

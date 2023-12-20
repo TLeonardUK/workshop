@@ -22,6 +22,9 @@
 #include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/perf/timer.h"
 
+#include "workshop.core/cvar/cvar.h"
+#include "workshop.core/cvar/cvar_manager.h"
+
 #include "workshop.assets/asset_manager.h"
 #include "workshop.assets/caches/asset_cache_disk.h"
 
@@ -135,6 +138,11 @@ void engine::register_init(init_list& list)
         "Filesystem",
         [this, &list]() -> result<void> { return create_filesystem(list); },
         [this, &list]() -> result<void> { return destroy_filesystem(); }
+    );
+    list.add_step(
+        "Load Config",
+        [this, &list]() -> result<void> { return load_config(list); },
+        [this, &list]() -> result<void> { return true; }
     );
     list.add_step(
         "Asset Manager",
@@ -366,6 +374,10 @@ result<void> engine::create_filesystem(init_list& list)
     m_async_copy_manager = std::make_unique<async_copy_manager>();
     m_filesystem = std::make_unique<virtual_file_system>();
 
+    std::filesystem::path appdata_path = get_special_path(special_path::app_data);
+    m_saved_data_dir = appdata_path / "saved" / "users" / get_username();
+    m_saved_machine_data_dir = appdata_path / "saved" / "machine";
+
     // Figure out what folders the engine and game assets are stored in.
     std::filesystem::path root_dir = get_application_path().parent_path();
     while (root_dir != root_dir.parent_path())
@@ -374,7 +386,6 @@ result<void> engine::create_filesystem(init_list& list)
         m_game_asset_dir = root_dir / "games" / app::instance().get_name() / "assets";
         m_asset_cache_dir = root_dir / "intermediate" / "cache";
         m_thumbnail_asset_cache_dir = root_dir / "intermediate" / "thumbnails";
-        m_saved_asset_cache_dir = root_dir / "intermediate" / "saved";
          
         if (std::filesystem::exists(m_engine_asset_dir) && 
             std::filesystem::exists(m_game_asset_dir))
@@ -411,11 +422,19 @@ result<void> engine::create_filesystem(init_list& list)
             return false;
         }
     }
-    if (!std::filesystem::exists(m_saved_asset_cache_dir))
+    if (!std::filesystem::exists(m_saved_data_dir))
     {
-        if (!std::filesystem::create_directories(m_saved_asset_cache_dir))
+        if (!std::filesystem::create_directories(m_saved_data_dir))
         {
-            db_fatal(engine, "Failed to create saved directory: %s", m_saved_asset_cache_dir.string().c_str());
+            db_fatal(engine, "Failed to create saved directory: %s", m_saved_data_dir.string().c_str());
+            return false;
+        }
+    }
+    if (!std::filesystem::exists(m_saved_machine_data_dir))
+    {
+        if (!std::filesystem::create_directories(m_saved_machine_data_dir))
+        {
+            db_fatal(engine, "Failed to create saved directory: %s", m_saved_machine_data_dir.string().c_str());
             return false;
         }
     }
@@ -423,6 +442,8 @@ result<void> engine::create_filesystem(init_list& list)
     db_log(engine, "Engine asset directory: %s", m_engine_asset_dir.string().c_str());
     db_log(engine, "Game asset directory: %s", m_game_asset_dir.string().c_str());
     db_log(engine, "Asset cache directory: %s", m_asset_cache_dir.string().c_str());
+    db_log(engine, "Save directory: %s", m_saved_data_dir.string().c_str());
+    db_log(engine, "Machine save directory: %s", m_saved_machine_data_dir.string().c_str());
 
     // Create the main data protocol, engine and game assets are mounted to the same path, 
     // with game assets taking priority.
@@ -453,7 +474,10 @@ result<void> engine::create_filesystem(init_list& list)
     m_filesystem->register_handler("host", 0, std::make_unique<virtual_file_system_disk_handler>("", false));
 
     // This handler is used to store saved data.
-    m_filesystem->register_handler("save", 0, std::make_unique<virtual_file_system_disk_handler>(m_saved_asset_cache_dir.string().c_str(), false));
+    m_filesystem->register_handler("save", 0, std::make_unique<virtual_file_system_disk_handler>(m_saved_data_dir.string().c_str(), false));
+
+    // This handler is used to store saved data that is machine specific.
+    m_filesystem->register_handler("machine-save", 0, std::make_unique<virtual_file_system_disk_handler>(m_saved_machine_data_dir.string().c_str(), false));
 
     return true;
 }
@@ -674,6 +698,35 @@ result<void> engine::create_main_window(init_list& list)
 result<void> engine::destroy_main_window()
 {
     m_window = nullptr;
+    return true;
+}
+
+result<void> engine::load_config(init_list& list)
+{
+    std::string engine_config = "data:engine.config";
+    std::string game_config = "data:game.config";
+    std::string user_save_config = "save:cvars_user.yaml";
+    std::string machine_save_config = "machine-save:cvars_machine.yaml";
+
+    // Set all cvars that are used for configuring settings.
+    //cvar_gpu_memory_mb->set_int(1024);
+    //cvar_platform->set_string("windows");
+
+
+    cvar_manager& manager = cvar_manager::get();
+    if (!manager.add_config_file(engine_config.c_str()) ||
+        !manager.add_config_file(game_config.c_str()))
+    {
+        return false;
+    }
+    manager.set_save_path(user_save_config.c_str(), machine_save_config.c_str());
+    manager.load();
+    manager.evaluate();
+    if (!manager.save())
+    {
+        return false;
+    }
+
     return true;
 }
 

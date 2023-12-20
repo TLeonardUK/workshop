@@ -78,4 +78,7 @@ std::string open_file_dialog(const char* title, const std::vector<file_dialog_fi
 // If a file is selected the path will be returned, otherwise an empty string.
 std::string save_file_dialog(const char* title, const std::vector<file_dialog_filter>& filters);
 
+// Gets username of currently logged in user.
+std::string get_username();
+
 }; // namespace ws::math
