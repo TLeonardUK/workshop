@@ -27,15 +27,6 @@ constexpr size_t k_cvar_save_descriptor_current_version = 1;
 
 };
 
-cvar<int> cvar_gpu_memory(cvar_flag::read_only, 3000, "gpu_memory", "gpu memory in mb");
-cvar<std::string> cvar_platform(cvar_flag::read_only, "windows", "platform", "Name of platform running on");
-
-cvar<int> cvar_texture_detail(cvar_flag::saved|cvar_flag::machine_specific|cvar_flag::evaluate_on_change, 0, "texture_detail", "texture detail level [0..3]");
-
-cvar<bool> cvar_texture_streaming_enabled(cvar_flag::none, false, "texture_streaming_enabled", "");
-cvar<int> cvar_texture_streaming_pool_size_mb(cvar_flag::none, 0, "texture_streaming_pool_size_mb", "");
-cvar<int> cvar_texture_streaming_max_resident_mips(cvar_flag::none, 0, "texture_streaming_max_resident_mips", "");
-
 cvar_base* cvar_manager::find_cvar(const char* name)
 {
     std::scoped_lock lock(m_mutex);
@@ -58,6 +49,10 @@ std::vector<cvar_base*> cvar_manager::get_cvars()
 void cvar_manager::register_cvar(cvar_base* value)
 {
     std::scoped_lock lock(m_mutex);
+    if (std::find(m_cvars.begin(), m_cvars.end(), value) != m_cvars.end())
+    {
+        return;
+    }
     m_cvars.push_back(value);
 }
 

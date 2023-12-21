@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/objects/render_light_probe_grid.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
@@ -107,8 +108,6 @@ void render_light_probe_grid::recalculate_probes()
 {
     memory_scope scope(memory_type::rendering__light_probe_grid, memory_scope::k_ignore_asset);
 
-    const render_options& options = m_renderer->get_options();
-
     vector3 bounds = get_local_scale();
 
     m_width = static_cast<size_t>(floor(bounds.x / m_density));
@@ -171,8 +170,8 @@ void render_light_probe_grid::recalculate_probes()
     m_param_block->set("occlusion_texture_size", (int)m_occlusion_texture->get_width());
     m_param_block->set("occlusion_map_size", (int)m_occlusion_map_size);
     m_param_block->set("occlusion_probes_per_row", (int)(m_occlusion_texture->get_width() / occlusion_required_space));
-    m_param_block->set("view_bias", options.light_probe_view_bias);
-    m_param_block->set("normal_bias", options.light_probe_normal_bias);
+    m_param_block->set("view_bias", cvar_light_probe_view_bias.get());
+    m_param_block->set("normal_bias", cvar_light_probe_normal_bias.get());
     m_param_block->set("probe_state_buffer", *m_probe_state_buffer, true);
 
     // Update individual probes.

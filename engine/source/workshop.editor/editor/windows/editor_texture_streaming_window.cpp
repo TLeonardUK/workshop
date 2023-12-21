@@ -6,6 +6,7 @@
 #include "workshop.core/containers/string.h"
 #include "workshop.core/filesystem/async_io_manager.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/assets/texture/texture.h"
 #include "workshop.assets/asset_manager.h"
@@ -23,7 +24,6 @@ editor_texture_streaming_window::editor_texture_streaming_window(renderer* rende
 void editor_texture_streaming_window::draw()
 {
     render_texture_streamer& streamer = m_renderer->get_texture_streamer();
-    const render_options& options = m_renderer->get_options();
 
     if (m_open)
     {
@@ -58,7 +58,7 @@ void editor_texture_streaming_window::draw()
 
             // Draw progress bar showing how full the texture pool is.
             float pool_usage_mb = streamer.get_memory_pressure() / (1024.0f * 1024.0f);
-            float pool_size_mb = options.texture_streaming_pool_size / (1024.0f * 1024.0f);
+            float pool_size_mb = (float)cvar_texture_streaming_pool_size.get_int();
 
             char buffer[256];
 

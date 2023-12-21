@@ -5,6 +5,7 @@
 #include "workshop.renderer/systems/render_system_reflection_probes.h"
 #include "workshop.renderer/systems/render_system_light_probes.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
@@ -36,14 +37,13 @@ void render_system_reflection_probes::register_init(init_list& list)
 result<void> render_system_reflection_probes::create_resources()
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    const render_options& options = m_renderer.get_options();
 
     // Grab configuration from renderer.
-    m_probe_cubemap_size = options.reflection_probe_cubemap_size;
-    m_probe_cubemap_mips = options.reflection_probe_cubemap_mip_count;
-    m_probe_regenerations_per_frame = options.reflection_probe_max_regenerations_per_frame;
-    m_probe_near_z = options.reflection_probe_near_z;
-    m_probe_far_z = options.reflection_probe_far_z;
+    m_probe_cubemap_size = cvar_reflection_probe_cubemap_size.get();
+    m_probe_cubemap_mips = cvar_reflection_probe_cubemap_mip_count.get();
+    m_probe_regenerations_per_frame = cvar_reflection_probe_max_regenerations_per_frame.get();
+    m_probe_near_z = cvar_reflection_probe_near_z.get();
+    m_probe_far_z = cvar_reflection_probe_far_z.get();
 
     // Create cubemap we will render the scene into.
     ri_texture::create_params params;
@@ -186,7 +186,6 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
 {
     ri_interface& ri_interface = m_renderer.get_render_interface();
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    const render_options& options = m_renderer.get_options();
  
     vector3 origin = probe->get_local_location();
 
@@ -206,8 +205,8 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
         matrix4 projection_matrix = matrix4::perspective(
             math::halfpi,
             1.0f,
-            options.reflection_probe_near_z,
-            options.reflection_probe_far_z
+            cvar_reflection_probe_near_z.get(),
+            cvar_reflection_probe_far_z.get()
         );
 
         size_t view_index = (regeneration_index * 6) + i;
@@ -237,18 +236,17 @@ void render_system_reflection_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     render_system_light_probes* light_probe_system = m_renderer.get_system<render_system_light_probes>();
-    const render_options& options = m_renderer.get_options();
 
     std::vector<render_reflection_probe*> reflection_probes = scene_manager.get_reflection_probes();
 
     m_probes_regenerating = 0;
 
     // Regenerate views if our configuration has changed.
-    if (options.reflection_probe_cubemap_size != m_probe_cubemap_size ||
-        options.reflection_probe_cubemap_mip_count != m_probe_cubemap_mips ||
-        options.reflection_probe_max_regenerations_per_frame != m_probe_regenerations_per_frame ||
-        options.reflection_probe_near_z != m_probe_near_z ||
-        options.reflection_probe_far_z != m_probe_far_z)
+    if (cvar_reflection_probe_cubemap_size.get() != m_probe_cubemap_size ||
+        cvar_reflection_probe_cubemap_mip_count.get() != m_probe_cubemap_mips ||
+        cvar_reflection_probe_max_regenerations_per_frame.get() != m_probe_regenerations_per_frame ||
+        cvar_reflection_probe_near_z.get() != m_probe_near_z ||
+        cvar_reflection_probe_far_z.get() != m_probe_far_z)
     {
         if (!destroy_resources() || !create_resources())
         {

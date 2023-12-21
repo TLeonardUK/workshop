@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/systems/render_system_light_probes.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
@@ -39,12 +40,11 @@ void render_system_light_probes::register_init(init_list& list)
 result<void> render_system_light_probes::create_resources()
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    const render_options& options = m_renderer.get_options();
-
+    
     // Grab configuration from renderer.
-    m_probe_ray_count = options.light_probe_ray_count;
-    m_probe_regenerations_per_frame = options.light_probe_max_regenerations_per_frame;
-    m_probe_far_z = options.light_probe_far_z;
+    m_probe_ray_count = cvar_light_probe_ray_count.get();
+    m_probe_regenerations_per_frame = cvar_light_probe_max_regenerations_per_frame.get();
+    m_probe_far_z = cvar_light_probe_far_z.get();
 
     ri_param_block_archetype* scratch_archetype = m_renderer.get_param_block_manager().get_param_block_archetype("ddgi_probe_scrach_data");    
     db_assert(scratch_archetype != nullptr);
@@ -121,11 +121,9 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
 
     render_system_lighting* lighting_system = m_renderer.get_system<render_system_lighting>();
     
-    const render_options& options = m_renderer.get_options();
-
     m_probes_rengerated_last_frame = 0;
 
-    if (!options.raytracing_enabled ||
+    if (!cvar_raytracing_enabled.get() ||
         !m_renderer.get_render_interface().check_feature(ri_feature::raytracing))
     {
         return;
@@ -163,13 +161,13 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
     m_regeneration_param_block->set("probe_ray_count", (int)m_probe_ray_count);
     m_regeneration_param_block->set("scratch_buffer", *m_scratch_buffer, true);
     m_regeneration_param_block->set("probe_data_buffer", m_regeneration_instance_buffer->get_buffer(), false);
-    m_regeneration_param_block->set("probe_distance_exponent", options.light_probe_distance_exponent);
-    m_regeneration_param_block->set("probe_blend_hysteresis", options.light_probe_blend_hysteresis);
-    m_regeneration_param_block->set("probe_large_change_threshold", options.light_probe_large_change_threshold);
-    m_regeneration_param_block->set("probe_brightness_threshold", options.light_probe_brightness_threshold);
-    m_regeneration_param_block->set("probe_fixed_ray_backface_threshold", options.light_probe_fixed_ray_backface_threshold);
-    m_regeneration_param_block->set("probe_random_ray_backface_threshold", options.light_probe_random_ray_backface_threshold);
-    m_regeneration_param_block->set("probe_min_frontface_distance", options.light_probe_min_frontface_distance);
+    m_regeneration_param_block->set("probe_distance_exponent", cvar_light_probe_distance_exponent.get());
+    m_regeneration_param_block->set("probe_blend_hysteresis", cvar_light_probe_blend_hysteresis.get());
+    m_regeneration_param_block->set("probe_large_change_threshold", cvar_light_probe_large_change_threshold.get());
+    m_regeneration_param_block->set("probe_brightness_threshold", cvar_light_probe_brightness_threshold.get());
+    m_regeneration_param_block->set("probe_fixed_ray_backface_threshold", cvar_light_probe_fixed_ray_backface_threshold.get());
+    m_regeneration_param_block->set("probe_random_ray_backface_threshold", cvar_light_probe_random_ray_backface_threshold.get());
+    m_regeneration_param_block->set("probe_min_frontface_distance", cvar_light_probe_min_frontface_distance.get());
     m_regeneration_param_block->set("random_ray_rotation", vector4(m_random_ray_direction.x, m_random_ray_direction.y, m_random_ray_direction.z, m_random_ray_direction.w));
 
     // Start timer.
@@ -268,7 +266,6 @@ render_view* render_system_light_probes::get_main_view()
 void render_system_light_probes::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-    const render_options& options = m_renderer.get_options();
 
     std::vector<render_view*> views = scene_manager.get_views();
     std::vector<render_light_probe_grid*> probe_grids = scene_manager.get_light_probe_grids();
@@ -291,21 +288,21 @@ void render_system_light_probes::step(const render_world_state& state)
 
                 // Adjust the max probes over time until we converge at a number that 
                 // is within the time limit.
-                if (m_average_gpu_time < options.light_probe_regeneration_time_limit_ms)
+                if (m_average_gpu_time < cvar_light_probe_regeneration_time_limit_ms.get())
                 {
-                    m_adjusted_max_probes_per_frame += options.light_probe_regeneration_step_amount;
+                    m_adjusted_max_probes_per_frame += cvar_light_probe_regeneration_step_amount.get();
                 }
-                else if (m_adjusted_max_probes_per_frame > options.light_probe_regeneration_step_amount)
+                else if (m_adjusted_max_probes_per_frame > cvar_light_probe_regeneration_step_amount.get())
                 {
-                    m_adjusted_max_probes_per_frame -= options.light_probe_regeneration_step_amount;
+                    m_adjusted_max_probes_per_frame -= cvar_light_probe_regeneration_step_amount.get();
                 }
             }
         }
     }
 
     // If settings have changed, rebuild resources.
-    if (options.light_probe_ray_count != m_probe_ray_count || 
-        options.light_probe_max_regenerations_per_frame != m_probe_regenerations_per_frame)
+    if (cvar_light_probe_ray_count.get() != m_probe_ray_count || 
+        cvar_light_probe_max_regenerations_per_frame.get() != m_probe_regenerations_per_frame)
     {
         if (!destroy_resources() || !create_resources())
         {

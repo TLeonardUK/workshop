@@ -13,8 +13,6 @@ SET(SOURCES
     
     "render_cvars.h"
     "render_cvars.cpp"
-    "render_options.h"
-    "render_options.cpp"
     "render_world_state.h"
     "render_world_state.cpp"
     "render_graph.h"

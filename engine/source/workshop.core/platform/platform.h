@@ -45,6 +45,9 @@ platform_type get_platform();
 // Gets the configuration the application is running under.
 config_type get_config();
 
+// Gets the total number of bytes installed in the machine.
+size_t get_total_memory();
+
 // Gets the current memory usage, in bytes.
 size_t get_memory_usage();
 

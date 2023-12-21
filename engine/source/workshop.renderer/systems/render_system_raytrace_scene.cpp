@@ -5,6 +5,7 @@
 #include "workshop.renderer/systems/render_system_raytrace_scene.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_raytracing.h"
@@ -33,8 +34,6 @@ void render_system_raytrace_scene::register_init(init_list& list)
 result<void> render_system_raytrace_scene::create_resources()
 {
     ri_interface& render_interface = m_renderer.get_render_interface();
-
-    const render_options& options = m_renderer.get_options();
 
     ri_texture::create_params texture_params;
     texture_params.width = m_renderer.get_display_width();
@@ -79,9 +78,7 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
 
     render_system_lighting* lighting_system = m_renderer.get_system<render_system_lighting>();
 
-    const render_options& options = m_renderer.get_options();
-
-    if (!options.raytracing_enabled || 
+    if (!cvar_raytracing_enabled.get() || 
         !m_renderer.get_render_interface().check_feature(ri_feature::raytracing))
     {
         return;

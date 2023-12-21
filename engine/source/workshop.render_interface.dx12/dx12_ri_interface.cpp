@@ -546,6 +546,9 @@ result<void> dx12_render_interface::select_adapter()
         return false;
     }
 
+    m_vram_total_local = descriptions[0].first.DedicatedVideoMemory;
+    m_vram_total_non_local = descriptions[0].first.SharedSystemMemory + descriptions[0].first.DedicatedSystemMemory;
+
     return true;
 }
 
@@ -933,6 +936,12 @@ void dx12_render_interface::get_vram_usage(size_t& out_local, size_t& out_non_lo
 
     out_local = local_video_memory_info.CurrentUsage;
     out_non_local = non_local_video_memory_info.CurrentUsage;
+}
+
+void dx12_render_interface::get_vram_total(size_t& out_local_total, size_t& out_non_local_total)
+{
+    out_local_total = m_vram_total_local;
+    out_non_local_total = m_vram_total_non_local;
 }
 
 size_t dx12_render_interface::get_cube_map_face_index(ri_cube_map_face face)

@@ -7,6 +7,7 @@
 #include "workshop.renderer/systems/render_system_light_probes.h"
 #include "workshop.renderer/systems/render_system_reflection_probes.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/render_effect_manager.h"
@@ -48,8 +49,6 @@ void render_system_shadows::build_graph(render_graph& graph, const render_world_
 void render_system_shadows::step(const render_world_state& state)
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
-
-    const render_options& options = m_renderer.get_options();
 
     std::vector<render_view*> views = scene_manager.get_views();
     std::vector<render_directional_light*> directional_lights = scene_manager.get_directional_lights();
@@ -217,7 +216,7 @@ void render_system_shadows::step(const render_world_state& state)
     }
 
     // Add a fixed amount from the needing render list to the must render list.
-    for (size_t i = 0; i < options.shadows_max_cascade_updates_per_frame && i < cascades_can_render.size(); i++)
+    for (size_t i = 0; i < cvar_shadows_max_cascade_updates_per_frame.get() && i < cascades_can_render.size(); i++)
     {
         cascades_must_render.push_back(cascades_can_render[i]);
     }

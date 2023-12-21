@@ -20,7 +20,6 @@
 #include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/render_command_queue.h"
-#include "workshop.renderer/render_options.h"
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_param_block.h"
 #include "workshop.render_interface/ri_raytracing_tlas.h"
@@ -339,12 +338,6 @@ public:
     // Gets a pointer to the given debug material.
     asset_ptr<material> get_debug_material(debug_material model);
 
-    // Gets the configuration of the rendering pipeline.
-    const render_options& get_options();
-
-    // Sets the configuration of the rendering pipeline.
-    void set_options(const render_options& options);
-
     // Sets the value of a flag dictating what and how things should be rendered.
     void set_render_flag(render_flag flag, bool value);
 
@@ -423,8 +416,6 @@ private:
     window& m_window;
     asset_manager& m_asset_manager;
     
-    render_options m_options;
-
     std::vector<std::unique_ptr<render_system>> m_systems;
 
     std::unique_ptr<render_param_block_manager> m_param_block_manager;
@@ -465,7 +456,7 @@ private:
 
     // Debug menu.
 
-    visualization_mode m_visualization_mode = visualization_mode::albedo;
+    visualization_mode m_visualization_mode = visualization_mode::normal;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

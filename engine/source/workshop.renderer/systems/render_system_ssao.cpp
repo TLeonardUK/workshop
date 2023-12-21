@@ -5,6 +5,7 @@
 #include "workshop.renderer/systems/render_system_ssao.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
@@ -33,8 +34,6 @@ void render_system_ssao::register_init(init_list& list)
 result<void> render_system_ssao::create_resources()
 {
     ri_interface& render_interface = m_renderer.get_render_interface();
-
-    const render_options& options = m_renderer.get_options();
 
     ri_texture::create_params texture_params;
     texture_params.width = m_renderer.get_display_width();
@@ -123,9 +122,7 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
         return;
     }
 
-    const render_options& options = m_renderer.get_options();
-
-    if (!options.ssao_enabled)
+    if (!cvar_ssao_enabled.get())
     {
         return;
     }
@@ -140,9 +137,9 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     ));
     ssao_parameters->set("noise_texture", *m_noise_texture);
     ssao_parameters->set("noise_texture_sampler", *m_noise_texture_sampler);
-    ssao_parameters->set("ssao_radius", options.ssao_sample_radius);
-    ssao_parameters->set("ssao_power", options.ssao_intensity_power);
-    ssao_parameters->set("ssao_resolution_scale", options.ssao_resolution_scale);
+    ssao_parameters->set("ssao_radius", cvar_ssao_sample_radius.get());
+    ssao_parameters->set("ssao_power", cvar_ssao_intensity_power.get());
+    ssao_parameters->set("ssao_resolution_scale", cvar_ssao_resolution_scale.get());
 
     // Composite the transparent geometry onto the light buffer.
     std::unique_ptr<render_pass_fullscreen> resolve_pass = std::make_unique<render_pass_fullscreen>();
@@ -151,8 +148,8 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     resolve_pass->viewport = recti(
         0, 
         0,
-        static_cast<size_t>(view.get_viewport().width * options.ssao_resolution_scale),
-        static_cast<size_t>(view.get_viewport().height * options.ssao_resolution_scale)
+        static_cast<size_t>(view.get_viewport().width * cvar_ssao_resolution_scale.get()),
+        static_cast<size_t>(view.get_viewport().height * cvar_ssao_resolution_scale.get())
     );
     resolve_pass->technique = m_renderer.get_effect_manager().get_technique("calculate_ssao", {});
     resolve_pass->output.color_targets.push_back(m_ssao_texture.get());
@@ -181,8 +178,8 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     h_blur_pass->scissor = recti(
         0,
         0,
-        static_cast<size_t>(view.get_viewport().width * options.ssao_resolution_scale),
-        static_cast<size_t>(view.get_viewport().height * options.ssao_resolution_scale)
+        static_cast<size_t>(view.get_viewport().width * cvar_ssao_resolution_scale.get()),
+        static_cast<size_t>(view.get_viewport().height * cvar_ssao_resolution_scale.get())
     );
     h_blur_pass->output.color_targets.push_back(m_ssao_blur_texture.get());
     h_blur_pass->param_blocks.push_back(view.get_view_info_param_block());
@@ -209,8 +206,8 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     v_blur_pass->scissor = recti(
         0,
         0,
-        static_cast<size_t>(view.get_viewport().width * options.ssao_resolution_scale),
-        static_cast<size_t>(view.get_viewport().height * options.ssao_resolution_scale)
+        static_cast<size_t>(view.get_viewport().width * cvar_ssao_resolution_scale.get()),
+        static_cast<size_t>(view.get_viewport().height * cvar_ssao_resolution_scale.get())
     );
     v_blur_pass->output.color_targets.push_back(m_ssao_texture.get());
     v_blur_pass->param_blocks.push_back(view.get_view_info_param_block());

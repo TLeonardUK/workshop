@@ -1060,16 +1060,6 @@ visualization_mode renderer::get_visualization_mode()
     return m_visualization_mode;
 }
 
-const render_options& renderer::get_options()
-{
-    return m_options;
-}
-
-void renderer::set_options(const render_options& options)
-{
-    m_options = options;
-}
-
 void renderer::set_render_flag(render_flag flag, bool value)
 {
     m_render_flags[static_cast<int>(flag)] = value;

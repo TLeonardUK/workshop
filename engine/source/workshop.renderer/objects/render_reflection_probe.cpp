@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/objects/render_reflection_probe.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/systems/render_system_lighting.h"
@@ -15,15 +16,13 @@ namespace ws {
 render_reflection_probe::render_reflection_probe(render_object_id id, renderer& in_renderer)
     : render_object(id, &in_renderer, render_visibility_flags::physical)
 {
-    const render_options& options = in_renderer.get_options();
-
     m_param_block = m_renderer->get_param_block_manager().create_param_block("reflection_probe_state");
 
     ri_texture::create_params params;
-    params.width = options.reflection_probe_cubemap_size;
-    params.height = options.reflection_probe_cubemap_size;
+    params.width = cvar_reflection_probe_cubemap_size.get_int();
+    params.height = cvar_reflection_probe_cubemap_size.get_int();
     params.depth = 6;
-    params.mip_levels = options.reflection_probe_cubemap_mip_count;
+    params.mip_levels = cvar_reflection_probe_cubemap_mip_count.get_int();
     params.dimensions = ri_texture_dimension::texture_cube;
     params.is_render_target = true;
     params.format = ri_texture_format::R16G16B16A16_FLOAT;

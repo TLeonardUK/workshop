@@ -152,7 +152,9 @@ SET(SOURCES
     "reflection/reflect_field.h"
     "reflection/reflect_constraint.cpp"
     "reflection/reflect_constraint.h"
-
+    
+    "cvar/core_cvars.cpp"
+    "cvar/core_cvars.h"
     "cvar/cvar.cpp"
     "cvar/cvar.h"
     "cvar/cvar_manager.cpp"

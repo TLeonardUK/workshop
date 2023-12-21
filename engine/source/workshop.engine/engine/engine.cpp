@@ -21,6 +21,7 @@
 #include "workshop.core/app/app.h"
 #include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/perf/timer.h"
+#include "workshop.core/cvar/core_cvars.h"
 
 #include "workshop.core/cvar/cvar.h"
 #include "workshop.core/cvar/cvar_manager.h"
@@ -33,6 +34,7 @@
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/assets/shader/shader_loader.h"
 #include "workshop.renderer/assets/material/material.h"
+#include "workshop.renderer/render_cvars.h"
 
 #include "workshop.window_interface/window_interface.h"
 #include "workshop.window_interface.sdl/sdl_window_interface.h"
@@ -140,11 +142,6 @@ void engine::register_init(init_list& list)
         [this, &list]() -> result<void> { return destroy_filesystem(); }
     );
     list.add_step(
-        "Load Config",
-        [this, &list]() -> result<void> { return load_config(list); },
-        [this, &list]() -> result<void> { return true; }
-    );
-    list.add_step(
         "Asset Manager",
         [this, &list]() -> result<void> { return create_asset_manager(list); },
         [this, &list]() -> result<void> { return destroy_asset_manager(); }
@@ -183,6 +180,11 @@ void engine::register_init(init_list& list)
         "Physics Interface",
         [this, &list]() -> result<void> { return create_physics_interface(list); },
         [this, &list]() -> result<void> { return destroy_physics_interface(); }
+    );
+    list.add_step(
+        "Load Config",
+        [this, &list]() -> result<void> { return load_config(list); },
+        [this, &list]() -> result<void> { return true; }
     );
     list.add_step(
         "Renderer",
@@ -708,10 +710,9 @@ result<void> engine::load_config(init_list& list)
     std::string user_save_config = "save:cvars_user.yaml";
     std::string machine_save_config = "machine-save:cvars_machine.yaml";
 
-    // Set all cvars that are used for configuring settings.
-    //cvar_gpu_memory_mb->set_int(1024);
-    //cvar_platform->set_string("windows");
-
+    // Register all the relevant cvars.
+    register_core_cvars();
+    register_render_cvars(*m_render_interface);
 
     cvar_manager& manager = cvar_manager::get();
     if (!manager.add_config_file(engine_config.c_str()) ||

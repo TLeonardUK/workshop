@@ -87,6 +87,7 @@ public:
     virtual size_t get_pipeline_depth() override;
     virtual void defer_delete(const deferred_delete_function_t& func) override;
     virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) override;
+    virtual void get_vram_total(size_t& out_local_total, size_t& out_non_local_total) override;
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
     virtual bool check_feature(ri_feature feature) override;
 
@@ -200,6 +201,9 @@ private:
 
     size_t m_ray_type_count;
     size_t m_ray_domain_count;
+
+    size_t m_vram_total_local = 0;
+    size_t m_vram_total_non_local = 0;
 
 };
 

@@ -27,7 +27,6 @@ enum class visualization_mode;
 enum class render_flag;
 enum class render_gpu_flags;
 enum class render_draw_flags;
-class render_options;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
 using render_object_id = size_t;
@@ -60,9 +59,6 @@ public:
 
     // Sets the debug mode we should use for rendering the output.
     void set_visualization_mode(visualization_mode mode);
-
-    // Sets the rendering configuration for the pipeline.
-    void set_options(const render_options& options);
 
     // Sets the value of a flag dictating what and how things should be rendered.
     void set_render_flag(render_flag flag, bool value);

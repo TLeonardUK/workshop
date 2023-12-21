@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/objects/render_view.h"
@@ -45,8 +46,7 @@ size_t render_texture_streamer::get_current_resident_mip_count(texture* tex)
         return iter->second->current_resident_mips;
     }
 
-    const render_options& options = m_renderer.get_options();
-    return options.texture_streaming_min_resident_mips;
+    return cvar_texture_streaming_min_resident_mips.get_int();
 }
 
 size_t render_texture_streamer::get_ideal_resident_mip_count(texture* tex)
@@ -58,15 +58,12 @@ size_t render_texture_streamer::get_ideal_resident_mip_count(texture* tex)
         return iter->second->ideal_resident_mips;
     }
 
-    const render_options& options = m_renderer.get_options();
-    return options.texture_streaming_min_resident_mips;
+    return cvar_texture_streaming_min_resident_mips.get_int();
 }
 
 void render_texture_streamer::register_texture(texture* tex)
 {
     std::unique_lock lock(m_access_mutex);
-
-    const render_options& options = m_renderer.get_options();
 
     std::shared_ptr<texture_streaming_info> info = std::make_shared<texture_streaming_info>();
     info->instance = tex;
@@ -109,8 +106,7 @@ void render_texture_streamer::unregister_texture(texture* tex)
 
 void render_texture_streamer::begin_frame()
 {
-    const render_options& options = m_renderer.get_options();
-    if (!options.texture_streaming_enabled)
+    if (!cvar_texture_streaming_enabled.get())
     {
         return;
     }
@@ -125,8 +121,7 @@ void render_texture_streamer::end_frame()
 {
     profile_marker(profile_colors::render, "texture streaming integration");
 
-    const render_options& options = m_renderer.get_options();
-    if (!options.texture_streaming_enabled)
+    if (!cvar_texture_streaming_enabled.get())
     {
         return;
     }
@@ -164,7 +159,6 @@ size_t render_texture_streamer::get_ideal_memory_usage()
 
 void render_texture_streamer::make_completed_mips_resident()
 {
-    const render_options& options = m_renderer.get_options();
 
     // Apply any textures that have finished streaming.
     std::vector<texture_streaming_info*>& waiting_list = m_state_array[(int)texture_state::waiting_for_mips];
@@ -193,7 +187,7 @@ void render_texture_streamer::make_completed_mips_resident()
                 }
                 else if (!mip_iter->staging_buffer)
                 {
-                    if (m_total_staging_buffer_size < options.texture_streaming_max_staged_memory)
+                    if (m_total_staging_buffer_size < cvar_texture_streaming_max_staged_memory.get() * 1024 * 1024)
                     {
                         // Asyncronously copy data to an upload buffer.
                         ri_staging_buffer::create_params params;
@@ -233,7 +227,7 @@ void render_texture_streamer::make_completed_mips_resident()
 
             // See if time has elapsed and stop fulfilling other mip requests.
             double elapsed = (get_seconds() - start) * 1000.0f;
-            if (elapsed >= options.texture_streaming_time_limit_ms)
+            if (elapsed >= cvar_texture_streaming_time_limit_ms.get())
             {
                 time_elapsed = true;
                 break;
@@ -395,8 +389,6 @@ void render_texture_streamer::add_to_state_array(texture_streaming_info& streami
 
 size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& tex_bounds)
 {
-    const render_options& options = m_renderer.get_options();
-
     sphere sphere_bounds = tex_bounds.bounds.get_sphere();
 
     float vertical_fov = tex_bounds.view->get_fov();
@@ -424,13 +416,13 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
     float ideal_mip_float = 0.5f * log2(screen_space_area / uv_density);
                                                                                     // The -1 is because the algorithm we use overestimates the texture usage
                                                                                     // this brings it down to a more accurate value.
-    size_t ideal_mip_count = (size_t)std::clamp((int)std::truncf(ideal_mip_float) - 1 + options.texture_streaming_mip_bias, 0, (int)mip_count);
+    size_t ideal_mip_count = (size_t)std::clamp((int)std::truncf(ideal_mip_float) - 1 + cvar_texture_streaming_mip_bias.get(), 0, (int)mip_count);
 
     // Clamp to minimum and maximum mip bounds.
     ideal_mip_count = std::clamp(
         ideal_mip_count,
-        std::min(mip_count, options.texture_streaming_min_resident_mips),
-        options.texture_streaming_max_resident_mips
+        std::min(mip_count, (size_t)cvar_texture_streaming_min_resident_mips.get()),
+        (size_t)cvar_texture_streaming_max_resident_mips.get()
     );
 
     return ideal_mip_count;
@@ -546,9 +538,7 @@ void render_texture_streamer::start_downgrade(texture_streaming_info& streaming_
 
 void render_texture_streamer::calculate_textures_to_change(std::vector<texture_streaming_info*>& to_upgrade, std::vector<texture_streaming_info*>& to_downgrade)
 {
-    const render_options& options = m_renderer.get_options();
-
-    int64_t bytes_available = (int64_t)options.texture_streaming_pool_size - (int64_t)m_current_memory_pressure;
+    int64_t bytes_available = (int64_t)((size_t)cvar_texture_streaming_pool_size.get() * 1024 * 1024) - (int64_t)m_current_memory_pressure;
 
     // Reduce the available bytes by the pressure of pending upgrades.
     for (texture_streaming_info* texture : m_state_array[(int)texture_state::waiting_for_mips])
@@ -590,7 +580,7 @@ void render_texture_streamer::calculate_textures_to_change(std::vector<texture_s
     }
 
     // If we need more space for other textures to upgrade, downgrade unneeded textures.
-    if (bytes_available < 0 || options.texture_streaming_force_unstream)
+    if (bytes_available < 0 || cvar_texture_streaming_force_unstream.get())
     {
         // Sort the downgrade list by priority.
         auto& downgrade_array = m_state_array[(int)texture_state::pending_downgrade];
@@ -613,7 +603,7 @@ void render_texture_streamer::calculate_textures_to_change(std::vector<texture_s
             to_downgrade.push_back(texture);
             bytes_available += memory_delta;
 
-            if (bytes_available >= 0 && !options.texture_streaming_force_unstream)
+            if (bytes_available >= 0 && !cvar_texture_streaming_force_unstream.get())
             {
                 break;
             }
@@ -638,7 +628,6 @@ void render_texture_streamer::calculate_in_view_mips()
 {
     std::shared_lock lock(m_access_mutex);
 
-    const render_options& options = m_renderer.get_options();
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
 
     // Gather all views that can determine streaming state.
@@ -692,7 +681,7 @@ void render_texture_streamer::calculate_in_view_mips()
         if (info->can_decay)
         {
             size_t mip_count = texture->ri_instance->get_mip_levels();
-            set_ideal_resident_mip_count(*info, std::min(mip_count, options.texture_streaming_min_resident_mips));
+            set_ideal_resident_mip_count(*info, std::min(mip_count, (size_t)cvar_texture_streaming_min_resident_mips.get()));
         }
 
         info->can_decay = true;

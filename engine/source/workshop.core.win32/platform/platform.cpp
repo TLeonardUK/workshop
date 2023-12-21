@@ -8,6 +8,7 @@
 
 #include <Windows.h>
 #include <psapi.h>
+#include <sysinfoapi.h>
 
 namespace ws {
 
@@ -34,6 +35,13 @@ size_t get_memory_usage()
     PROCESS_MEMORY_COUNTERS_EX counters;
     GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&counters, sizeof(counters));
     return counters.PrivateUsage;
+}
+
+size_t get_total_memory()
+{
+    ULONGLONG total_kb;
+    GetPhysicallyInstalledSystemMemory(&total_kb);
+    return total_kb * 1024ull;
 }
 
 size_t get_pagefile_usage()

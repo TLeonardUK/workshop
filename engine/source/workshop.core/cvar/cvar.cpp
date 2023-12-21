@@ -15,10 +15,19 @@ cvar_base::cvar_base(std::type_index value_type, cvar_flag flags, const char* na
     , m_name(name)
     , m_description(description)
 {
-    cvar_manager::get().register_cvar(this);
 }
 
 cvar_base::~cvar_base()
+{
+    unregister_self();
+}
+
+void cvar_base::register_self()
+{
+    cvar_manager::get().register_cvar(this);
+}
+
+void cvar_base::unregister_self()
 {
     cvar_manager::get().unregister_cvar(this);
 }

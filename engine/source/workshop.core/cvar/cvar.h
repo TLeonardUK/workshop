@@ -86,10 +86,15 @@ public:
     cvar_base(std::type_index value_type, cvar_flag flags, const char* name, const char* description);
     ~cvar_base();
 
+    void register_self();
+    void unregister_self();
+
     void set_string(const char* value, cvar_source source = cvar_source::set_by_code);
     void set_int(int value, cvar_source source = cvar_source::set_by_code);
     void set_float(float value, cvar_source source = cvar_source::set_by_code);
     void set_bool(bool value, cvar_source source = cvar_source::set_by_code);
+
+    void set_variant(value_storage_t value, cvar_source source = cvar_source::set_by_code, bool force = false);
 
     void reset_to_default();
 
@@ -112,9 +117,6 @@ public:
 
     // Called when the cvar's value is changed, parameter is the old value of the cvar.
     event<value_storage_t> on_changed;
-
-private:
-    void set_variant(value_storage_t value, cvar_source source = cvar_source::set_by_code, bool force = false);
 
 private:    
     cvar_flag m_flags = cvar_flag::none;

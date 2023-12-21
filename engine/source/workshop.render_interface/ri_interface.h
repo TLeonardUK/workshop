@@ -127,6 +127,10 @@ public:
     // Local memory is dedicated vram, non-local is system shared memory.
     virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) = 0;
 
+    // Gets the number of bytes of vram currently available to the application.
+    // Local memory is dedicated vram, non-local is system shared memory.
+    virtual void get_vram_total(size_t& out_local_total, size_t& out_non_local_total) = 0;
+
     // Gets the texture slice that represents a given cube map face.
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) = 0;
     

@@ -7,6 +7,7 @@
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/systems/render_system_ssao.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
@@ -110,8 +111,6 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
 
     render_system_shadows* shadow_system = m_renderer.get_system<render_system_shadows>();
 
-    const render_options& options = m_renderer.get_options();
-
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
     render_batch_instance_buffer* light_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this);
     render_batch_instance_buffer* shadow_map_instance_buffer = view.get_resource_cache().find_or_create_instance_buffer(this + 1);
@@ -208,8 +207,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             render_system_shadows::shadow_info& shadows = shadow_system->find_or_create_shadow_info(light->get_id(), view.get_id());
 
             // Make sure we have space left in the lists.
-            if (total_lights + 1 >= options.lighting_max_lights ||
-                total_shadow_maps + shadows.cascades.size() >= options.lighting_max_shadow_maps)
+            if (total_lights + 1 >= cvar_lighting_max_lights.get() ||
+                total_shadow_maps + shadows.cascades.size() >= cvar_lighting_max_shadow_maps.get())
             {
                 break;
             }
@@ -283,7 +282,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("apply_direct_lighting", !m_renderer.get_render_flag(render_flag::disable_direct_lighting));
         resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
         resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
-        resolve_param_block->set("probe_encoding_gamma", options.light_probe_encoding_gamma);
+        resolve_param_block->set("probe_encoding_gamma", cvar_light_probe_encoding_gamma.get());
         resolve_param_block->set("reflection_probe_count", (int)visible_reflection_probes.size());
         resolve_param_block->set("reflection_probe_buffer", reflection_probe_instance_buffer->get_buffer());
         resolve_param_block->set("brdf_lut", *m_brdf_lut_texture);
@@ -291,10 +290,10 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
 
         ri_texture& ao_texture = *m_renderer.get_system<render_system_ssao>()->get_ssao_mask();
         resolve_param_block->set("ao_texture", ao_texture);
-        resolve_param_block->set("ao_enabled", options.ssao_enabled);
+        resolve_param_block->set("ao_enabled", cvar_ssao_enabled.get());
         resolve_param_block->set("ao_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
-        resolve_param_block->set("ao_direct_light_effect", options.ssao_direct_light_effect);
-        resolve_param_block->set("ao_uv_scale", vector2(options.ssao_resolution_scale, options.ssao_resolution_scale));
+        resolve_param_block->set("ao_direct_light_effect", cvar_ssao_direct_light_effect.get());
+        resolve_param_block->set("ao_uv_scale", vector2(cvar_ssao_resolution_scale.get(), cvar_ssao_resolution_scale.get()));
     }
 
     // Add pass to run compute shader to generate the clusters.

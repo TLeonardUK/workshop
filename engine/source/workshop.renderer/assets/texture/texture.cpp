@@ -5,6 +5,7 @@
 #include "workshop.renderer/assets/texture/texture.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
@@ -28,7 +29,6 @@ texture::~texture()
 bool texture::load_dependencies()
 {
     render_texture_streamer& streamer = m_renderer.get_texture_streamer();
-    const render_options& options = m_renderer.get_options();
 
     ri_texture::create_params params;
     params.width = width;
@@ -39,7 +39,7 @@ bool texture::load_dependencies()
     params.is_render_target = false;
     params.data = data;
 
-    if (std::max(params.width, params.height) < options.texture_streaming_min_dimension)
+    if (std::max(params.width, params.height) < cvar_texture_streaming_min_dimension.get_int())
     {
         db_warning(renderer, "Disabled streaming for texture as it is smaller than minimum dimensions, consider turning off streaming in the asset: %s", name.c_str());
         streamed = false;
@@ -66,14 +66,14 @@ bool texture::load_dependencies()
         params.is_partially_resident = true;
         params.mip_levels = mip_levels;
         params.resident_mips = streamer.get_current_resident_mip_count(this);
-        params.drop_mips = options.textures_dropped_mips;
+        params.drop_mips = cvar_textures_dropped_mips.get_int();
     }
     else
     {
         params.is_partially_resident = false;
         params.mip_levels = mip_levels;
         params.resident_mips = mip_levels;
-        params.drop_mips = options.textures_dropped_mips;
+        params.drop_mips = cvar_textures_dropped_mips.get_int();
     }
 
     ri_instance = m_ri_interface.create_texture(params, name.c_str());
