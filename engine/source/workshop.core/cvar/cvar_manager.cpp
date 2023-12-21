@@ -4,14 +4,18 @@
 // ================================================================================================
 #include "workshop.core/cvar/cvar_manager.h"
 #include "workshop.core/cvar/cvar.h"
+#include "workshop.core/cvar/cvar_config_file.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/containers/string.h"
+#include "workshop.core/utils/time.h"
 
 #include <string>
 
-#pragma optimize("", off)
+// TODO: 
+//      Add setting cvar's from command line
+//      Could use the config files to + command lines to add debug functionality?
 
 namespace ws {
 
@@ -23,8 +27,14 @@ constexpr size_t k_cvar_save_descriptor_current_version = 1;
 
 };
 
-cvar<int> cvar_test_machine(cvar_flag::saved|cvar_flag::machine_specific, 0, "test_machine", "test a");
-cvar<int> cvar_test_user(cvar_flag::saved, 0, "test_user", "test a");
+cvar<int> cvar_gpu_memory(cvar_flag::read_only, 3000, "gpu_memory", "gpu memory in mb");
+cvar<std::string> cvar_platform(cvar_flag::read_only, "windows", "platform", "Name of platform running on");
+
+cvar<int> cvar_texture_detail(cvar_flag::saved|cvar_flag::machine_specific|cvar_flag::evaluate_on_change, 0, "texture_detail", "texture detail level [0..3]");
+
+cvar<bool> cvar_texture_streaming_enabled(cvar_flag::none, false, "texture_streaming_enabled", "");
+cvar<int> cvar_texture_streaming_pool_size_mb(cvar_flag::none, 0, "texture_streaming_pool_size_mb", "");
+cvar<int> cvar_texture_streaming_max_resident_mips(cvar_flag::none, 0, "texture_streaming_max_resident_mips", "");
 
 cvar_base* cvar_manager::find_cvar(const char* name)
 {
@@ -88,10 +98,11 @@ bool cvar_manager::save_filtered(const char* path, bool machine_specific)
     output += string_format("type: %s\n", k_cvar_save_descriptor_type);
     output += string_format("version: %i\n", k_cvar_save_descriptor_current_version);
     output += "\n";
-    output += "values:\n";
 
     bool has_saved_values = false;
-    
+    std::string value_output = "";
+    value_output += "values:\n";
+
     for (cvar_base* base : m_cvars)
     {
         if (!base->has_flag(cvar_flag::saved))
@@ -105,29 +116,29 @@ bool cvar_manager::save_filtered(const char* path, bool machine_specific)
 
         if (base->get_value_type() == typeid(int))
         {
-            output += string_format("  %s: %i\n", base->get_name(), base->get_int());
+            value_output += string_format("  %s: %i\n", base->get_name(), base->get_int());
             has_saved_values = true;
         }
         else if (base->get_value_type() == typeid(std::string))
         {
-            output += string_format("  %s: %s\n", base->get_name(), base->get_string());
+            value_output += string_format("  %s: %s\n", base->get_name(), base->get_string());
             has_saved_values = true;
         }
         else if (base->get_value_type() == typeid(float))
         {
-            output += string_format("  %s: %.8f\n", base->get_name(), base->get_float());
+            value_output += string_format("  %s: %.8f\n", base->get_name(), base->get_float());
             has_saved_values = true;
         }
         else if (base->get_value_type() == typeid(bool))
         {
-            output += string_format("  %s: %i\n", base->get_name(), base->get_bool() ? 1 : 0);
+            value_output += string_format("  %s: %i\n", base->get_name(), base->get_bool() ? 1 : 0);
             has_saved_values = true;
         }
     }
 
-    if (!has_saved_values)
+    if (has_saved_values)
     {
-        output += "  -\n";
+        output += value_output;
     }
 
     std::unique_ptr<stream> stream = virtual_file_system::get().open(path, true);
@@ -250,23 +261,7 @@ bool cvar_manager::load_filtered(const char* path, bool machine_specific)
                 continue;
             }
 
-            if (instance->get_value_type() == typeid(int))
-            {
-                instance->set_int(atoi(value.c_str()), cvar_source::set_by_save);
-            }
-            else if (instance->get_value_type() == typeid(std::string))
-            {
-                instance->set_string(value.c_str(), cvar_source::set_by_save);
-            }
-            else if (instance->get_value_type() == typeid(float))
-            {
-                instance->set_float((float)atof(value.c_str()), cvar_source::set_by_save);
-            }
-            else if (instance->get_value_type() == typeid(bool))
-            {
-                bool is_true = (value == "1" || _stricmp(value.c_str(), "true") == 0);
-                instance->set_bool(is_true, cvar_source::set_by_save);
-            }
+            instance->coerce_from_string(value.c_str(), cvar_source::set_by_save);
         }
     }
 
@@ -289,8 +284,23 @@ bool cvar_manager::add_config_file(const char* path)
 
     m_config_paths.push_back(path);
 
-    // TODO: Load and parse the file.
+    db_log(core, "Parsing cvar config file: %s", path);
+#if 0
+    double start = get_seconds();
+#endif
 
+    std::unique_ptr<cvar_config_file> config = std::make_unique<cvar_config_file>();
+    if (!config->parse(path))
+    {
+        return false;
+    }
+
+#if 0
+    double elapsed = get_seconds() - start;
+    db_log(core, "Parsed in %.2f ms", elapsed * 1000.0f);
+#endif
+
+    m_config_files.push_back(std::move(config));
     return true;
 }
 
@@ -298,7 +308,37 @@ void cvar_manager::evaluate()
 {
     std::scoped_lock lock(m_mutex);
 
-    // TODO: Evaluate the config properties.
+    db_log(core, "Evaluating cvar config files ...");
+#if 0
+    double start = get_seconds();
+#endif
+
+    for (auto& ptr : m_config_files)
+    {
+        ptr->evaluate_defaults();
+    }
+
+    for (auto& ptr : m_config_files)
+    {
+        ptr->evaluate();
+}
+
+#if 0
+    double elapsed = get_seconds() - start;
+    db_log(core, "Evaluated in %.2f ms", elapsed * 1000.0f);
+#endif
+}
+
+void cvar_manager::reset_to_default()
+{
+    std::scoped_lock lock(m_mutex);
+
+    for (cvar_base* base : m_cvars)
+    {
+        base->reset_to_default();
+    }
+
+    evaluate();
 }
 
 }; // namespace ws

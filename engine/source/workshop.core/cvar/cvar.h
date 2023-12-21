@@ -29,7 +29,10 @@ enum class cvar_flag
 
     // When cvar is changed cvar files will be re-evaluated to pick up any settings
     // that are dependent on this one.
-    evaluate_on_change = 3,
+    evaluate_on_change = 4,
+
+    // If set this cvar will not be editable in the UI.
+    read_only = 8,
 };
 DEFINE_ENUM_FLAGS(cvar_flag);
 
@@ -59,6 +62,18 @@ enum class cvar_source
 
     // Some area of code has explicitly set the value.
     set_by_code = 6,
+
+    COUNT,
+};
+
+static inline const char* cvar_source_strings[(int)cvar_source::COUNT] = {
+    "none",
+    "set_by_code_default",
+    "set_by_config_default",
+    "set_by_config",
+    "set_by_save",
+    "set_by_user",
+    "set_by_code",
 };
 
 // Base class for all cvar's, don't use directly, use the 
@@ -83,11 +98,15 @@ public:
     bool get_bool();
     float get_float();
 
+    std::string coerce_to_string();
+    void coerce_from_string(const char* value, cvar_source source = cvar_source::set_by_code);
+
     bool has_flag(cvar_flag flag);
     bool has_source(cvar_source source);
 
     const char* get_name();
     const char* get_description();
+    cvar_source get_source();
 
     std::type_index get_value_type();
 
@@ -95,7 +114,7 @@ public:
     event<value_storage_t> on_changed;
 
 private:
-    void set_variant(value_storage_t value, cvar_source source = cvar_source::set_by_code);
+    void set_variant(value_storage_t value, cvar_source source = cvar_source::set_by_code, bool force = false);
 
 private:    
     cvar_flag m_flags = cvar_flag::none;
@@ -127,7 +146,7 @@ public:
     {
         if constexpr (std::is_same<value_type, std::string>::value)
         {
-            set_string(default_value, cvar_source::set_by_code_default);
+            set_string(default_value.c_str(), cvar_source::set_by_code_default);
         }
         else if constexpr (std::is_same<value_type, float>::value)
         {

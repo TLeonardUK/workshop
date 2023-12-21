@@ -49,12 +49,14 @@ public:
             return;
         }
         m_original_function = (signature_t)GetProcAddress(mod, m_name);
+#if 0
         if (m_original_function)
         {
             char buffer[1024];
             snprintf(buffer, sizeof(buffer), "Found memory function: module=%s function=%s\n", mod_name, m_name);
             OutputDebugStringA(buffer);
         }
+#endif
     }
 
     virtual void* get_hook_function() override
@@ -149,8 +151,8 @@ void hook_module(HMODULE mod, std::vector<HMODULE>& imported_modules)
         const char* lib_name = (LPCSTR)((DWORD_PTR)import_desc->Name + (DWORD_PTR)image_base);
         HMODULE lib = LoadLibraryA(lib_name);
 
-        char buffer[256];
 #if 0
+        char buffer[256];
         snprintf(buffer, sizeof(buffer), "library: %s\n", lib_name);
         OutputDebugStringA(buffer);
 #endif
@@ -186,8 +188,10 @@ void hook_module(HMODULE mod, std::vector<HMODULE>& imported_modules)
 
                         if (strcmp(hook->get_name(), function_name->Name) == 0)
                         {
+#if 0
                             snprintf(buffer, sizeof(buffer), "Found and installed IAT hook for %s\n", hook->get_name());
                             OutputDebugStringA(buffer);
+#endif
 
                             DWORD old_protection = 0;
                             VirtualProtect((LPVOID)(&first_thunk->u1.Function), 8, PAGE_READWRITE, &old_protection);

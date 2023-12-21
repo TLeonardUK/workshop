@@ -11,6 +11,8 @@ SET(SOURCES
     "renderer.h"
     "renderer.cpp"
     
+    "render_cvars.h"
+    "render_cvars.cpp"
     "render_options.h"
     "render_options.cpp"
     "render_world_state.h"

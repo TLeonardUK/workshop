@@ -5,6 +5,7 @@
 #include "workshop.core/cvar/cvar.h"
 #include "workshop.core/cvar/cvar_manager.h"
 #include "workshop.core/debug/debug.h"
+#include "workshop.core/containers/string.h"
 
 namespace ws {
 
@@ -46,10 +47,10 @@ void cvar_base::set_bool(bool value, cvar_source source)
     set_variant(value, source);
 }
 
-void cvar_base::set_variant(value_storage_t value, cvar_source source)
+void cvar_base::set_variant(value_storage_t value, cvar_source source, bool force)
 {
     // Already set by a high priority source.
-    if (m_source > source)
+    if (m_source > source && !force)
     {
         return;
     }
@@ -63,6 +64,7 @@ void cvar_base::set_variant(value_storage_t value, cvar_source source)
 
     if (m_value == value)
     {
+        m_source = source;
         return;
     }
 
@@ -70,6 +72,8 @@ void cvar_base::set_variant(value_storage_t value, cvar_source source)
 
     m_value = value;
     m_source = source;
+
+    db_log(core, "[cvar] %s changed to %s (%s)", m_name.c_str(), coerce_to_string().c_str(), cvar_source_strings[(int)source]);
 
     on_changed.broadcast(old_value);
 
@@ -86,9 +90,51 @@ void cvar_base::set_variant(value_storage_t value, cvar_source source)
     }
 }
 
+std::string cvar_base::coerce_to_string()
+{
+    if (m_value_type == typeid(std::string))
+    {
+        return get_string();
+    }
+    else if (m_value_type == typeid(float))
+    {
+        return string_format("%f", get_float());
+    }
+    else if (m_value_type == typeid(int))
+    {
+        return string_format("%i", get_int());
+    }
+    else if (m_value_type == typeid(bool))
+    {
+        return string_format("%i", get_bool() ? 1 : 0);
+    }
+    return "";
+}
+
+void cvar_base::coerce_from_string(const char* value, cvar_source source)
+{
+    if (m_value_type == typeid(int))
+    {
+        set_int(atoi(value), source);
+    }
+    else if (m_value_type == typeid(std::string))
+    {
+        set_string(value, source);
+    }
+    else if (m_value_type == typeid(float))
+    {
+        set_float((float)atof(value), source);
+    }
+    else if (m_value_type == typeid(bool))
+    {
+        bool is_true = (strcmp(value, "1") == 0 || _stricmp(value, "true") == 0);
+        set_bool(is_true, source);
+    }
+}
+
 void cvar_base::reset_to_default()
 {
-    set_variant(m_default_value, m_default_source);
+    set_variant(m_default_value, m_default_source, true);
 }
 
 const char* cvar_base::get_string()
@@ -133,6 +179,11 @@ const char* cvar_base::get_name()
 const char* cvar_base::get_description()
 {
     return m_description.c_str();
+}
+
+cvar_source cvar_base::get_source()
+{
+    return m_source;
 }
 
 std::type_index cvar_base::get_value_type()

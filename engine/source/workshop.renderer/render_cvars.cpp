@@ -1,8 +1,9 @@
 // ================================================================================================
 //  workshop
-//  Copyright (C) 2022 Tim Leonard
+//  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
+#include "workshop.renderer/render_cvars.h"
 
-default
-{
-}
+namespace ws {
+
+}; // namespace ws

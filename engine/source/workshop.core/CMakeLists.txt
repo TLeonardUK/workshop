@@ -157,6 +157,8 @@ SET(SOURCES
     "cvar/cvar.h"
     "cvar/cvar_manager.cpp"
     "cvar/cvar_manager.h"    
+    "cvar/cvar_config_ast.cpp"
+    "cvar/cvar_config_ast.h"
     "cvar/cvar_config_file.cpp"
     "cvar/cvar_config_file.h"
     "cvar/cvar_config_lexer.cpp"

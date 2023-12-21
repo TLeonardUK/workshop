@@ -12,6 +12,7 @@
 #include "workshop.editor/editor/windows/editor_properties_window.h"
 #include "workshop.editor/editor/windows/editor_assets_window.h"
 #include "workshop.editor/editor/windows/editor_texture_streaming_window.h"
+#include "workshop.editor/editor/windows/editor_cvar_window.h"
 #include "workshop.editor/editor/windows/popups/editor_progress_popup.h"
 #include "workshop.editor/editor/transactions/editor_transaction_change_selected_objects.h"
 #include "workshop.editor/editor/transactions/editor_transaction_change_object_transform.h"
@@ -303,6 +304,7 @@ result<void> editor::create_windows(init_list& list)
     create_window<editor_assets_window>(&m_engine.get_asset_manager(), &m_engine.get_asset_database());
     create_window<editor_log_window>();
     create_window<editor_memory_window>();
+    create_window<editor_cvar_window>();
     create_window<editor_performance_window>();
     create_window<editor_progress_popup>();
     create_window<editor_texture_streaming_window>(&m_engine.get_renderer());

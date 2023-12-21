@@ -28,6 +28,8 @@ SET(SOURCES
     "editor/windows/editor_log_window.h"
     "editor/windows/editor_memory_window.cpp"
     "editor/windows/editor_memory_window.h"
+    "editor/windows/editor_cvar_window.cpp"
+    "editor/windows/editor_cvar_window.h"
     "editor/windows/editor_performance_window.cpp"
     "editor/windows/editor_performance_window.h"
     "editor/windows/editor_properties_window.cpp"

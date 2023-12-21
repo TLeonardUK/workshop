@@ -6,6 +6,7 @@
 
 #include "workshop.core/utils/singleton.h"
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
+#include "workshop.core/cvar/cvar_config_file.h"
 
 #include <memory>
 #include <filesystem>
@@ -13,6 +14,7 @@
 namespace ws {
 
 class cvar_base;
+class cvar_config_file;
 
 // Holds references to all cvars created by the game.
 class cvar_manager 
@@ -35,6 +37,9 @@ public:
     // Runs the config files added by add_config_file and applies any 
     // setting changes.
     void evaluate();
+
+    // Resets all cvars to their code default values.
+    void reset_to_default();
 
     // Finds a cvar with the given name or returns null if not found.
     // The search is case-insensitive.
@@ -67,6 +72,8 @@ private:
     std::string m_user_save_path;
     std::string m_machine_save_path;
     std::vector<std::string> m_config_paths;
+
+    std::vector<std::unique_ptr<cvar_config_file>> m_config_files;
 
 };
 
