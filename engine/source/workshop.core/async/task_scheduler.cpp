@@ -194,7 +194,7 @@ task_scheduler::task_scheduler(init_state& states)
     }
 
     // Assign queues to workers.
-    size_t nextWorkerIndex = 0;
+    //size_t nextWorkerIndex = 0;
     for (size_t i = 0; i < static_cast<int>(task_queue::COUNT); i++)
     {
         float weight = states.queue_weights[i];
@@ -202,11 +202,12 @@ task_scheduler::task_scheduler(init_state& states)
 
         size_t worker_count = std::max(1, static_cast<int>(ceilf(states.worker_count * weight)));
         m_queues[i].worker_count = worker_count;
+        m_queues[i].queue_type = (task_queue)i;
 
         for (size_t j = 0; j < worker_count; j++)
         {
-            m_workers[nextWorkerIndex].queues.insert(&m_queues[i]);
-            nextWorkerIndex = (nextWorkerIndex + 1) % states.worker_count;
+            m_workers[j].queues.insert(&m_queues[i]);
+            //nextWorkerIndex = (nextWorkerIndex + 1) % states.worker_count;
         }
     }
 
@@ -216,7 +217,17 @@ task_scheduler::task_scheduler(init_state& states)
         worker_state& worker = m_workers[i];
         worker.thread = std::make_unique<std::thread>([=, &worker]() {
             
-            db_set_thread_name(string_format("Task Worker %zi", i));
+            std::string queue_string;
+            for (auto& value : worker.queues)
+            {
+                if (!queue_string.empty())
+                {
+                    queue_string.append(", ");
+                }
+                queue_string += task_queue_strings[(int)value->queue_type];
+            }
+
+            db_set_thread_name(string_format("Task Worker %zi (%s)", i, queue_string.c_str()));
             worker_entry(worker);
 
         });

@@ -203,6 +203,13 @@ void render_command_queue::set_view_projection(render_object_id id, float fov, f
     });
 }
 
+void render_command_queue::set_view_readback_pixmap(render_object_id id, pixmap* output)
+{
+    queue_command("set_view_readback_pixmap", [renderer = &m_renderer, id, output]() {
+        renderer->get_scene_manager().set_view_readback_pixmap(id, output);
+    });
+}
+
 // ================================================================================================
 //  Static meshes
 // ================================================================================================

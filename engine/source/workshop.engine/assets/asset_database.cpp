@@ -380,7 +380,7 @@ void asset_database::gather_metadata(asset_database_entry* entry, bool get_thumb
 
     std::string path = entry->get_path();
 
-    async("Generate Metadata", task_queue::loading, [this, path, entry, get_thumbnail]() {
+    async("Generate Metadata", task_queue::background, [this, path, entry, get_thumbnail]() {
 
         db_verbose(engine, "Gathering metadata for %s", path.c_str());
         std::unique_ptr<asset_database_metadata> metadata = generate_metadata(path.c_str(), get_thumbnail);

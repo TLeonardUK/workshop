@@ -41,10 +41,22 @@ void render_static_mesh::set_model(const asset_ptr<model>& model)
     recreate_render_data();
 }
 
-const std::vector<asset_ptr<material>>& render_static_mesh::get_materials()
+asset_ptr<material> render_static_mesh::get_material(size_t index)
 {
-    // TODO: What happens if we have no overrides?
-    return m_override_materials;
+    if (m_override_materials.size() > index)
+    {
+        return m_override_materials[index];
+    }
+
+    if (m_model.is_loaded())
+    {
+        if (m_model->materials.size() > index)
+        {
+            return m_model->materials[index].material;
+        }
+    }
+
+    return {};
 }
 
 void render_static_mesh::set_materials(const std::vector<asset_ptr<material>>& materials)

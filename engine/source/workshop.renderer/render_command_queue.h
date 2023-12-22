@@ -119,6 +119,9 @@ public:
     // Sets the projection parameters of the view.
     void set_view_projection(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip);
 
+    // Sets a pixmap that a views output will be copied to.
+    void set_view_readback_pixmap(render_object_id id, pixmap* output);
+
     // ===========================================================================================
     //  Static meshes
     // ===========================================================================================

@@ -57,12 +57,13 @@ public:
 
     struct texture_streaming_info
     {
-        texture*        instance;
-        texture_state   state;
-        size_t          current_resident_mips;
-        size_t          ideal_resident_mips;
-        bool            can_decay = false;
-        size_t          last_seen_frame = 0;
+        texture*            instance;
+        texture_state       state;
+        size_t              current_resident_mips;
+        size_t              ideal_resident_mips;
+        bool                can_decay = false;
+        size_t              last_seen_frame = 0;
+        std::atomic_size_t  locked_count { 0 };
 
         std::vector<texture_mip_request> mip_requests;
     };
@@ -106,6 +107,23 @@ public:
 
     // Gets the ideal memory usage if all textures were at their ideal mip levels.
     size_t get_ideal_memory_usage();
+
+    // Locking a texture forces the texture streamer to load it in fully resident, and it will
+    // remain resident until unlock_texture is called.
+    // 
+    // Locked textures get priority for pool space over all others.
+    //
+    // Locks are reference counted (eg, two calls to lock_texture required two calls to unlock_texture to unlock it).
+    void lock_texture(texture* tex);
+
+    // Unlocking a texture forces the texture streamer to load it in fully resident.
+    void unlock_texture(texture* tex);
+
+    // Returns true if the given texture has all its streamed mips resident.
+    // 
+    // This doesn't mean that all mips in the reserved textures are streamed in, just all the possible
+    // mips that can be streamed in are resident (ie. this takes cvar_texture_streaming_max_resident_mips clamping into account).
+    bool is_texture_fully_resident(texture* tex);
 
 private:
     friend class texture;

@@ -20,6 +20,8 @@ dx12_ri_raytracing_tlas::dx12_ri_raytracing_tlas(dx12_render_interface& renderer
 
 dx12_ri_raytracing_tlas::~dx12_ri_raytracing_tlas()
 {
+    m_renderer.dequeue_as_build(this);
+
     destroy_resources();
 }
 

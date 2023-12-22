@@ -197,7 +197,7 @@ void editor_assets_window::draw_asset_list()
             if (thumb)
             {
                 ImTextureID texture = thumb->thumbnail_texture.get();
-                ImGui::GetWindowDrawList()->AddImage(texture, preview_min, preview_max, ImVec2(0, 0), ImVec2(1, 1), ImColor(1.0f, 1.0f, 1.0f, 0.5f));
+                ImGui::GetWindowDrawList()->AddImage(texture, preview_min, preview_max, ImVec2(0, 0), ImVec2(1, 1), ImColor(1.0f, 1.0f, 1.0f, 1.0f));
             }
             else
             {

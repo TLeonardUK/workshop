@@ -128,6 +128,9 @@ public:
     void queue_as_build(dx12_ri_raytracing_tlas* tlas);
     void queue_as_build(dx12_ri_raytracing_blas* blas);
 
+    void dequeue_as_build(dx12_ri_raytracing_tlas* tlas);
+    void dequeue_as_build(dx12_ri_raytracing_blas* blas);
+
 private:
 
     result<void> create_device();

@@ -291,6 +291,12 @@ public:
     // This is only valid for the current frame, do not try to cache this.
     render_command_queue& get_command_queue();
 
+    // Gets the current command queue that is being processed on the current render thread's
+    // frame.
+    // BE VERY CAREFUL USING THIS. It should only be used from the render thread, and unless
+    // you know exactly what you are doing, you probably want to be using get_command_queue.
+    render_command_queue& get_rt_command_queue();
+
     // Gets the main scene top level acceleration structure for scene geometry.
     ri_raytracing_tlas& get_scene_tlas();
 
@@ -306,11 +312,19 @@ public:
     // Gets the current frame index being constructed.
     size_t get_frame_index();
 
+    // Blocks until the renderer gets to the given frame index. 
+    // Be careful you don't block the renderer from running when calling this or you 
+    // will deadlock. This is mostly meant for async-threads waiting for renders to complete/etc.
+    void wait_for_frame(size_t frame_index);
+
     // Queues a callback that runs on the render thread.
     void queue_callback(void* source, std::function<void()> callback);
 
     // Unqueues all callbacks queued from the given source.
     void unqueue_callbacks(void* source);
+
+    // Queues a callback that runs on the render thread when the current frame completes.
+    void queue_frame_complete_callback(std::function<void()> callback);
 
     // Drains the renderer of all pending gpu work.
     void drain();
@@ -394,6 +408,9 @@ private:
 
     // Runs all callbacks that have been queued.
     void run_callbacks();
+
+    // Runs all callbacks that are waiting for a specific frame to complete.
+    void run_frame_callbacks();
 
     // Switchs the visualization mode. 
     // Don't call directly, use the command queue to change only
@@ -479,6 +496,8 @@ private:
 
     std::atomic_size_t m_next_render_object_id { 1 };
 
+    render_command_queue* m_rt_command_queue = nullptr;
+
     // Render job dispatch management.
 
     std::queue<std::unique_ptr<render_world_state>> m_pending_frames;
@@ -492,6 +511,9 @@ private:
 
     size_t m_frame_index = 0;
     size_t m_visibility_frame_index = 0;
+
+    std::mutex m_frame_index_mutex;
+    std::condition_variable m_frame_index_cvar;
 
     bool m_paused = false;
 
@@ -532,6 +554,14 @@ private:
 
     std::mutex m_callback_mutex;
     std::vector<callback> m_callbacks;
+
+    struct frame_callback
+    {
+        size_t frame_index;
+        std::function<void()> callback_function;
+    };
+
+    std::vector<frame_callback> m_frame_callbacks;
 
 };
 

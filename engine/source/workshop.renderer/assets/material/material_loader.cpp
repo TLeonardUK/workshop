@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/assets/material/material_loader.h"
 #include "workshop.renderer/assets/material/material.h"
+#include "workshop.renderer/assets/model/model.h"
 #include "workshop.assets/asset_cache.h"
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/stream.h"
@@ -14,6 +15,8 @@
 #include "workshop.render_interface/ri_types.h"
 
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
+
+#include <semaphore>
 
 namespace ws {
 
@@ -372,30 +375,125 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
         return nullptr;
     }
 
-    // For simplicity, we just grab the albedo texture for the materials thumbnail.
-    // TODO: In future we should probably render an object with the full material applied.
-    std::string texture_path;
-    for (material::texture_info& info : asset.textures)
+    // Get the assets we will need to generate the thumbnail loaded.
+    asset_ptr<material> material_asset = m_asset_manager.request_asset<material>(path, 0);
+    asset_ptr<model> sphere_asset = m_asset_manager.request_asset<model>("data:models/core/primitives/sphere.yaml", 0);
+    asset_ptr<model> skybox_asset = m_asset_manager.request_asset<model>("data:models/core/skyboxs/default_skybox.yaml", 0);
+
+    material_asset.wait_for_load();
+    sphere_asset.wait_for_load();
+    skybox_asset.wait_for_load();
+
+    // Lock all textures in the texture streamer so they will be fully streamed in.
+    for (material::texture_info& tex : material_asset->textures)
     {
-        if (info.name.find("albedo") != std::string::npos)
+        if (!tex.texture.is_loaded())
         {
-            texture_path = info.path;
+            continue;
+        }
+        m_renderer.get_texture_streamer().lock_texture(tex.texture.get());
+    }
+
+    // Wait until all mips are streamed in.
+    while (true)
+    {
+        bool fully_resident = true;
+
+        for (material::texture_info& tex : material_asset->textures)
+        {
+            if (!tex.texture.is_loaded())
+            {
+                continue;
+            }
+
+            if (!m_renderer.get_texture_streamer().is_texture_fully_resident(tex.texture.get()))
+            {
+                fully_resident = false;
+                break;
+            }
+        }
+        
+        if (fully_resident)
+        {
             break;
         }
+
+        m_renderer.wait_for_frame(m_renderer.get_frame_index() + 1);
     }
 
-    // If no albedo texture, just grab the first texture.
-    if (texture_path.empty() && !asset.textures.empty())
+    // Setup the scene to render out material.
+    std::binary_semaphore semaphore { 0 };
+
+    render_object_id model_id;
+    render_object_id skybox_id;
+    render_object_id light_id;
+    render_object_id view_id;
+
+    size_t start_frame_index = 0;
+
+    std::unique_ptr<pixmap> output = std::make_unique<pixmap>(size, size, pixmap_format::R8G8B8A8_SRGB);
+
+    m_renderer.queue_callback(this, [this, &semaphore, &model_id, &view_id, &skybox_id, &light_id, &start_frame_index, &sphere_asset, &material_asset, &skybox_asset, size, &output]()
     {
-        texture_path = asset.textures[0].path;
-    }
+        // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
+        auto& cmd_queue = m_renderer.get_rt_command_queue(); 
 
-    if (texture_path.empty())
+        model_id = cmd_queue.create_static_mesh("thumbnail_model");
+        cmd_queue.set_static_mesh_model(model_id, sphere_asset);
+        cmd_queue.set_static_mesh_materials(model_id, { material_asset });
+        cmd_queue.set_object_transform(model_id, vector3::zero, quat::identity, vector3(100.0f, 100.0f, 100.0f));
+
+        skybox_id = cmd_queue.create_static_mesh("thumbnail_skybox_model");
+        cmd_queue.set_static_mesh_model(skybox_id, skybox_asset);
+        cmd_queue.set_object_transform(skybox_id, vector3::zero, quat::identity, vector3(1000.0f, 1000.0f, 1000.0f));
+
+        light_id = cmd_queue.create_directional_light("thumbnail_light");
+        cmd_queue.set_object_transform(light_id, vector3::zero, quat::identity.rotate_x(math::halfpi) * quat::identity.rotate_y(math::halfpi), vector3::one);
+
+        view_id = cmd_queue.create_view("thumbnail_view");        
+        cmd_queue.set_object_transform(view_id, vector3(0.0f, 0.0f, -150.0f), quat::identity, vector3::one);
+        cmd_queue.set_view_projection(view_id, 45.0f, 1.0f, 1.0f, 10000.0f);
+        cmd_queue.set_view_viewport(view_id, recti(0, 0, (int)size, (int)size));
+        cmd_queue.set_view_readback_pixmap(view_id, output.get());
+
+        start_frame_index = m_renderer.get_frame_index();
+
+        semaphore.release();
+    });
+
+    semaphore.acquire();
+
+    // Wait for render of frame to complete on gpu and data to be copied back to our pixmap.
+    m_renderer.wait_for_frame(start_frame_index + m_renderer.get_render_interface().get_pipeline_depth());
+    
+    // Destroy all objects we created to render the thumbnail.    
+    m_renderer.queue_callback(this, [this, &semaphore, &model_id, &view_id, &skybox_id, &light_id]()
     {
-        return nullptr;
+        // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
+        auto& cmd_queue = m_renderer.get_rt_command_queue();
+
+        cmd_queue.destroy_static_mesh(model_id);
+        cmd_queue.destroy_static_mesh(skybox_id);
+        cmd_queue.destroy_directional_light(light_id);
+        cmd_queue.destroy_view(view_id);
+
+        semaphore.release();
+    });
+
+    semaphore.acquire();
+
+    // Unlock all the textures that were previously locked.
+    for (material::texture_info& tex : material_asset->textures)
+    {
+        if (!tex.texture.is_loaded())
+        {
+            continue;
+        }
+
+        m_renderer.get_texture_streamer().unlock_texture(tex.texture.get());
     }
 
-    return texture_asset_loader->generate_thumbnail(texture_path.c_str(), size);
+    return output;
 }
 
 void material_loader::hot_reload(asset* instance, asset* new_instance)

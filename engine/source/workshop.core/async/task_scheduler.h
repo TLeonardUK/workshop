@@ -27,10 +27,22 @@ using task_index_t = uint32_t;
 // workers will prioritize different queues to balance workload.
 enum class task_queue : uint8_t
 {
+    // Standard loading queue, everything goes here by default.
     standard,
+
+    // Loading queue, adjusted to not impact the standard queue.
     loading,
 
+    // Background queue, adjusted to not impact the standard or loading queues.
+    background,
+
     COUNT
+};
+
+inline const char* task_queue_strings[(int)task_queue::COUNT] = {
+    "standard",
+    "loading",
+    "background"
 };
 
 // ================================================================================================
@@ -182,6 +194,7 @@ protected:
 
     struct queue_state
     {
+        task_queue queue_type;
         std::queue<task_index_t> work;
         std::mutex work_mutex;
         size_t worker_count;

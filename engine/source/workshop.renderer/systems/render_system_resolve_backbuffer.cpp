@@ -10,6 +10,7 @@
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_compute.h"
+#include "workshop.renderer/passes/render_pass_readback.h"
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.render_interface/ri_interface.h"
@@ -150,7 +151,7 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
     resolve_param_block->set("raytraced_scene_texture", m_renderer.get_system<render_system_raytrace_scene>()->get_output_buffer());
     resolve_param_block->set("raytraced_scene_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-    resolve_param_block->set("tonemap_enabled", !is_hdr_output);
+    resolve_param_block->set("tonemap_enabled", !is_hdr_output && !view.has_flag(render_view_flags::constant_eye_adaption));
     resolve_param_block->set("white_point_squared", math::square(white_point));    
     resolve_param_block->set("average_luminance_buffer", *m_luminance_average_buffer, true);
     resolve_param_block->set("uv_scale", vector2(
@@ -162,6 +163,22 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     pass->param_blocks.push_back(resolve_param_block);
 
     graph.add_node(std::move(pass));
+
+    // If we are capturing to the gpu, copy the RT to the readback buffer.
+    if (view.get_readback_pixmap())
+    {
+        std::unique_ptr<render_pass_readback> readback_pass = std::make_unique<render_pass_readback>();
+        readback_pass->name = "readback render target";
+        readback_pass->system = this;
+        readback_pass->render_target = view.get_render_target().texture;
+        readback_pass->readback_buffer = view.get_readback_buffer();
+        readback_pass->readback_pixmap = view.get_readback_pixmap();
+
+        graph.add_node(std::move(readback_pass));
+
+        // Automatically disable the view from rendering after queueing the readback.
+        view.set_should_render(false);
+    }
 }
 
 void render_system_resolve_backbuffer::step(const render_world_state& state)

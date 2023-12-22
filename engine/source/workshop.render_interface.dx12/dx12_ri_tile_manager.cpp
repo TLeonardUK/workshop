@@ -168,10 +168,15 @@ void dx12_ri_tile_manager::queue_map(dx12_ri_texture& texture, tile_allocation a
         m_operations.erase(iter);
     }
 
+    const dx12_ri_texture::mip_residency& residency = texture.get_mip_residency(mip_index);
+
     operation& op = m_operations.emplace_back();
     op.type = operation_type::map;
     op.allocation = allocation;
     op.texture = &texture;
+    op.resource = texture.get_resource();
+    op.range_coordinate = residency.tile_coordinate;
+    op.range_size = residency.tile_size;
     op.mip_index = mip_index;
     // We can map immediately.
     op.frame_index = m_frame_index;
@@ -192,9 +197,14 @@ void dx12_ri_tile_manager::queue_unmap(dx12_ri_texture& texture, size_t mip_inde
         m_operations.erase(iter);
     }
 
+    const dx12_ri_texture::mip_residency& residency = texture.get_mip_residency(mip_index);
+
     operation& op = m_operations.emplace_back();
     op.type = operation_type::unmap;
     op.texture = &texture;
+    op.resource = texture.get_resource();
+    op.range_coordinate = residency.tile_coordinate;
+    op.range_size = residency.tile_size;
     op.mip_index = mip_index;
     // Free only after pipeline depth has elapsed so we can be assured the tiles are no longer in use.
     op.frame_index = m_frame_index + m_renderer.get_pipeline_depth();
@@ -246,17 +256,15 @@ void dx12_ri_tile_manager::perform_operation(operation& op)
         {
             for (heap_tile_allocation& alloc : op.allocation.heap_allocations)
             {
-                const dx12_ri_texture::mip_residency& residency = op.texture->get_mip_residency(op.mip_index);
-
-                D3D12_TILED_RESOURCE_COORDINATE resource_range_coordinate = residency.tile_coordinate;
-                D3D12_TILE_REGION_SIZE resource_range_size = residency.tile_size;
+                D3D12_TILED_RESOURCE_COORDINATE resource_range_coordinate = op.range_coordinate;
+                D3D12_TILE_REGION_SIZE resource_range_size = op.range_size;
 
                 D3D12_TILE_RANGE_FLAGS range_flags = D3D12_TILE_RANGE_FLAG_NONE;
                 UINT range_offset = (UINT)alloc.tile_offset;
                 UINT range_size = (UINT)alloc.tile_count;
 
                 queue.get_queue()->UpdateTileMappings(
-                    op.texture->get_resource(),
+                    op.resource,
                     1,
                     &resource_range_coordinate,
                     &resource_range_size,
@@ -274,13 +282,11 @@ void dx12_ri_tile_manager::perform_operation(operation& op)
         {
             for (heap_tile_allocation& alloc : op.allocation.heap_allocations)
             {
-                const dx12_ri_texture::mip_residency& residency = op.texture->get_mip_residency(op.mip_index);
-
-                D3D12_TILED_RESOURCE_COORDINATE resource_range_coordinate = residency.tile_coordinate;
-                D3D12_TILE_REGION_SIZE resource_range_size = residency.tile_size;
+                D3D12_TILED_RESOURCE_COORDINATE resource_range_coordinate = op.range_coordinate;
+                D3D12_TILE_REGION_SIZE resource_range_size = op.range_size;
 
                 queue.get_queue()->UpdateTileMappings(
-                    op.texture->get_resource(),
+                    op.resource,
                     1,
                     &resource_range_coordinate,
                     &resource_range_size,

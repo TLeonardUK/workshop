@@ -102,6 +102,9 @@ public:
     // Ends the given query.
     virtual void end_query(ri_query* query) = 0;
 
+    // Copies a textures contents to a buffer.
+    virtual void copy_texture(ri_texture* texture, ri_buffer* buffer) = 0;
+
 };
 
 }; // namespace ws

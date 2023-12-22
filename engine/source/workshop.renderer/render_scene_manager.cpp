@@ -183,6 +183,20 @@ void render_scene_manager::set_view_projection(render_object_id id, float fov, f
     }
 }
 
+void render_scene_manager::set_view_readback_pixmap(render_object_id id, pixmap* output)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->set_readback_pixmap(output);
+    }
+    else
+    {
+        db_warning(renderer, "set_view_projection called with non-existant id {%zi}.", id);
+    }
+}
+
 std::vector<render_view*> render_scene_manager::get_views()
 {
     return m_active_views;

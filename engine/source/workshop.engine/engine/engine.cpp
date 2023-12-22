@@ -349,9 +349,10 @@ result<void> engine::create_task_scheduler(init_list& list)
     init_state.worker_count = std::thread::hardware_concurrency();
 
     // If you add new task queues, set up and appropriate weight here.
-    static_assert(static_cast<int>(task_queue::COUNT) == 2);
+    static_assert(static_cast<int>(task_queue::COUNT) == 3);
     init_state.queue_weights[static_cast<int>(task_queue::standard)] = 1.0f;
-    init_state.queue_weights[static_cast<int>(task_queue::loading)] = 0.75f; 
+    init_state.queue_weights[static_cast<int>(task_queue::loading)] = 0.75f;
+    init_state.queue_weights[static_cast<int>(task_queue::background)] = 0.25f;
 
     db_log(engine, "Creating task scheduler with %zi workers.", init_state.worker_count);
 

@@ -378,6 +378,14 @@ result<void> dx12_ri_texture::create_resources()
             );
         }
     }
+    
+    UINT row_count = 0;
+    UINT64 row_pitch = 0;
+    UINT64 total_resource_size = 0;
+
+    m_renderer.get_device()->GetCopyableFootprints(&desc, 0, 1, 0, nullptr, &row_count, &row_pitch, &total_resource_size);
+    m_pitch = (size_t)row_pitch;
+    m_pitch = math::round_up_multiple(m_pitch, (size_t)D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
     // Create RTV view if we are to be used as a render target.
     create_views();
@@ -1187,6 +1195,11 @@ dx12_ri_descriptor_table::allocation dx12_ri_texture::get_uav(size_t slice, size
 dx12_ri_descriptor_table::allocation dx12_ri_texture::get_dsv(size_t slice) const
 {
     return m_dsvs[slice];
+}
+
+size_t dx12_ri_texture::get_pitch()
+{
+    return m_pitch;
 }
 
 size_t dx12_ri_texture::get_width()

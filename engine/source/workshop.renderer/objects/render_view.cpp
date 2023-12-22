@@ -293,4 +293,55 @@ render_visibility_manager::view_id render_view::get_visibility_view_id()
     return m_visibility_view_id;
 }
 
+void render_view::set_readback_pixmap(pixmap* output)
+{
+    m_readback_pixmap = output;
+
+    // If no render target is specified create a new readback RT.
+    if (!m_readback_rt && output)
+    {
+        db_assert(output->get_format() == pixmap_format::R8G8B8A8_SRGB);
+
+        // Make sure we have the capture flag set.
+        // TODO: We should move these settings outside and have the rendering code calling this function set it directly.
+        m_flags = m_flags | render_view_flags::capture;
+        m_flags = m_flags | render_view_flags::scene_only;
+        m_flags = m_flags | render_view_flags::constant_ambient_lighting;
+        m_flags = m_flags | render_view_flags::constant_eye_adaption;        
+
+        // Create render target to write the view to.
+        ri_texture::create_params create_params;
+        create_params.dimensions = ri_texture_dimension::texture_2d;
+        create_params.width = output->get_width();
+        create_params.height = output->get_height();
+        create_params.mip_levels = 1;
+        create_params.is_render_target = true;
+        create_params.format = ri_texture_format::R8G8B8A8_SRGB;
+
+        m_readback_rt = m_renderer->get_render_interface().create_texture(create_params, "view readback render target");;
+
+        m_render_target.mip = 0;
+        m_render_target.slice = 0;
+        m_render_target.texture = m_readback_rt.get();
+
+        // Create a readback buffer to copy the RT into.
+        ri_buffer::create_params buffer_create_params;
+        buffer_create_params.element_count = 1;
+        buffer_create_params.element_size = m_readback_rt->get_pitch() * m_readback_rt->get_height() * 4;
+        buffer_create_params.usage = ri_buffer_usage::readback;
+
+        m_readback_buffer = m_renderer->get_render_interface().create_buffer(buffer_create_params, "view readback buffer");
+    }
+}
+
+pixmap* render_view::get_readback_pixmap()
+{
+    return m_readback_pixmap;
+}
+
+ri_buffer* render_view::get_readback_buffer()
+{
+    return m_readback_buffer.get();
+}
+
 }; // namespace ws

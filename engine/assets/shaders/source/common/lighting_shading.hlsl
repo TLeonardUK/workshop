@@ -575,11 +575,6 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, float3 view_origin, boo
 #ifdef DISABLE_AMBIENT_LIGHTING    
     return float3(0.0f, 0.0f, 0.0f);
 #else
-    if (use_constant_ambient)
-    {
-        return float3(0.0f, 0.0f, 0.0f);
-    }
-
     if (!apply_ambient_lighting)
     {
         return float3(0.0f, 0.0f, 0.0f);
@@ -622,6 +617,11 @@ float3 calculate_ambient_lighting(gbuffer_fragment frag, float3 view_origin, boo
     }
 
     float3 ambient = (kD * diffuse + specular) * ao;
+
+    if (use_constant_ambient)
+    {
+        ambient = albedo * 0.10f;
+    }
 
 #ifndef DISABLE_VISUALIZATION_MODES
     if (visualization_mode == visualization_mode_t::indirect_specular)

@@ -503,6 +503,11 @@ render_command_queue& renderer::get_command_queue()
     return *m_command_queues[m_command_queue_active_index];
 }
 
+render_command_queue& renderer::get_rt_command_queue()
+{
+    return *m_rt_command_queue;
+}
+
 ri_raytracing_tlas& renderer::get_scene_tlas()
 {
     return *m_scene_tlas;
@@ -521,6 +526,16 @@ ri_sampler* renderer::get_default_sampler(default_sampler_type type)
 size_t renderer::get_frame_index()
 {
     return m_frame_index;
+}
+
+void renderer::wait_for_frame(size_t frame_index)
+{
+    std::unique_lock lock(m_frame_index_mutex);
+
+    while (get_frame_index() < frame_index)
+    {
+        m_frame_index_cvar.wait(lock);    
+    }
 }
 
 render_object_id renderer::next_render_object_id()
@@ -545,6 +560,13 @@ void renderer::unqueue_callbacks(void* source)
     m_callbacks.erase(start_iter, m_callbacks.end());
 }
 
+void renderer::queue_frame_complete_callback(std::function<void()> callback)
+{
+    std::scoped_lock lock(m_callback_mutex);
+
+    m_frame_callbacks.push_back({ m_frame_index + m_render_interface.get_pipeline_depth(), callback });
+}
+
 void renderer::run_callbacks()
 {
     std::scoped_lock lock(m_callback_mutex);
@@ -557,6 +579,26 @@ void renderer::run_callbacks()
     }
 
     m_callbacks.clear();
+}
+
+void renderer::run_frame_callbacks()
+{
+    std::scoped_lock lock(m_callback_mutex);
+
+    profile_marker(profile_colors::render, "process render callbacks");
+
+    for (auto iter = m_frame_callbacks.begin(); iter != m_frame_callbacks.end(); /*empty*/)
+    {
+        if (m_frame_index == iter->frame_index)
+        {
+            iter->callback_function();
+            iter = m_frame_callbacks.erase(iter);
+        }
+        else
+        {
+            iter++;
+        }
+    }
 }
 
 void renderer::process_render_commands(render_world_state& state)
@@ -580,22 +622,33 @@ void renderer::render_state(render_world_state& state)
 
     profile_marker(profile_colors::render, "frame %zi", (size_t)state.time.frame_count);
 
+    m_rt_command_queue = state.command_queue;
+
     timer frame_timer;
     frame_timer.start();
 
-    m_frame_index = state.time.frame_count;
-
-    // Grab the next backbuffer, and wait for gpu if pipeline is full.
     {
-        profile_marker(profile_colors::render, "get next back buffer");
+        std::unique_lock lock(m_frame_index_mutex);
+        m_frame_index = state.time.frame_count;
 
-        timer wait_timer;
-        wait_timer.start();
+        // Grab the next backbuffer, and wait for gpu if pipeline is full.
+        {
+            profile_marker(profile_colors::render, "get next back buffer");
 
-        m_current_backbuffer = &get_next_backbuffer();
+            timer wait_timer;
+            wait_timer.start();
 
-        wait_timer.stop();
-        m_stats_frame_time_present_wait->submit(wait_timer.get_elapsed_seconds());
+            m_current_backbuffer = &get_next_backbuffer();
+
+            wait_timer.stop();
+            m_stats_frame_time_present_wait->submit(wait_timer.get_elapsed_seconds());
+        }
+
+        // Run any frame-complete callbacks early.
+        run_frame_callbacks();
+
+        // Wake up anything waiting for this frame to be completed.
+        m_frame_index_cvar.notify_all();
     }
 
     // Finish off texture streaming tasks.

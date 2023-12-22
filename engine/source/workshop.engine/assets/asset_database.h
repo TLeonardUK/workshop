@@ -168,7 +168,7 @@ private:
 private:
 
     // Size of thumbnail generated in pixels.
-    static inline constexpr size_t k_thumbnail_size = 128;
+    static inline constexpr size_t k_thumbnail_size = 256;
 
     // How many frames before an unused thumbnail is purged.
     static inline constexpr size_t k_thumbnail_removal_frames = 30;

@@ -92,7 +92,11 @@ private:
         tile_allocation allocation;
 
         dx12_ri_texture* texture;
+        ID3D12Resource* resource;
         size_t mip_index;
+
+        D3D12_TILED_RESOURCE_COORDINATE range_coordinate;
+        D3D12_TILE_REGION_SIZE range_size;
     };
 
 private:

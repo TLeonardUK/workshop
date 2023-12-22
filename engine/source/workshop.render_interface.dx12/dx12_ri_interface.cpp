@@ -757,6 +757,19 @@ void dx12_render_interface::queue_as_build(dx12_ri_raytracing_blas* blas)
     m_pending_blas_compacts.erase(blas);
 }
 
+void dx12_render_interface::dequeue_as_build(dx12_ri_raytracing_tlas* tlas)
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+    m_pending_tlas_builds.erase(tlas);
+}
+
+void dx12_render_interface::dequeue_as_build(dx12_ri_raytracing_blas* blas)
+{
+    std::scoped_lock lock(m_pending_as_build_mutex);
+    m_pending_blas_builds.erase(blas);
+    m_pending_blas_compacts.erase(blas);
+}
+
 void dx12_render_interface::process_blas_build_requests()
 {
     std::scoped_lock lock(m_pending_as_build_mutex);
@@ -772,7 +785,9 @@ void dx12_render_interface::process_blas_build_requests()
     // Order is important, blas should be built before tlas.
     //db_log(renderer, "[%zi] Building raytracing BLAS: %zi", m_frame_index, m_pending_blas_builds.size());
 
-    for (dx12_ri_raytracing_blas* blas : m_pending_blas_builds)
+    std::unordered_set<dx12_ri_raytracing_blas*> to_build = m_pending_blas_builds;
+
+    for (dx12_ri_raytracing_blas* blas : to_build)
     {
         blas->build(build_list);
 
@@ -805,7 +820,9 @@ void dx12_render_interface::process_tlas_build_requests()
     // Order is important, blas should be built before tlas.
     //db_log(renderer, "[%zi] Building raytracing TLAS: Top=%zi", m_frame_index, m_pending_tlas_builds.size());
 
-    for (dx12_ri_raytracing_tlas* tlas : m_pending_tlas_builds)
+    std::unordered_set<dx12_ri_raytracing_tlas*> to_build = m_pending_tlas_builds;
+
+    for (dx12_ri_raytracing_tlas* tlas : to_build)
     {
         tlas->build(build_list);
     }

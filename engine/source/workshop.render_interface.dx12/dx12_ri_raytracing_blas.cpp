@@ -20,6 +20,9 @@ dx12_ri_raytracing_blas::dx12_ri_raytracing_blas(dx12_render_interface& renderer
 
 dx12_ri_raytracing_blas::~dx12_ri_raytracing_blas()
 {
+    m_renderer.dequeue_as_build(this);
+
+    destroy_resources();
 }
 
 void dx12_ri_raytracing_blas::destroy_resources()
@@ -27,6 +30,7 @@ void dx12_ri_raytracing_blas::destroy_resources()
     m_scratch = nullptr;
     m_resource = nullptr;
     m_compacted_size_buffer = nullptr;
+    m_compacted_size_readback_buffer = nullptr;
 }
 
 D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS dx12_ri_raytracing_blas::get_input_desc()

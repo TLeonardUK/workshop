@@ -32,6 +32,7 @@ public:
 
     result<void> create_resources();
 
+    virtual size_t get_pitch() override;
     virtual size_t get_width() override;
     virtual size_t get_height() override;
     virtual size_t get_depth() override;
@@ -154,6 +155,8 @@ public:
     ri_descriptor_table m_srv_table;
 
     ri_resource_state m_common_state;
+
+    size_t m_pitch = 0;
 
 };
 

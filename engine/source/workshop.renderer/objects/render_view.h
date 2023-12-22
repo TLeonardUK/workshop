@@ -12,6 +12,7 @@
 #include "workshop.renderer/render_object.h"
 #include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.render_interface/ri_texture.h"
+#include "workshop.render_interface/ri_buffer.h"
 
 #include <memory>
 
@@ -58,6 +59,9 @@ enum class render_view_flags
     
     // This view is for a probe/scene/etc capture, this forces all parts of the capture to be done this frame (eg. no staggered shadow updates).
     capture                         = 32,
+
+    // Eye adapation is set to a constant value. This is useful when capturing renders where it hasn't stabalized.
+    constant_eye_adaption           = 64,
 };
 DEFINE_ENUM_FLAGS(render_view_flags);
 
@@ -140,6 +144,11 @@ public:
 
     render_resource_cache& get_resource_cache();
 
+    // Sets/Gets a pixmap that the rendered output of this view will be copied to.
+    void set_readback_pixmap(pixmap* output);
+    pixmap* get_readback_pixmap();
+    ri_buffer* get_readback_buffer();
+
     // Returns true if the given object is visible within this view.
     bool is_object_visible(render_object* object);
 
@@ -181,6 +190,10 @@ private:
 
     bool m_should_render = true;
     bool m_active = true;
+
+    pixmap* m_readback_pixmap = nullptr;
+    std::unique_ptr<ri_texture> m_readback_rt;
+    std::unique_ptr<ri_buffer> m_readback_buffer;
 
 };
 

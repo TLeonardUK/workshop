@@ -493,4 +493,27 @@ void dx12_ri_command_list::end_query(ri_query* query)
     typed_query->end(m_command_list.Get());
 }
 
+void dx12_ri_command_list::copy_texture(ri_texture* texture, ri_buffer* buffer)
+{
+    size_t required_space = texture->get_width() * texture->get_height() * ri_bytes_per_texel(texture->get_format());
+    db_assert(buffer->get_element_count() * buffer->get_element_size() >= required_space);
+
+    D3D12_TEXTURE_COPY_LOCATION dst;
+    dst.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    dst.PlacedFootprint.Offset = 0;
+    dst.PlacedFootprint.Footprint.Format = ri_to_dx12(texture->get_format());
+    dst.PlacedFootprint.Footprint.Width = (UINT)texture->get_width();
+    dst.PlacedFootprint.Footprint.RowPitch = (UINT)texture->get_pitch();
+    dst.PlacedFootprint.Footprint.Height = (UINT)texture->get_height();
+    dst.PlacedFootprint.Footprint.Depth = 1;
+    dst.pResource = static_cast<dx12_ri_buffer*>(buffer)->get_resource();
+
+    D3D12_TEXTURE_COPY_LOCATION src;
+    src.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    src.SubresourceIndex = 0;
+    src.pResource = static_cast<dx12_ri_texture*>(texture)->get_resource();
+
+    m_command_list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+}
+
 }; // namespace ws

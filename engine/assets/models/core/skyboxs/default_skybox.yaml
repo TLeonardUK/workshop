@@ -1,0 +1,11 @@
+# ================================================================================================
+#  workshop
+#  Copyright (C) 2022 Tim Leonard
+# ================================================================================================
+type: model
+version: 1
+
+source: data:models/core/skyboxs/default_skybox.obj 
+
+materials:
+  "DefaultMaterial": "data:models/core/skyboxs/materials/default_skybox.yaml"

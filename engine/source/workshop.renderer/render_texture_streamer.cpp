@@ -157,9 +157,48 @@ size_t render_texture_streamer::get_ideal_memory_usage()
     return m_ideal_memory_pressure;
 }
 
+void render_texture_streamer::lock_texture(texture* tex)
+{
+    if (!tex->streamed)
+    {
+        return;
+    }
+    tex->streaming_info->locked_count.fetch_add(1);
+}
+
+void render_texture_streamer::unlock_texture(texture* tex)
+{
+    if (!tex->streamed)
+    {
+        return;
+    }
+    tex->streaming_info->locked_count.fetch_sub(1);
+}
+
+bool render_texture_streamer::is_texture_fully_resident(texture* tex)
+{
+    if (!tex->streamed)
+    {
+        return true;
+    }
+
+    size_t max_mip_count = std::min(tex->ri_instance->get_mip_levels(), (size_t)cvar_texture_streaming_max_resident_mips.get());
+
+    for (size_t i = 0; i < max_mip_count; i++)
+    {
+        size_t mip_index = tex->ri_instance->get_mip_levels() - (i + 1);
+
+        if (!tex->ri_instance->is_mip_resident(mip_index))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void render_texture_streamer::make_completed_mips_resident()
 {
-
     // Apply any textures that have finished streaming.
     std::vector<texture_streaming_info*>& waiting_list = m_state_array[(int)texture_state::waiting_for_mips];
 
@@ -452,7 +491,7 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
                 for (size_t i = 0; i < mesh_model->meshes.size(); i++)
                 {
                     const model::mesh_info& mesh_info = static_mesh->get_model()->meshes[i];
-                    const asset_ptr<material>& mat = static_mesh->get_materials()[mesh_info.material_index];
+                    asset_ptr<material> mat = static_mesh->get_material(mesh_info.material_index);
                     if (!mat.is_loaded())
                     {
                         continue;
@@ -555,12 +594,22 @@ void render_texture_streamer::calculate_textures_to_change(std::vector<texture_s
 
     std::sort(upgrade_array.begin(), upgrade_array.end(), [](texture_streaming_info* a, texture_streaming_info* b) {
 
+        bool a_locked = a->locked_count.load() > 0;
+        bool b_locked = b->locked_count.load() > 0;
+
+        // Locked textures always go first.
+        if (a_locked != b_locked)
+        {
+            return a_locked;
+        }
         // Priority goes to textures with the largest delta between their current and wanted level.
+        else
+        {
+            size_t a_mip_delta = a->ideal_resident_mips - a->current_resident_mips;
+            size_t b_mip_delta = b->ideal_resident_mips - b->current_resident_mips;
 
-        size_t a_mip_delta = a->ideal_resident_mips - a->current_resident_mips;
-        size_t b_mip_delta = b->ideal_resident_mips - b->current_resident_mips;
-
-        return a_mip_delta > b_mip_delta;
+            return a_mip_delta > b_mip_delta;
+        }
 
     });
 
@@ -587,10 +636,20 @@ void render_texture_streamer::calculate_textures_to_change(std::vector<texture_s
 
         std::sort(downgrade_array.begin(), downgrade_array.end(), [](texture_streaming_info* a, texture_streaming_info* b) {
 
+            bool a_locked = a->locked_count.load() > 0;
+            bool b_locked = b->locked_count.load() > 0;
+
+            // Locked textures always go last
+            if (a_locked != b_locked)
+            {
+                return !a_locked;
+            }
             // Priority goes to the textures that haven't been seen for the most number of frames, this prevents
             // streaming flicker when moving something frequently in and out of view when under memory pressure.
-            
-            return a->last_seen_frame < b->last_seen_frame;
+            else
+            {
+                return a->last_seen_frame < b->last_seen_frame;
+            }
 
         });
 
@@ -654,6 +713,12 @@ void render_texture_streamer::calculate_in_view_mips()
             continue;
         }
 
+        // Ignore locked textures, we are going to set them to the full mip level regardless.
+        if (bounds.texture->streaming_info->locked_count.load() > 0)
+        {
+            continue;
+        }
+
         size_t new_ideal_mips = calculate_ideal_mip_count(bounds);
         highest_texture_mips[bounds.texture] = std::max(highest_texture_mips[bounds.texture], new_ideal_mips);
     }
@@ -661,7 +726,7 @@ void render_texture_streamer::calculate_in_view_mips()
     for (auto& [texture, highest_mip] : highest_texture_mips)
     {
         set_ideal_resident_mip_count(*texture->streaming_info.get(), highest_mip);
-
+        
         // Don't allow this texture to decay as its been seen this frame.
         texture->streaming_info->last_seen_frame = m_renderer.get_frame_index();
         texture->streaming_info->can_decay = false;
@@ -678,10 +743,17 @@ void render_texture_streamer::calculate_in_view_mips()
         }
 
         // Check the texture wasn't seen this frame.
-        if (info->can_decay)
+        if (info->can_decay && info->locked_count.load() == 0)
         {
             size_t mip_count = texture->ri_instance->get_mip_levels();
             set_ideal_resident_mip_count(*info, std::min(mip_count, (size_t)cvar_texture_streaming_min_resident_mips.get()));
+        }
+
+        // If locked set its ideal mips to the maximum.
+        if (info->locked_count.load() > 0)
+        {
+            size_t max_mip_count = std::min(texture->ri_instance->get_mip_levels(), (size_t)cvar_texture_streaming_max_resident_mips.get());
+            set_ideal_resident_mip_count(*info, max_mip_count);
         }
 
         info->can_decay = true;

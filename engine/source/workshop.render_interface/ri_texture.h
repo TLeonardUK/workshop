@@ -67,6 +67,7 @@ public:
     virtual ~ri_texture() {}
 
     virtual size_t get_width() = 0;
+    virtual size_t get_pitch() = 0;
     virtual size_t get_height() = 0;
     virtual size_t get_depth() = 0;
     virtual size_t get_mip_levels() = 0;
