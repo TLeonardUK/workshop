@@ -10,6 +10,8 @@
 #include "workshop.core/containers/oct_tree.h"
 #include "workshop.core/utils/traits.h"
 
+#include "workshop.renderer/render_command_queue.h"
+
 #include <shared_mutex>
 #include <unordered_map>
 #include <bitset>
@@ -123,14 +125,14 @@ public:
     // Objects
 
     // Registers a bounding box for visibility calculations.
-    object_id register_object(const obb& bounds, render_visibility_flags flags);
+    object_id register_object(const obb& bounds, render_object_id world_id, render_visibility_flags flags);
 
     // Unregisters an object previously registered with register_object.
     void unregister_object(object_id id);
 
     // Updates the bounds of an object that is currently registered. Visibility
     // state will not be immediately updated, it will occur when update_visibility is next called.
-    void update_object_bounds(object_id id, const obb& bounds);
+    void update_object_bounds(object_id id, render_object_id world_id, const obb& bounds);
 
     // Returns true if the object is visible inside the given view.
     bool is_object_visibile(view_id view_id, object_id object_id);
@@ -141,7 +143,7 @@ public:
     // Views
 
     // Registers a view that will determine visibility of objects.
-    view_id register_view(const frustum& frustum, render_view* metadata = nullptr);
+    view_id register_view(const frustum& frustum, render_object_id world_id, render_view* metadata = nullptr);
     
     // Unregisters a view previously allocated with register_view.
     void unregister_view(view_id id);
@@ -151,7 +153,7 @@ public:
     bool has_view_changed(view_id id);
 
     // Updates the frustum of the view.
-    void update_object_frustum(view_id id, const frustum& bounds);
+    void update_object_frustum(view_id id, render_object_id world_id, const frustum& bounds);
 
     // Sets if the view is active and visibility should be calculated for it. Otherwise its last
     // state persists.
@@ -172,6 +174,8 @@ private:
         object_id id;
         bool used;
 
+        render_object_id world_id;
+
         obb bounds;
         render_visibility_flags flags;
         std::bitset<k_max_tracked_views> visibility;
@@ -186,6 +190,8 @@ private:
     {
         view_id id;
         bool used;
+
+        render_object_id world_id;
 
         frustum bounds;
 

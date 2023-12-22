@@ -218,7 +218,7 @@ void render_static_mesh::create_render_data()
 
         mesh_visibility& visibility = m_mesh_visibility.emplace_back();
         visibility.mesh_index = i;
-        visibility.id = m_renderer->get_visibility_manager().register_object(bounds, render_visibility_flags::physical);
+        visibility.id = m_renderer->get_visibility_manager().register_object(bounds, m_world_id, render_visibility_flags::physical);
 
         render_batch_key key;
         key.mesh_index = i;
@@ -337,7 +337,7 @@ void render_static_mesh::bounds_modified()
     for (mesh_visibility& id : m_mesh_visibility)
     {
         obb bounds = obb(m_model->meshes[id.mesh_index].bounds, get_transform());
-        m_renderer->get_visibility_manager().update_object_bounds(id.id, bounds);
+        m_renderer->get_visibility_manager().update_object_bounds(id.id, m_world_id, bounds);
     }
 }
 

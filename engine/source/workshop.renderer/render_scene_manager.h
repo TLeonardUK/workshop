@@ -25,6 +25,7 @@ class render_point_light;
 class render_spot_light;
 class render_light_probe_grid;
 class render_reflection_probe;
+class render_world;
 
 // ================================================================================================
 //  Handles management of the render scene and the objects within it. 
@@ -58,6 +59,21 @@ public:
 public:
 
     // ===========================================================================================
+    //  Worlds
+    // ===========================================================================================
+
+    // Creates a world. Worlds are a high level filter filter of what objects are visible from what views.
+    // If an object is not assigned to a specific world it exists in a default world that always 
+    // exists and is used by default for rendering.
+    void create_world(render_object_id id, const char* name);
+
+    // Destroys a world previously created with create_world.
+    void destroy_world(render_object_id id);
+
+    // Gets a list of all active worlds.
+    std::vector<render_world*> get_worlds();
+
+    // ===========================================================================================
     //  Objects
     // ===========================================================================================
 
@@ -72,6 +88,9 @@ public:
 
     // Sets the visibility of the render object.
     void set_object_visibility(render_object_id id, bool visibility);
+
+    // Sets the world an object belongs to.
+    void set_object_world(render_object_id id, render_object_id world_id);
 
     // ===========================================================================================
     //  Views
@@ -231,6 +250,7 @@ private:
 
     std::unordered_map<render_object_id, std::unique_ptr<render_object>> m_objects;
     std::vector<render_view*> m_active_views;
+    std::vector<render_world*> m_active_worlds;
     std::vector<render_static_mesh*> m_active_static_meshes;
     std::vector<render_directional_light*> m_active_directional_lights;
     std::vector<render_point_light*> m_active_point_lights;

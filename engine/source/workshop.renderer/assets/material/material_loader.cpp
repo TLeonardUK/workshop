@@ -428,33 +428,40 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
     render_object_id skybox_id;
     render_object_id light_id;
     render_object_id view_id;
+    render_object_id world_id;
 
     size_t start_frame_index = 0;
 
     std::unique_ptr<pixmap> output = std::make_unique<pixmap>(size, size, pixmap_format::R8G8B8A8_SRGB);
 
-    m_renderer.queue_callback(this, [this, &semaphore, &model_id, &view_id, &skybox_id, &light_id, &start_frame_index, &sphere_asset, &material_asset, &skybox_asset, size, &output]()
+    m_renderer.queue_callback(this, [this, &semaphore, &world_id, &model_id, &view_id, &skybox_id, &light_id, &start_frame_index, &sphere_asset, &material_asset, &skybox_asset, size, &output]()
     {
         // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
         auto& cmd_queue = m_renderer.get_rt_command_queue(); 
+
+        world_id = cmd_queue.create_world("thumbnail world");
 
         model_id = cmd_queue.create_static_mesh("thumbnail_model");
         cmd_queue.set_static_mesh_model(model_id, sphere_asset);
         cmd_queue.set_static_mesh_materials(model_id, { material_asset });
         cmd_queue.set_object_transform(model_id, vector3::zero, quat::identity, vector3(100.0f, 100.0f, 100.0f));
+        cmd_queue.set_object_world(model_id, world_id);
 
         skybox_id = cmd_queue.create_static_mesh("thumbnail_skybox_model");
         cmd_queue.set_static_mesh_model(skybox_id, skybox_asset);
         cmd_queue.set_object_transform(skybox_id, vector3::zero, quat::identity, vector3(1000.0f, 1000.0f, 1000.0f));
+        cmd_queue.set_object_world(skybox_id, world_id);
 
         light_id = cmd_queue.create_directional_light("thumbnail_light");
         cmd_queue.set_object_transform(light_id, vector3::zero, quat::identity.rotate_x(math::halfpi) * quat::identity.rotate_y(math::halfpi), vector3::one);
+        cmd_queue.set_object_world(light_id, world_id);
 
         view_id = cmd_queue.create_view("thumbnail_view");        
         cmd_queue.set_object_transform(view_id, vector3(0.0f, 0.0f, -150.0f), quat::identity, vector3::one);
         cmd_queue.set_view_projection(view_id, 45.0f, 1.0f, 1.0f, 10000.0f);
         cmd_queue.set_view_viewport(view_id, recti(0, 0, (int)size, (int)size));
         cmd_queue.set_view_readback_pixmap(view_id, output.get());
+        cmd_queue.set_object_world(view_id, world_id);
 
         start_frame_index = m_renderer.get_frame_index();
 
@@ -467,7 +474,7 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
     m_renderer.wait_for_frame(start_frame_index + m_renderer.get_render_interface().get_pipeline_depth());
     
     // Destroy all objects we created to render the thumbnail.    
-    m_renderer.queue_callback(this, [this, &semaphore, &model_id, &view_id, &skybox_id, &light_id]()
+    m_renderer.queue_callback(this, [this, &semaphore, &model_id, &view_id, &skybox_id, &light_id, &world_id]()
     {
         // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
         auto& cmd_queue = m_renderer.get_rt_command_queue();
@@ -476,6 +483,7 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
         cmd_queue.destroy_static_mesh(skybox_id);
         cmd_queue.destroy_directional_light(light_id);
         cmd_queue.destroy_view(view_id);
+        cmd_queue.destroy_world(world_id);
 
         semaphore.release();
     });

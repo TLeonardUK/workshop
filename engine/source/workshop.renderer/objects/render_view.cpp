@@ -15,7 +15,7 @@ render_view::render_view(render_object_id id, renderer& renderer)
 {
     m_resource_cache = std::make_unique<render_resource_cache>(renderer);
 
-    m_visibility_view_id = m_renderer->get_visibility_manager().register_view(get_frustum(), this);
+    m_visibility_view_id = m_renderer->get_visibility_manager().register_view(get_frustum(), m_world_id, this);
 }
 
 render_view::~render_view()
@@ -27,7 +27,7 @@ void render_view::bounds_modified()
 {
     render_object::bounds_modified();
 
-    m_renderer->get_visibility_manager().update_object_frustum(m_visibility_view_id, get_frustum());
+    m_renderer->get_visibility_manager().update_object_frustum(m_visibility_view_id, m_world_id, get_frustum());
 
     update_view_info_param_block();
 }

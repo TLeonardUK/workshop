@@ -18,7 +18,7 @@ void render_visibility_manager::register_init(init_list& list)
 {
 }
 
-render_visibility_manager::object_id render_visibility_manager::register_object(const obb& bounds, render_visibility_flags flags)
+render_visibility_manager::object_id render_visibility_manager::register_object(const obb& bounds, render_object_id world_id, render_visibility_flags flags)
 {
     std::unique_lock lock(m_mutex);
 
@@ -43,6 +43,7 @@ render_visibility_manager::object_id render_visibility_manager::register_object(
     object_state& state = m_objects[id.index];
     state.id.generation++;
     id.generation = state.id.generation;
+    state.world_id = world_id;
     state.used = true;
     state.bounds = bounds;
     state.flags = flags;
@@ -72,7 +73,7 @@ void render_visibility_manager::unregister_object(object_id id)
     }
 }
 
-void render_visibility_manager::update_object_bounds(object_id id, const obb& bounds)
+void render_visibility_manager::update_object_bounds(object_id id, render_object_id world_id, const obb& bounds)
 {
     std::unique_lock lock(m_mutex);
 
@@ -81,6 +82,7 @@ void render_visibility_manager::update_object_bounds(object_id id, const obb& bo
     {
         state.bounds = bounds;
         state.oct_tree_entry = m_oct_tree.modify(state.oct_tree_entry, bounds.get_aligned_bounds(), state.id);
+        state.world_id = world_id;
 
         if (!state.is_dirty)
         {
@@ -89,6 +91,8 @@ void render_visibility_manager::update_object_bounds(object_id id, const obb& bo
         }
     }
 }
+
+#pragma optimize("", off)
 
 bool render_visibility_manager::is_object_visibile(view_id view_id, object_id object_id)
 {
@@ -128,7 +132,7 @@ void render_visibility_manager::set_object_manual_visibility(object_id id, bool 
     }
 }
 
-render_visibility_manager::view_id render_visibility_manager::register_view(const frustum& frustum, render_view* metadata)
+render_visibility_manager::view_id render_visibility_manager::register_view(const frustum& frustum, render_object_id world_id, render_view* metadata)
 {
     std::unique_lock lock(m_mutex);
 
@@ -150,12 +154,18 @@ render_visibility_manager::view_id render_visibility_manager::register_view(cons
     id.index = m_free_view_indices.back();
     m_free_view_indices.pop_back();
 
+    if (id.index >= k_max_tracked_views)
+    {
+        db_warning(renderer, "Visibility manager ran out of indices for tracked views. Attempts to render this view may result in incorrect objects being visible.");
+    }
+
     view_state& state = m_views[id.index];
     state.id.generation++;
     state.is_dirty = true;
     state.used = true;
     state.active = true;
     state.object = metadata;
+    state.world_id = world_id;
 
     id.generation = state.id.generation;
 
@@ -200,7 +210,7 @@ void render_visibility_manager::set_view_active(view_id id, bool active)
     }
 }
 
-void render_visibility_manager::update_object_frustum(view_id id, const frustum& bounds)
+void render_visibility_manager::update_object_frustum(view_id id, render_object_id world_id, const frustum& bounds)
 {
     std::unique_lock lock(m_mutex);
 
@@ -208,6 +218,7 @@ void render_visibility_manager::update_object_frustum(view_id id, const frustum&
     if (state.id.generation == id.generation)
     {
         state.bounds = bounds;
+        state.world_id = world_id;
         state.is_dirty = true;
     }
 }
@@ -296,7 +307,10 @@ void render_visibility_manager::update_visibility()
         {
             object_id id = *iter;
             object_state& obj_state = m_objects[id.index];
-            if (!obj_state.manual_visibility)
+
+            // Remove objects we know will not be visible to this view.
+            if (!obj_state.manual_visibility || 
+                 obj_state.world_id != state.world_id)
             {
                 iter = visible_objects.elements.erase(iter);
             }
@@ -311,6 +325,7 @@ void render_visibility_manager::update_visibility()
         {
             object_state& obj_state = m_objects[object_id.index];
 
+            
             // Object newly entering view.
             if (!obj_state.visibility[view_index])
             {

@@ -77,11 +77,16 @@ public:
     virtual void set_visibility(bool flags);
     bool get_visibility();
 
+    // Gets or sets the id of the world the object belongs to.
+    void set_world(render_object_id id);
+    render_object_id get_world();
+
 protected:
 
     bool m_store_in_octtree = false;
 
-    render_object_id m_id;
+    render_object_id m_id = 0;
+    render_object_id m_world_id = 0;
 
     render_gpu_flags m_gpu_flags = (render_gpu_flags)0;
     render_draw_flags m_draw_flags = (render_draw_flags)0;

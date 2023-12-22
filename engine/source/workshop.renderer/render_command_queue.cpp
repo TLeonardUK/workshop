@@ -135,6 +135,29 @@ void render_command_queue::draw_truncated_cone(const vector3& start, const vecto
 }
 
 // ===========================================================================================
+//  Worlds
+// ===========================================================================================
+
+render_object_id render_command_queue::create_world(const char* name)
+{
+    render_object_id id = m_renderer.next_render_object_id();
+    const char* stored_name = allocate_copy(name);
+
+    queue_command("create_world", [renderer = &m_renderer, id, stored_name]() {
+        renderer->get_scene_manager().create_world(id, stored_name);
+    });
+
+    return id;
+}
+
+void render_command_queue::destroy_world(render_object_id id)
+{
+    queue_command("destroy_world", [renderer = &m_renderer, id]() {
+        renderer->get_scene_manager().destroy_world(id);
+    });
+}
+
+// ===========================================================================================
 //  Objects
 // ===========================================================================================
 
@@ -163,6 +186,13 @@ void render_command_queue::set_object_visibility(render_object_id id, bool visib
 {
     queue_command("set_object_visibility", [renderer = &m_renderer, id, visibility]() {
         renderer->get_scene_manager().set_object_visibility(id, visibility);
+    });
+}
+
+void render_command_queue::set_object_world(render_object_id id, render_object_id world_id)
+{
+    queue_command("set_object_world", [renderer = &m_renderer, id, world_id]() {
+        renderer->get_scene_manager().set_object_world(id, world_id);
     });
 }
 
@@ -211,7 +241,6 @@ void render_command_queue::set_view_readback_pixmap(render_object_id id, pixmap*
 }
 
 // ================================================================================================
-//  Static meshes
 // ================================================================================================
 
 render_object_id render_command_queue::create_static_mesh(const char* name)

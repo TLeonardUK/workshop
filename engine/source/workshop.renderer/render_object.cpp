@@ -6,6 +6,8 @@
 #include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.renderer/renderer.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 render_object::render_object(render_object_id id, renderer* renderer, render_visibility_flags visibility_flags)
@@ -13,7 +15,7 @@ render_object::render_object(render_object_id id, renderer* renderer, render_vis
     , m_renderer(renderer)
     , m_visibility_flags(visibility_flags)
 {
-    m_visibility_id = m_renderer->get_visibility_manager().register_object(get_bounds(), m_visibility_flags);
+    m_visibility_id = m_renderer->get_visibility_manager().register_object(get_bounds(), m_world_id, m_visibility_flags);
 }
 
 render_object::~render_object()
@@ -131,7 +133,24 @@ obb render_object::get_bounds()
 
 void render_object::bounds_modified()
 {
-    m_renderer->get_visibility_manager().update_object_bounds(m_visibility_id, get_bounds());
+    m_renderer->get_visibility_manager().update_object_bounds(m_visibility_id, m_world_id, get_bounds());
+}
+
+void render_object::set_world(render_object_id id)
+{
+    if (m_world_id == id)
+    {
+        return;
+    }
+
+    m_world_id = id;
+
+    bounds_modified();
+}
+
+render_object_id render_object::get_world()
+{
+    return m_world_id;
 }
 
 }; // namespace ws

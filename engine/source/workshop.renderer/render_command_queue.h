@@ -88,6 +88,18 @@ public:
     void draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
 
     // ===========================================================================================
+    //  Worlds
+    // ===========================================================================================
+
+    // Creates a world. Worlds are a high level filter filter of what objects are visible from what views.
+    // If an object is not assigned to a specific world it exists in a default world that always 
+    // exists and is used by default for rendering.
+    render_object_id create_world(const char* name);
+
+    // Destroys a world previously created with create_world.
+    void destroy_world(render_object_id id);
+
+    // ===========================================================================================
     //  Objects
     // ===========================================================================================
 
@@ -102,6 +114,9 @@ public:
 
     // Sets the visibility of the render object.
     void set_object_visibility(render_object_id id, bool visibility);
+
+    // Sets the world an object belongs to.
+    void set_object_world(render_object_id id, render_object_id world_id);
 
     // ===========================================================================================
     //  Views

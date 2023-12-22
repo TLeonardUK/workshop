@@ -5,6 +5,7 @@
 #include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/objects/render_view.h"
+#include "workshop.renderer/objects/render_world.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/objects/render_directional_light.h"
 #include "workshop.renderer/objects/render_point_light.h"
@@ -46,6 +47,55 @@ std::vector<render_object*> render_scene_manager::get_objects()
     }
 
     return objects;
+
+}
+
+// ===========================================================================================
+//  Worlds
+// ===========================================================================================
+
+void render_scene_manager::create_world(render_object_id id, const char* name)
+{
+    std::scoped_lock lock(m_mutex);
+
+    std::unique_ptr<render_world> world = std::make_unique<render_world>(id, m_renderer);
+    world->set_name(name);
+
+    render_world* world_ptr = world.get();
+
+    auto [iter, success] = m_objects.try_emplace(id, std::move(world));
+    if (success)
+    {
+        m_active_worlds.push_back(world_ptr);
+
+        db_verbose(renderer, "Created new render world: {%zi} %s", id, name);
+    }
+    else
+    {
+        db_warning(renderer, "create_world called with a duplicate id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::destroy_world(render_object_id id)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (auto iter = m_objects.find(id); iter != m_objects.end())
+    {
+        db_verbose(renderer, "Removed render world: {%zi} %s", id, iter->second->get_name().c_str());
+
+        m_active_worlds.erase(std::find(m_active_worlds.begin(), m_active_worlds.end(), iter->second.get()));
+        m_objects.erase(iter);
+    }
+    else
+    {
+        db_warning(renderer, "destroy_view called with non-existant id {%zi}.", id);
+    }
+}
+
+std::vector<render_world*> render_scene_manager::get_worlds()
+{
+    return m_active_worlds;
 }
 
 // ===========================================================================================
@@ -105,6 +155,20 @@ void render_scene_manager::set_object_visibility(render_object_id id, bool visib
     else
     {
         db_warning(renderer, "set_object_visibility called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_object_world(render_object_id id, render_object_id world_id)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_object* object = resolve_id(id))
+    {
+        object->set_world(world_id);
+    }
+    else
+    {
+        db_warning(renderer, "set_object_world called with non-existant id {%zi}.", id);
     }
 }
 
