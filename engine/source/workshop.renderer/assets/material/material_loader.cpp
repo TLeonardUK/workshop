@@ -369,12 +369,6 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
         return nullptr;
     }
 
-    asset_loader* texture_asset_loader = m_asset_manager.get_loader_for_descriptor_type("texture");
-    if (!texture_asset_loader)
-    {
-        return nullptr;
-    }
-
     // Get the assets we will need to generate the thumbnail loaded.
     asset_ptr<material> material_asset = m_asset_manager.request_asset<material>(path, 0);
     asset_ptr<model> sphere_asset = m_asset_manager.request_asset<model>("data:models/core/primitives/sphere.yaml", 0);
@@ -439,6 +433,10 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
         // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
         auto& cmd_queue = m_renderer.get_rt_command_queue(); 
 
+        vector3 light_location = vector3(1.0f, -1.0f, -1.0f);
+        vector3 light_normal = light_location.normalize();
+        quat light_rotation = quat::rotate_to(-light_normal, vector3::forward);
+
         world_id = cmd_queue.create_world("thumbnail world");
 
         model_id = cmd_queue.create_static_mesh("thumbnail_model");
@@ -453,8 +451,11 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
         cmd_queue.set_object_world(skybox_id, world_id);
 
         light_id = cmd_queue.create_directional_light("thumbnail_light");
-        cmd_queue.set_object_transform(light_id, vector3::zero, quat::identity.rotate_x(math::halfpi) * quat::identity.rotate_y(math::halfpi), vector3::one);
+        cmd_queue.set_object_transform(light_id, light_location, light_rotation, vector3::one);
         cmd_queue.set_object_world(light_id, world_id);
+        cmd_queue.set_light_intensity(light_id, 1.0f);
+        cmd_queue.set_light_range(light_id, 10000.0f);
+        cmd_queue.set_light_importance_distance(light_id, 10000.0f);
 
         view_id = cmd_queue.create_view("thumbnail_view");        
         cmd_queue.set_object_transform(view_id, vector3(0.0f, 0.0f, -150.0f), quat::identity, vector3::one);

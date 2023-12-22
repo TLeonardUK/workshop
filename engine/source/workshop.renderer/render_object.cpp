@@ -6,8 +6,6 @@
 #include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.renderer/renderer.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 render_object::render_object(render_object_id id, renderer* renderer, render_visibility_flags visibility_flags)

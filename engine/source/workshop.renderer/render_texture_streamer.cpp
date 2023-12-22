@@ -430,24 +430,16 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
 {
     sphere sphere_bounds = tex_bounds.bounds.get_sphere();
 
-    float vertical_fov = tex_bounds.view->get_fov();
-    float radius = sphere_bounds.radius;
-    float distance = (sphere_bounds.origin - tex_bounds.view->get_local_location()).length();
-
     // Calculate the texel density of the mesh.
     float texture_size = (float)std::max(tex_bounds.texture->width, tex_bounds.texture->height);
     float uv_density = tex_bounds.uv_density;
 
-    // Clamp distance to radius to avoid inf results in projected sphere calulation.
-    if (distance <= radius)
-    {
-        distance = radius + 0.1f;
-    }
-
     // Get projected radius of sphere in screen spcae.
-    float adjusted_fov = vertical_fov / 2.0f * math::pi / 180.0f;
-    float projected_radius = 1.0f / tanf(adjusted_fov) * radius / sqrtf(distance * distance - radius * radius);
-    float projected_radius_viewport = tex_bounds.view->get_viewport().height * projected_radius;
+    float projected_radius_viewport = sphere_bounds.projected_screen_radius(
+        tex_bounds.view->get_local_location(), 
+        tex_bounds.view->get_fov(),
+        (float)tex_bounds.view->get_viewport().height
+    );
     float screen_space_area = projected_radius_viewport * projected_radius_viewport;
 
     // Calculate the ideal mip count.

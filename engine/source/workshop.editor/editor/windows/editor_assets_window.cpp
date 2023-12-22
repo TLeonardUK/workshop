@@ -70,8 +70,8 @@ void editor_assets_window::draw_asset_list()
     asset_database_entry* entry = m_asset_database->get(m_selected_path.c_str());
     if (entry)
     {
-        constexpr float k_item_width = 96;
-        constexpr float k_item_height = 164;
+        constexpr float k_item_width = 128;
+        constexpr float k_item_height = k_item_width + 44.0f;
         constexpr float k_item_padding = 10.0f;
         constexpr float k_preview_padding = 2.0f;
 

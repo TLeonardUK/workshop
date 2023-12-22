@@ -230,5 +230,4 @@ inline size_t calculate_atlas_size(size_t sub_rect_size, size_t sub_rect_count)
 
     return atlas_size;
 }
-
 }; // namespace ws::math

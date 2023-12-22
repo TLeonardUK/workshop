@@ -29,6 +29,9 @@ public:
 
 	bool intersects(const aabb& bounds) const;
 	aabb get_bounds() const;
+
+    // Calculated the radius of a world space sphere projected onto the screen.
+    float projected_screen_radius(const vector3& camera_position, float camera_fov, float camera_viewport_height);
 };
 
 using sphere  = base_sphere<float>;
@@ -83,6 +86,24 @@ template <typename element_type>
 inline aabb base_sphere<element_type>::get_bounds() const
 {
 	return aabb(origin - radius, origin + radius);
+}
+
+template <typename element_type>
+inline float base_sphere<element_type>::projected_screen_radius(const vector3& camera_position, float camera_fov, float camera_viewport_height)
+{
+    float distance = (origin - camera_position).length();
+
+    // Clamp distance to radius to avoid inf results in projected sphere calulation.
+    if (distance <= radius)
+    {
+        distance = radius + 0.1f;
+    }
+
+    float adjusted_fov = camera_fov / 2.0f * math::pi / 180.0f;
+    float projected_radius = 1.0f / tanf(adjusted_fov) * radius / sqrtf(distance * distance - radius * radius);
+    float projected_radius_viewport = camera_viewport_height * projected_radius;
+
+    return projected_radius_viewport;
 }
 
 }; // namespace ws

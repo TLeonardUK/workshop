@@ -92,8 +92,6 @@ void render_visibility_manager::update_object_bounds(object_id id, render_object
     }
 }
 
-#pragma optimize("", off)
-
 bool render_visibility_manager::is_object_visibile(view_id view_id, object_id object_id)
 {
     std::shared_lock lock(m_mutex);

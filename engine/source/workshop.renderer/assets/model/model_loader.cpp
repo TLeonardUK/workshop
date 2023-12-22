@@ -24,7 +24,7 @@ constexpr size_t k_asset_descriptor_minimum_version = 1;
 constexpr size_t k_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 76;
+constexpr size_t k_asset_compiled_version = 77;
 
 };
 
@@ -349,6 +349,21 @@ bool model_loader::parse_file(const char* path, model& asset)
        return false;
     }
 
+    // Calculate the geometry bounds to the meshes we've actually used.
+    bool first_mesh = true;
+    for (model::mesh_info& info : asset.meshes)
+    {
+        if (first_mesh)
+        {
+            asset.geometry->bounds = info.bounds;
+            first_mesh = false;
+        }
+        else
+        {
+            asset.geometry->bounds = asset.geometry->bounds.combine(info.bounds);
+        }
+    }
+
     return true;
 }
 
@@ -393,6 +408,183 @@ void model_loader::hot_reload(asset* instance, asset* new_instance)
     model* new_instance_typed = static_cast<model*>(new_instance);
 
     old_instance_typed->swap(new_instance_typed);
+}
+
+std::unique_ptr<pixmap> model_loader::generate_thumbnail(const char* path, size_t size)
+{
+    model asset(m_ri_interface, m_renderer, m_asset_manager);
+
+    // Parse the source YAML file that defines the shader.
+    if (!parse_file(path, asset))
+    {
+        return nullptr;
+    }
+
+    // Get the assets we will need to generate the thumbnail loaded.
+    asset_ptr<model> model_asset = m_asset_manager.request_asset<model>(path, 0);
+    asset_ptr<model> skybox_asset = m_asset_manager.request_asset<model>("data:models/core/skyboxs/default_skybox.yaml", 0);
+
+    model_asset.wait_for_load();
+    skybox_asset.wait_for_load();
+
+    // Lock all textures in the texture streamer so they will be fully streamed in.
+    std::vector<texture*> textures;
+
+    for (model::material_info& mat : model_asset->materials)
+    {
+        if (!mat.material.is_loaded())
+        {
+            continue;
+        }
+
+        for (material::texture_info& tex : mat.material->textures)
+        {
+            if (!tex.texture.is_loaded())
+            {
+                continue;
+            }
+
+            textures.push_back(tex.texture.get());
+            m_renderer.get_texture_streamer().lock_texture(tex.texture.get());
+        }
+    }
+
+    // Wait until all mips are streamed in.
+    while (true)
+    {
+        bool fully_resident = true;
+
+        for (texture* tex : textures)
+        {
+            if (!m_renderer.get_texture_streamer().is_texture_fully_resident(tex))
+            {
+                fully_resident = false;
+                break;
+            }
+        }
+
+        if (fully_resident)
+        {
+            break;
+        }
+
+        m_renderer.wait_for_frame(m_renderer.get_frame_index() + 1);
+    }
+
+    // Setup the scene to render out material.
+    std::binary_semaphore semaphore { 0 };
+
+    render_object_id model_id;
+    render_object_id skybox_id;
+    render_object_id light_id;
+    render_object_id view_id;
+    render_object_id world_id;
+
+    size_t start_frame_index = 0;
+
+    std::unique_ptr<pixmap> output = std::make_unique<pixmap>(size, size, pixmap_format::R8G8B8A8_SRGB);
+
+    m_renderer.queue_callback(this, [this, &semaphore, &world_id, &model_id, &view_id, &skybox_id, &light_id, &start_frame_index, &model_asset, &skybox_asset, size, &output]()
+    {
+        // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
+        auto& cmd_queue = m_renderer.get_rt_command_queue(); 
+
+        world_id = cmd_queue.create_world("thumbnail world");
+
+        // Calculate the projected bounds of the model and zoom out to a good position to frame it all.
+        sphere sphere_bounds = obb(model_asset->geometry->bounds, matrix4::identity).get_sphere();
+
+        vector3 light_location = vector3(1.0f, -1.0f, -1.0f);
+        vector3 light_normal = light_location.normalize();
+        quat light_rotation = quat::rotate_to(-light_normal, vector3::forward);
+
+        vector3 view_location = vector3(-1.0f, 1.0f, -1.0f);
+        vector3 view_normal = view_location.normalize();
+        quat view_rotation = quat::rotate_to(-view_normal, vector3::forward);
+        float view_fov = 45.0f;
+        float view_distance = 0.1f;
+
+        // TODO: This is hot garbage, there should be a non-iterative way to calculate this.
+        while (true)
+        {
+            view_location = view_normal * view_distance;
+
+            float projected_radius = sphere_bounds.projected_screen_radius(
+                view_location,
+                view_fov,
+                (float)size
+            );
+
+            if (projected_radius < (float)size * 0.85f) 
+            {
+                break;
+            }
+
+            view_distance *= 1.05f;
+        }
+
+        float max_distance = std::max(10000.0f, view_distance + (sphere_bounds.radius * 0.5f));
+
+        view_id = cmd_queue.create_view("thumbnail_view");
+        cmd_queue.set_object_transform(view_id, view_location, view_rotation, vector3::one);
+        cmd_queue.set_view_projection(view_id, view_fov, 1.0f, 1.0f, max_distance + 1.0f);
+        cmd_queue.set_view_viewport(view_id, recti(0, 0, (int)size, (int)size));
+        cmd_queue.set_view_readback_pixmap(view_id, output.get());
+        cmd_queue.set_object_world(view_id, world_id);
+
+        start_frame_index = m_renderer.get_frame_index();
+
+        // Create model/skybox/light
+        model_id = cmd_queue.create_static_mesh("thumbnail_model");
+        cmd_queue.set_static_mesh_model(model_id, model_asset);
+        cmd_queue.set_object_transform(model_id, -model_asset->geometry->bounds.get_center(), quat::identity, vector3(1.0f, 1.0f, 1.0f));
+        cmd_queue.set_object_world(model_id, world_id);
+
+        skybox_id = cmd_queue.create_static_mesh("thumbnail_skybox_model");
+        cmd_queue.set_static_mesh_model(skybox_id, skybox_asset);
+        cmd_queue.set_object_transform(skybox_id, vector3::zero, quat::identity, vector3(max_distance, max_distance, max_distance));
+        cmd_queue.set_object_world(skybox_id, world_id);
+
+        light_id = cmd_queue.create_directional_light("thumbnail_light");
+        cmd_queue.set_object_transform(light_id, light_location, light_rotation, vector3::one);
+        cmd_queue.set_object_world(light_id, world_id);
+        cmd_queue.set_directional_light_shadow_cascades(light_id, 1);
+        cmd_queue.set_light_intensity(light_id, 1.0f);
+        cmd_queue.set_light_range(light_id, 10000.0f);
+        cmd_queue.set_light_importance_distance(light_id, 10000.0f);
+
+        semaphore.release();
+    });
+
+    semaphore.acquire();
+
+    // Wait for render of frame to complete on gpu and data to be copied back to our pixmap.
+    m_renderer.wait_for_frame(start_frame_index + m_renderer.get_render_interface().get_pipeline_depth());
+    
+    // Destroy all objects we created to render the thumbnail.    
+    m_renderer.queue_callback(this, [this, &semaphore, &model_id, &view_id, &skybox_id, &light_id, &world_id]()
+    {
+        // We're running on the RT so just grab the RT command queue directly, avoids extra latency.
+        auto& cmd_queue = m_renderer.get_rt_command_queue();
+
+        cmd_queue.destroy_static_mesh(model_id);
+        cmd_queue.destroy_static_mesh(skybox_id);
+        cmd_queue.destroy_directional_light(light_id);
+        cmd_queue.destroy_view(view_id);
+        cmd_queue.destroy_world(world_id);
+
+        semaphore.release();
+    });
+
+    semaphore.acquire();
+
+    // Unlock all the textures that were previously locked.
+    for (texture* tex : textures)
+    {
+        m_renderer.get_texture_streamer().unlock_texture(tex);
+    }
+
+    return output;
 }
 
 }; // namespace ws
