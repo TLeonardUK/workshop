@@ -34,12 +34,18 @@ public:
 	// Maximum rendered depth of the view.
 	float max_depth = 20000.0f;
 
+    // Viewport the camera is rendered with.
+    recti viewport = recti(0, 0, 0, 0);
+
     // Matrices calculated by the system.
     matrix4 projection_matrix;
     matrix4 view_matrix;
 
     // Render flags that dictate what gets drawn to this camera view.
     render_draw_flags draw_flags = render_draw_flags::geometry;
+
+    // Render target to draw to.
+    ri_texture_view render_target = {};
 
 private:
 

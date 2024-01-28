@@ -10,6 +10,7 @@ project(workshop.game_framework C CXX)
 SET(SOURCES
     "components/camera/camera_component.h"    
     "components/camera/fly_camera_movement_component.h"    
+    "components/camera/editor_camera_movement_component.h"    
     "components/lighting/spot_light_component.h"    
     "components/lighting/point_light_component.h"    
     "components/lighting/directional_light_component.h"    
@@ -25,6 +26,8 @@ SET(SOURCES
     "systems/camera/camera_system.cpp"  
     "systems/camera/fly_camera_movement_system.cpp"
     "systems/camera/fly_camera_movement_system.h"  
+    "systems/camera/editor_camera_movement_system.cpp"
+    "systems/camera/editor_camera_movement_system.h"  
         
     "systems/lighting/light_system.h"  
     "systems/lighting/light_system.cpp"  

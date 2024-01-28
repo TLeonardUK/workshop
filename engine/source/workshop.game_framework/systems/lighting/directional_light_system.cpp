@@ -17,6 +17,8 @@ namespace ws {
 directional_light_system::directional_light_system(object_manager& manager)
     : system(manager, "directional light system")
 {
+    set_flags(system_flags::run_in_editor);
+
     // We want the latest transform to apply to the render object.
     add_predecessor<transform_system>();
 

@@ -111,6 +111,10 @@ public:
     // Sets a pixmap that a views output will be copied to.
     void set_view_readback_pixmap(render_object_id id, pixmap* output);
 
+    // Sets the render target the view renders to, if nullptr it will be rendered
+    // to the back buffer.
+    void set_view_render_target(render_object_id id, ri_texture_view render_target);
+
     // Gets a list of all active views.
     std::vector<render_view*> get_views();
 

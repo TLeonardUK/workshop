@@ -155,6 +155,9 @@ public:
     // Invoked when the engine is stepped.
     event<frame_time> on_step;
 
+    // Invoked when the default world changes.
+    event<world*> on_default_world_changed;
+
     // Sets or gets if the mouse is currently over the game viewport or
     // if its over part of the UI. 
     // TODO: This should probably be stored somewhere else not the core engine.

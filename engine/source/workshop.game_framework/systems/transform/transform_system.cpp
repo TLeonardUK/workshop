@@ -14,6 +14,7 @@ namespace ws {
 transform_system::transform_system(object_manager& manager)
     : system(manager, "transform system")
 {
+    set_flags(system_flags::run_in_editor);
 }
 
 void transform_system::set_local_transform(object handle, const vector3& location, const quat& rotation, const vector3& scale)

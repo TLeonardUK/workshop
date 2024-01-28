@@ -673,7 +673,7 @@ void object_manager::deserialize_object(object handle, const std::vector<uint8_t
     }
 }
 
-void object_manager::step_systems(const frame_time& time)
+void object_manager::step_systems(const frame_time& time, bool in_editor)
 {
     task_scheduler& scheduler = task_scheduler::get();
     std::vector<task_handle> step_tasks;
@@ -687,11 +687,30 @@ void object_manager::step_systems(const frame_time& time)
         // Create tasks for stepping each system.
         for (size_t i = 0; i < m_systems.size(); i++)
         {
-            auto& system = m_systems[i];
+            auto& base_system = m_systems[i];
 
-            step_tasks[i] = scheduler.create_task(system->get_name(), task_queue::standard, [this, &time, i]() {
+            step_tasks[i] = scheduler.create_task(base_system->get_name(), task_queue::standard, [this, &time, i, in_editor]() {
                 profile_marker(profile_colors::simulation, "step ecs system: %s", m_systems[i]->get_name());
-                m_systems[i]->step(time);
+
+                auto& system = m_systems[i];
+
+                if (in_editor)
+                {
+                    if ((system->get_flags() & system_flags::run_in_editor) == system_flags::none &&
+                        (system->get_flags() & system_flags::run_in_editor_only) == system_flags::none)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    if ((system->get_flags() & system_flags::run_in_editor_only) != system_flags::none)
+                    {
+                        return;
+                    }
+                }
+
+                system->step(time);
             });
         }
 
@@ -726,10 +745,10 @@ void object_manager::step_systems(const frame_time& time)
     m_is_system_step_active = false;
 }
 
-void object_manager::step(const frame_time& time)
+void object_manager::step(const frame_time& time, bool in_editor)
 {
     // step all systems.
-    step_systems(time);
+    step_systems(time, in_editor);
 
     // Deferred actions.
     {

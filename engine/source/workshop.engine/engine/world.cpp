@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.engine/engine/world.h"
+#include "workshop.engine/engine/engine.h"
 #include "workshop.core/perf/profile.h"
 
 #include "workshop.engine/ecs/component_filter.h"
@@ -56,8 +57,9 @@ void world::step(const frame_time& time)
     {
         return;
     }
-
-    m_object_manager->step(time);
+    
+    bool in_editor = (m_engine.get_editor().get_editor_mode() == editor_mode::editor);
+    m_object_manager->step(time, in_editor);
 }
 
 void world::set_step_enabled(bool enabled)

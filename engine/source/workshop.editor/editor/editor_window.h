@@ -12,9 +12,15 @@ enum class editor_window_layout
     top,
     bottom_left,
     bottom_right,
-    left,
-    right,
+    left_bottom,
+    left_top,
+    //right,
     
+    center_top_left,
+    center_top_right,
+    center_bottom_left,
+    center_bottom_right, 
+
     popup,
     overlay
 };

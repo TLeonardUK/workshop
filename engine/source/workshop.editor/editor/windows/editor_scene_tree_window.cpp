@@ -42,6 +42,10 @@ void editor_scene_tree_window::draw_object_node(object obj, transform_component*
     }
 
     meta_component* obj_meta = obj_manager.get_component<meta_component>(obj);
+    if ((obj_meta->flags & object_flags::hidden) == object_flags::hidden)
+    {
+        return;
+    }
 
     ImGui::TableNextRow();
 
@@ -386,7 +390,7 @@ const char* editor_scene_tree_window::get_window_id()
 
 editor_window_layout editor_scene_tree_window::get_layout()
 {
-    return editor_window_layout::left;
+    return editor_window_layout::left_top;
 }
 
 }; // namespace ws

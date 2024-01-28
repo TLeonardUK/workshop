@@ -17,6 +17,8 @@ namespace ws {
 static_mesh_system::static_mesh_system(object_manager& manager)
     : system(manager, "static mesh system")
 {
+    set_flags(system_flags::run_in_editor);
+
     // We want the latest transform to apply to the render object.
     add_predecessor<transform_system>();
 }

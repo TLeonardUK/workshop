@@ -75,7 +75,11 @@ SET(SOURCES
     "passes/render_pass_clear.cpp"
     "passes/render_pass_query.h"
     "passes/render_pass_query.cpp"
-
+    "passes/render_pass_readback.h"
+    "passes/render_pass_readback.cpp"
+    
+    "objects/render_world.h"
+    "objects/render_world.cpp"
     "objects/render_view.h"
     "objects/render_view.cpp"
     "objects/render_static_mesh.h"

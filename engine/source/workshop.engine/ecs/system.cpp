@@ -49,4 +49,14 @@ void system::flush_command_queue()
     m_command_queue.reset();
 }
 
+system_flags system::get_flags()
+{
+    return m_flags;
+}
+
+void system::set_flags(system_flags flags)
+{
+    m_flags = flags;
+}
+
 }; // namespace ws

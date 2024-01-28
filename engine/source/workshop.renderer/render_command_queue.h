@@ -18,6 +18,8 @@
 #include "workshop.core/math/hemisphere.h"
 #include "workshop.core/drawing/color.h"
 
+#include "workshop.render_interface/ri_texture.h"
+
 namespace ws {
 
 class renderer;
@@ -136,6 +138,10 @@ public:
 
     // Sets a pixmap that a views output will be copied to.
     void set_view_readback_pixmap(render_object_id id, pixmap* output);
+
+    // Sets the render target the view renders to, if nullptr it will be rendered
+    // to the back buffer.
+    void set_view_render_target(render_object_id id, ri_texture_view render_target);
 
     // ===========================================================================================
     //  Static meshes

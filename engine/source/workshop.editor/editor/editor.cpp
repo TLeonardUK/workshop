@@ -13,6 +13,7 @@
 #include "workshop.editor/editor/windows/editor_assets_window.h"
 #include "workshop.editor/editor/windows/editor_texture_streaming_window.h"
 #include "workshop.editor/editor/windows/editor_cvar_window.h"
+#include "workshop.editor/editor/windows/editor_viewport_window.h"
 #include "workshop.editor/editor/windows/popups/editor_progress_popup.h"
 #include "workshop.editor/editor/transactions/editor_transaction_change_selected_objects.h"
 #include "workshop.editor/editor/transactions/editor_transaction_change_object_transform.h"
@@ -85,6 +86,11 @@ void editor::register_init(init_list& list)
         [this, &list]() -> result<void> { return create_world(list); },
         [this, &list]() -> result<void> { return destroy_world(); }
     );
+}
+
+editor_mode editor::get_editor_mode()
+{
+    return m_editor_mode;
 }
 
 void editor::set_editor_mode(editor_mode mode)
@@ -309,6 +315,11 @@ result<void> editor::create_windows(init_list& list)
     create_window<editor_progress_popup>();
     create_window<editor_texture_streaming_window>(&m_engine.get_renderer());
 
+    create_window<editor_viewport_window>(this, &m_engine, 0);
+    create_window<editor_viewport_window>(this, &m_engine, 1);
+    create_window<editor_viewport_window>(this, &m_engine, 2);
+    create_window<editor_viewport_window>(this, &m_engine, 3);
+
     return true;
 }
 
@@ -357,7 +368,7 @@ void editor::new_scene()
     obj_manager.add_component<bounds_component>(obj);
     obj_manager.add_component<camera_component>(obj);
     obj_manager.add_component<fly_camera_movement_component>(obj);
-    transform_sys->set_local_transform(obj, vector3(0.0f, 100.0f, -250.0f), quat::identity, vector3::one);
+    transform_sys->set_local_transform(obj, vector3::zero, quat::identity, vector3::one);
 
     // Add a directional light.
     obj = obj_manager.create_object("sun light");
@@ -370,7 +381,7 @@ void editor::new_scene()
     light_sys->set_light_shadow_max_distance(obj, 10000.0f);
     light_sys->set_light_intensity(obj, 5.0f);
     direction_light_sys->set_light_shadow_cascade_exponent(obj, 0.6f);
-    transform_sys->set_local_transform(obj, vector3(0.0f, 300.0f, 0.0f), quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
+    transform_sys->set_local_transform(obj, vector3::zero, quat::angle_axis(-math::halfpi * 0.85f, vector3::right) * quat::angle_axis(0.5f, vector3::forward), vector3::one);
 
     // Switch to the new default world.
     m_engine.set_default_world(new_world);
@@ -730,9 +741,15 @@ void editor::step(const frame_time& time)
 		set_editor_mode(m_editor_mode == editor_mode::editor ? editor_mode::game : editor_mode::editor);
 	}
 	// Change input state depending on mode.
-	bool needs_input = (m_editor_mode != editor_mode::editor);
-	input.set_mouse_hidden(needs_input);
-	input.set_mouse_capture(needs_input);
+    if (m_editor_mode == editor_mode::editor)
+    {
+        input.set_mouse_capture(false);
+    }
+    else
+    {
+        input.set_mouse_hidden(true);
+        input.set_mouse_capture(true);
+    }
 
 	// Draw relevant parts of the editor ui.
     ImGuiIO& imgui_io = ImGui::GetIO();
@@ -743,14 +760,6 @@ void editor::step(const frame_time& time)
 		draw_dockspace();
 
         viewport_rect = ImGui::DockBuilderGetCentralNode(m_dockspace_id)->Rect();
-
-        // Draw selection.
-        ImGui::SetNextWindowPos(viewport_rect.Min);
-        ImGui::SetNextWindowSize(ImVec2(viewport_rect.Max.x - viewport_rect.Min.x, viewport_rect.Max.y - viewport_rect.Min.y));
-        ImGui::Begin("SelectionView", nullptr, ImGuiWindowFlags_NoBackground|ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoDocking);
-        draw_viewport_toolbar();
-        draw_selection();
-        ImGui::End();
 	}
 
     // Draw all overlay windows on top of everything even if not in editor mode.
@@ -881,9 +890,18 @@ void editor::draw_dockspace()
 
 		ImGui::EndMainMenuBar();
 
+        // Draw toolbar.
+        float bar_width = ImGui::GetContentRegionAvail().x;
+        if (ImGui::BeginChildFrame(123123, ImVec2(bar_width, 27.0f)))
+        {
+            draw_viewport_toolbar();
+            ImGui::EndChildFrame();
+        }
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.0f);
+
         // Draw the main dockspace.
 		m_dockspace_id = ImGui::GetID("MainDockspace");
-		ImGui::DockSpace(m_dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGui::DockSpace(m_dockspace_id, ImVec2(0.0f, 0.0f), 0/*ImGuiDockNodeFlags_PassthruCentralNode*/);
 
         if (!m_set_default_dock_space)
         {
@@ -961,46 +979,44 @@ void editor::reset_dockspace_layout()
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 
     ImGui::DockBuilderRemoveNode(m_dockspace_id); 
-    ImGui::DockBuilderAddNode(m_dockspace_id, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderAddNode(m_dockspace_id, /*ImGuiDockNodeFlags_PassthruCentralNode |*/ ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(m_dockspace_id, viewport->Size);
 
     auto dock_id_top = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Up, 0.3f, nullptr, &m_dockspace_id);
-    auto dock_id_bottom_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Down, 0.3f, nullptr, &m_dockspace_id);
-    auto dock_id_bottom_right = ImGui::DockBuilderSplitNode(dock_id_bottom_left, ImGuiDir_Right, 0.5f, nullptr, &dock_id_bottom_left);
-    auto dock_id_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Left, 0.15f, nullptr, &m_dockspace_id);
-    auto dock_id_right = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Right, 0.15f, nullptr, &m_dockspace_id);
+
+    auto dock_id_bottom_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Down, 0.2f, nullptr, &m_dockspace_id);
+        auto dock_id_bottom_right = ImGui::DockBuilderSplitNode(dock_id_bottom_left, ImGuiDir_Right, 0.5f, nullptr, &dock_id_bottom_left);
+
+    auto dock_id_left_top = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Left, 0.10f, nullptr, &m_dockspace_id);
+        auto dock_id_left_bottom = ImGui::DockBuilderSplitNode(dock_id_left_top, ImGuiDir_Down, 0.5f, nullptr, &dock_id_left_top);
+
+    //auto dock_id_right = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Right, 0.15f, nullptr, &m_dockspace_id);
+
+    ImGuiID dock_id_center_right;
+    auto dock_id_center_left = ImGui::DockBuilderSplitNode(m_dockspace_id, ImGuiDir_Left, 0.5f, nullptr, &dock_id_center_right);
+
+        ImGuiID dock_id_center_top_left;
+        auto dock_id_center_bottom_left = ImGui::DockBuilderSplitNode(dock_id_center_left, ImGuiDir_Down, 0.5f, nullptr, &dock_id_center_top_left);
+
+        ImGuiID dock_id_center_top_right;
+        auto dock_id_center_bottom_right = ImGui::DockBuilderSplitNode(dock_id_center_right, ImGuiDir_Down, 0.5f, nullptr, &dock_id_center_top_right);
 
     // we now dock our windows into the docking node we made above
     for (auto& window : m_windows)
     {
-        ImGuiID dock_id = dock_id_left;
+        ImGuiID dock_id = dock_id_left_top;
         switch (window->get_layout())
         {
-        case editor_window_layout::top:
-            {
-                dock_id = dock_id_top;
-                break;
-            }
-        case editor_window_layout::bottom_left:
-            {
-                dock_id = dock_id_bottom_left;
-                break;
-            }
-        case editor_window_layout::bottom_right:
-            {
-                dock_id = dock_id_bottom_right;
-                break;
-            }
-        case editor_window_layout::left:
-            {
-                dock_id = dock_id_left;
-                break;
-            }
-        case editor_window_layout::right:
-            {
-                dock_id = dock_id_right;
-                break;
-            }
+        case editor_window_layout::top: dock_id = dock_id_top; break;
+        case editor_window_layout::bottom_left: dock_id = dock_id_bottom_left; break;
+        case editor_window_layout::bottom_right: dock_id = dock_id_bottom_right; break;
+        case editor_window_layout::left_top: dock_id = dock_id_left_top; break;
+        case editor_window_layout::left_bottom: dock_id = dock_id_left_bottom; break;
+        // case editor_window_layout::right: dock_id = dock_id_right; break;
+        case editor_window_layout::center_top_left: dock_id = dock_id_center_top_left; break;
+        case editor_window_layout::center_top_right: dock_id = dock_id_center_top_right; break;
+        case editor_window_layout::center_bottom_left: dock_id = dock_id_center_bottom_left; break;
+        case editor_window_layout::center_bottom_right: dock_id = dock_id_center_bottom_right; break;
         case editor_window_layout::popup:
         case editor_window_layout::overlay:
             {
@@ -1025,15 +1041,13 @@ camera_component* editor::get_camera()
     return nullptr;
 }
 
-void editor::draw_selection()
+void editor::draw_selection(camera_component* camera, const ImRect& viewport, bool focused)
 {
     if (m_selected_objects.empty() || 
         m_editor_mode != editor_mode::editor)
     {
         return;
     }
-
-    camera_component* camera = get_camera();
 
     renderer& render = m_engine.get_renderer();
     object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
@@ -1055,7 +1069,7 @@ void editor::draw_selection()
     }
 
     ImGuizmo::SetDrawlist(nullptr);
-    ImGuizmo::SetRect(0, 0, (float)render.get_display_width(), (float)render.get_display_height());
+    ImGuizmo::SetRect(viewport.Min.x, viewport.Min.y, viewport.GetWidth(), viewport.GetHeight());
 
     bool fixed_pivot_point = (ImGuizmo::IsUsingAny() && m_current_gizmo_mode != ImGuizmo::OPERATION::TRANSLATE);
     obb selected_object_bounds = bounds_sys->get_combined_bounds(m_selected_objects, m_pivot_point, fixed_pivot_point);
@@ -1083,7 +1097,10 @@ void editor::draw_selection()
         any_selected_objects_have_transform |= (comp != nullptr);
     }
 
-    if (any_selected_objects_have_transform && !m_selected_object_states.empty() && ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::WORLD, model_mat_raw, nullptr, snap))
+    if (any_selected_objects_have_transform && 
+        !m_selected_object_states.empty() && 
+        ImGuizmo::Manipulate(view_mat_raw, proj_mat_raw, m_current_gizmo_mode, ImGuizmo::MODE::WORLD, model_mat_raw, nullptr, snap) &&
+        focused)
     {
         matrix4 model_mat;
         model_mat.set_raw(model_mat_raw, false);

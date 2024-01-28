@@ -49,6 +49,7 @@ void render_view::set_render_target(ri_texture_view view)
     m_render_target = view;
 
     update_view_info_param_block();
+    update_render_target_flags();
 }
 
 ri_texture_view render_view::get_render_target()
@@ -302,13 +303,6 @@ void render_view::set_readback_pixmap(pixmap* output)
     {
         db_assert(output->get_format() == pixmap_format::R8G8B8A8_SRGB);
 
-        // Make sure we have the capture flag set.
-        // TODO: We should move these settings outside and have the rendering code calling this function set it directly.
-        m_flags = m_flags | render_view_flags::capture;
-        m_flags = m_flags | render_view_flags::scene_only;
-        m_flags = m_flags | render_view_flags::constant_ambient_lighting;
-        m_flags = m_flags | render_view_flags::constant_eye_adaption;        
-
         // Create render target to write the view to.
         ri_texture::create_params create_params;
         create_params.dimensions = ri_texture_dimension::texture_2d;
@@ -331,6 +325,8 @@ void render_view::set_readback_pixmap(pixmap* output)
         buffer_create_params.usage = ri_buffer_usage::readback;
 
         m_readback_buffer = m_renderer->get_render_interface().create_buffer(buffer_create_params, "view readback buffer");
+    
+        update_render_target_flags();
     }
 }
 
@@ -342,6 +338,25 @@ pixmap* render_view::get_readback_pixmap()
 ri_buffer* render_view::get_readback_buffer()
 {
     return m_readback_buffer.get();
+}
+
+void render_view::update_render_target_flags()
+{
+    // If we are drawing to an RT, we don't want to add all the capture flags.
+    if (m_render_target.texture)
+    {
+        m_flags = m_flags | render_view_flags::capture;
+        m_flags = m_flags | render_view_flags::scene_only;
+        m_flags = m_flags | render_view_flags::constant_ambient_lighting;
+        m_flags = m_flags | render_view_flags::constant_eye_adaption;
+    }
+    else
+    {
+        m_flags = m_flags & ~render_view_flags::capture;
+        m_flags = m_flags & ~render_view_flags::scene_only;
+        m_flags = m_flags & ~render_view_flags::constant_ambient_lighting;
+        m_flags = m_flags & ~render_view_flags::constant_eye_adaption;
+    }
 }
 
 }; // namespace ws

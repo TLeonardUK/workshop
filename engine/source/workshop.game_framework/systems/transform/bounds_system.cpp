@@ -22,6 +22,8 @@ bounds_system::bounds_system(object_manager& manager)
     : system(manager, "bounds system")
     , m_oct_tree(k_octtree_extents, k_octtree_max_depth)
 {
+    set_flags(system_flags::run_in_editor);
+
     add_predecessor<transform_system>();    
 }
 

@@ -254,7 +254,7 @@ const char* editor_properties_window::get_window_id()
 
 editor_window_layout editor_properties_window::get_layout()
 {
-    return editor_window_layout::right;
+    return editor_window_layout::left_bottom;
 }
 
 }; // namespace ws

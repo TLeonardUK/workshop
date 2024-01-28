@@ -24,6 +24,8 @@ namespace ws {
 object_pick_system::object_pick_system(object_manager& manager)
     : system(manager, "pick system")
 {
+    set_flags(system_flags::run_in_editor);
+
     add_predecessor<transform_system>();
     add_predecessor<bounds_system>();
 }

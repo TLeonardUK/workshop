@@ -162,6 +162,7 @@ public:
 
 private:
     void update_view_info_param_block();
+    void update_render_target_flags();
 
 private:
     recti m_viewport = recti::empty;

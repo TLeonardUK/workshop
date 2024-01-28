@@ -16,6 +16,8 @@ namespace ws {
 light_probe_grid_system::light_probe_grid_system(object_manager& manager)
     : system(manager, "light probe grid system")
 {
+    set_flags(system_flags::run_in_editor);
+
     // We want the latest transform to apply to the render object.
     add_predecessor<transform_system>();
 }

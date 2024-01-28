@@ -20,6 +20,7 @@
 #include "workshop.engine/ecs/object.h"
 
 #include "thirdparty/imgui/imgui.h"
+#include "thirdparty/imgui/imgui_internal.h"
 #include "thirdparty/ImGuizmo/ImGuizmo.h"
 
 #include <future>
@@ -67,6 +68,9 @@ public:
     // Switches to the given editor mode.
     void set_editor_mode(editor_mode mode);
 
+    // Gets the current editor mode.
+    editor_mode get_editor_mode();
+
     // Gets the main menu bar.
     editor_main_menu& get_main_menu();
 
@@ -106,6 +110,7 @@ public:
 
 protected:
     friend class editor_transaction_change_selected_objects;
+    friend class editor_viewport_window;
 
     // Sets the selected objects without creating a transaction to do it.
     void set_selected_objects_untransacted(const std::vector<object>& object);
@@ -121,7 +126,7 @@ protected:
     result<void> create_world(init_list& list);
     result<void> destroy_world();
 
-    void draw_selection();
+    void draw_selection(camera_component* camera, const ImRect& viewport, bool focused);
     void draw_dockspace();
     void draw_viewport_toolbar();
 

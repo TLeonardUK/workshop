@@ -37,8 +37,10 @@ SET(SOURCES
     "editor/windows/editor_scene_tree_window.cpp"
     "editor/windows/editor_scene_tree_window.h"
     "editor/windows/editor_texture_streaming_window.cpp"
-    "editor/windows/editor_texture_streaming_window.h"
-    
+    "editor/windows/editor_texture_streaming_window.h"    
+    "editor/windows/editor_viewport_window.cpp"
+    "editor/windows/editor_viewport_window.h"
+
     "editor/windows/popups/editor_progress_popup.cpp"
     "editor/windows/popups/editor_progress_popup.h"
 

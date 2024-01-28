@@ -25,6 +25,19 @@ enum class component_modification_source
     serialization = 1,
 };
 
+// Flags that determine how a system is updated.
+enum class system_flags
+{
+    none = 0,
+
+    // System will be run while in editor mode.
+    run_in_editor = 1,
+
+    // System will only be run in editor mode,
+    run_in_editor_only = 2,
+};
+DEFINE_ENUM_FLAGS(system_flags);
+
 // ================================================================================================
 //  Base class for all systems.
 // 
@@ -67,6 +80,10 @@ public:
     // before you call this and where you call it from to avoid threading issues.
     void flush_command_queue();
 
+    // Gets/sets the flags determining how the system runs.
+    system_flags get_flags();
+    void set_flags(system_flags flags);
+
 protected:
 
     // Adds a dependency to another system. This system will not be stepped until 
@@ -90,6 +107,8 @@ protected:
     static inline constexpr size_t k_command_queue_capacity = 1 * 1024 * 1024;
 
     object_manager& m_manager;
+
+    system_flags m_flags = system_flags::none;
 
     std::vector<system*> m_dependencies;
 

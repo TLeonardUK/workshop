@@ -16,6 +16,8 @@
 #include "workshop.core/reflection/reflect_class.h"
 #include "workshop.core/reflection/reflect_field.h"
 
+#include "workshop.engine/ecs/meta_component.h"
+
 #include "workshop.core/utils/yaml.h"
 #include "workshop.engine/utils/yaml.h"
 
@@ -359,6 +361,13 @@ bool scene_loader::save_uncompiled(const char* path, asset& instance)
     emitter << YAML::BeginMap;
     for (object obj : manager.get_objects())
     {
+        // Don't save trasient objects.
+        meta_component* obj_meta = manager.get_component<meta_component>(obj);
+        if ((obj_meta->flags & object_flags::transient) == object_flags::transient)
+        {
+            continue;
+        }
+
         emitter << YAML::Key << (size_t)obj;
         emitter << YAML::BeginMap;
 

@@ -240,6 +240,13 @@ void render_command_queue::set_view_readback_pixmap(render_object_id id, pixmap*
     });
 }
 
+void render_command_queue::set_view_render_target(render_object_id id, ri_texture_view render_target)
+{
+    queue_command("set_view_render_target", [renderer = &m_renderer, id, render_target]() {
+        renderer->get_scene_manager().set_view_render_target(id, render_target);
+    });
+}
+
 // ================================================================================================
 // ================================================================================================
 

@@ -17,8 +17,29 @@ namespace ws {
 camera_system::camera_system(object_manager& manager)
     : system(manager, "camera system")
 {
+    set_flags(system_flags::run_in_editor);
+
     // We want the latest transform to apply to the render view.
     add_predecessor<transform_system>();
+}
+
+void camera_system::set_viewport(object handle, const recti& viewport)
+{
+    m_command_queue.queue_command("set_viewport", [this, handle, viewport]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->viewport = viewport;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_view_viewport(component->view_id, component->viewport);
+            }
+        }
+    });
 }
 
 void camera_system::set_projection(object handle, float fov, float aspect_ratio, float min_depth, float max_depth)
@@ -57,6 +78,25 @@ void camera_system::set_draw_flags(object handle, render_draw_flags flags)
                 render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
                 render_command_queue.set_object_draw_flags(component->view_id, component->draw_flags);
+            }
+        }
+    });
+}
+
+void camera_system::set_render_target(object handle, ri_texture_view texture)
+{
+    m_command_queue.queue_command("set_render_target", [this, handle, texture]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->render_target = texture;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_view_render_target(component->view_id, component->render_target);
             }
         }
     });
@@ -170,7 +210,15 @@ void camera_system::step(const frame_time& time)
         // Apply settings if component is dirty.
         if (camera->is_dirty || screen_size_changed)
         {
-            render_command_queue.set_view_viewport(camera->view_id, recti(0, 0, static_cast<int>(screen_size.x), static_cast<int>(screen_size.y)));
+            recti viewport = camera->viewport;
+
+            // If no explicit viewport is set, use the screen bounds.
+            if (viewport == recti(0, 0, 0, 0))
+            {
+                viewport = recti(0, 0, static_cast<int>(screen_size.x), static_cast<int>(screen_size.y));
+            }
+
+            render_command_queue.set_view_viewport(camera->view_id, viewport);
             render_command_queue.set_view_projection(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
             render_command_queue.set_object_draw_flags(camera->view_id, camera->draw_flags);

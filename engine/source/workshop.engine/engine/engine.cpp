@@ -69,6 +69,8 @@ void engine::step()
 
     m_frame_time.step();
 
+    m_editor->step(m_frame_time);
+
     {
         profile_marker(profile_colors::engine, "pump platform events");
 
@@ -87,7 +89,6 @@ void engine::step()
         world->step(m_frame_time);
     }
 
-    m_editor->step(m_frame_time);
     m_presenter->step(m_frame_time);
 
     m_filesystem->raise_watch_events();
@@ -734,7 +735,7 @@ result<void> engine::load_config(init_list& list)
 
 result<void> engine::create_default_world(init_list& list)
 {
-    m_default_world = create_world("Default World");
+    set_default_world(create_world("Default World"));
     return true;
 }
 
@@ -751,6 +752,8 @@ void engine::set_default_world(world* new_world)
         destroy_world(m_default_world);
     }
     m_default_world = new_world;
+
+    on_default_world_changed.broadcast(new_world);
 }
 
 void engine::load_world(const char* path)

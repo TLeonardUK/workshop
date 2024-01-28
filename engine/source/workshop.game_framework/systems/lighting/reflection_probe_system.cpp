@@ -16,6 +16,8 @@ namespace ws {
 reflection_probe_system::reflection_probe_system(object_manager& manager)
     : system(manager, "reflection probe system")
 {
+    set_flags(system_flags::run_in_editor);
+
     // We want the latest transform to apply to the render object.
     add_predecessor<transform_system>();
 }

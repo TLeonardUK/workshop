@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.game_framework/systems/default_systems.h"
 #include "workshop.game_framework/systems/camera/fly_camera_movement_system.h"
+#include "workshop.game_framework/systems/camera/editor_camera_movement_system.h"
 #include "workshop.game_framework/systems/camera/camera_system.h"
 #include "workshop.game_framework/systems/lighting/light_system.h"
 #include "workshop.game_framework/systems/lighting/directional_light_system.h"
@@ -19,6 +20,7 @@
 
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/fly_camera_movement_component.h"
+#include "workshop.game_framework/components/camera/editor_camera_movement_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
 #include "workshop.game_framework/components/geometry/billboard_component.h"
 #include "workshop.game_framework/components/lighting/directional_light_component.h"
@@ -54,6 +56,7 @@ void register_default_systems(object_manager& manager)
 
     manager.register_component<camera_component>();
     manager.register_component<fly_camera_movement_component>();
+    manager.register_component<editor_camera_movement_component>();
 
     // Systems
 
@@ -72,6 +75,7 @@ void register_default_systems(object_manager& manager)
     manager.register_system<billboard_system>();
 
     manager.register_system<fly_camera_movement_system>();
+    manager.register_system<editor_camera_movement_system>();
 }
 
 }; // namespace ws

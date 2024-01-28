@@ -121,7 +121,7 @@ public:
     virtual size_t get_pipeline_depth() = 0;
 
     // Used to defer a resource deletion until the gpu is no longer referencing it.
-    virtual void defer_delete(const deferred_delete_function_t& func) = 0;
+    virtual void defer_delete(deferred_delete_function_t&& func) = 0;
 
     // Gets the number of bytes of vram currently in use by the application.
     // Local memory is dedicated vram, non-local is system shared memory.

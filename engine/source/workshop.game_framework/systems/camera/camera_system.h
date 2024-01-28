@@ -7,6 +7,9 @@
 #include "workshop.engine/ecs/system.h"
 #include "workshop.core/math/vector2.h"
 #include "workshop.core/math/ray.h"
+#include "workshop.core/math/rect.h"
+
+#include "workshop.render_interface/ri_texture.h"
 
 namespace ws {
 
@@ -29,12 +32,18 @@ public:
 public:
 
     // Public Commands
+    
+    // Sets the viewport settings for a given camera.
+    void set_viewport(object handle, const recti& viewport);
 
     // Sets the projection settings for a given camera.
     void set_projection(object handle, float fov, float aspect_ratio, float min_depth, float max_depth);
 
     // Sets the draw flags for a given camera.
     void set_draw_flags(object handle, render_draw_flags flags);
+
+    // Sets the render target that the camera should draw to.
+    void set_render_target(object handle, ri_texture_view texture);
 
     // Converts an on screen location to a world space position. Screen location is in 0-1 coordinates.
     vector3 screen_to_world_space(object handle, vector3 screen_space_position);

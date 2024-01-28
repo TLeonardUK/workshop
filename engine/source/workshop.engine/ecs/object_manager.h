@@ -90,7 +90,7 @@ public:
     ~object_manager();
 
     // Called once each frame, steps all the systems.
-    void step(const frame_time& time);
+    void step(const frame_time& time, bool in_editor);
 
     // Gets the world this object manager is owned by.
     world& get_world();
@@ -380,7 +380,7 @@ protected:
     // Returns true if any other components depend on this component.
     bool has_active_dependencies(object handle, component* comp);
 
-    void step_systems(const frame_time& time);
+    void step_systems(const frame_time& time, bool in_editor);
 
 private:    
     std::recursive_mutex m_object_mutex;

@@ -1061,17 +1061,9 @@ void renderer::step(std::unique_ptr<render_world_state>&& state)
 
 void renderer::pause()
 {
-    std::unique_lock lock(m_pending_frames_mutex);
-
-    while (m_frames_in_flight.load() > 0)
-    {
-        profile_marker(profile_colors::render, "wait for render");
-        m_pending_frame_convar.wait(lock);
-    }
+    m_paused = true;
 
     drain();
-
-    m_paused = true;
 }
  
 void renderer::resume()
@@ -1191,6 +1183,14 @@ asset_ptr<material> renderer::get_debug_material(debug_material model)
 
 void renderer::drain()
 {
+    std::unique_lock lock(m_pending_frames_mutex);
+
+    while (m_frames_in_flight.load() > 0)
+    {
+        profile_marker(profile_colors::render, "wait for render");
+        m_pending_frame_convar.wait(lock);
+    }
+
     if (m_swapchain)
     {
         m_swapchain->drain();

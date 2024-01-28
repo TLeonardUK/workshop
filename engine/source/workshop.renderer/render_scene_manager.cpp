@@ -261,6 +261,20 @@ void render_scene_manager::set_view_readback_pixmap(render_object_id id, pixmap*
     }
 }
 
+void render_scene_manager::set_view_render_target(render_object_id id, ri_texture_view render_target)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->set_render_target(render_target);
+    }
+    else
+    {
+        db_warning(renderer, "set_view_render_target called with non-existant id {%zi}.", id);
+    }
+}
+
 std::vector<render_view*> render_scene_manager::get_views()
 {
     return m_active_views;

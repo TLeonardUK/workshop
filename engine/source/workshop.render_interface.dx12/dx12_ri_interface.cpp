@@ -936,12 +936,12 @@ void dx12_render_interface::process_pending_deletes()
     queue.clear();
 }
 
-void dx12_render_interface::defer_delete(const deferred_delete_function_t& func)
+void dx12_render_interface::defer_delete(deferred_delete_function_t&& func)
 {
     std::scoped_lock lock(m_pending_deletion_mutex);
 
     size_t queue_index = (m_frame_index % k_max_pipeline_depth);
-    m_pending_deletions[queue_index].push_back(func);
+    m_pending_deletions[queue_index].push_back(std::move(func));
 }
 
 void dx12_render_interface::get_vram_usage(size_t& out_local, size_t& out_non_local)
