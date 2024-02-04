@@ -331,7 +331,7 @@ inline cvar<float> cvar_eye_adapation_exposure_tau(
 
 inline cvar<bool> cvar_ssao_enabled(
 	cvar_flag::none,
-	true,
+	false,                          // Disabled for now, doesn't play nicely with multiple views.
     "ssao_enabled",
     "Turns SSAO on or off."
 );

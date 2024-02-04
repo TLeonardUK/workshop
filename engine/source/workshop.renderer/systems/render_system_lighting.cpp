@@ -261,14 +261,7 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         resolve_param_block->set("shadow_map_count", total_shadow_maps);
         resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
         resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
-        if (view.has_flag(render_view_flags::scene_only))
-        {
-            resolve_param_block->set("visualization_mode", (int)visualization_mode::normal);
-        }
-        else
-        {
-            resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
-        }
+        resolve_param_block->set("visualization_mode", (int)view.get_visualization_mode());
         resolve_param_block->set("light_grid_size", grid_size);
         resolve_param_block->set("light_cluster_buffer", *m_light_cluster_buffer, true);
         resolve_param_block->set("light_cluster_visibility_buffer", *m_light_cluster_visibility_buffer, true);
@@ -278,8 +271,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
             (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
         ));
         resolve_param_block->set("use_constant_ambient", view.has_flag(render_view_flags::constant_ambient_lighting));
-        resolve_param_block->set("apply_ambient_lighting", !m_renderer.get_render_flag(render_flag::disable_ambient_lighting));
-        resolve_param_block->set("apply_direct_lighting", !m_renderer.get_render_flag(render_flag::disable_direct_lighting));
+        resolve_param_block->set("apply_ambient_lighting", !view.has_flag(render_view_flags::disable_ambient_lighting));
+        resolve_param_block->set("apply_direct_lighting", !view.has_flag(render_view_flags::disable_direct_lighting));
         resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
         resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
         resolve_param_block->set("probe_encoding_gamma", cvar_light_probe_encoding_gamma.get());

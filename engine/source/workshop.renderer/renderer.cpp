@@ -659,17 +659,25 @@ void renderer::render_state(render_world_state& state)
 
     // Process the command queue.
     process_render_commands(state);
-
+    
     // Debug drawing.
     {
         profile_marker(profile_colors::render, "debug drawing");
 
-        bool draw_cell_bounds = get_render_flag(render_flag::draw_cell_bounds);
-        bool draw_object_bounds = get_render_flag(render_flag::draw_object_bounds);
-
-        if (draw_cell_bounds || draw_object_bounds)
+        for (render_view* view : m_scene_manager->get_views())
         {
-            m_visibility_manager->draw_cell_bounds(draw_cell_bounds, draw_object_bounds);
+            if (!view->should_render())
+            {
+                continue;
+            }
+
+            bool draw_cell_bounds = view->has_flag(render_view_flags::draw_cell_bounds);
+            bool draw_object_bounds = view->has_flag(render_view_flags::draw_object_bounds);
+
+            if (draw_cell_bounds || draw_object_bounds)
+            {
+                m_visibility_manager->draw_cell_bounds(draw_cell_bounds, draw_object_bounds, view);
+            }
         }
     }
 
@@ -716,21 +724,18 @@ void renderer::render_state(render_world_state& state)
     m_texture_streamer->begin_frame();
 
     // Perform frustum culling for all views.
-    if (!get_render_flag(render_flag::freeze_rendering))
-    {
-        m_visibility_manager->update_visibility();
-    }
+    m_visibility_manager->update_visibility();
 
-    // Render each view.
+    // Grab a list of active views that should be rendered this frame.
     std::vector<render_view*> views = m_scene_manager->get_views();
 
-    // Strip out any views not markled for rendering this frame.
     auto iter = std::remove_if(views.begin(), views.end(), [](render_view* view) { return !view->should_render(); });
     if (iter != views.end())
     {
         views.erase(iter, views.end());
     }
 
+    // Render each view.    
     struct view_generated_state
     {
         std::vector<render_pass::generated_state> states;
@@ -1092,27 +1097,6 @@ result<void> renderer::destroy_statistics()
 {
 
     return true;
-}
-
-void renderer::set_visualization_mode(visualization_mode mode)
-{
-    db_log(renderer, "Changed visualization mode to %zi", mode);
-    m_visualization_mode = mode;
-}
-
-visualization_mode renderer::get_visualization_mode()
-{
-    return m_visualization_mode;
-}
-
-void renderer::set_render_flag(render_flag flag, bool value)
-{
-    m_render_flags[static_cast<int>(flag)] = value;
-}
-
-bool renderer::get_render_flag(render_flag flag)
-{
-    return m_render_flags[static_cast<int>(flag)];
 }
 
 void renderer::regenerate_reflection_probes()

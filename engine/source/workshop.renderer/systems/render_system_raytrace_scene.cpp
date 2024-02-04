@@ -71,7 +71,7 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
         return;
     }
 
-    if (m_renderer.get_visualization_mode() != visualization_mode::raytraced_scene)
+    if (view.get_visualization_mode() != visualization_mode::raytraced_scene)
     {
         return;
     }

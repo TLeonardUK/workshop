@@ -8,6 +8,8 @@
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_param_block.h"
 
+#include <typeindex>
+
 namespace ws {
 
 class renderer;
@@ -88,6 +90,35 @@ public:
     // found a new one is created.
     render_batch_instance_buffer* find_or_create_instance_buffer(void* key);
 
+    // Finds an arbitrary type of the given key, if one is not found, one is
+    // created and the creation callback is called for it.
+    template <typename data_type>
+    data_type* find_or_create(
+        void* key,
+        std::function<auto() -> std::unique_ptr<data_type>> creation_callback)
+    {
+        std::scoped_lock lock(m_mutex);
+
+        if (auto iter = m_untyped_values.find(key); iter != m_untyped_values.end())
+        {
+            db_assert(iter->second->type == typeid(data_type));
+            return reinterpret_cast<data_type*>(iter->second->get_data());
+        }
+        else
+        {
+            std::unique_ptr<untyped_value<data_type>> block = std::make_unique<untyped_value<data_type>>();
+            block->key = key;
+            block->type = typeid(data_type);
+            block->data = creation_callback();
+
+            data_type* ret = block->data.get();
+
+            m_untyped_values[key] = std::move(block);
+
+            return ret;
+        }
+    }
+
     // Clears all data from the cache.
     void clear();
 
@@ -110,6 +141,33 @@ public:
         std::unique_ptr<render_batch_instance_buffer> buffer;
     };
     std::unordered_map<void*, instance_buffer> m_instance_buffers;
+
+    struct untyped_value_base
+    {
+    public:
+        void* key;
+        std::type_index type = typeid(void);
+
+    public:
+        untyped_value_base() = default;
+        virtual ~untyped_value_base() = default;
+        virtual void* get_data() = 0; 
+    };
+
+    template <typename data_type>
+    struct untyped_value : public untyped_value_base
+    {
+    public:
+        std::unique_ptr<data_type> data;
+
+    public:
+        virtual void* get_data() override
+        {
+            return data.get();
+        }
+    };
+
+    std::unordered_map<void*, std::unique_ptr<untyped_value_base>> m_untyped_values;
 
 };
 

@@ -120,31 +120,6 @@ static inline const char* visualization_mode_strings[] = {
     "Raytraced Scene"
 };
 
-// Global render flags are used to define how various parts of the render pipeline should behave.
-enum class render_flag
-{
-    // Draws the bounds of the active cells in the rendering octtree.
-    draw_cell_bounds,
-
-    // Draws the bounds of individual objects in the rendering octree.
-    draw_object_bounds,
-
-    // Draws any debug rendering for objects that require it. This is used in the editor
-    // to display things like lighting bounds.
-    draw_object_debug,
-
-    // If false direct lighting is used when rendering the scene.
-    disable_direct_lighting,
-
-    // If false ambient lighting is used when rendering the scene.
-    disable_ambient_lighting,
-
-    // If true the rendering is frozen on a given frame but allows the user to continue moving the camera about.
-    freeze_rendering,
-
-    COUNT
-};
-
 // Defines a set of preloaded models that are commonly used for debugging.
 enum class debug_model
 {
@@ -340,9 +315,6 @@ public:
     size_t get_display_width();
     size_t get_display_height();
 
-    // Gets the current visualization mode on the render thread.
-    visualization_mode get_visualization_mode();
-
     // Gets buffers desc
     void get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_index, ri_param_block*& out_model_info);
 
@@ -351,12 +323,6 @@ public:
 
     // Gets a pointer to the given debug material.
     asset_ptr<material> get_debug_material(debug_material model);
-
-    // Sets the value of a flag dictating what and how things should be rendered.
-    void set_render_flag(render_flag flag, bool value);
-
-    // Gets the value of a flag dictating what and how things should be rendered.
-    bool get_render_flag(render_flag flag);
 
     // Regenerates all reflection light probes.
     void regenerate_reflection_probes();
@@ -412,11 +378,6 @@ private:
     // Runs all callbacks that are waiting for a specific frame to complete.
     void run_frame_callbacks();
 
-    // Switchs the visualization mode. 
-    // Don't call directly, use the command queue to change only
-    // on the render thread.
-    void set_visualization_mode(visualization_mode mode);
-
     // Draws a little debug display window with general rendering stats.
     void draw_debug_overlay();
 
@@ -442,8 +403,6 @@ private:
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
     std::unique_ptr<render_texture_streamer> m_texture_streamer;
-
-    std::array<bool, static_cast<int>(render_flag::COUNT)> m_render_flags = { 0 };
 
     // Swapchain state.
 
@@ -472,8 +431,6 @@ private:
     std::vector<fullscreen_buffers> m_fullscreen_buffers;
 
     // Debug menu.
-
-    visualization_mode m_visualization_mode = visualization_mode::normal;
 
     std::unique_ptr<ri_query> m_gpu_time_query;
 

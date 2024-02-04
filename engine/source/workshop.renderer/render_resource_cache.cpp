@@ -260,6 +260,7 @@ void render_resource_cache::clear()
 
     m_blocks.clear();
     m_instance_buffers.clear();
+    m_untyped_values.clear();
 }
 
 }; // namespace ws

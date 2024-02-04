@@ -18,27 +18,6 @@ render_command_queue::render_command_queue(renderer& render, size_t capacity)
 //  Global
 // ===========================================================================================
 
-void render_command_queue::set_visualization_mode(visualization_mode mode)
-{
-    queue_command("set_visualization_mode", [renderer = &m_renderer, mode]() {
-        renderer->set_visualization_mode(mode);
-    });
-}
-
-void render_command_queue::set_render_flag(render_flag flag, bool value)
-{
-    queue_command("set_render_flag", [renderer = &m_renderer, flag, value]() {
-        renderer->set_render_flag(flag, value);
-    });
-}
-
-void render_command_queue::toggle_render_flag(render_flag flag)
-{
-    queue_command("toggle_render_flag", [renderer = &m_renderer, flag]() {
-        renderer->set_render_flag(flag, !renderer->get_render_flag(flag));
-    });
-}
-
 void render_command_queue::regenerate_reflection_probes()
 {
     queue_command("regenerate_reflection_probes", [renderer = &m_renderer]() {
@@ -226,10 +205,17 @@ void render_command_queue::set_view_viewport(render_object_id id, const recti& v
     });
 }
 
-void render_command_queue::set_view_projection(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip)
+void render_command_queue::set_view_perspective(render_object_id id, float fov, float aspect_ratio, float min_depth, float max_depth)
 {
-    queue_command("set_view_projection", [renderer = &m_renderer, id, fov, aspect_ratio, near_clip, far_clip]() {
-        renderer->get_scene_manager().set_view_projection(id, fov, aspect_ratio, near_clip, far_clip);
+    queue_command("set_view_perspective", [renderer = &m_renderer, id, fov, aspect_ratio, min_depth, max_depth]() {
+        renderer->get_scene_manager().set_view_perspective(id, fov, aspect_ratio, min_depth, max_depth);
+    });
+}
+
+void render_command_queue::set_view_orthographic(render_object_id id, rect ortho_rect, float min_depth, float max_depth)
+{
+    queue_command("set_view_orthographic", [renderer = &m_renderer, id, ortho_rect, min_depth, max_depth]() {
+        renderer->get_scene_manager().set_view_orthographic(id, ortho_rect, min_depth, max_depth);
     });
 }
 
@@ -244,6 +230,20 @@ void render_command_queue::set_view_render_target(render_object_id id, ri_textur
 {
     queue_command("set_view_render_target", [renderer = &m_renderer, id, render_target]() {
         renderer->get_scene_manager().set_view_render_target(id, render_target);
+    });
+}
+
+void render_command_queue::set_view_visualization_mode(render_object_id id, visualization_mode mode)
+{
+    queue_command("set_view_visualization_mode", [renderer = &m_renderer, id, mode]() {
+        renderer->get_scene_manager().set_view_visualization_mode(id, mode);
+    });
+}
+
+void render_command_queue::set_view_flags(render_object_id id, render_view_flags flags)
+{
+    queue_command("set_view_flags", [renderer = &m_renderer, id, flags]() {
+        renderer->get_scene_manager().set_view_flags(id, flags);
     });
 }
 

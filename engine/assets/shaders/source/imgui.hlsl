@@ -36,7 +36,10 @@ imgui_poutput pshader(imgui_pinput input)
     f.color = color_texture.Sample(color_sampler, input.uv0) * input.color0;
 
     // Backbuffer is srgb, so cancel out the srgb colors passed in.
-    f.color.rgb = srgb_to_linear(f.color.rgb);
+    if (correct_srgb)
+    {
+        f.color.rgb = srgb_to_linear(f.color.rgb);
+    }
 
     return f;
 }

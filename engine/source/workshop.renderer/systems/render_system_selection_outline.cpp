@@ -52,7 +52,14 @@ void render_system_selection_outline::build_graph(render_graph& graph, const ren
     pass->name = "selection outline";
     pass->system = this;
     pass->technique = m_renderer.get_effect_manager().get_technique("render_selection_outline", {});
-    pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
+    if (view.has_render_target())
+    {
+        pass->output.color_targets.push_back(view.get_render_target());
+    }
+    else
+    {
+        pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
+    }
     pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
     pass->param_blocks.push_back(m_renderer.get_gbuffer_param_block());
     pass->param_blocks.push_back(outline_param_block);

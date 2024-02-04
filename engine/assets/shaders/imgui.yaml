@@ -24,6 +24,7 @@ param_blocks:
       color_texture: texture2d
       color_sampler: sampler     
       projection_matrix: float4x4
+      correct_srgb: bool
 
 render_states:
   imgui_render_state: 

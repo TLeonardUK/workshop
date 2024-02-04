@@ -189,10 +189,19 @@ void editor_camera_movement_system::step(const frame_time& time)
                 movement->rotation_euler.y = std::fmod(movement->rotation_euler.y, math::pi2);
             }
 
-            // Apply current rotation.
-            quat x_rotation = quat::angle_axis(movement->rotation_euler.y, vector3::up);
-            quat y_rotation = quat::angle_axis(movement->rotation_euler.x, vector3::right);
-            target_rotation = y_rotation * x_rotation;
+            // Orthographic views don't allow rotation.
+            if (camera->is_perspective)
+            {
+                // Apply current rotation.
+                quat x_rotation = quat::angle_axis(movement->rotation_euler.y, vector3::up);
+                quat y_rotation = quat::angle_axis(movement->rotation_euler.x, vector3::right);
+                target_rotation = y_rotation * x_rotation;
+            }
+            else
+            {
+                target_rotation = transform->world_rotation;
+                movement->rotation_euler = vector3::zero;
+            }
 
             // Apply movement input.
             target_position += (vector3::forward * target_rotation) * forward_movement * movement->speed;
@@ -203,11 +212,30 @@ void editor_camera_movement_system::step(const frame_time& time)
             target_position += (vector3::forward * target_rotation) * mouse_delta_movement * movement->zoom_speed;
 
             // Apply uncaptured movement.
-            vector3 y_plane_vector = y_plane.project(vector3::forward * target_rotation);
-            target_position += y_plane_vector * y_plane_movement * movement->pan_speed;
+            if (camera->is_perspective)
+            {
+                vector3 y_plane_vector = y_plane.project(vector3::forward * target_rotation);
+                target_position += y_plane_vector * y_plane_movement * movement->pan_speed;
 
-            target_position += (vector3::right * target_rotation) * pan_right_movement * movement->pan_speed;
-            target_position += vector3::up * pan_up_movement * movement->pan_speed;
+                target_position += (vector3::right * target_rotation) * pan_right_movement * movement->pan_speed;
+                target_position += vector3::up * pan_up_movement * movement->pan_speed;
+            }
+            else
+            {
+                target_position += (vector3::right * target_rotation) * pan_right_movement * movement->pan_speed;
+                target_position += (vector3::up * target_rotation) * pan_up_movement * movement->pan_speed;
+            }
+
+            // If in an orthographic perspective ensure position doesn't move to otherside of the plane we are viewing.
+            if (!camera->is_perspective)
+            {
+                vector3 normal = (vector3::forward * transform->local_rotation).normalize();
+                plane view_plane(-normal, vector3::zero);
+                if (view_plane.classify(target_position) != plane::classification::infront)
+                {
+                    target_position = view_plane.project(target_position) + (normal * 0.1f);
+                }
+            }
 
             // Tell the transform system to move our camera to the new target transform.
             m_manager.get_system<transform_system>()->set_local_transform(obj, target_position, target_rotation, transform->local_scale);

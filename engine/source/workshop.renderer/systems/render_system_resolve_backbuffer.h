@@ -30,7 +30,6 @@ private:
 
 private:
     std::unique_ptr<ri_buffer> m_luminance_histogram_buffer;
-    std::unique_ptr<ri_buffer> m_luminance_average_buffer;
 
 };
 

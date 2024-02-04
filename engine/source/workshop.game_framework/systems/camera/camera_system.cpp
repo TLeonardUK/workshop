@@ -12,6 +12,8 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 
+#pragma optimize("", off)
+
 namespace ws {
 
 camera_system::camera_system(object_manager& manager)
@@ -42,9 +44,9 @@ void camera_system::set_viewport(object handle, const recti& viewport)
     });
 }
 
-void camera_system::set_projection(object handle, float fov, float aspect_ratio, float min_depth, float max_depth)
+void camera_system::set_perspective(object handle, float fov, float aspect_ratio, float min_depth, float max_depth)
 {
-    m_command_queue.queue_command("set_projection", [this, handle, fov, aspect_ratio, min_depth, max_depth]() {
+    m_command_queue.queue_command("set_perspective", [this, handle, fov, aspect_ratio, min_depth, max_depth]() {
         camera_component* component = m_manager.get_component<camera_component>(handle);
         if (component)
         {
@@ -52,13 +54,36 @@ void camera_system::set_projection(object handle, float fov, float aspect_ratio,
             component->aspect_ratio = aspect_ratio;
             component->min_depth = min_depth;
             component->max_depth = max_depth;
+            component->is_perspective = true;
 
             if (component->view_id != null_render_object)
             {
                 engine& engine = m_manager.get_world().get_engine();
                 render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
-                render_command_queue.set_view_projection(component->view_id, component->fov, component->aspect_ratio, component->min_depth, component->max_depth);
+                render_command_queue.set_view_perspective(component->view_id, component->fov, component->aspect_ratio, component->min_depth, component->max_depth);
+            }
+        }
+    });
+}
+
+void camera_system::set_orthographic(object handle, rect ortho_rect, float min_depth, float max_depth)
+{
+    m_command_queue.queue_command("set_orthographic", [this, handle, ortho_rect, min_depth, max_depth]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->ortho_rect = ortho_rect;
+            component->min_depth = min_depth;
+            component->max_depth = max_depth;
+            component->is_perspective = false;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_view_orthographic(component->view_id, component->ortho_rect, component->min_depth, component->max_depth);
             }
         }
     });
@@ -83,6 +108,25 @@ void camera_system::set_draw_flags(object handle, render_draw_flags flags)
     });
 }
 
+void camera_system::set_view_flags(object handle, render_view_flags flags)
+{
+    m_command_queue.queue_command("set_view_flags", [this, handle, flags]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->view_flags = flags;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_view_flags(component->view_id, component->view_flags);
+            }
+        }
+    });
+}
+
 void camera_system::set_render_target(object handle, ri_texture_view texture)
 {
     m_command_queue.queue_command("set_render_target", [this, handle, texture]() {
@@ -97,6 +141,25 @@ void camera_system::set_render_target(object handle, ri_texture_view texture)
                 render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
                 render_command_queue.set_view_render_target(component->view_id, component->render_target);
+            }
+        }
+    });
+}
+
+void camera_system::set_visualization_mode(object handle, visualization_mode mode)
+{
+    m_command_queue.queue_command("set_visualization_mode", [this, handle, mode]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->visualization_mode = mode;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_view_visualization_mode(component->view_id, component->visualization_mode);
             }
         }
     });
@@ -219,9 +282,19 @@ void camera_system::step(const frame_time& time)
             }
 
             render_command_queue.set_view_viewport(camera->view_id, viewport);
-            render_command_queue.set_view_projection(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
             render_command_queue.set_object_draw_flags(camera->view_id, camera->draw_flags);
+            render_command_queue.set_view_flags(camera->view_id, camera->view_flags);
+
+            if (camera->is_perspective)
+            {
+                render_command_queue.set_view_perspective(camera->view_id, camera->fov, camera->aspect_ratio, camera->min_depth, camera->max_depth);
+            }
+            else
+            {
+                render_command_queue.set_view_orthographic(camera->view_id, camera->ortho_rect, camera->min_depth, camera->max_depth);
+            }
+
             update_matrices = true;
 
             camera->is_dirty = false;
@@ -238,11 +311,24 @@ void camera_system::step(const frame_time& time)
 
         if (update_matrices)
         {
-            camera->projection_matrix = matrix4::perspective(
-                math::radians(camera->fov),
-                camera->aspect_ratio,
-                camera->min_depth,
-                camera->max_depth);
+            if (camera->is_perspective)
+            {
+                camera->projection_matrix = matrix4::perspective(
+                    math::radians(camera->fov),
+                    camera->aspect_ratio,
+                    camera->min_depth,
+                    camera->max_depth);
+            }
+            else
+            {
+                camera->projection_matrix = matrix4::orthographic(
+                    camera->ortho_rect.x,
+                    camera->ortho_rect.x + camera->ortho_rect.width,
+                    camera->ortho_rect.y + camera->ortho_rect.height,
+                    camera->ortho_rect.y,
+                    camera->min_depth,
+                    camera->max_depth);
+            }
 
             camera->view_matrix = matrix4::look_at(
                 transform->world_location,

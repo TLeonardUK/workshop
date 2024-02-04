@@ -49,11 +49,13 @@ result<void> render_system_resolve_backbuffer::create_resources()
 
     data.resize(4);
 
+    /*
     buffer_params.element_count = 1;
     buffer_params.element_size = 4;
     buffer_params.usage = ri_buffer_usage::generic;
     buffer_params.linear_data = data;
     m_luminance_average_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "luminance average");
+    */
 
     return true;
 }
@@ -70,6 +72,21 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
         return;
     }
 
+    // Cache a buffer for storing the average luminance.
+    ri_buffer* luminance_average_buffer = view.get_resource_cache().find_or_create<ri_buffer>(this, [this]() {
+
+        std::vector<uint8_t> data;
+        data.resize(4);
+
+        ri_buffer::create_params buffer_params;
+        buffer_params.element_count = 1;
+        buffer_params.element_size = 4;
+        buffer_params.usage = ri_buffer_usage::generic;
+        buffer_params.linear_data = data;
+        return m_renderer.get_render_interface().create_buffer(buffer_params, "luminance average");
+
+    });
+
     // Calculate luminance calculation parameters.
     const float min_luminance = cvar_eye_adapation_min_luminance.get(); 
     const float max_luminance = cvar_eye_adapation_max_luminance.get();
@@ -85,7 +102,7 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     resolve_luminance_params->set("input_target", texture);
     resolve_luminance_params->set("input_dimensions", vector2i((int)texture.get_width(), (int)texture.get_height()));
     resolve_luminance_params->set("histogram_buffer", *m_luminance_histogram_buffer, true);
-    resolve_luminance_params->set("average_buffer", *m_luminance_average_buffer, true);
+    resolve_luminance_params->set("average_buffer", *luminance_average_buffer, true);
     resolve_luminance_params->set("time_coeff", time_coeff);
 
     // Calculate the luminance histogram
@@ -139,21 +156,14 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     }
 
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_parameters");
-    if (view.has_flag(render_view_flags::scene_only))
-    {
-        resolve_param_block->set("visualization_mode", (int)visualization_mode::normal);
-    }
-    else
-    {
-        resolve_param_block->set("visualization_mode", (int)m_renderer.get_visualization_mode());
-    }
+    resolve_param_block->set("visualization_mode", (int)view.get_visualization_mode());
     resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
     resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
     resolve_param_block->set("raytraced_scene_texture", m_renderer.get_system<render_system_raytrace_scene>()->get_output_buffer());
     resolve_param_block->set("raytraced_scene_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
     resolve_param_block->set("tonemap_enabled", !is_hdr_output && !view.has_flag(render_view_flags::constant_eye_adaption));
     resolve_param_block->set("white_point_squared", math::square(white_point));    
-    resolve_param_block->set("average_luminance_buffer", *m_luminance_average_buffer, true);
+    resolve_param_block->set("average_luminance_buffer", *luminance_average_buffer, true);
     resolve_param_block->set("uv_scale", vector2(
         (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
         (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()

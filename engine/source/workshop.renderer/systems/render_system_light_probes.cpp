@@ -84,7 +84,7 @@ void render_system_light_probes::build_graph(render_graph& graph, const render_w
         return;
     }
 
-    if (m_renderer.get_visualization_mode() != visualization_mode::light_probes)
+    if (view.get_visualization_mode() != visualization_mode::light_probes)
     {
         return;
     }

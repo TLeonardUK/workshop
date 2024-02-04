@@ -65,6 +65,9 @@ bool render_view::has_render_target()
 void render_view::set_flags(render_view_flags flags)
 {
     m_flags = flags;
+
+    update_render_target_flags();
+    update_visibility_flags();
 }
 
 render_view_flags render_view::get_flags()
@@ -102,6 +105,16 @@ void render_view::set_viewport(const recti& viewport)
 recti render_view::get_viewport()
 {
     return m_viewport;
+}
+
+void render_view::set_visualization_mode(visualization_mode mode)
+{
+    m_visualization_mode = mode;
+}
+
+visualization_mode render_view::get_visualization_mode()
+{
+    return m_visualization_mode;
 }
 
 void render_view::set_clip(float near, float far)
@@ -176,6 +189,7 @@ matrix4 render_view::get_view_matrix()
     {
     default:
     case render_view_type::perspective:
+    case render_view_type::ortographic:
         {
             return matrix4::look_at(
                 m_local_location,
@@ -187,6 +201,17 @@ matrix4 render_view::get_view_matrix()
             return m_custom_view_matrix;
         }
     }
+}
+
+
+void render_view::set_orthographic_rect(rect value)
+{
+    m_ortho_rect = value;
+}
+
+rect render_view::get_orthographic_rect()
+{
+    return m_ortho_rect;
 }
 
 void render_view::set_projection_matrix(matrix4 value)
@@ -211,6 +236,16 @@ matrix4 render_view::get_projection_matrix()
             return matrix4::perspective(
                 math::radians(m_field_of_view),
                 m_aspect_ratio,
+                m_near_clip,
+                m_far_clip);
+        }
+    case render_view_type::ortographic:
+        {
+            return matrix4::orthographic(
+                m_ortho_rect.x,
+                m_ortho_rect.x + m_ortho_rect.width,
+                m_ortho_rect.y + m_ortho_rect.height,
+                m_ortho_rect.y,
                 m_near_clip,
                 m_far_clip);
         }
@@ -281,12 +316,23 @@ void render_view::set_active(bool value)
 {
     m_active = value;
 
-    m_renderer->get_visibility_manager().set_view_active(m_visibility_view_id, value);
+    update_visibility_flags();
 }
 
 bool render_view::get_active()
 {
     return m_active;
+}
+
+void render_view::update_visibility_flags()
+{
+    bool active = m_active;
+    if (has_flag(render_view_flags::freeze_rendering))
+    {
+        active = false;
+    }
+
+    m_renderer->get_visibility_manager().set_view_active(m_visibility_view_id, active);
 }
 
 render_visibility_manager::view_id render_view::get_visibility_view_id()
@@ -346,16 +392,10 @@ void render_view::update_render_target_flags()
     if (m_render_target.texture)
     {
         m_flags = m_flags | render_view_flags::capture;
-        m_flags = m_flags | render_view_flags::scene_only;
-        m_flags = m_flags | render_view_flags::constant_ambient_lighting;
-        m_flags = m_flags | render_view_flags::constant_eye_adaption;
     }
     else
     {
         m_flags = m_flags & ~render_view_flags::capture;
-        m_flags = m_flags & ~render_view_flags::scene_only;
-        m_flags = m_flags & ~render_view_flags::constant_ambient_lighting;
-        m_flags = m_flags & ~render_view_flags::constant_eye_adaption;
     }
 }
 

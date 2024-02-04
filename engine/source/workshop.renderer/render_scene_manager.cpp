@@ -231,7 +231,7 @@ void render_scene_manager::set_view_viewport(render_object_id id, const recti& v
     }
 }
 
-void render_scene_manager::set_view_projection(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip)
+void render_scene_manager::set_view_perspective(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip)
 {
     std::scoped_lock lock(m_mutex);
 
@@ -240,10 +240,27 @@ void render_scene_manager::set_view_projection(render_object_id id, float fov, f
         object->set_fov(fov);
         object->set_aspect_ratio(aspect_ratio);
         object->set_clip(near_clip, far_clip);
+        object->set_view_type(render_view_type::perspective);
     }
     else
     {
         db_warning(renderer, "set_view_projection called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_view_orthographic(render_object_id id, rect ortho_rect, float near_clip, float far_clip)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->set_orthographic_rect(ortho_rect);
+        object->set_clip(near_clip, far_clip);
+        object->set_view_type(render_view_type::ortographic);
+    }
+    else
+    {
+        db_warning(renderer, "set_view_orthographic called with non-existant id {%zi}.", id);
     }
 }
 
@@ -272,6 +289,34 @@ void render_scene_manager::set_view_render_target(render_object_id id, ri_textur
     else
     {
         db_warning(renderer, "set_view_render_target called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_view_visualization_mode(render_object_id id, visualization_mode mode)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->set_visualization_mode(mode);
+    }
+    else
+    {
+        db_warning(renderer, "set_view_visualization_mode called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::set_view_flags(render_object_id id, render_view_flags mode)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->set_flags(mode);
+    }
+    else
+    {
+        db_warning(renderer, "set_view_flags called with non-existant id {%zi}.", id);
     }
 }
 

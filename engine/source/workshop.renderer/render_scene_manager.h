@@ -105,8 +105,11 @@ public:
     // Set the viewport in pixel space to which to render the view.    
     void set_view_viewport(render_object_id id, const recti& viewport);
 
-    // Sets the projection parameters of the view.
-    void set_view_projection(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip);
+    // Sets the camera to a perspective view with the given settings.
+    void set_view_perspective(render_object_id id, float fov, float aspect_ratio, float min_depth, float max_depth);
+
+    // Sets the camera to an orthographic view with the given settings.
+    void set_view_orthographic(render_object_id id, rect ortho_rect, float min_depth, float max_depth);
 
     // Sets a pixmap that a views output will be copied to.
     void set_view_readback_pixmap(render_object_id id, pixmap* output);
@@ -114,6 +117,12 @@ public:
     // Sets the render target the view renders to, if nullptr it will be rendered
     // to the back buffer.
     void set_view_render_target(render_object_id id, ri_texture_view render_target);
+
+    // Sets what debug visualization the view is rendered with.
+    void set_view_visualization_mode(render_object_id id, visualization_mode mode);
+
+    // Sets render flags defining what passes the view renders
+    void set_view_flags(render_object_id id, render_view_flags mode);
 
     // Gets a list of all active views.
     std::vector<render_view*> get_views();

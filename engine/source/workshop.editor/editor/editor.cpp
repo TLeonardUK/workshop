@@ -218,36 +218,6 @@ result<void> editor::create_main_menu(init_list& list)
         m_engine.get_renderer().get_command_queue().regenerate_reflection_probes();
     }));
 
-    // Adding rendering options.
-    for (size_t i = 0; i < static_cast<size_t>(visualization_mode::COUNT); i++)
-    {
-        std::string path = string_format("Render/Visualization/%s", visualization_mode_strings[i]);
-
-        auto option = m_main_menu->add_menu_item(path.c_str(), [this, i]() {
-            m_engine.get_renderer().get_command_queue().set_visualization_mode(static_cast<visualization_mode>(i));
-        });
-
-        m_main_menu_options.push_back(std::move(option));
-    }
-
-    m_main_menu_options.push_back(m_main_menu->add_menu_seperator("Render"));
-
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Render/Toggle Cell Bounds", [this]() { 
-        m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::draw_cell_bounds);
-    }));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Render/Toggle Object Bounds", [this]() { 
-        m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::draw_object_bounds);
-    }));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Render/Toggle Direct Lighting", [this]() { 
-        m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::disable_direct_lighting);
-    }));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Render/Toggle Ambient Lighting", [this]() { 
-        m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::disable_ambient_lighting);
-    }));
-    m_main_menu_options.push_back(m_main_menu->add_menu_item("Render/Toggle Freeze Rendering", [this]() { 
-        m_engine.get_renderer().get_command_queue().toggle_render_flag(render_flag::freeze_rendering);
-    }));
-
     // Window Settings
     m_main_menu_options.push_back(m_main_menu->add_menu_item("Window/Reset Layout", [this]() { 
         m_set_default_dock_space = false;

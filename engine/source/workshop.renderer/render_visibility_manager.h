@@ -161,7 +161,7 @@ public:
 
     // Debug rendering.
 
-    void draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds);
+    void draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds, render_view* view);
 
 private:
 

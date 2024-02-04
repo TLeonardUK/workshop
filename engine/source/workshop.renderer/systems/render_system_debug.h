@@ -37,18 +37,18 @@ public:
     virtual void step(const render_world_state& state) override;
     virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
 
-    void add_line(const vector3& start, const vector3& end, const color& color);
-    void add_aabb(const aabb& bounds, const color& color);
-    void add_obb(const obb& bounds, const color& color);
-    void add_sphere(const sphere& bounds, const color& color);
-    void add_frustum(const frustum& bounds, const color& color);
-    void add_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color);
-    void add_cylinder(const cylinder& bounds, const color& color);
-    void add_capsule(const cylinder& bounds, const color& color);
-    void add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true);
-    void add_cone(const vector3& origin, const vector3& end, float radius, const color& color);
-    void add_arrow(const vector3& start, const vector3& end, const color& color);
-    void add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
+    void add_line(const vector3& start, const vector3& end, const color& color, render_view* only_view = nullptr);
+    void add_aabb(const aabb& bounds, const color& color, render_view* only_view = nullptr);
+    void add_obb(const obb& bounds, const color& color, render_view* only_view = nullptr);
+    void add_sphere(const sphere& bounds, const color& color, render_view* only_view = nullptr);
+    void add_frustum(const frustum& bounds, const color& color, render_view* only_view = nullptr);
+    void add_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color, render_view* only_view = nullptr);
+    void add_cylinder(const cylinder& bounds, const color& color, render_view* only_view = nullptr);
+    void add_capsule(const cylinder& bounds, const color& color, render_view* only_view = nullptr);
+    void add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true, render_view* only_view = nullptr);
+    void add_cone(const vector3& origin, const vector3& end, float radius, const color& color, render_view* only_view = nullptr);
+    void add_arrow(const vector3& start, const vector3& end, const color& color, render_view* only_view = nullptr);
+    void add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color, render_view* only_view = nullptr);
 
 private:
 
@@ -73,22 +73,32 @@ private:
 
 private:
 
+    struct data_buffer
+    {
+        std::unique_ptr<ri_buffer> position_buffer;
+        std::unique_ptr<ri_buffer> color0_buffer;
+        std::unique_ptr<ri_buffer> index_buffer;
+
+        std::mutex vertices_mutex;
+        std::vector<debug_primitive_vertex> vertices;
+        size_t queued_vertex_count = 0;
+        size_t draw_vertex_count = 0;
+    };
+
     shape& find_or_create_cached_shape(shape_type type);
-    void add_cached_shape(const shape& shape, const vector3& offset, const vector3& scale, const color& color);
+    void add_cached_shape(const shape& shape, const vector3& offset, const vector3& scale, const color& color, render_view* only_view = nullptr);
+
+    void step_data_buffer(data_buffer* buffer);
+
+    data_buffer* get_data_buffer(render_view* view, bool create_if_not_found);
 
 private:
-
     std::mutex m_cached_shape_mutex;
     std::vector<std::unique_ptr<shape>> m_cached_shapes;
 
-    std::mutex m_vertices_mutex;
-    std::vector<debug_primitive_vertex> m_vertices;
-    size_t m_queued_vertex_count = 0;
-    size_t m_draw_vertex_count = 0;
-
-    std::unique_ptr<ri_buffer> m_position_buffer;
-    std::unique_ptr<ri_buffer> m_color0_buffer;
-    std::unique_ptr<ri_buffer> m_index_buffer;
+    std::mutex m_buffer_mutex;
+    data_buffer m_global_buffer;
+    std::unordered_map<render_view*, std::unique_ptr<data_buffer>> m_view_only_buffers;
 
 };
 

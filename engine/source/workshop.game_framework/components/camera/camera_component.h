@@ -34,6 +34,12 @@ public:
 	// Maximum rendered depth of the view.
 	float max_depth = 20000.0f;
 
+    // If true use an perspective projection, otherwise use orthographic.
+    bool is_perspective = true;
+
+    // Area of the world the orthographic view displays.
+    rect ortho_rect = rect::empty;
+
     // Viewport the camera is rendered with.
     recti viewport = recti(0, 0, 0, 0);
 
@@ -43,6 +49,12 @@ public:
 
     // Render flags that dictate what gets drawn to this camera view.
     render_draw_flags draw_flags = render_draw_flags::geometry;
+
+    // Configures the parts of the view pipeline that contributes to this camera.
+    render_view_flags view_flags = render_view_flags::normal;
+
+    // Debug mode the cameras view is rendered in.
+    visualization_mode visualization_mode = visualization_mode::normal;
 
     // Render target to draw to.
     ri_texture_view render_target = {};

@@ -54,10 +54,12 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
                 continue;
             }
 
+            bool correct_srgb = false;
             ri_texture* texture = static_cast<ri_texture*>(cmd.texture);
             if (texture == nullptr)
             {
                 texture = default_texture;
+                correct_srgb = true;
             }
 
             std::size_t imgui_params_hash = reinterpret_cast<std::size_t>(get_cache_key(*view));
@@ -74,7 +76,8 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
                 0.0f,
                 1.0f
             ));
-            
+            imgui_params->set("correct_srgb", correct_srgb);
+
             list.set_param_blocks({ vertex_info_param_block, imgui_params });
             list.set_scissor(recti((int)cmd.scissor.x, (int)cmd.scissor.y, (int)cmd.scissor.width, (int)cmd.scissor.height));
             list.draw(cmd.count, 1, cmd.offset);

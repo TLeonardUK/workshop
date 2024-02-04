@@ -221,7 +221,7 @@ void render_visibility_manager::update_object_frustum(view_id id, render_object_
     }
 }
 
-void render_visibility_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds)
+void render_visibility_manager::draw_cell_bounds(bool draw_cell_bounds, bool draw_object_bounds, render_view* view)
 {
     std::shared_lock lock(m_mutex);
 
@@ -232,14 +232,14 @@ void render_visibility_manager::draw_cell_bounds(bool draw_cell_bounds, bool dra
     {
         if (draw_cell_bounds)
         {
-            debug_system->add_aabb(cell->bounds, color::green);
+            debug_system->add_aabb(cell->bounds, color::green, view);
         }
 
         for (auto& entry : cell->elements)
         {
             if (draw_object_bounds)
             {
-                debug_system->add_aabb(entry.bounds, color::blue);
+                debug_system->add_aabb(entry.bounds, color::blue, view);
             }
         }
     }

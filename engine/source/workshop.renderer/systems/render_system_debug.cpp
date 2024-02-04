@@ -46,94 +46,163 @@ void render_system_debug::build_graph(render_graph& graph, const render_world_st
         return;
     }
 
-    if (m_position_buffer == nullptr || m_color0_buffer == nullptr)
+    if (m_global_buffer.position_buffer != nullptr)
     {
-        return;
+        std::unique_ptr<render_pass_primitives> pass = std::make_unique<render_pass_primitives>();
+        pass->name = "global debug primitives";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("render_debug_primitive", {});
+        if (view.has_render_target())
+        {
+            pass->output.color_targets.push_back(view.get_render_target());
+        }
+        else
+        {
+            pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
+        }
+        pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
+        pass->position_buffer = m_global_buffer.position_buffer.get();
+        pass->color0_buffer = m_global_buffer.color0_buffer.get();
+        pass->index_buffer = m_global_buffer.index_buffer.get();
+        pass->vertex_count = m_global_buffer.draw_vertex_count;
+        graph.add_node(std::move(pass));
     }
 
-    std::unique_ptr<render_pass_primitives> pass = std::make_unique<render_pass_primitives>();
-    pass->name = "debug primitives";
-    pass->system = this;
-    pass->technique = m_renderer.get_effect_manager().get_technique("render_debug_primitive", {});
-    pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
-    pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
-    pass->position_buffer = m_position_buffer.get(); 
-    pass->color0_buffer = m_color0_buffer.get(); 
-    pass->index_buffer = m_index_buffer.get();
-    pass->vertex_count = m_draw_vertex_count;
-    graph.add_node(std::move(pass));
+    if (data_buffer* buffer = get_data_buffer(&view, false))
+    {   
+        std::unique_ptr<render_pass_primitives> pass = std::make_unique<render_pass_primitives>();
+        pass->name = "view-only debug primitives";
+        pass->system = this;
+        pass->technique = m_renderer.get_effect_manager().get_technique("render_debug_primitive", {});
+        if (view.has_render_target())
+        {
+            pass->output.color_targets.push_back(view.get_render_target());
+        }
+        else
+        {
+            pass->output.color_targets = m_renderer.get_swapchain_output().color_targets;
+        }
+        pass->output.depth_target = m_renderer.get_gbuffer_output().depth_target;
+        pass->position_buffer = buffer->position_buffer.get();
+        pass->color0_buffer = buffer->color0_buffer.get();
+        pass->index_buffer = buffer->index_buffer.get();
+        pass->vertex_count = buffer->draw_vertex_count;
+        graph.add_node(std::move(pass));
+    }
 }
 
-void render_system_debug::step(const render_world_state& state)
+render_system_debug::data_buffer* render_system_debug::get_data_buffer(render_view* view, bool create_if_not_found)
 {
-    std::scoped_lock mutex(m_vertices_mutex);
+    if (view == nullptr)
+    {
+        return &m_global_buffer;
+    }
 
+    std::scoped_lock buffer_mutex(m_buffer_mutex);
+
+    if (auto iter = m_view_only_buffers.find(view); iter != m_view_only_buffers.end())
+    {
+        return iter->second.get();
+    }
+
+    if (create_if_not_found)
+    {
+        std::unique_ptr<data_buffer> new_buffer = std::make_unique<data_buffer>();
+        data_buffer* ptr = new_buffer.get();
+
+        m_view_only_buffers[view] = std::move(new_buffer);
+
+        return ptr;
+    }
+
+    return nullptr;
+}
+
+void render_system_debug::step_data_buffer(data_buffer* buffer)
+{
     ri_interface& ri = m_renderer.get_render_interface();
 
-    if (m_queued_vertex_count == 0)
+    std::scoped_lock mutex(buffer->vertices_mutex);
+
+    if (buffer->queued_vertex_count == 0)
     {
-        m_draw_vertex_count = 0;
+        buffer->draw_vertex_count = 0;
         return;
     }
 
     // Make sure position/color buffers have enough space.
-    if (m_position_buffer == nullptr || m_position_buffer->get_element_count() < m_queued_vertex_count)
+    if (buffer->position_buffer == nullptr || 
+        buffer->position_buffer->get_element_count() < buffer->queued_vertex_count)
     {
         ri_buffer::create_params params;
-        params.element_count = m_queued_vertex_count;
+        params.element_count = buffer->queued_vertex_count;
         params.element_size = sizeof(vector3);
         params.usage = ri_buffer_usage::vertex_buffer;
 
-        m_position_buffer = ri.create_buffer(params, "Debug Primitive Vertex Stream [Position]");
+        buffer->position_buffer = ri.create_buffer(params, "Debug Primitive Vertex Stream [Position]");
     }
 
-    if (m_color0_buffer == nullptr || m_color0_buffer->get_element_count() < m_queued_vertex_count)
+    if (buffer->color0_buffer == nullptr || buffer->color0_buffer->get_element_count() < buffer->queued_vertex_count)
     {
         ri_buffer::create_params params;
-        params.element_count = m_queued_vertex_count;
+        params.element_count = buffer->queued_vertex_count;
         params.element_size = sizeof(vector4);
         params.usage = ri_buffer_usage::vertex_buffer;
 
-        m_color0_buffer = ri.create_buffer(params, "Debug Primitive Vertex Stream [Color0]");
+        buffer->color0_buffer = ri.create_buffer(params, "Debug Primitive Vertex Stream [Color0]");
     }
 
     // Make sure index buffer has enough space.
-    if (m_index_buffer == nullptr || m_index_buffer->get_element_count() < m_queued_vertex_count)
+    if (buffer->index_buffer == nullptr || buffer->index_buffer->get_element_count() < buffer->queued_vertex_count)
     {
         ri_buffer::create_params params;
-        params.element_count = m_queued_vertex_count;
+        params.element_count = buffer->queued_vertex_count;
         params.element_size = sizeof(uint32_t);
         params.usage = ri_buffer_usage::index_buffer;
 
-        m_index_buffer = ri.create_buffer(params, "Debug Primitive Index Buffer");
+        buffer->index_buffer = ri.create_buffer(params, "Debug Primitive Index Buffer");
 
         // Update index buffer.
-        uint32_t* index_ptr = reinterpret_cast<uint32_t*>(m_index_buffer->map(0, m_queued_vertex_count * sizeof(uint32_t)));
-        for (size_t i = 0; i < m_queued_vertex_count; i++)
+        uint32_t* index_ptr = reinterpret_cast<uint32_t*>(buffer->index_buffer->map(0, buffer->queued_vertex_count * sizeof(uint32_t)));
+        for (size_t i = 0; i < buffer->queued_vertex_count; i++)
         {
             index_ptr[i] = static_cast<uint32_t>(i);
         }
-        m_index_buffer->unmap(index_ptr);
+        buffer->index_buffer->unmap(index_ptr);
     }
 
     // Update vertex buffer.
-    vector3* position_ptr = reinterpret_cast<vector3*>(m_position_buffer->map(0, m_queued_vertex_count * sizeof(vector3)));
-    for (size_t i = 0; i < m_queued_vertex_count; i++)
+    vector3* position_ptr = reinterpret_cast<vector3*>(buffer->position_buffer->map(0, buffer->queued_vertex_count * sizeof(vector3)));
+    for (size_t i = 0; i < buffer->queued_vertex_count; i++)
     {
-        position_ptr[i] = m_vertices[i].position;
+        position_ptr[i] = buffer->vertices[i].position;
     }
-    m_position_buffer->unmap(position_ptr);
+    buffer->position_buffer->unmap(position_ptr);
 
-    vector4* color0_ptr = reinterpret_cast<vector4*>(m_color0_buffer->map(0, m_queued_vertex_count * sizeof(vector4)));
-    for (size_t i = 0; i < m_queued_vertex_count; i++)
+    vector4* color0_ptr = reinterpret_cast<vector4*>(buffer->color0_buffer->map(0, buffer->queued_vertex_count * sizeof(vector4)));
+    for (size_t i = 0; i < buffer->queued_vertex_count; i++)
     {
-        color0_ptr[i] = m_vertices[i].color;
+        color0_ptr[i] = buffer->vertices[i].color;
     }
-    m_color0_buffer->unmap(color0_ptr);
+    buffer->color0_buffer->unmap(color0_ptr);
 
     // Reset vertex buffer so we can start filling it again.
-    m_draw_vertex_count = m_queued_vertex_count;
-    m_queued_vertex_count = 0;
+    buffer->draw_vertex_count = buffer->queued_vertex_count;
+    buffer->queued_vertex_count = 0;
+}
+
+void render_system_debug::step(const render_world_state& state)
+{
+    ri_interface& ri = m_renderer.get_render_interface();
+
+    std::scoped_lock buffer_mutex(m_buffer_mutex);
+
+    step_data_buffer(&m_global_buffer);
+
+    for (auto& pair : m_view_only_buffers)
+    {
+        step_data_buffer(pair.second.get());
+    }
 }
 
 render_system_debug::shape& render_system_debug::find_or_create_cached_shape(shape_type type)
@@ -156,15 +225,17 @@ render_system_debug::shape& render_system_debug::find_or_create_cached_shape(sha
     return *result;
 }
 
-void render_system_debug::add_cached_shape(const shape& shape, const vector3& offset, const vector3& scale, const color& color)
+void render_system_debug::add_cached_shape(const shape& shape, const vector3& offset, const vector3& scale, const color& color, render_view* only_view)
 {
-    std::scoped_lock mutex(m_vertices_mutex);
+    data_buffer* buffer = get_data_buffer(only_view, true);
 
-    size_t start_index = m_queued_vertex_count;
-    m_queued_vertex_count += shape.positions.size();
-    if (m_queued_vertex_count > m_vertices.size())
+    std::scoped_lock mutex(buffer->vertices_mutex);
+
+    size_t start_index = buffer->queued_vertex_count;
+    buffer->queued_vertex_count += shape.positions.size();
+    if (buffer->queued_vertex_count > buffer->vertices.size())
     {
-        m_vertices.resize(m_queued_vertex_count);
+        buffer->vertices.resize(buffer->queued_vertex_count);
     }
 
     for (size_t i = 0; i < shape.positions.size(); i += 2)
@@ -175,75 +246,77 @@ void render_system_debug::add_cached_shape(const shape& shape, const vector3& of
         p1 = offset + (p1 * scale);
         p2 = offset + (p2 * scale);
 
-        debug_primitive_vertex& v0 = m_vertices[start_index + i + 0];
+        debug_primitive_vertex& v0 = buffer->vertices[start_index + i + 0];
         v0.position = p1;
         v0.color = color.rgba();
 
-        debug_primitive_vertex& v1 = m_vertices[start_index + i + 1];
+        debug_primitive_vertex& v1 = buffer->vertices[start_index + i + 1];
         v1.position = p2;
         v1.color = color.rgba();
     }
 }
 
-void render_system_debug::add_line(const vector3& start, const vector3& end, const color& color)
+void render_system_debug::add_line(const vector3& start, const vector3& end, const color& color, render_view* only_view)
 {
-    std::scoped_lock mutex(m_vertices_mutex);
+    data_buffer* buffer = get_data_buffer(only_view, true);
 
-    size_t start_index = m_queued_vertex_count;
-    m_queued_vertex_count += 2;
-    if (m_queued_vertex_count > m_vertices.size())
+    std::scoped_lock mutex(buffer->vertices_mutex);
+
+    size_t start_index = buffer->queued_vertex_count;
+    buffer->queued_vertex_count += 2;
+    if (buffer->queued_vertex_count > buffer->vertices.size())
     {
-        m_vertices.resize(m_queued_vertex_count);
+        buffer->vertices.resize(buffer->queued_vertex_count);
     }
 
-    debug_primitive_vertex& v0 = m_vertices[start_index + 0];
+    debug_primitive_vertex& v0 = buffer->vertices[start_index + 0];
     v0.position = start;
     v0.color = color.rgba();
 
-    debug_primitive_vertex& v1 = m_vertices[start_index + 1];
+    debug_primitive_vertex& v1 = buffer->vertices[start_index + 1];
     v1.position = end;
     v1.color = color.rgba();
 }
 
-void render_system_debug::add_aabb(const aabb& bounds, const color& color)
+void render_system_debug::add_aabb(const aabb& bounds, const color& color, render_view* only_view)
 {
     vector3 corners[aabb::k_corner_count];
     bounds.get_corners(corners);
     
-    add_line(corners[(int)aabb::corner::back_top_left], corners[(int)aabb::corner::back_top_right], color);
-    add_line(corners[(int)aabb::corner::front_top_left], corners[(int)aabb::corner::front_top_right], color);
-    add_line(corners[(int)aabb::corner::back_top_left], corners[(int)aabb::corner::front_top_left], color);
-    add_line(corners[(int)aabb::corner::back_top_right], corners[(int)aabb::corner::front_top_right], color);
-    add_line(corners[(int)aabb::corner::back_bottom_left], corners[(int)aabb::corner::back_bottom_right], color);
-    add_line(corners[(int)aabb::corner::front_bottom_left], corners[(int)aabb::corner::front_bottom_right], color);
-    add_line(corners[(int)aabb::corner::back_bottom_left], corners[(int)aabb::corner::front_bottom_left], color);
-    add_line(corners[(int)aabb::corner::back_bottom_right], corners[(int)aabb::corner::front_bottom_right], color);
-    add_line(corners[(int)aabb::corner::back_top_left], corners[(int)aabb::corner::back_bottom_left], color);
-    add_line(corners[(int)aabb::corner::back_top_right], corners[(int)aabb::corner::back_bottom_right], color);
-    add_line(corners[(int)aabb::corner::front_top_left], corners[(int)aabb::corner::front_bottom_left], color);
-    add_line(corners[(int)aabb::corner::front_top_right], corners[(int)aabb::corner::front_bottom_right], color);
+    add_line(corners[(int)aabb::corner::back_top_left], corners[(int)aabb::corner::back_top_right], color, only_view);
+    add_line(corners[(int)aabb::corner::front_top_left], corners[(int)aabb::corner::front_top_right], color, only_view);
+    add_line(corners[(int)aabb::corner::back_top_left], corners[(int)aabb::corner::front_top_left], color, only_view);
+    add_line(corners[(int)aabb::corner::back_top_right], corners[(int)aabb::corner::front_top_right], color, only_view);
+    add_line(corners[(int)aabb::corner::back_bottom_left], corners[(int)aabb::corner::back_bottom_right], color, only_view);
+    add_line(corners[(int)aabb::corner::front_bottom_left], corners[(int)aabb::corner::front_bottom_right], color, only_view);
+    add_line(corners[(int)aabb::corner::back_bottom_left], corners[(int)aabb::corner::front_bottom_left], color, only_view);
+    add_line(corners[(int)aabb::corner::back_bottom_right], corners[(int)aabb::corner::front_bottom_right], color, only_view);
+    add_line(corners[(int)aabb::corner::back_top_left], corners[(int)aabb::corner::back_bottom_left], color, only_view);
+    add_line(corners[(int)aabb::corner::back_top_right], corners[(int)aabb::corner::back_bottom_right], color, only_view);
+    add_line(corners[(int)aabb::corner::front_top_left], corners[(int)aabb::corner::front_bottom_left], color, only_view);
+    add_line(corners[(int)aabb::corner::front_top_right], corners[(int)aabb::corner::front_bottom_right], color, only_view);
 }
 
-void render_system_debug::add_obb(const obb& bounds, const color& color)
+void render_system_debug::add_obb(const obb& bounds, const color& color, render_view* only_view)
 {
     vector3 corners[obb::k_corner_count];
     bounds.get_corners(corners);
 
-    add_line(corners[(int)obb::corner::back_top_left], corners[(int)obb::corner::back_top_right], color);
-    add_line(corners[(int)obb::corner::front_top_left], corners[(int)obb::corner::front_top_right], color);
-    add_line(corners[(int)obb::corner::back_top_left], corners[(int)obb::corner::front_top_left], color);
-    add_line(corners[(int)obb::corner::back_top_right], corners[(int)obb::corner::front_top_right], color);
-    add_line(corners[(int)obb::corner::back_bottom_left], corners[(int)obb::corner::back_bottom_right], color);
-    add_line(corners[(int)obb::corner::front_bottom_left], corners[(int)obb::corner::front_bottom_right], color);
-    add_line(corners[(int)obb::corner::back_bottom_left], corners[(int)obb::corner::front_bottom_left], color);
-    add_line(corners[(int)obb::corner::back_bottom_right], corners[(int)obb::corner::front_bottom_right], color);
-    add_line(corners[(int)obb::corner::back_top_left], corners[(int)obb::corner::back_bottom_left], color);
-    add_line(corners[(int)obb::corner::back_top_right], corners[(int)obb::corner::back_bottom_right], color);
-    add_line(corners[(int)obb::corner::front_top_left], corners[(int)obb::corner::front_bottom_left], color);
-    add_line(corners[(int)obb::corner::front_top_right], corners[(int)obb::corner::front_bottom_right], color);
+    add_line(corners[(int)obb::corner::back_top_left], corners[(int)obb::corner::back_top_right], color, only_view);
+    add_line(corners[(int)obb::corner::front_top_left], corners[(int)obb::corner::front_top_right], color, only_view);
+    add_line(corners[(int)obb::corner::back_top_left], corners[(int)obb::corner::front_top_left], color, only_view);
+    add_line(corners[(int)obb::corner::back_top_right], corners[(int)obb::corner::front_top_right], color, only_view);
+    add_line(corners[(int)obb::corner::back_bottom_left], corners[(int)obb::corner::back_bottom_right], color, only_view);
+    add_line(corners[(int)obb::corner::front_bottom_left], corners[(int)obb::corner::front_bottom_right], color, only_view);
+    add_line(corners[(int)obb::corner::back_bottom_left], corners[(int)obb::corner::front_bottom_left], color, only_view);
+    add_line(corners[(int)obb::corner::back_bottom_right], corners[(int)obb::corner::front_bottom_right], color, only_view);
+    add_line(corners[(int)obb::corner::back_top_left], corners[(int)obb::corner::back_bottom_left], color, only_view);
+    add_line(corners[(int)obb::corner::back_top_right], corners[(int)obb::corner::back_bottom_right], color, only_view);
+    add_line(corners[(int)obb::corner::front_top_left], corners[(int)obb::corner::front_bottom_left], color, only_view);
+    add_line(corners[(int)obb::corner::front_top_right], corners[(int)obb::corner::front_bottom_right], color, only_view);
 }
 
-void render_system_debug::add_sphere(const sphere& bounds, const color& color)
+void render_system_debug::add_sphere(const sphere& bounds, const color& color, render_view* only_view)
 {
     shape& cached_shape = find_or_create_cached_shape(shape_type::sphere);
     if (cached_shape.positions.empty())
@@ -303,38 +376,38 @@ void render_system_debug::add_sphere(const sphere& bounds, const color& color)
     }
 
     // Transform cached shape and add to screen.
-    add_cached_shape(cached_shape, bounds.origin, vector3(bounds.radius, bounds.radius, bounds.radius), color);
+    add_cached_shape(cached_shape, bounds.origin, vector3(bounds.radius, bounds.radius, bounds.radius), color, only_view);
 }
 
-void render_system_debug::add_frustum(const frustum& bounds, const color& color)
+void render_system_debug::add_frustum(const frustum& bounds, const color& color, render_view* only_view)
 {
     vector3 corners[frustum::k_corner_count];
     bounds.get_corners(corners);
 
-    add_line(corners[(int)frustum::corner::far_top_left], corners[(int)frustum::corner::far_top_right], color);
-    add_line(corners[(int)frustum::corner::far_bottom_left], corners[(int)frustum::corner::far_bottom_right], color);
-    add_line(corners[(int)frustum::corner::far_top_left], corners[(int)frustum::corner::far_bottom_left], color);
-    add_line(corners[(int)frustum::corner::far_top_right], corners[(int)frustum::corner::far_bottom_right], color);
+    add_line(corners[(int)frustum::corner::far_top_left], corners[(int)frustum::corner::far_top_right], color, only_view);
+    add_line(corners[(int)frustum::corner::far_bottom_left], corners[(int)frustum::corner::far_bottom_right], color, only_view);
+    add_line(corners[(int)frustum::corner::far_top_left], corners[(int)frustum::corner::far_bottom_left], color, only_view);
+    add_line(corners[(int)frustum::corner::far_top_right], corners[(int)frustum::corner::far_bottom_right], color, only_view);
 
-    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_top_right], color);
-    add_line(corners[(int)frustum::corner::near_bottom_left], corners[(int)frustum::corner::near_bottom_right], color);
-    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_bottom_left], color);
-    add_line(corners[(int)frustum::corner::near_top_right], corners[(int)frustum::corner::near_bottom_right], color);
+    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_top_right], color, only_view);
+    add_line(corners[(int)frustum::corner::near_bottom_left], corners[(int)frustum::corner::near_bottom_right], color, only_view);
+    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::near_bottom_left], color, only_view);
+    add_line(corners[(int)frustum::corner::near_top_right], corners[(int)frustum::corner::near_bottom_right], color, only_view);
 
-    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::far_top_left], color);
-    add_line(corners[(int)frustum::corner::near_top_right], corners[(int)frustum::corner::far_top_right], color);
-    add_line(corners[(int)frustum::corner::near_bottom_left], corners[(int)frustum::corner::far_bottom_left], color);
-    add_line(corners[(int)frustum::corner::near_bottom_right], corners[(int)frustum::corner::far_bottom_right], color);
+    add_line(corners[(int)frustum::corner::near_top_left], corners[(int)frustum::corner::far_top_left], color, only_view);
+    add_line(corners[(int)frustum::corner::near_top_right], corners[(int)frustum::corner::far_top_right], color, only_view);
+    add_line(corners[(int)frustum::corner::near_bottom_left], corners[(int)frustum::corner::far_bottom_left], color, only_view);
+    add_line(corners[(int)frustum::corner::near_bottom_right], corners[(int)frustum::corner::far_bottom_right], color, only_view);
 }
 
-void render_system_debug::add_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color)
+void render_system_debug::add_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color, render_view* only_view)
 {
-    add_line(a, b, color);
-    add_line(b, c, color);
-    add_line(c, a, color);
+    add_line(a, b, color, only_view);
+    add_line(b, c, color, only_view);
+    add_line(c, a, color, only_view);
 }
 
-void render_system_debug::add_cylinder(const cylinder& bounds, const color& color)
+void render_system_debug::add_cylinder(const cylinder& bounds, const color& color, render_view* only_view)
 {
     float top_y = (bounds.height * 0.5f);
     float bottom_y = -(bounds.height * 0.5f);
@@ -356,13 +429,13 @@ void render_system_debug::add_cylinder(const cylinder& bounds, const color& colo
         vector3 next_top_vertex = vector3(next_x, top_y, next_z) * transform;
         vector3 next_bottom_vertex = vector3(next_x, bottom_y, next_z) * transform;
 
-        add_line(top_vertex, next_top_vertex, color);
-        add_line(bottom_vertex, next_bottom_vertex, color);
-        add_line(bottom_vertex, top_vertex, color);
+        add_line(top_vertex, next_top_vertex, color, only_view);
+        add_line(bottom_vertex, next_bottom_vertex, color, only_view);
+        add_line(bottom_vertex, top_vertex, color, only_view);
     }
 }
 
-void render_system_debug::add_capsule(const cylinder& bounds, const color& color)
+void render_system_debug::add_capsule(const cylinder& bounds, const color& color, render_view* only_view)
 {
     float cap_radius = bounds.radius;
     cylinder body_bounds(bounds.origin, bounds.orientation, bounds.radius, bounds.height - (cap_radius * 2.0f));
@@ -373,14 +446,14 @@ void render_system_debug::add_capsule(const cylinder& bounds, const color& color
     vector3 top_center = vector3(0.0f, bounds.height * 0.5f, 0.0f) * transform;
 
     // The body of the capsule.
-    add_cylinder(bounds, color);
+    add_cylinder(bounds, color, only_view);
 
     // Add hemispheres to top and bottom
-    add_hemisphere(hemisphere(top_center, bounds.orientation, bounds.radius), color, false);
-    add_hemisphere(hemisphere(bottom_center, bounds.orientation * quat::angle_axis(math::pi, vector3::forward), bounds.radius), color, false);
+    add_hemisphere(hemisphere(top_center, bounds.orientation, bounds.radius), color, false, only_view);
+    add_hemisphere(hemisphere(bottom_center, bounds.orientation * quat::angle_axis(math::pi, vector3::forward), bounds.radius), color, false, only_view);
 }
 
-void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands)
+void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands, render_view* only_view)
 {
     float radius = bounds.radius;
     matrix4 transform = bounds.get_transform();
@@ -407,7 +480,7 @@ void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& 
                 vector3 vert = vector3(x, y, z) * transform;
                 vector3 next_vert = vector3(next_x, y, next_z) * transform;
 
-                add_line(vert, next_vert, color);
+                add_line(vert, next_vert, color, only_view);
             }
         }
     }
@@ -441,12 +514,12 @@ void render_system_debug::add_hemisphere(const hemisphere& bounds, const color& 
             vector3 vert = vector3(x, y, z) * transform;
             vector3 next_vert = vector3(next_x, next_y, next_z) * transform;
 
-            add_line(vert, next_vert, color);
+            add_line(vert, next_vert, color, only_view);
         }
     }
 }
 
-void render_system_debug::add_cone(const vector3& start, const vector3& end, float radius, const color& color)
+void render_system_debug::add_cone(const vector3& start, const vector3& end, float radius, const color& color, render_view* only_view)
 {
     vector3 origin = start;
     vector3 normal = (end - start).normalize();
@@ -469,12 +542,12 @@ void render_system_debug::add_cone(const vector3& start, const vector3& end, flo
         vector3 next_vert = vector3(sin(next_angle) * radius, 0.0f, cos(next_angle) * radius) * transform;
         vector3 top_vert = vector3(0.0f, height, 0.0f) * transform;
 
-        add_line(vert, next_vert, color);
-        add_line(vert, top_vert, color);
+        add_line(vert, next_vert, color, only_view);
+        add_line(vert, top_vert, color, only_view);
     }
 }
 
-void render_system_debug::add_arrow(const vector3& start, const vector3& end, const color& color)
+void render_system_debug::add_arrow(const vector3& start, const vector3& end, const color& color, render_view* only_view)
 {
     float total_length = (end - start).length();
 
@@ -486,11 +559,11 @@ void render_system_debug::add_arrow(const vector3& start, const vector3& end, co
     vector3 normal = (end - start).normalize();
     vector3 spoke_center = start + (normal * (spoke_length * 0.5f));
 
-    add_cylinder(cylinder(spoke_center, quat::rotate_to(vector3::up, normal), spoke_radius, spoke_length), color);
-    add_cone(start + (normal * spoke_length), end, cone_radius, color);
+    add_cylinder(cylinder(spoke_center, quat::rotate_to(vector3::up, normal), spoke_radius, spoke_length), color, only_view);
+    add_cone(start + (normal * spoke_length), end, cone_radius, color, only_view);
 }
 
-void render_system_debug::add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color)
+void render_system_debug::add_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color, render_view* only_view)
 {
     vector3 origin = start;
     vector3 normal = (end - start).normalize();
@@ -514,9 +587,9 @@ void render_system_debug::add_truncated_cone(const vector3& start, const vector3
         vector3 top_vert = vector3(sin(angle) * end_radius, height, cos(angle) * end_radius) * transform;
         vector3 next_top_vert = vector3(sin(next_angle) * end_radius, height, cos(next_angle) * end_radius) * transform;
 
-        add_line(vert, next_vert, color);
-        add_line(top_vert, next_top_vert, color);
-        add_line(vert, top_vert, color);
+        add_line(vert, next_vert, color, only_view);
+        add_line(top_vert, next_top_vert, color, only_view);
+        add_line(vert, top_vert, color, only_view);
     }
 }
 

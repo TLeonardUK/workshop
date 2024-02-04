@@ -225,6 +225,7 @@ void render_system_reflection_probes::regenerate_probe(render_reflection_probe* 
         view->set_active(true);
         view->set_local_transform(origin, quat::identity, vector3::one);
         view->set_render_target(rt_view);
+        view->set_flags(render_view_flags::constant_eye_adaption | render_view_flags::constant_ambient_lighting);
         view->set_viewport({ 0, 0, (int)info.render_target->get_width(), (int)info.render_target->get_height() });
     }
     

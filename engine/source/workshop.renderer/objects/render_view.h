@@ -30,6 +30,9 @@ enum class render_view_type
     // Perspective information is generated from the parameters set on the view.
     perspective,
 
+    // Orthographic view.
+    ortographic,
+
     // View expects a custom view and projection matrix to be provided.
     custom
 };
@@ -43,25 +46,47 @@ enum class render_view_flags
     none                            = 0,
 
     // Standard path we use to render the scene.
-    normal                          = 1,
+    normal                          = 1 << 0,
 
     // Only renders a depth map of the scene.
-    depth_only                      = 2,
+    depth_only                      = 1 << 1,
 
     // Same as depth_only but depth is stored in a linear format.
-    linear_depth_only               = 4,
+    linear_depth_only               = 1 << 2,
 
     // Skips rendering of anything like debug primitives, hud, etc.
-    scene_only                      = 8,
+    scene_only                      = 1 << 3,
 
     // Applies a constant ambient term rather than calculating it from probes. This is useful when generating light probes.
-    constant_ambient_lighting       = 16,
+    constant_ambient_lighting       = 1 << 4,
     
     // This view is for a probe/scene/etc capture, this forces all parts of the capture to be done this frame (eg. no staggered shadow updates).
-    capture                         = 32,
+    capture                         = 1 << 5,
 
     // Eye adapation is set to a constant value. This is useful when capturing renders where it hasn't stabalized.
-    constant_eye_adaption           = 64,
+    constant_eye_adaption           = 1 << 6,
+
+    // Disables all imgui rendering inside this view. imgui should only be rendered in the top level view.
+    no_imgui                        = 1 << 7,
+
+    // Draws the bounds of the active cells in the rendering octtree.
+    draw_cell_bounds                = 1 << 8,
+
+    // Draws the bounds of individual objects in the rendering octree.
+    draw_object_bounds              = 1 << 9,
+
+    // Draws any debug rendering for objects that require it. This is used in the editor
+    // to display things like lighting bounds.
+    draw_object_debug               = 1 << 10,
+
+    // If false direct lighting is used when rendering the scene.
+    disable_direct_lighting         = 1 << 11,
+
+    // If false ambient lighting is used when rendering the scene.
+    disable_ambient_lighting        = 1 << 12,
+
+    // If true the rendering is frozen on a given frame but allows the user to continue moving the camera about.
+    freeze_rendering                = 1 << 13,
 };
 DEFINE_ENUM_FLAGS(render_view_flags);
 
@@ -102,6 +127,10 @@ public:
     void set_view_matrix(matrix4 type);
     matrix4 get_view_matrix();
 
+    // Gets/Sets the area of the world an orthographic view displays.
+    void set_orthographic_rect(rect value);
+    rect get_orthographic_rect();
+
     // Sets the render target this view will render to. If not set
     // the view will be rendered to the swapchain.
     void set_render_target(ri_texture_view view);
@@ -119,6 +148,9 @@ public:
 
     void set_viewport(const recti& viewport);
     recti get_viewport();
+
+    void set_visualization_mode(visualization_mode mode);
+    visualization_mode get_visualization_mode();
 
     // GEts or sets if this view should be rendered this frame.
     void set_should_render(bool value);
@@ -163,25 +195,27 @@ public:
 private:
     void update_view_info_param_block();
     void update_render_target_flags();
+    void update_visibility_flags();
 
 private:
     recti m_viewport = recti::empty;
-
+    rect m_ortho_rect = rect::empty;
     float m_near_clip = 0.01f;
     float m_far_clip = 10000.0f;
-
     float m_field_of_view = 45.0f;
     float m_aspect_ratio = 1.33f;
 
-    render_visibility_manager::view_id m_visibility_view_id;
-
-    ri_texture_view m_render_target;
+    matrix4 m_custom_view_matrix = matrix4::identity;
+    matrix4 m_custom_projection_matrix = matrix4::identity;
 
     render_view_type m_view_type = render_view_type::perspective;
     render_view_flags m_flags = render_view_flags::normal;
 
-    matrix4 m_custom_view_matrix = matrix4::identity;
-    matrix4 m_custom_projection_matrix = matrix4::identity;
+    visualization_mode m_visualization_mode;
+
+    render_visibility_manager::view_id m_visibility_view_id;
+
+    ri_texture_view m_render_target;
 
     render_view_order m_render_view_order = render_view_order::normal;
 

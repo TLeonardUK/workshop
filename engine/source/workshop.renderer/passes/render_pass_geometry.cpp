@@ -87,7 +87,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
         
             // Select the technique to use.
             render_effect::technique* active_technique = technique;
-            if (renderer.get_visualization_mode() == visualization_mode::wireframe && wireframe_technique)
+            if (view->get_visualization_mode() == visualization_mode::wireframe && wireframe_technique)
             {
                 active_technique = wireframe_technique;
             }

@@ -26,9 +26,9 @@ class renderer;
 class model;
 class material;
 enum class visualization_mode;
-enum class render_flag;
 enum class render_gpu_flags;
 enum class render_draw_flags;
+enum class render_view_flags;
 
 // Used as an opaque reference to objects created through the use of the render command queue.
 using render_object_id = size_t;
@@ -58,15 +58,6 @@ public:
     // ===========================================================================================
     //  Global
     // ===========================================================================================
-
-    // Sets the debug mode we should use for rendering the output.
-    void set_visualization_mode(visualization_mode mode);
-
-    // Sets the value of a flag dictating what and how things should be rendered.
-    void set_render_flag(render_flag flag, bool value);
-
-    // Same as set_render_flag but toggles the current value of the flag.
-    void toggle_render_flag(render_flag flag);
 
     // Regenerates all reflection light probes.
     void regenerate_reflection_probes();
@@ -133,8 +124,11 @@ public:
     // Set the viewport in pixel space to which to render the view.    
     void set_view_viewport(render_object_id id, const recti& viewport);
 
-    // Sets the projection parameters of the view.
-    void set_view_projection(render_object_id id, float fov, float aspect_ratio, float near_clip, float far_clip);
+    // Sets the camera to a perspective view with the given settings.
+    void set_view_perspective(render_object_id id, float fov, float aspect_ratio, float min_depth, float max_depth);
+
+    // Sets the camera to an orthographic view with the given settings.
+    void set_view_orthographic(render_object_id id, rect ortho_rect, float min_depth, float max_depth);
 
     // Sets a pixmap that a views output will be copied to.
     void set_view_readback_pixmap(render_object_id id, pixmap* output);
@@ -142,6 +136,12 @@ public:
     // Sets the render target the view renders to, if nullptr it will be rendered
     // to the back buffer.
     void set_view_render_target(render_object_id id, ri_texture_view render_target);
+
+    // Sets the debug mode we should use for rendering the output.
+    void set_view_visualization_mode(render_object_id id, visualization_mode mode);
+
+    // Sets render flags defining what passes the view renders
+    void set_view_flags(render_object_id id, render_view_flags mode);
 
     // ===========================================================================================
     //  Static meshes
