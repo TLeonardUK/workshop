@@ -28,18 +28,16 @@ dx12_ri_fence::~dx12_ri_fence()
 result<void> dx12_ri_fence::create_resources()
 {
     HRESULT hr = m_renderer.get_device()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence));
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateFence"))
     {
-        db_error(render_interface, "CreateFence failed with error 0x%08x.", hr);
         return false;
     }
 
     m_fence->SetName(widen_string(m_debug_name).c_str());
 
     m_fence_event = CreateEvent(nullptr, false, false, nullptr);
-    if (m_fence_event == nullptr)
+    if (!m_renderer.check_result(hr, "CreateEvent"))
     {
-        db_error(render_interface, "CreateEvent failed with error 0x%08x.", GetLastError());
         return false;
     }
 
@@ -49,9 +47,9 @@ result<void> dx12_ri_fence::create_resources()
 void dx12_ri_fence::wait(size_t value)
 {
     HRESULT hr = m_fence->SetEventOnCompletion(value, m_fence_event);
-    if (FAILED(hr)) 
+    if (!m_renderer.check_result(hr, "SetEventOnCompletion"))
     {
-        db_error(render_interface, "SetEventOnCompletion failed with error 0x%08x.", hr);
+        return;
     }
 
     WaitForSingleObject(m_fence_event, INFINITE);
@@ -62,10 +60,7 @@ void dx12_ri_fence::wait(ri_command_queue& queue, size_t value)
     dx12_ri_command_queue& dx12_queue = static_cast<dx12_ri_command_queue&>(queue);
 
     HRESULT hr = dx12_queue.get_queue()->Wait(m_fence.Get(), value);
-    if (FAILED(hr))
-    {
-        db_error(render_interface, "Wait failed with error 0x%08x.", hr);
-    }
+    m_renderer.assert_result(hr, "Wait");    
 }
 
 size_t dx12_ri_fence::current_value()
@@ -76,10 +71,7 @@ size_t dx12_ri_fence::current_value()
 void dx12_ri_fence::signal(size_t value)
 {
     HRESULT hr = m_fence->Signal(value);
-    if (FAILED(hr))
-    {
-        db_error(render_interface, "Signal failed with error 0x%08x.", hr);
-    }
+    m_renderer.assert_result(hr, "Signal");
 }
 
 void dx12_ri_fence::signal(ri_command_queue& queue, size_t value) 
@@ -87,10 +79,7 @@ void dx12_ri_fence::signal(ri_command_queue& queue, size_t value)
     dx12_ri_command_queue& dx12_queue = static_cast<dx12_ri_command_queue&>(queue);
 
     HRESULT hr = dx12_queue.get_queue()->Signal(m_fence.Get(), value);
-    if (FAILED(hr))
-    {
-        db_error(render_interface, "Signal failed with error 0x%08x.", hr);
-    }
+    m_renderer.assert_result(hr, "Signal");
 }
 
 }; // namespace ws

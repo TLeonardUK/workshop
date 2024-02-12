@@ -127,6 +127,25 @@ void camera_system::set_view_flags(object handle, render_view_flags flags)
     });
 }
 
+void camera_system::set_should_render(object handle, bool active)
+{
+    m_command_queue.queue_command("set_active", [this, handle, active]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            component->should_render = active;
+
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.set_view_should_render(component->view_id, component->should_render);
+            }
+        }
+    });
+}
+
 void camera_system::set_render_target(object handle, ri_texture_view texture)
 {
     m_command_queue.queue_command("set_render_target", [this, handle, texture]() {
@@ -160,6 +179,23 @@ void camera_system::set_visualization_mode(object handle, visualization_mode mod
                 render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
                 render_command_queue.set_view_visualization_mode(component->view_id, component->visualization_mode);
+            }
+        }
+    });
+}
+
+void camera_system::force_render(object handle)
+{
+    m_command_queue.queue_command("force_render", [this, handle]() {
+        camera_component* component = m_manager.get_component<camera_component>(handle);
+        if (component)
+        {
+            if (component->view_id != null_render_object)
+            {
+                engine& engine = m_manager.get_world().get_engine();
+                render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
+
+                render_command_queue.force_view_render(component->view_id);
             }
         }
     });
@@ -285,6 +321,7 @@ void camera_system::step(const frame_time& time)
             render_command_queue.set_object_transform(camera->view_id, transform->world_location, transform->world_rotation, transform->world_scale);
             render_command_queue.set_object_draw_flags(camera->view_id, camera->draw_flags);
             render_command_queue.set_view_flags(camera->view_id, camera->view_flags);
+            render_command_queue.set_view_should_render(camera->view_id, camera->should_render);
 
             if (camera->is_perspective)
             {

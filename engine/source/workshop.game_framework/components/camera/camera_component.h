@@ -37,6 +37,9 @@ public:
     // If true use an perspective projection, otherwise use orthographic.
     bool is_perspective = true;
 
+    // If true the cameras view is actively being rendered.
+    bool should_render = true;
+
     // Area of the world the orthographic view displays.
     rect ortho_rect = rect::empty;
 

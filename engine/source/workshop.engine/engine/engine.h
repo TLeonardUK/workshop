@@ -152,6 +152,9 @@ public:
     // Returns true if a world is currently actively being loaded.
     bool is_loading_world();
 
+    // Gets the frame time for the current simulation frame being stepped.
+    frame_time get_frame_time();
+
     // Invoked when the engine is stepped.
     event<frame_time> on_step;
 

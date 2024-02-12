@@ -62,6 +62,9 @@ public:
     // Regenerates all reflection light probes.
     void regenerate_reflection_probes();
 
+    // Sets if we are in the editor or not, this adjusts how certain views are rendered.
+    void set_editor_mode(bool in_editor);
+
     // ===========================================================================================
     //  Debug rendering.
     // ===========================================================================================
@@ -142,6 +145,12 @@ public:
 
     // Sets render flags defining what passes the view renders
     void set_view_flags(render_object_id id, render_view_flags mode);
+
+    // Sets if the view is being actively rendered or not.
+    void set_view_should_render(render_object_id id, bool active);
+
+    // Forces a view to be rendered if it is marked as lazy_render.
+    void force_view_render(render_object_id id);
 
     // ===========================================================================================
     //  Static meshes

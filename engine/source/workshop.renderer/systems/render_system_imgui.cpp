@@ -30,18 +30,49 @@ void render_system_imgui::register_init(init_list& list)
 {
 }
 
-void render_system_imgui::build_graph(render_graph& graph, const render_world_state& state, render_view& view)
+void render_system_imgui::build_post_graph(render_graph& graph, const render_world_state& state)
 {
-    if (!view.has_flag(render_view_flags::normal) ||
-         view.has_flag(render_view_flags::scene_only) ||
-         view.has_flag(render_view_flags::no_imgui))
+    if (m_draw_vertices.empty() || m_draw_indices.empty())
     {
         return;
     }
 
-    if (m_draw_vertices.empty() || m_draw_indices.empty())
+    // TODO: When we have multi viewport support add a pass for each swapchain.
+
+    m_model_info_param_block = m_renderer.get_param_block_manager().create_param_block("model_info");
+    m_model_info_param_block->set("index_size", (int)m_index_buffer->get_element_size());
+    m_model_info_param_block->set("position_buffer", *m_position_buffer);
+    m_model_info_param_block->set("uv0_buffer", *m_uv0_buffer);
+    m_model_info_param_block->set("color0_buffer", *m_color0_buffer);
+
+    size_t model_info_table_index;
+    size_t model_info_table_offset;
+    m_model_info_param_block->get_table(model_info_table_index, model_info_table_offset);
+
+    m_vertex_info_param_block = m_renderer.get_param_block_manager().create_param_block("vertex_info");
+    m_vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
+    m_vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
+    m_vertex_info_param_block->set("material_info_table", 0);
+    m_vertex_info_param_block->set("material_info_offset", 0);
+    m_vertex_info_param_block->clear_buffer("instance_buffer");
+
+    m_imgui_param_blocks.clear();
+    if (m_imgui_param_blocks.size() < m_draw_commands.size())
     {
-        return;
+        m_imgui_param_blocks.resize(m_draw_commands.size());
+    }
+
+    size_t index = 0;
+    for (render_system_imgui::draw_command& cmd : m_draw_commands)
+    {
+        std::unique_ptr<ri_param_block>& param_block = m_imgui_param_blocks[index];
+        if (!param_block)
+        {
+            param_block = m_renderer.get_param_block_manager().create_param_block("imgui_params");
+        }
+
+        cmd.param_block = param_block.get();
+        index++;
     }
 
     std::unique_ptr<render_pass_imgui> pass = std::make_unique<render_pass_imgui>();
@@ -55,6 +86,7 @@ void render_system_imgui::build_graph(render_graph& graph, const render_world_st
     pass->color0_buffer = m_color0_buffer.get();
     pass->index_buffer = m_index_buffer.get();
     pass->draw_commands = m_draw_commands;
+    pass->param_blocks.push_back(m_vertex_info_param_block.get());
     graph.add_node(std::move(pass));
 }
 

@@ -45,9 +45,8 @@ result<void> dx12_ri_command_queue::create_resources()
     description.NodeMask = 0;
 
     hr = m_renderer.get_device()->CreateCommandQueue(&description, IID_PPV_ARGS(&m_queue));
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateCommandQueue"))
     {
-        db_error(render_interface, "CreateCommandQueue failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -70,10 +69,7 @@ dx12_ri_command_queue::thread_context& dx12_ri_command_queue::get_thread_context
         for (size_t i = 0; i < dx12_render_interface::k_max_pipeline_depth; i++)
         {
             HRESULT hr = m_renderer.get_device()->CreateCommandAllocator(m_queue_type, IID_PPV_ARGS(&context->frame_resources[i].allocator));
-            if (FAILED(hr))
-            {
-                db_fatal(render_interface, "CreateCommandAllocator failed with error 0x%08x.", hr);
-            }
+            m_renderer.assert_result(hr, "CreateCommandAllocator");
         }
 
         frame_resources& resources = context->frame_resources[m_frame_index % dx12_render_interface::k_max_pipeline_depth];

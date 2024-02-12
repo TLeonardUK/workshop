@@ -25,6 +25,13 @@ void render_command_queue::regenerate_reflection_probes()
     });
 }
 
+void render_command_queue::set_editor_mode(bool in_editor)
+{
+    queue_command("set_editor_mode", [renderer = &m_renderer, in_editor]() {
+        renderer->set_editor_mode(in_editor);
+    });
+}
+
 // ===========================================================================================
 //  Debug rendering.
 // ===========================================================================================
@@ -244,6 +251,20 @@ void render_command_queue::set_view_flags(render_object_id id, render_view_flags
 {
     queue_command("set_view_flags", [renderer = &m_renderer, id, flags]() {
         renderer->get_scene_manager().set_view_flags(id, flags);
+    });
+}
+
+void render_command_queue::set_view_should_render(render_object_id id, bool active)
+{
+    queue_command("set_view_active", [renderer = &m_renderer, id, active]() {
+        renderer->get_scene_manager().set_view_should_render(id, active);
+    });
+}
+
+void render_command_queue::force_view_render(render_object_id id)
+{
+    queue_command("force_view_render", [renderer = &m_renderer, id]() {
+        renderer->get_scene_manager().force_view_render(id);
     });
 }
 

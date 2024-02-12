@@ -4,6 +4,8 @@
 // ================================================================================================
 #pragma once
 
+#include "workshop.core/utils/event.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -54,6 +56,9 @@ public:
     // Gets the name of the next redo operation, or an empty
     // string if no more redo operations are available.
     std::string get_next_redo_name();
+
+    // Executed when any transaction is run, either from undo/redo/push.
+    event<> on_transaction_executed;
 
 protected:
     static inline constexpr size_t k_max_stack_size = 100;

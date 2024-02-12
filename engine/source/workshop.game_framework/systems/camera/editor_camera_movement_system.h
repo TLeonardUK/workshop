@@ -29,9 +29,6 @@ public:
 
 private:    
 
-    // State of mouse last frame.
-    bool m_mouse_down_last = false;
-
     // How much we have to move the mouse after first pressing button
     // before capturing the mouse.
     constexpr inline static float k_movement_capture_threshold = 8.0f;

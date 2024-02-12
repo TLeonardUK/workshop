@@ -327,6 +327,9 @@ public:
     // Regenerates all reflection light probes.
     void regenerate_reflection_probes();
 
+    // Returns true if we are in the editor.
+    bool in_editor();
+
 private:
 
     friend class render_command_queue;
@@ -381,6 +384,9 @@ private:
     // Draws a little debug display window with general rendering stats.
     void draw_debug_overlay();
 
+    // Sets if we are in the editor or not.
+    void set_editor_mode(bool in_editor);
+
 private:
 
     // How many frames can be in the pipeline at a given time.
@@ -403,6 +409,8 @@ private:
     std::unique_ptr<render_batch_manager> m_batch_manager;
     std::unique_ptr<render_imgui_manager> m_imgui_manager;
     std::unique_ptr<render_texture_streamer> m_texture_streamer;
+
+    bool m_in_editor = false;
 
     // Swapchain state.
 

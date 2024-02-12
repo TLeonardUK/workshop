@@ -169,9 +169,8 @@ result<void> dx12_ri_swapchain::resize_buffers()
         m_renderer.is_tearing_allowed() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0
     );
 
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "ResizeBuffers"))
     {
-        db_error(render_interface, "Failed to ResizeBuffers with error 0x%08x.", hr);
         return false;
     }
 
@@ -209,10 +208,7 @@ void dx12_ri_swapchain::present()
     profile_gpu_marker(m_renderer.get_graphics_queue(), profile_colors::gpu_frame, "present");
 
     HRESULT hr = m_swap_chain->Present(0, DXGI_PRESENT_ALLOW_TEARING);//m_renderer.is_tearing_allowed() ? DXGI_PRESENT_ALLOW_TEARING : 0);
-    if (FAILED(hr))
-    {
-        db_error(render_interface, "Present failed with error 0x%08x.", hr);
-    }
+    m_renderer.assert_result(hr, "Present");
 
     // Signal last back buffer is complete.
     m_back_buffer_last_used_frame[m_current_buffer_index] = m_frame_index;

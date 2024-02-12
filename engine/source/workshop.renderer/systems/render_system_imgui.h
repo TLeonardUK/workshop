@@ -21,6 +21,7 @@ namespace ws {
 class renderer;
 class render_pass_callback;
 class render_view;
+class ri_param_block;
 
 // ================================================================================================
 //  Renders the imgui context to the composited RT.
@@ -47,13 +48,15 @@ public:
         rect scissor;
         size_t offset;
         size_t count;
+
+        ri_param_block* param_block;
     };
 
 public:
     render_system_imgui(renderer& render);
 
     virtual void register_init(init_list& list) override;
-    virtual void build_graph(render_graph& graph, const render_world_state& state, render_view& view) override;
+    virtual void build_post_graph(render_graph& graph, const render_world_state& state) override;
     virtual void step(const render_world_state& state) override;
 
     // Sets the default imgui texture.
@@ -74,6 +77,11 @@ private:
     std::unique_ptr<ri_buffer> m_uv0_buffer;
     std::unique_ptr<ri_buffer> m_color0_buffer;
     std::unique_ptr<ri_buffer> m_index_buffer;
+
+    std::unique_ptr<ri_param_block> m_model_info_param_block;
+    std::unique_ptr<ri_param_block> m_vertex_info_param_block;
+
+    std::vector<std::unique_ptr<ri_param_block>> m_imgui_param_blocks;
 
 };
 

@@ -320,6 +320,34 @@ void render_scene_manager::set_view_flags(render_object_id id, render_view_flags
     }
 }
 
+void render_scene_manager::set_view_should_render(render_object_id id, bool active)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->set_should_render(active);
+    }
+    else
+    {
+        db_warning(renderer, "set_view_active called with non-existant id {%zi}.", id);
+    }
+}
+
+void render_scene_manager::force_view_render(render_object_id id)
+{
+    std::scoped_lock lock(m_mutex);
+
+    if (render_view* object = dynamic_cast<render_view*>(resolve_id(id)))
+    {
+        object->force_render();
+    }
+    else
+    {
+        db_warning(renderer, "set_view_active called with non-existant id {%zi}.", id);
+    }
+}
+
 std::vector<render_view*> render_scene_manager::get_views()
 {
     return m_active_views;

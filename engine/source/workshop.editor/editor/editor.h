@@ -130,8 +130,6 @@ protected:
     void draw_dockspace();
     void draw_viewport_toolbar();
 
-    void update_object_picking(bool mouse_over_viewport);
-
     void reset_dockspace_layout();
 
     void reset_scene_state();
@@ -178,10 +176,6 @@ protected:
 
     ImGuiID m_dockspace_id = 0;
     bool m_set_default_dock_space = false;
-
-    // Object selection
-    std::future<object> m_pick_object_query;
-    bool m_pick_object_add_to_selected = false;
 
     // Scene State
 

@@ -65,6 +65,9 @@ void editor_camera_movement_system::step(const frame_time& time)
     bool lmb_down = input.is_key_down(input_key::mouse_left);
     bool rmb_down = input.is_key_down(input_key::mouse_right);
 
+    bool lmb_pressed = input.was_key_pressed(input_key::mouse_left);
+    bool rmb_pressed = input.was_key_pressed(input_key::mouse_right);
+
     plane y_plane = plane(vector3::up, vector3::zero);
     float y_plane_movement = 0.0f;
 
@@ -97,19 +100,27 @@ void editor_camera_movement_system::step(const frame_time& time)
         vector3 target_position = transform->local_location;
         quat target_rotation = quat::identity;
 
+        // Track start location when mouse is first pressed.
+        if (lmb_pressed || rmb_pressed)
+        {
+            movement->start_mouse_down_position = mouse_position;
+        }
+
         // Calculate how much the mouse has moved from the center of the screen and reset
         // it to the center.
         vector2 center_pos = vector2(movement->input_viewport.x + (movement->input_viewport.width * 0.5f), movement->input_viewport.y + (movement->input_viewport.height * 0.5f));
         vector2 delta_pos = (mouse_position - center_pos);
+        vector2 delta_from_start_pos = (mouse_position - movement->start_mouse_down_position);
         bool reset_mouse = (movement->is_focused && !movement->input_blocked && mouse_down);
+        bool inside_press_deadzone = (delta_from_start_pos.length() <= 4.0f);
 
-        if (delta_pos.length() > 0 && reset_mouse)
+        if (delta_pos.length() > 0 && reset_mouse && !inside_press_deadzone)
         {
             input.set_mouse_position(center_pos);
         }
 
         // Focus on viewport if mouse down over it.
-        if (mouse_down && !m_mouse_down_last)
+        if (mouse_down && !inside_press_deadzone)
         {
             movement->is_focused = movement->input_mouse_over;
         }
@@ -243,7 +254,6 @@ void editor_camera_movement_system::step(const frame_time& time)
     }
 
     // Store mouse state.
-    m_mouse_down_last = mouse_down;
     input.set_mouse_hidden(should_hide_cursor);
 }
 

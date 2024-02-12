@@ -8,8 +8,10 @@
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_heap.h"
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include "workshop.render_interface/ri_types.h"
+
 #include <array>
 #include <unordered_set>
+#include <mutex>
 
 namespace ws {
 
@@ -131,6 +133,16 @@ public:
     void dequeue_as_build(dx12_ri_raytracing_tlas* tlas);
     void dequeue_as_build(dx12_ri_raytracing_blas* blas);
 
+    // Invoked when device is removed, handles dumping as much debug information as possible.
+    void device_removed();
+
+    // Checks the the hr for success and returns true if it was succesful. On failure, a debug log
+    // is written and any needed debugging information is dumped out, the function then returns false.
+    bool check_result(HRESULT hr, const char* context);
+
+    // Same as check_result but terminates the program on failure.
+    void assert_result(HRESULT hr, const char* context);
+
 private:
 
     result<void> create_device();
@@ -179,7 +191,7 @@ private:
     Microsoft::WRL::ComPtr<IDXGIAdapter4> m_dxgi_adapter = nullptr;
     Microsoft::WRL::ComPtr<ID3D12InfoQueue> m_info_queue = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Debug> m_debug_interface = nullptr;
-    Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedDataSettings> m_dread_interface = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> m_dread_interface = nullptr;
 
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 m_options_5 = {};
     D3D12_FEATURE_DATA_D3D12_OPTIONS  m_options = {};
@@ -207,6 +219,9 @@ private:
 
     size_t m_vram_total_local = 0;
     size_t m_vram_total_non_local = 0;
+
+    std::mutex m_device_removed_mutex;
+    bool m_dred_debug_enabled = false;
 
 };
 

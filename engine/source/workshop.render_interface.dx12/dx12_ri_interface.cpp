@@ -308,36 +308,45 @@ result<void> dx12_render_interface::create_device()
     HRESULT hr = 0;
 
     bool should_debug = false;
+    bool should_dred_debug = false;
 #ifdef WS_DEBUG
     should_debug = true;
+    should_dred_debug = true;
 #endif
     if (ws::is_option_set("directx_debug"))
     {
         should_debug = true;
     }
+    if (ws::is_option_set("directx_dred_debug"))
+    {
+        should_debug = true;
+        should_dred_debug = true;
+    }
 
     if (should_debug)
     {
         hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_debug_interface));
-        if (FAILED(hr))
+        if (!check_result(hr, "D3D12GetDebugInterface"))
         {
-            db_error(render_interface, "D3D12GetDebugInterface failed with error 0x%08x.", hr);
             return false;
         }
 
         m_debug_interface->EnableDebugLayer();
 
-#if 0
-        hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_dread_interface));
-        if (FAILED(hr))
+        if (should_dred_debug)
         {
-            db_error(render_interface, "D3D12GetDebugInterface failed with error 0x%08x.", hr);
-            return false;
-        }
+            hr = D3D12GetDebugInterface(IID_PPV_ARGS(&m_dread_interface));
+            if (!check_result(hr, "D3D12GetDebugInterface"))
+            {
+                return false;
+            }
 
-        m_dread_interface->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-        m_dread_interface->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-#endif
+            m_dread_interface->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+            m_dread_interface->SetBreadcrumbContextEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+            m_dread_interface->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+
+            m_dred_debug_enabled = true;
+        }
     }
 
     UINT createFactoryFlags = 0;
@@ -347,9 +356,8 @@ result<void> dx12_render_interface::create_device()
     }
 
     hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&m_dxgi_factory));
-    if (FAILED(hr))
+    if (!check_result(hr, "CreateDXGIFactory2"))
     {
-        db_error(render_interface, "CreateDXGIFactory2 failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -359,9 +367,8 @@ result<void> dx12_render_interface::create_device()
     }
 
     hr = D3D12CreateDevice(m_dxgi_adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), (void**)&m_device);
-    if (FAILED(hr))
+    if (!check_result(hr, "D3D12CreateDevice"))
     {
-        db_error(render_interface, "D3D12CreateDevice failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -386,9 +393,14 @@ result<void> dx12_render_interface::create_device()
             return false;
         }
 
-        m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-        m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        // We turn off breaking when dred debugging as we want to pick up the dred on present rather 
+        // than breaking at any other failing commands.
+        if (!should_dred_debug)
+        {
+            m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+            m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+            m_info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        }
     }
 
     return true;
@@ -483,9 +495,8 @@ result<void> dx12_render_interface::select_adapter()
 
         DXGI_ADAPTER_DESC1 adapterDescription;
         hr = adapter->GetDesc1(&adapterDescription);
-        if (FAILED(hr))
+        if (!check_result(hr, "IDXGIAdapter1::GetDesc1"))
         {
-            db_error(render_interface, "IDXGIAdapter1::GetDesc1 failed with error 0x%08x.", hr);
             return false;
         }
 
@@ -978,6 +989,183 @@ size_t dx12_render_interface::get_cube_map_face_index(ri_cube_map_face face)
 bool dx12_render_interface::check_feature(ri_feature feature)
 {
     return m_feature_support[(int)feature];
+}
+
+bool dx12_render_interface::check_result(HRESULT hr, const char* context)
+{
+    if (FAILED(hr))
+    {
+        if (hr == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            device_removed();
+        }
+
+        db_error(render_interface, "%s failed with error 0x%08x.", context, hr);
+
+        return false;
+    }
+    return true;
+}
+
+void dx12_render_interface::assert_result(HRESULT hr, const char* context)
+{
+    if (FAILED(hr))
+    {
+        if (hr == DXGI_ERROR_DEVICE_REMOVED)
+        {
+            device_removed();
+        }
+
+        db_fatal(render_interface, "%s failed with error 0x%08x.", context, hr);
+    }
+}
+
+void dx12_render_interface::device_removed()
+{
+    std::scoped_lock lock(m_device_removed_mutex);
+
+    static const char* breadcrumb_op_names[] = {
+        "D3D12_AUTO_BREADCRUMB_OP_SETMARKER",
+        "D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT",
+        "D3D12_AUTO_BREADCRUMB_OP_ENDEVENT",
+        "D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED",
+        "D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED",
+        "D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT",
+        "D3D12_AUTO_BREADCRUMB_OP_DISPATCH",
+        "D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION",
+        "D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION",
+        "D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE",
+        "D3D12_AUTO_BREADCRUMB_OP_COPYTILES",
+        "D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE",
+        "D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW",
+        "D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW",
+        "D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW",
+        "D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER",
+        "D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE",
+        "D3D12_AUTO_BREADCRUMB_OP_PRESENT",
+        "D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA",
+        "D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION",
+        "D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION",
+        "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME",
+        "D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES",
+        "D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT",
+        "D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64",
+        "D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION",
+        "D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE",
+        "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1",
+        "D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION",
+        "D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2",
+        "D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1",
+        "D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE",
+        "D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO",
+        "D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE",
+        "D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS",
+        "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND",
+        "D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND",
+        "D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION",
+        "D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP",
+        "D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1",
+        "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND",
+        "D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND",
+        "D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH"
+    };
+
+    if (!m_dred_debug_enabled)
+    {
+        return;
+    }
+
+    db_error(renderer, "");
+    db_error(renderer, "================================== DRED REPORT ==================================");
+
+    Microsoft::WRL::ComPtr<ID3D12DeviceRemovedExtendedData1> dred_data;
+    HRESULT hr = m_device->QueryInterface(IID_PPV_ARGS(&dred_data));
+    if (FAILED(hr))
+    {
+        db_error(renderer, "Failed to query DRED data with error: 0x%08x", hr);
+        return;
+    }
+
+    D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 auto_breadcrumbs;
+    hr = dred_data->GetAutoBreadcrumbsOutput1(&auto_breadcrumbs);
+    if (FAILED(hr))
+    {
+        db_error(renderer, "Failed to query auto breakcrumbs: 0x%08x", hr);
+        return;
+    }
+
+    D3D12_DRED_PAGE_FAULT_OUTPUT page_fault_info;    
+    hr = dred_data->GetPageFaultAllocationOutput(&page_fault_info);
+    if (FAILED(hr))
+    {
+        db_error(renderer, "Failed to query page fault: 0x%08x", hr);
+        return;
+    }
+
+    db_error(renderer, "Page Fault Address: %p", page_fault_info.PageFaultVA);
+    const D3D12_DRED_ALLOCATION_NODE* alloc_node = page_fault_info.pHeadExistingAllocationNode;
+    while (alloc_node)
+    {
+        if (alloc_node->ObjectNameA)
+        {
+            db_error(renderer, "\tAllocation Name: %s", alloc_node->ObjectNameA);
+        }
+        else if (alloc_node->ObjectNameW)
+        {
+            db_error(renderer, "\tAllocation Name: %s", narrow_string(alloc_node->ObjectNameW).c_str());
+        }
+
+        db_error(renderer, "\tAllocation Type: %i", alloc_node->AllocationType);
+
+        alloc_node = alloc_node->pNext;
+    }
+
+    db_error(renderer, "Breadcrumbs: ");
+    const D3D12_AUTO_BREADCRUMB_NODE1* node = auto_breadcrumbs.pHeadAutoBreadcrumbNode;
+    size_t node_index = 0;
+    while (node)
+    {
+        db_error(renderer, "Node %zi:", node_index);
+
+        if (node->pCommandListDebugNameA)
+        {
+            db_error(renderer, "\tCommand List: %s", node->pCommandListDebugNameA);
+        }
+        else if (node->pCommandListDebugNameW)
+        {
+            db_error(renderer, "\tCommand List: %s", narrow_string(node->pCommandListDebugNameW).c_str());
+        }
+
+        if (node->pCommandQueueDebugNameA)
+        {
+            db_error(renderer, "\tCommand Queue: %s", node->pCommandQueueDebugNameA);
+        }
+        else if (node->pCommandQueueDebugNameW)
+        {
+            db_error(renderer, "\tCommand Queue: %s", narrow_string(node->pCommandQueueDebugNameW).c_str());
+        }
+
+        db_error(renderer, "\tContexts:");
+        for (UINT i = 0; i < node->BreadcrumbContextsCount; i++)
+        {
+            const D3D12_DRED_BREADCRUMB_CONTEXT& ctx = node->pBreadcrumbContexts[i];
+            db_error(renderer, "\t\t%u: %s", ctx.BreadcrumbIndex, narrow_string(ctx.pContextString).c_str());
+        }
+
+        db_error(renderer, "\tCrumbs:");
+        for (UINT i = 0; i < node->BreadcrumbCount; i++)
+        {
+            const D3D12_AUTO_BREADCRUMB_OP& crumb = node->pCommandHistory[i];
+            db_error(renderer, "\t\t%s", breadcrumb_op_names[crumb]);
+        }
+
+        node = node->pNext;
+        node_index++;
+    }
+
+    db_error(renderer, "");
+    db_flush();
+    db_break();
 }
 
 }; // namespace ws

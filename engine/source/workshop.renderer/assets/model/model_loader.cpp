@@ -531,7 +531,11 @@ std::unique_ptr<pixmap> model_loader::generate_thumbnail(const char* path, size_
         cmd_queue.set_view_viewport(view_id, recti(0, 0, (int)size, (int)size));
         cmd_queue.set_view_readback_pixmap(view_id, output.get());
         cmd_queue.set_object_world(view_id, world_id);
-        cmd_queue.set_view_flags(view_id, render_view_flags::constant_eye_adaption | render_view_flags::constant_ambient_lighting | render_view_flags::scene_only);
+        cmd_queue.set_view_flags(view_id,
+            render_view_flags::constant_eye_adaption |
+            render_view_flags::constant_ambient_lighting |
+            render_view_flags::scene_only |
+            render_view_flags::render_in_editor_mode);
 
         start_frame_index = m_renderer.get_frame_index();
 

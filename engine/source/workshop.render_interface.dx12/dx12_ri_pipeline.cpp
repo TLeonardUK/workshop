@@ -131,9 +131,8 @@ bool dx12_ri_pipeline::create_root_signature()
 
     ID3DBlob* serialized_root_sig = nullptr;
     HRESULT hr = D3D12SerializeRootSignature(&root_sig_desc, D3D_ROOT_SIGNATURE_VERSION_1, &serialized_root_sig, nullptr);
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "D3D12SerializeRootSignature"))
     {
-        db_error(render_interface, "D3D12SerializeRootSignature failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -344,9 +343,8 @@ result<void> dx12_ri_pipeline::create_raytracing_pso()
     desc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
     HRESULT hr = m_renderer.get_device()->CreateStateObject(&desc, IID_PPV_ARGS(&m_rt_pipeline_state));
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateStateObject"))
     {
-        db_error(render_interface, "CreateStateObject failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -678,9 +676,8 @@ result<void> dx12_ri_pipeline::create_graphics_pso()
     // Create the actual pipeline state.
 
     HRESULT hr = m_renderer.get_device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&m_pipeline_state));
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateGraphicsPipelineState"))
     {
-        db_error(render_interface, "CreateGraphicsPipelineState failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -714,9 +711,8 @@ result<void> dx12_ri_pipeline::create_compute_pso()
     // Create the actual pipeline state.
 
     HRESULT hr = m_renderer.get_device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(&m_pipeline_state));
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateComputePipelineState"))
     {
-        db_error(render_interface, "CreateComputePipelineState failed with error 0x%08x.", hr);
         return false;
     }
 

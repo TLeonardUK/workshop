@@ -61,6 +61,9 @@ private:
     // Number of frames camera has been focused and mouse has been down.
     size_t focused_down_frames = 0;
 
+    // Location that the mouse starts being pressed down.
+    vector2 start_mouse_down_position = vector2::zero;
+
     // Rotation we want to apply to camera in euler coordinates.
     // TODO: Remove this and do it statelessly.
     vector3 rotation_euler = vector3::zero;

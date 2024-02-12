@@ -10,6 +10,10 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.core/utils/event.h"
 
+#include <future>
+
+struct ImRect;
+
 namespace ws {
 
 class engine;
@@ -52,15 +56,19 @@ private:
 
     void toggle_view_flag(render_view_flags flag);
 
+    void update_object_picking(bool mouse_over_viewport, const ImRect& viewport_rect);
+
 private:
     engine* m_engine;
     editor* m_editor;
 
     size_t m_viewport_index;
-
     vector2 m_viewport_size = vector2::zero;
 
-    render_view_flags m_render_view_flags = render_view_flags::normal | render_view_flags::no_imgui;
+    render_view_flags m_render_view_flags = 
+        render_view_flags::normal | 
+        render_view_flags::render_in_editor_mode |
+        render_view_flags::lazy_render;
 
     object m_view_camera;
 
@@ -74,6 +82,15 @@ private:
 
     char m_name[128];
     
+    // Object selection
+    std::future<object> m_pick_object_query;
+    bool m_pick_object_add_to_selected = false;
+
+    // Lazy update
+    bool m_realtime = false;
+    bool m_new_render_required = true;
+    event<>::delegate_ptr m_transaction_executed_delegate;
+
 };
 
 }; // namespace ws

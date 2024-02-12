@@ -17,6 +17,8 @@ void editor_undo_stack::push(std::unique_ptr<editor_transaction> transaction)
 	{
 		m_undo_stack.erase(m_undo_stack.begin());
 	}
+
+    on_transaction_executed.broadcast();
 }
 
 void editor_undo_stack::undo()
@@ -34,6 +36,8 @@ void editor_undo_stack::undo()
 			m_redo_stack.erase(m_redo_stack.begin());
 		}
 	}
+
+    on_transaction_executed.broadcast();
 }
 
 void editor_undo_stack::redo()
@@ -51,6 +55,8 @@ void editor_undo_stack::redo()
 			m_undo_stack.erase(m_undo_stack.begin());
 		}
 	}
+
+    on_transaction_executed.broadcast();
 }
 
 void editor_undo_stack::clear()

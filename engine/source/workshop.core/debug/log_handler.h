@@ -90,6 +90,9 @@ public:
     static void set_max_log_level(log_level level);
     static log_level get_max_log_level();
 
+    // Flushes any pending logs.
+    static void flush();
+
 public:
 
     // Internal functions which ~generally~ shouldn't be called directly.

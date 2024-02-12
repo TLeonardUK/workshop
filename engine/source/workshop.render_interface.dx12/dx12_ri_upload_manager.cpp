@@ -74,10 +74,7 @@ void dx12_ri_upload_manager::allocate_new_heap(size_t minimum_size)
         nullptr,
         IID_PPV_ARGS(&state->handle)
     );
-    if (FAILED(hr))
-    {
-        db_fatal(render_interface, "CreateCommittedResource failed with error 0x%08x when creating upload heap.", hr);
-    }
+    m_renderer.assert_result(hr, "CreateCommittedResource");
 
     // Record the memory allocation.
     D3D12_RESOURCE_ALLOCATION_INFO info = m_renderer.get_device()->GetResourceAllocationInfo(0, 1, &desc);
@@ -88,10 +85,7 @@ void dx12_ri_upload_manager::allocate_new_heap(size_t minimum_size)
     range.End = state->size;
 
     hr = state->handle->Map(0, &range, (void**)&state->start_ptr);
-    if (FAILED(hr))
-    {
-        db_fatal(render_interface, "Mapping upload heap failed with error 0x%08x.", hr);
-    }
+    m_renderer.assert_result(hr, "Map");
 
     state->memory_heap = std::make_unique<memory_heap>(state->size);
 

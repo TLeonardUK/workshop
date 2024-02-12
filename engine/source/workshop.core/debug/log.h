@@ -26,7 +26,9 @@
     if (!(expr))                                                            \
     {                                                                       \
         ws::db_assert_failed(#expr, __FILE__, __LINE__, msg, __VA_ARGS__);  \
-    }                 
+    }             
+    
+#define db_flush() ws::log_handler::flush();
 
 namespace ws {
 

@@ -55,11 +55,8 @@ void dx12_ri_tile_manager::allocate_new_heap(size_t minimum_size_in_tiles)
         &heap_desc,
         IID_PPV_ARGS(&state->handle)
     );
-    if (FAILED(hr))
-    {
-        db_fatal(render_interface, "CreateHeap failed with error 0x%08x when creating upload heap.", hr);
-    }
-
+    m_renderer.assert_result(hr, "CreateHeap");
+    
     // Record the memory allocation.
     state->memory_heap = std::make_unique<memory_heap>(state->size_in_tiles);
 

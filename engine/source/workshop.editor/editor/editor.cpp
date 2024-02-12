@@ -119,6 +119,8 @@ void editor::set_editor_mode(editor_mode mode)
 
         camera_sys->set_draw_flags(filter.get_object(i), new_flags);
     }
+
+    m_engine.get_renderer().get_command_queue().set_editor_mode(mode == editor_mode::editor);
 }
 
 editor_main_menu& editor::get_main_menu()
@@ -752,59 +754,6 @@ void editor::step(const frame_time& time)
         !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup);
 
     m_engine.set_mouse_over_viewport(mouse_over_viewport);
-
-    update_object_picking(mouse_over_viewport);
-}
-
-void editor::update_object_picking(bool mouse_over_viewport)
-{
-    input_interface& input = m_engine.get_input_interface();
-    object_manager& obj_manager = m_engine.get_default_world().get_object_manager();
-    ImGuiIO& imgui_io = ImGui::GetIO();
-
-    // Do select pick if we release mouse over the viewport and no imgui is active.
-    if (input.was_key_hit(input_key::mouse_left) && mouse_over_viewport && !m_pick_object_query.valid())
-    {
-        component_filter<camera_component, const transform_component> filter(obj_manager);
-        if (filter.size() > 0)
-        {
-            vector2 mouse_pos = input.get_mouse_position();
-            vector2 screen_space_pos = vector2(
-                mouse_pos.x / imgui_io.DisplaySize.x,
-                mouse_pos.y / imgui_io.DisplaySize.y
-            );
-
-            object_pick_system& pick_system = *obj_manager.get_system<object_pick_system>();
-            m_pick_object_query = pick_system.pick(filter.get_object(0), screen_space_pos);
-
-            m_pick_object_add_to_selected = input.is_key_down(input_key::shift);
-        }
-    }
-
-    // If we have a pick object query ongoing pick up the result if its finished.
-    if (m_pick_object_query.valid())
-    {
-        if (m_pick_object_query.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-        {
-            object picked_object = m_pick_object_query.get();
-            if (obj_manager.is_object_alive(picked_object))
-            {
-                std::vector<object> new_selection = m_selected_objects;
-
-                if (m_pick_object_add_to_selected)
-                {
-                    new_selection.push_back(picked_object);
-                }
-                else
-                {
-                    new_selection = { picked_object };
-                }
-
-                set_selected_objects(new_selection);
-            }
-            m_pick_object_query = {};
-        }
-    }
 }
 
 void editor::draw_dockspace()

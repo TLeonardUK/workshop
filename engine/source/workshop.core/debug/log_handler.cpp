@@ -40,6 +40,14 @@ public:
         m_thread->join();
     }
 
+    void flush()
+    {
+        while (m_queue.empty())
+        {
+            std::this_thread::yield();
+        }
+    }
+
     void write_log(ws::log_level level, ws::log_source source, const char* log)
     {
         std::unique_lock lock(m_mutex);
@@ -202,6 +210,11 @@ void log_handler::static_write(log_level level, log_source source, const char* f
     }
 
     va_end(list);
+}
+
+void log_handler::flush()
+{
+    m_log_queue.flush();
 }
 
 }; // namespace workshop

@@ -139,9 +139,9 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
         nullptr,
         IID_PPV_ARGS(&m_handle)
     );
-    if (FAILED(hr))
+
+    if (!m_renderer.check_result(hr, "CreateCommittedResource"))
     {
-        db_error(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -396,10 +396,8 @@ void* dx12_ri_buffer::map(size_t offset, size_t size)
             range.End = offset + size;
 
             buf.ptr = nullptr;
-            if (HRESULT hr = m_handle->Map(0, &range, &buf.ptr); FAILED(hr))
-            {
-                db_error(renderer, "Map failed with error 0x%08x", hr);
-            }
+            HRESULT hr = m_handle->Map(0, &range, &buf.ptr);
+            m_renderer.assert_result(hr, "Map");
 
             buf.ptr = reinterpret_cast<uint8_t*>(buf.ptr) + offset;
 

@@ -157,14 +157,14 @@ void render_system_shadows::step(const render_world_state& state)
         for (shadow_info& info : m_shadow_info)
         {
             render_view* base_view = scene_manager.resolve_id_typed<render_view>(info.view_id);
-            bool base_view_is_active = (base_view == nullptr || base_view->get_active());
+            bool base_view_is_active = (base_view == nullptr || (base_view->get_active() && base_view->should_render()));
 
             for (cascade_info& cascade : info.cascades)
             {
                 render_view* cascade_view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
                 if (cascade_view)
                 {
-                    cascade_view->set_active(base_view_is_active);
+                    cascade_view->set_active(base_view_is_active);                    
                 }
 
                 // We can skip all of this if the parent view is currently inactive.
@@ -521,30 +521,47 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
 {
     render_scene_manager& scene_manager = m_renderer.get_scene_manager();
 
+    render_view* parent_view = scene_manager.resolve_id_typed<render_view>(info.view_id);
+    render_view* view = nullptr;
+
     if (!cascade.view_id)
     {
         cascade.view_id = m_renderer.next_render_object_id();
         scene_manager.create_view(cascade.view_id, "Shadow Cascade View");
 
+        // Copy over certain flags from the parent that are neccessary to render at the right times.
+        view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
+
         cascade.shadow_map_state_param_block = m_renderer.get_param_block_manager().create_param_block("shadow_map_state");
         update_cascade_param_block(cascade);
     }
 
-    render_view* parent_view = scene_manager.resolve_id_typed<render_view>(info.view_id);
-
-    render_view* view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
+    if (view == nullptr)
+    {
+        view = scene_manager.resolve_id_typed<render_view>(cascade.view_id);
+    }
     view->set_projection_matrix(cascade.projection_matrix);
     view->set_view_matrix(cascade.view_matrix);
     view->set_render_target(cascade.shadow_map_view);
     view->set_viewport(recti(0, 0, (int)cascade.map_size, (int)cascade.map_size));
+
+    render_view_flags flags = render_view_flags::none;
+
     if (cascade.use_linear_depth)
     {
-        view->set_flags(render_view_flags::linear_depth_only);
+        flags = flags | render_view_flags::linear_depth_only;
     }
     else
     {
-        view->set_flags(render_view_flags::depth_only);
+        flags = flags | render_view_flags::depth_only;
     }
+
+    if (parent_view && parent_view->has_flag(render_view_flags::render_in_editor_mode))
+    {
+        flags = flags | render_view_flags::render_in_editor_mode;
+    }
+
+    view->set_flags(flags);
     view->set_view_type(render_view_type::custom);
     view->set_view_order(render_view_order::shadows);
     view->set_clip(cascade.z_near, cascade.z_far);

@@ -124,6 +124,12 @@ public:
     // Sets render flags defining what passes the view renders
     void set_view_flags(render_object_id id, render_view_flags mode);
 
+    // Sets if this view should be actively rendered.
+    void set_view_should_render(render_object_id id, bool active);
+
+    // Forces a view to be rendered if it is marked as lazy_render.
+    void force_view_render(render_object_id id);
+
     // Gets a list of all active views.
     std::vector<render_view*> get_views();
 

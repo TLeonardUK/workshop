@@ -38,9 +38,8 @@ result<void> dx12_ri_descriptor_heap::create_resources()
     }
 
     HRESULT hr = m_renderer.get_device()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_heap));
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateDescriptorHeap"))
     {
-        db_error(render_interface, "CreateDescriptorHeap failed with error 0x%08x.", hr);
         return false;
     }
 

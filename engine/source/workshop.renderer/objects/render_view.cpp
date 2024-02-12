@@ -309,7 +309,24 @@ void render_view::set_should_render(bool value)
 
 bool render_view::should_render()
 {
+    // If in the editor and not marked to render in the editor mode, then ignore.
+    if (m_renderer->in_editor() && !has_flag(render_view_flags::render_in_editor_mode))
+    {
+        return false;
+    }
     return m_should_render;
+}
+
+void render_view::force_render()
+{
+    m_force_render = true;
+}
+
+bool render_view::consume_force_render()
+{
+    bool ret = m_force_render;
+    m_force_render = false;
+    return ret;
 }
 
 void render_view::set_active(bool value)

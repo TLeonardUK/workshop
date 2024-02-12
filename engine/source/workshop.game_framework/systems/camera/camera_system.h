@@ -50,11 +50,17 @@ public:
     // Sets the view flags for a given camera.
     void set_view_flags(object handle, render_view_flags flags);
 
+    // Turns on or off the rendering of the cameras view.
+    void set_should_render(object handle, bool active);
+
     // Sets the render target that the camera should draw to.
     void set_render_target(object handle, ri_texture_view texture);
 
     // Sets the debug mode this camera renders its view in.
     void set_visualization_mode(object handle, visualization_mode mode);
+
+    // Forces a view to render this frame if its marked with lazy_render.
+    void force_render(object handle);
 
     // Converts an on screen location to a world space position. Screen location is in 0-1 coordinates.
     vector3 screen_to_world_space(object handle, vector3 screen_space_position);

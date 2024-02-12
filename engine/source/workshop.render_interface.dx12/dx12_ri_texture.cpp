@@ -269,10 +269,8 @@ result<void> dx12_ri_texture::create_resources()
             m_create_params.is_render_target ? &clear_color : nullptr,
             IID_PPV_ARGS(&m_handle)
         );
-
-        if (FAILED(hr))
+        if (!m_renderer.check_result(hr, "CreateReservedResource"))
         {
-            db_error(render_interface, "CreateReservedResource failed with error 0x%08x.", hr);
             return false;
         }
 
@@ -358,10 +356,8 @@ result<void> dx12_ri_texture::create_resources()
             m_create_params.is_render_target ? &clear_color : nullptr,
             IID_PPV_ARGS(&m_handle)
         );
-
-        if (FAILED(hr))
+        if (!m_renderer.check_result(hr, "CreateReservedResource"))
         {
-            db_error(render_interface, "CreateCommittedResource failed with error 0x%08x.", hr);
             return false;
         }
 

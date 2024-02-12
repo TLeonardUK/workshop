@@ -209,6 +209,11 @@ void engine::register_init(init_list& list)
     );
 }
 
+frame_time engine::get_frame_time()
+{
+    return m_frame_time;
+}
+
 ri_interface& engine::get_render_interface()
 {
     return *m_render_interface.get();

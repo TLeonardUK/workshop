@@ -65,9 +65,9 @@ enum class render_view_flags
 
     // Eye adapation is set to a constant value. This is useful when capturing renders where it hasn't stabalized.
     constant_eye_adaption           = 1 << 6,
-
-    // Disables all imgui rendering inside this view. imgui should only be rendered in the top level view.
-    no_imgui                        = 1 << 7,
+    
+    // Draws this view when in editor mode, if this is not set a view will not be draw when in editor mode.
+    render_in_editor_mode           = 1 << 7,
 
     // Draws the bounds of the active cells in the rendering octtree.
     draw_cell_bounds                = 1 << 8,
@@ -87,6 +87,9 @@ enum class render_view_flags
 
     // If true the rendering is frozen on a given frame but allows the user to continue moving the camera about.
     freeze_rendering                = 1 << 13,
+
+    // Forces this view to only render if something has changed within it since the last time it was rendered.
+    lazy_render                     = 1 << 14,
 };
 DEFINE_ENUM_FLAGS(render_view_flags);
 
@@ -169,6 +172,12 @@ public:
     void set_aspect_ratio(float ration);
     float get_aspect_ratio();
 
+    // Marks this view as needing a render even if lazy_render is set.
+    void force_render();
+    
+    // Returns the force render flag and clears it.
+    bool consume_force_render();
+
     ri_param_block* get_view_info_param_block();
 
     frustum get_frustum();
@@ -204,6 +213,8 @@ private:
     float m_far_clip = 10000.0f;
     float m_field_of_view = 45.0f;
     float m_aspect_ratio = 1.33f;
+
+    bool m_force_render = false;
 
     matrix4 m_custom_view_matrix = matrix4::identity;
     matrix4 m_custom_projection_matrix = matrix4::identity;

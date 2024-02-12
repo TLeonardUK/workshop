@@ -40,10 +40,34 @@ void render_system_selection_outline::build_graph(render_graph& graph, const ren
     }
 
     ri_param_block* outline_param_block = view.get_resource_cache().find_or_create_param_block(this, "selection_outline_parameters");
-    outline_param_block->set("uv_step", vector2(
-        1.0f / m_renderer.get_swapchain_output().color_targets[0].get_width(),
-        1.0f / m_renderer.get_swapchain_output().color_targets[0].get_height()
-    ));
+    if (view.has_render_target())
+    {
+        outline_param_block->set("uv_step", vector2(
+            1.0f / view.get_render_target().get_width(),
+            1.0f / view.get_render_target().get_height()
+        ));
+    }
+    else
+    {
+        outline_param_block->set("uv_step", vector2(
+            1.0f / m_renderer.get_swapchain_output().color_targets[0].get_width(),
+            1.0f / m_renderer.get_swapchain_output().color_targets[0].get_height()
+        ));
+    }
+    if (view.has_render_target())
+    {
+        outline_param_block->set("gbuffer_scale", vector2(
+            (float)view.get_render_target().get_width() / (float)m_renderer.get_swapchain_output().color_targets[0].get_width(),
+            (float)view.get_render_target().get_height() / (float)m_renderer.get_swapchain_output().color_targets[0].get_height()
+        ));
+    }
+    else
+    {
+        outline_param_block->set("gbuffer_scale", vector2(
+            1.0f,
+            1.0f
+        ));
+    }
     outline_param_block->set("outline_color", color::gold.rgba());
     outline_param_block->set("fill_alpha", 0.25f);
 

@@ -45,16 +45,14 @@ result<void> dx12_ri_command_list::create_resources()
         nullptr, 
         IID_PPV_ARGS(&m_command_list));
 
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CreateCommandList"))
     {
-        db_error(render_interface, "CreateCommandList failed with error 0x%08x.", hr);
         return false;
     }
 
     hr = m_command_list->Close();
-    if (FAILED(hr))
+    if (!m_renderer.check_result(hr, "CommandList Close"))
     {
-        db_error(render_interface, "CommandList Reset failed with error 0x%08x.", hr);
         return false;
     }
 
@@ -82,11 +80,8 @@ void dx12_ri_command_list::open()
     db_assert_message(m_renderer.get_frame_index() == m_allocated_frame_index, "Command list is only valid for the frame its allocated on.");
 
     HRESULT hr = m_command_list->Reset(m_queue.get_current_command_allocator().Get(), nullptr);
-    if (FAILED(hr))
-    {
-        db_error(render_interface, "CommandList Reset failed with error 0x%08x.", hr);
-    }
-
+    m_renderer.assert_result(hr, "CommandList Reset");
+    
     m_opened = true;
 }
 
@@ -96,10 +91,7 @@ void dx12_ri_command_list::close()
     db_assert_message(m_renderer.get_frame_index() == m_allocated_frame_index, "Command list is only valid for the frame its allocated on.");
 
     HRESULT hr = m_command_list->Close();
-    if (FAILED(hr))
-    {
-        db_error(render_interface, "CommandList Close failed with error 0x%08x.", hr);
-    }
+    m_renderer.assert_result(hr, "CommandList Close");
 
     m_opened = false;
 }

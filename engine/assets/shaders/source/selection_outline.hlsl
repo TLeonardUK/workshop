@@ -45,10 +45,8 @@ float calculate_stength(float2 uv)
  
 swapchain_output pshader(fullscreen_pinput input)
 {
-    gbuffer_fragment f = read_gbuffer(input.uv0);
-
     swapchain_output output;
     output.color.rgb = srgb_to_linear(outline_color.rgb);
-    output.color.a = calculate_stength(input.uv0);
+    output.color.a = calculate_stength(input.uv0 * gbuffer_scale);
     return output;
 }

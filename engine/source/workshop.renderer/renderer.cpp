@@ -508,6 +508,16 @@ render_command_queue& renderer::get_rt_command_queue()
     return *m_rt_command_queue;
 }
 
+bool renderer::in_editor()
+{
+    return m_in_editor;
+}
+
+void renderer::set_editor_mode(bool in_editor)
+{
+    m_in_editor = in_editor;
+}
+
 ri_raytracing_tlas& renderer::get_scene_tlas()
 {
     return *m_scene_tlas;
@@ -729,7 +739,20 @@ void renderer::render_state(render_world_state& state)
     // Grab a list of active views that should be rendered this frame.
     std::vector<render_view*> views = m_scene_manager->get_views();
 
-    auto iter = std::remove_if(views.begin(), views.end(), [](render_view* view) { return !view->should_render(); });
+    // Remove views from list that we no longer care about.
+    auto iter = std::remove_if(views.begin(), views.end(), [](render_view* view) { 
+
+        // If lazy rendering, then don't update view if nothing has changed.
+        if ((view->get_flags() & render_view_flags::lazy_render) != render_view_flags::none && 
+            !view->has_view_changed() && 
+            !view->consume_force_render())
+        {
+            return true;
+        }
+
+        return !view->should_render();
+
+    });
     if (iter != views.end())
     {
         views.erase(iter, views.end());

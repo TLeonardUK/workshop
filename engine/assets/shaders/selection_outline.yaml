@@ -19,6 +19,7 @@ param_blocks:
     scope: draw
     fields:
       uv_step: float2
+      gbuffer_scale: float2
       fill_alpha: float
       outline_color: float4
 
