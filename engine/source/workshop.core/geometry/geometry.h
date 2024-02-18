@@ -94,6 +94,26 @@ static const char* geometry_vertex_stream_type_strings[static_cast<int>(geometry
     "color3"
 };
 
+// Settings for loading geometry.
+struct geometry_load_settings
+{
+    // Merges all submeshes in the source asset into one.
+    bool merge_submeshes = false;
+
+    // Recalculates the origin for all submeshes to the bottom-center.
+    bool recalculate_origin = false;
+
+    // Scale the geometry should be adjusted by.
+    vector3 scale = vector3::one;
+
+    // Import the geometry with the highest quality postprocessing. Slower but
+    // better results.
+    bool high_quality = true;
+
+    // If set, only submeshes with this name will be loaded.
+    std::string only_node = "";
+};
+
 // Represents an individual vertex stream held in a geometry instance.
 struct geometry_vertex_stream
 {
@@ -242,7 +262,7 @@ public:
 
     // Attempts to load the geometry data from the given file.
     // Returns nullptr if not able to load or attempting to load an unsupported format.
-    static std::unique_ptr<geometry> load(const char* path, const vector3& scale = vector3::one, bool high_quality = true);
+    static std::unique_ptr<geometry> load(const char* path, const geometry_load_settings& settings);
 
 public:
 

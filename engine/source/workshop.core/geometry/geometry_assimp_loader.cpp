@@ -55,8 +55,14 @@ struct import_context
 };
  
 // Imports a mesh node in the assimp scene.
-bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, matrix4 transform)
+bool process_mesh(aiMesh* node, const aiScene* scene, import_context& output, matrix4 transform, const geometry_load_settings& settings)
 {
+    // Skip mesh if its being filtered out.
+    if (!settings.only_node.empty() && node->mName.C_Str() != settings.only_node)
+    {
+        return true;
+    }
+
     size_t start_vertex_index = output.positions.size();
 
     if (node->mPrimitiveTypes != aiPrimitiveType_TRIANGLE)
@@ -231,7 +237,7 @@ bool process_material(aiMaterial* node, const aiScene* scene, import_context& ou
 }
 
 // Walks the assimp scene to extract our output.
-bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matrix4 transform)
+bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matrix4 transform, const geometry_load_settings& settings)
 {
     matrix4 node_transform = matrix4(
         node->mTransformation.a1, node->mTransformation.a2, node->mTransformation.a3, node->mTransformation.a4,
@@ -243,7 +249,7 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matr
     for (size_t i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        if (!process_mesh(mesh, scene, output, node_transform))
+        if (!process_mesh(mesh, scene, output, node_transform, settings))
         {
             return false;
         }
@@ -251,7 +257,7 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matr
 
     for (size_t i = 0; i < node->mNumChildren; i++)
     {
-        if (!walk_scene(node->mChildren[i], scene, output, node_transform))
+        if (!walk_scene(node->mChildren[i], scene, output, node_transform, settings))
         {
             return false;
         }
@@ -260,49 +266,46 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matr
     return true;
 }
 
-};
+#pragma optimize("", off)
 
-std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& buffer, const char* path_hint, const vector3& scale, bool high_quality)
+// Imports all materials from a scene into the context.
+bool import_materials(const aiScene* scene, import_context& context)
 {
-    Assimp::Importer importer;
-
-    int flags = 0;
-    if (high_quality)
-    {
-        flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_ConvertToLeftHanded);
-    }
-    else
-    {
-        flags = (aiProcessPreset_TargetRealtime_Fast | aiProcess_ConvertToLeftHanded);
-    }
-
-    flags &= ~aiProcess_RemoveRedundantMaterials;
-
-    const aiScene* scene = importer.ReadFileFromMemory(
-        buffer.data(), 
-        buffer.size(), 
-        flags,
-        path_hint);
+    // Create list of materials that are actively in use.
+    std::unordered_map<size_t, size_t> original_index_to_new_index;
+    size_t next_new_index = 0;
     
-    if (scene == nullptr)
+    // Go through all materials actively being used by imported meshes.
+    for (import_context::mesh& mesh : context.meshes)
     {
-        db_warning(asset, "Failed to load geometry with error: %s", importer.GetErrorString());
-        return nullptr;
-    }
-
-    import_context context;
-
-    // Import all materials.
-    for (size_t i = 0; i < scene->mNumMaterials; i++)
-    {
-        aiMaterial* material = scene->mMaterials[i];
-        if (!process_material(material, scene, context))
+        auto iter = original_index_to_new_index.find(mesh.material_index);
+        if (iter == original_index_to_new_index.end())
         {
-            return nullptr;
+            size_t original_material_index = mesh.material_index;
+
+            original_index_to_new_index[mesh.material_index] = next_new_index;
+            mesh.material_index = next_new_index;
+            next_new_index++;
+
+            // Add material to output.
+            aiMaterial* material = scene->mMaterials[original_material_index];
+            if (!process_material(material, scene, context))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            mesh.material_index = iter->second;
         }
     }
 
-    // Figure out the max number of uv/color channels in mesh.
+    return true;
+}
+
+// Counts maximum number of uv channels and allocates appropriate space in context.
+void allocate_uv_channels(const aiScene* scene, import_context& context)
+{
     context.uv_channel_count = 0;
     context.color_channel_count = 0;
 
@@ -315,14 +318,11 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
 
     context.uvs.resize(context.uv_channel_count);
     context.colors.resize(context.color_channel_count);
+}
 
-    // Import all meshes in scene.
-    if (!walk_scene(scene->mRootNode, scene, context, matrix4::identity))
-    {
-        return nullptr;
-    }
-
-    // Normalize all normal values. Some models have these as non-unit vectors which causes issues elsewhere in the engine.
+// Normalizes the data streams in the import context.
+void normalize_streams(const aiScene* scene, import_context& context)
+{
     for (vector3& input : context.normals)
     {
         input = input.normalize();
@@ -335,53 +335,33 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
     {
         input = input.normalize();
     }
+}
 
-    // Import all skeletons.
-    // TODO
-
-    // Import all animations.
-    // TODO
-
-    // Create resulting geometry.
-    std::unique_ptr<geometry> result = std::make_unique<geometry>();
-
-    // Scale all positions.
+// Applies a scale to all spatial data streams in the context.
+void apply_scale(import_context& context, const vector3& scale)
+{
     for (vector3& pos : context.positions)
     {
         pos *= scale;
     }
+}
 
-    // Calculate geometry bounds.
-    if (context.positions.empty())
-    {
-        result->bounds.min = vector3::zero;
-        result->bounds.max = vector3::zero;
-    }
-    else
-    {
-        result->bounds.min = context.positions[0];
-        result->bounds.max = context.positions[0];
-
-        for (vector3& pos : context.positions)
-        {
-            result->bounds.min = vector3::min(result->bounds.min, pos);
-            result->bounds.max = vector3::max(result->bounds.max, pos);
-        }
-    }
-
-    // Insert all the materials into the geometry.
+void add_materials_to_geometry(geometry& geo, import_context& context)
+{
     for (import_context::material& mat : context.materials)
     {
-        size_t index = result->add_material(mat.name.c_str());
+        size_t index = geo.add_material(mat.name.c_str());
 
-        geometry_material& new_mat = result->get_materials()[index];
+        geometry_material& new_mat = geo.get_materials()[index];
         new_mat.albedo_texture.path = mat.albedo_source;
         new_mat.normal_texture.path = mat.normal_source;
         new_mat.metallic_texture.path = mat.metallic_source;
         new_mat.roughness_texture.path = mat.roughness_source;
     }
+}
 
-    // Insert meshes into the geometry.
+void add_meshes_to_geometry(geometry& geo, import_context& context, const geometry_load_settings& settings)
+{
     for (import_context::mesh& mesh : context.meshes)
     {
         vector3 mesh_bounds_min = vector3(FLT_MAX, FLT_MAX, FLT_MAX);
@@ -398,13 +378,10 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
 
         double min_texel_area = std::numeric_limits<double>::max();
         double max_texel_area = std::numeric_limits<double>::min();
-
         double min_world_area = std::numeric_limits<double>::max();
         double max_world_area = std::numeric_limits<double>::min();
-
         double avg_texel_area = 0.0f;
         double avg_world_area = 0.0f;
-
         double uv_density = 1.0f;
 
         // Calculate texel factor of each triangle and use the minimum as our streaming bias.
@@ -505,7 +482,7 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
             uv_density = sqrt(uv_density);
         }
 
-        result->add_mesh(
+        geo.add_mesh(
             mesh.name.c_str(), 
             mesh.material_index, 
             mesh.indices, 
@@ -519,22 +496,146 @@ std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& 
             (float)uv_density
         );
     }
+}
 
-   //. std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+void calculate_geometry_bounds(geometry& geo, import_context& context)
+{
+    if (context.positions.empty())
+    {
+        geo.bounds.min = vector3::zero;
+        geo.bounds.max = vector3::zero;
+    }
+    else
+    {
+        geo.bounds.min = context.positions[0];
+        geo.bounds.max = context.positions[0];
 
-    // Insert all the vertex streams.
-    result->add_vertex_stream(geometry_vertex_stream_type::position, context.positions);
-    result->add_vertex_stream(geometry_vertex_stream_type::normal, context.normals);
-    result->add_vertex_stream(geometry_vertex_stream_type::tangent, context.tangents);
-    result->add_vertex_stream(geometry_vertex_stream_type::bitangent, context.bitangents);
+        for (vector3& pos : context.positions)
+        {
+            geo.bounds.min = vector3::min(geo.bounds.min, pos);
+            geo.bounds.max = vector3::max(geo.bounds.max, pos);
+        }
+    }
+}
+
+void add_vertex_streams_to_geometry(geometry& geo, import_context& context)
+{
+    geo.add_vertex_stream(geometry_vertex_stream_type::position, context.positions);
+    geo.add_vertex_stream(geometry_vertex_stream_type::normal, context.normals);
+    geo.add_vertex_stream(geometry_vertex_stream_type::tangent, context.tangents);
+    geo.add_vertex_stream(geometry_vertex_stream_type::bitangent, context.bitangents);
     for (size_t i = 0; i < context.uvs.size(); i++)
     {
-        result->add_vertex_stream(static_cast<geometry_vertex_stream_type>((int)geometry_vertex_stream_type::uv0 + i), context.uvs[i]);
+        geo.add_vertex_stream(static_cast<geometry_vertex_stream_type>((int)geometry_vertex_stream_type::uv0 + i), context.uvs[i]);
     }
     for (size_t i = 0; i < context.colors.size(); i++)
     {
-        result->add_vertex_stream(static_cast<geometry_vertex_stream_type>((int)geometry_vertex_stream_type::color0 + i), context.colors[i]);
+        geo.add_vertex_stream(static_cast<geometry_vertex_stream_type>((int)geometry_vertex_stream_type::color0 + i), context.colors[i]);
     }
+}
+
+void recalculate_origin(import_context& context)
+{
+    // If recalculating the origin for each mesh, shift all vertices used by the mesh so
+    // the bottom-center is touching zero.
+
+    aabb bounds;
+
+    if (context.positions.empty())
+    {
+        bounds.min = vector3::zero;
+        bounds.max = vector3::zero;
+    }
+    else
+    {
+        bounds.min = context.positions[0];
+        bounds.max = context.positions[0];
+
+        for (vector3& pos : context.positions)
+        {
+            bounds.min = vector3::min(bounds.min, pos);
+            bounds.max = vector3::max(bounds.max, pos);
+        }
+    }
+
+    vector3 origin(
+        bounds.min.x + ((bounds.max.x - bounds.min.x) * 0.5f),
+        bounds.min.y,
+        bounds.min.z + ((bounds.max.z - bounds.min.z) * 0.5f)
+    );
+
+    for (vector3& pos : context.positions)
+    {
+        pos -= origin;
+    }
+}
+
+};
+
+std::unique_ptr<geometry> geometry_assimp_loader::load(const std::vector<char>& buffer, const char* path_hint, const geometry_load_settings& settings)
+{
+    Assimp::Importer importer;
+
+    int flags = 0;
+    if (settings.high_quality)
+    {
+        flags = (aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_ConvertToLeftHanded);
+    }
+    else
+    {
+        flags = (aiProcessPreset_TargetRealtime_Fast | aiProcess_ConvertToLeftHanded);
+    }
+
+    flags &= ~aiProcess_RemoveRedundantMaterials;
+
+    const aiScene* scene = importer.ReadFileFromMemory(
+        buffer.data(), 
+        buffer.size(), 
+        flags,
+        path_hint);
+    
+    if (scene == nullptr)
+    {
+        db_warning(asset, "Failed to load geometry with error: %s", importer.GetErrorString());
+        return nullptr;
+    }
+
+    import_context context;
+
+    allocate_uv_channels(scene, context);
+    
+    // Import all meshes in scene.
+    if (!walk_scene(scene->mRootNode, scene, context, matrix4::identity, settings))
+    {
+        return nullptr;
+    }
+
+    // Import all materials that are in use.
+    if (!import_materials(scene, context))
+    {
+        return nullptr;
+    }
+
+    // Normalize all normal values. Some models have these as non-unit vectors which causes issues elsewhere in the engine.
+    normalize_streams(scene,  context);
+
+    // Apply scale to spatial data streams..
+    apply_scale(context, settings.scale);
+
+    // Recalculate the bounds
+    if (settings.recalculate_origin)
+    {
+        recalculate_origin(context);
+    }
+
+    // Create resulting geometry.
+    std::unique_ptr<geometry> result = std::make_unique<geometry>();
+    add_materials_to_geometry(*result, context);
+    add_meshes_to_geometry(*result, context, settings);
+    add_vertex_streams_to_geometry(*result, context); 
+
+    // Recalculate the final geometry bounds.
+    calculate_geometry_bounds(*result, context);
 
     return result;
 }

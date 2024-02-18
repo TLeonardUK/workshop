@@ -43,6 +43,8 @@ SET(SOURCES
 
     "editor/windows/popups/editor_progress_popup.cpp"
     "editor/windows/popups/editor_progress_popup.h"
+    "editor/windows/popups/editor_import_asset_popup.cpp"
+    "editor/windows/popups/editor_import_asset_popup.h"
 
     "editor/transactions/editor_transaction_change_object_transform.h"
     "editor/transactions/editor_transaction_change_object_transform.cpp"

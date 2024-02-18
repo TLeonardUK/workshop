@@ -11,7 +11,29 @@
 #include <filesystem>
 #include <unordered_map>
 
+#pragma optimize("", off)
+
 namespace ws {
+namespace {
+
+std::string sanitize_filename(const char* path)
+{
+    std::string result = path;
+
+    result = string_lower(result);
+    result = string_filter_alphanum(result, '_');
+
+    // Limit length of filenames to avoid ridiculously long filenames. 
+    // Things like assimp result in node names that are recurisively concatanated and get very long.
+    if (result.size() > 64)
+    {
+        result = result.substr(result.size() - 64);
+    }
+
+    return result;
+}
+
+};
 
 model_importer::model_importer(ri_interface& instance, renderer& renderer, asset_manager& ass_manager)
     : m_ri_interface(instance)
@@ -36,12 +58,19 @@ std::string model_importer::get_file_type_description()
     return "Model Files";
 }
 
-bool model_importer::import(const char* in_source_path, const char* in_output_path)
+std::unique_ptr<asset_importer_settings> model_importer::create_import_settings()
+{
+    return std::make_unique<model_importer_settings>();
+}
+
+bool model_importer::import(const char* in_source_path, const char* in_output_path, const asset_importer_settings& settings)
 {
     db_log(engine, "Importing model: %s", in_source_path);
 
+    const model_importer_settings& import_settings = static_cast<const model_importer_settings&>(settings);
+
     std::filesystem::path source_path = in_source_path;
-    std::filesystem::path asset_name = string_replace(string_lower(source_path.filename().replace_extension().string().c_str()), " ", "_");
+    std::filesystem::path asset_name = sanitize_filename(source_path.filename().replace_extension().string().c_str());
     std::filesystem::path asset_name_with_source_extension = asset_name;
     asset_name_with_source_extension = asset_name_with_source_extension.replace_extension(source_path.extension());
     std::filesystem::path asset_name_with_yaml_extension = asset_name;
@@ -98,7 +127,13 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
     // Write out the model template.
     
     // Load the fbx so we know what materials/etc we will need.
-    std::unique_ptr<geometry> geometry = geometry::load(vfs_output_model_path_normalized.c_str(), vector3::one);
+    geometry_load_settings geo_settings;
+    geo_settings.merge_submeshes = !import_settings.seperate_submeshes;
+    geo_settings.recalculate_origin = import_settings.recalculate_origin;
+    geo_settings.scale = import_settings.scale;
+    geo_settings.high_quality = true;
+
+    std::unique_ptr<geometry> geometry = geometry::load(vfs_output_model_path_normalized.c_str(), geo_settings);
 
     // Figure out the materials we will need.
     std::vector<imported_material> materials;
@@ -180,13 +215,16 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
         tex.usage = usage;
 
         std::filesystem::path filename = std::filesystem::path(texture.path).filename();
+        std::string filename_normalized = string_lower(filename.string());
 
         db_log(engine, "Importing texture: %s", tex.output_yaml_path.string().c_str());
         
         // Search in all folders under the folder the model was in for the texture.
         for (const std::filesystem::path& potential_path : file_matching_pool)
         {
-            if (potential_path.filename() == filename)
+            std::string potential_normalized = string_lower(potential_path.filename().string());
+
+            if (potential_normalized == filename_normalized)
             {
                 tex.found_path = potential_path;
                 break;
@@ -284,12 +322,26 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
     }
 
     // Write the model template.
-    for (geometry_mesh& mesh : geometry->get_meshes())
+    if (import_settings.seperate_submeshes)
     {
-        std::filesystem::path mesh_name = string_replace(string_lower(mesh.name.c_str()), " ", "_");
+        for (geometry_mesh& mesh : geometry->get_meshes())
+        {
+            std::filesystem::path mesh_name = sanitize_filename(mesh.name.c_str());
+            std::filesystem::path mesh_yaml_path = output_directory_path / mesh_name.replace_extension(".yaml");
+
+            if (!write_model_template(mesh_yaml_path.string().c_str(), vfs_output_model_path_normalized.c_str(), materials, mesh.name.c_str(), import_settings))
+            {
+                db_error(engine, "Failed to write out model asset file: %s", asset_name_with_yaml_extension.string().c_str());
+                return false;
+            }
+        }
+    }
+    else
+    {
+        std::filesystem::path mesh_name = asset_name;
         std::filesystem::path mesh_yaml_path = output_directory_path / mesh_name.replace_extension(".yaml");
 
-        if (!write_model_template(mesh_yaml_path.string().c_str(), vfs_output_model_path_normalized.c_str(), materials, mesh.name.c_str()))
+        if (!write_model_template(mesh_yaml_path.string().c_str(), vfs_output_model_path_normalized.c_str(), materials, "", import_settings))
         {
             db_error(engine, "Failed to write out model asset file: %s", asset_name_with_yaml_extension.string().c_str());
             return false;
@@ -319,7 +371,7 @@ bool model_importer::import(const char* in_source_path, const char* in_output_pa
     return true;
 }
 
-bool model_importer::write_model_template(const char* path, const char* vfs_model_path, const std::vector<imported_material>& materials, const char* source_node_name)
+bool model_importer::write_model_template(const char* path, const char* vfs_model_path, const std::vector<imported_material>& materials, const char* source_node_name, const model_importer_settings& import_settings)
 {
     std::string output = "";
 
@@ -336,7 +388,9 @@ bool model_importer::write_model_template(const char* path, const char* vfs_mode
         output += "source_node: " + std::string(source_node_name) + "\n";
     }
     output += "\n";
-    output += "scale: [ 1.0, 1.0, 1.0 ]\n";
+    output += string_format("recalculate_origin: %s\n", import_settings.recalculate_origin ? "true" : "false");
+    output += string_format("merge_submeshes: %s\n", !import_settings.seperate_submeshes ? "true" : "false");
+    output += string_format("scale: [ %.2f, %.2f, %.2f ]\n", import_settings.scale.x, import_settings.scale.y, import_settings.scale.z);
     output += "\n";
     output += "materials:\n";
     for (const imported_material& mat : materials)

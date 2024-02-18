@@ -30,7 +30,12 @@ std::string texture_importer::get_file_type_description()
     return "Texture Files";
 }
 
-bool texture_importer::import(const char* in_source_path, const char* in_output_path)
+std::unique_ptr<asset_importer_settings> texture_importer::create_import_settings()
+{
+    return std::make_unique<texture_importer_settings>();
+}
+
+bool texture_importer::import(const char* in_source_path, const char* in_output_path, const asset_importer_settings& settings)
 {
     db_log(engine, "Importing Texture: %s", in_source_path);
 

@@ -177,7 +177,19 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
         scale.z = scale_node[2].as<float>();
     }
 
-    asset.geometry = geometry::load(source.c_str(), scale);
+    geometry_load_settings geo_settings;
+    geo_settings.scale = scale;
+    geo_settings.only_node = source_node;
+    if (!parse_property(path, "merge_submeshes", node["merge_submeshes"], geo_settings.merge_submeshes, false))
+    {
+        return false;
+    }
+    if (!parse_property(path, "recalculate_origin", node["recalculate_origin"], geo_settings.recalculate_origin, false))
+    {
+        return false;
+    }
+
+    asset.geometry = geometry::load(source.c_str(), geo_settings);
     asset.source_node = source_node;
     asset.header.add_dependency(source.c_str());
 
@@ -235,7 +247,7 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
                 // Add all the meshes that use this material.
                 for (geometry_mesh& mesh : asset.geometry->get_meshes())
                 {
-                    if (mesh.material_index == geo_mat->index && (asset.source_node.empty() || asset.source_node == mesh.name))
+                    if (mesh.material_index == geo_mat->index)
                     {
                         model::mesh_info& info = asset.meshes.emplace_back();
                         info.name = mesh.name;

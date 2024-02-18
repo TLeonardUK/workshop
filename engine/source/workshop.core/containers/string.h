@@ -125,6 +125,12 @@ std::string string_lower(const std::string& subject);
 // ================================================================================================
 std::string string_upper(const std::string& subject);
 
+
+// ================================================================================================
+//  Filters out all non-alphanumeriuc characters in a string.
+// ================================================================================================
+std::string string_filter_alphanum(const std::string& subject, char replacement_char = '_');
+
 // ================================================================================================
 //  Generates a 32bit hash from a string. No guarantees are given about collisions
 //  so be careful with your usage.

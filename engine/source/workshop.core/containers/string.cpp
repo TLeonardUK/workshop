@@ -242,6 +242,26 @@ std::string string_upper(const std::string& subject)
     return result;
 }
 
+std::string string_filter_alphanum(const std::string& subject, char replacement_char)
+{
+    std::string result = "";
+    result.reserve(subject.size());
+
+    for (size_t i = 0; i < subject.size(); i++)
+    {
+        char chr = subject[i];
+        if (isalpha(chr) || isdigit(chr))
+        {
+            result += chr;
+        }
+        else
+        {
+            result += replacement_char;
+        }
+    }
+    return result;
+}
+
 uint32_t string_hash32(const std::string& subject)
 {
     uint32_t hash = 0;

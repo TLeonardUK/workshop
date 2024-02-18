@@ -3,6 +3,8 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.editor/editor/windows/editor_assets_window.h"
+#include "workshop.editor/editor/windows/popups/editor_import_asset_popup.h"
+#include "workshop.editor/editor/editor.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.assets/asset_manager.h"
 #include "workshop.assets/asset.h"
@@ -14,8 +16,9 @@
 
 namespace ws {
 
-editor_assets_window::editor_assets_window(asset_manager* ass_manager, asset_database* ass_database)
-    : m_asset_manager(ass_manager)
+editor_assets_window::editor_assets_window(editor* in_editor, asset_manager* ass_manager, asset_database* ass_database)
+    : m_editor(in_editor)
+    , m_asset_manager(ass_manager)
     , m_asset_database(ass_database)
 {
 }
@@ -464,10 +467,10 @@ void editor_assets_window::import_asset()
             }
 
             db_log(engine, "Importing '%s' to '%s'.", path, output_path.c_str());
-            if (!importer->import(path.c_str(), output_path.c_str()))
-            {
-                message_dialog("Failed to import asset, view output log for details.", message_dialog_type::error);
-            }
+
+            editor_import_asset_popup* popup = m_editor->get_window<editor_import_asset_popup>();
+            popup->set_import_settings(importer, path, output_path);
+            popup->open();
         }
         else
         {
