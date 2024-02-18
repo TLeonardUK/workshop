@@ -467,6 +467,7 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
             render_view_flags::constant_eye_adaption | 
             render_view_flags::constant_ambient_lighting | 
             render_view_flags::scene_only |
+            render_view_flags::normal |
             render_view_flags::render_in_editor_mode);
 
         start_frame_index = m_renderer.get_frame_index();

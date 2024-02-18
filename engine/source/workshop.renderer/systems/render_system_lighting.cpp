@@ -56,12 +56,16 @@ result<void> render_system_lighting::create_resources()
     m_lighting_output.color_targets.push_back(m_lighting_buffer.get());
 
     // LUT we will generate for calculating BRDF factors.
-    texture_params.width = 256;
-    texture_params.height = 256;
-    texture_params.dimensions = ri_texture_dimension::texture_2d;
-    texture_params.format = ri_texture_format::R32G32_FLOAT;
-    texture_params.is_render_target = true;
-    m_brdf_lut_texture = render_interface.create_texture(texture_params, "BRDF LUT");
+    // Only need to generate this once, so don't recreate on swapchain resize/etc.
+    if (m_brdf_lut_texture == nullptr)
+    {
+        texture_params.width = 256;
+        texture_params.height = 256;
+        texture_params.dimensions = ri_texture_dimension::texture_2d;
+        texture_params.format = ri_texture_format::R32G32_FLOAT;
+        texture_params.is_render_target = true;
+        m_brdf_lut_texture = render_interface.create_texture(texture_params, "BRDF LUT");
+    }
 
     return true;
 }

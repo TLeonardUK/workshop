@@ -30,9 +30,14 @@ private:
     void draw_asset_tree_dir(asset_database_entry* entry);
     void draw_asset_tree();
 
-    void draw_asset_list();
+    void draw_asset_text_list();
+    void draw_asset_icon_list();
 
     void import_asset();
+
+    float get_item_size();
+
+    std::vector<asset_database_entry*> get_file_entries();
 
 private:
     asset_manager* m_asset_manager = nullptr;
@@ -44,7 +49,15 @@ private:
 
     int m_current_filter_type = 0;
 
+    float m_zoom_level = 50.0f;
+
     char m_current_filter[256] = {};
+
+    static inline const float k_show_text_min_zoom = 30.0f;
+    static inline const float k_show_list_min_zoom = 1.0f;
+
+    static inline const float k_min_item_width = 32;
+    static inline const float k_max_item_width = 256;
 
     static inline constexpr int k_filter_type_count = 6;
     const char* m_filter_types[k_filter_type_count] = {

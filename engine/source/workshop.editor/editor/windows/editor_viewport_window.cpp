@@ -279,10 +279,10 @@ void editor_viewport_window::draw()
     if (m_open)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        if (ImGui::Begin(get_window_id(), &m_open, ImGuiWindowFlags_MenuBar))
+        bool should_open = ImGui::Begin(get_window_id(), &m_open, ImGuiWindowFlags_MenuBar);
+        ImGui::PopStyleVar();
+        if (should_open)
         {
-            ImGui::PopStyleVar();
-
             was_drawn = true;
 
             update_render_target(false);
@@ -395,7 +395,7 @@ void editor_viewport_window::draw()
 
     // Update if camera movement component should be taking input or not.
     mouse_over_viewport = ImGui::IsMouseHoveringRect(viewport_rect.Min, viewport_rect.Max, false);
-    input_blocked = ImGuizmo::IsUsingAny() || ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup);
+    input_blocked = ImGuizmo::IsUsingAny() || ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) || GImGui->MovingWindow;
 
     camera_movement_sys->set_input_state(m_view_camera, recti(
         (int)(viewport_rect.Min.x),
