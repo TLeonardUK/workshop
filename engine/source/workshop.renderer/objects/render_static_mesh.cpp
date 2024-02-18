@@ -248,12 +248,12 @@ void render_static_mesh::create_render_data()
 
             size_t table_index, table_offset;
             m_model->get_model_info_param_block(i).get_table(table_index, table_offset);
-            tlas->metadata->set("model_info_table", (uint32_t)table_index);
-            tlas->metadata->set("model_info_offset", (uint32_t)table_offset);
+            tlas->metadata->set("model_info_table"_sh, (uint32_t)table_index);
+            tlas->metadata->set("model_info_offset"_sh, (uint32_t)table_offset);
             mat->get_material_info_param_block()->get_table(table_index, table_offset);
-            tlas->metadata->set("material_info_table", (uint32_t)table_index);
-            tlas->metadata->set("material_info_offset", (uint32_t)table_offset);
-            tlas->metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
+            tlas->metadata->set("material_info_table"_sh, (uint32_t)table_index);
+            tlas->metadata->set("material_info_offset"_sh, (uint32_t)table_offset);
+            tlas->metadata->set("gpu_flags"_sh, (uint32_t)m_gpu_flags);
 
             bool is_transparent = (mat->domain == material_domain::transparent || mat->domain == material_domain::masked);
 
@@ -298,8 +298,8 @@ void render_static_mesh::update_render_data()
     matrix4 transform = get_transform();
 
     bool changed = false;
-    changed |= m_geometry_instance_info->set("model_matrix", transform);
-    changed |= m_geometry_instance_info->set("gpu_flags", (uint32_t)m_gpu_flags);
+    changed |= m_geometry_instance_info->set("model_matrix"_sh, transform);
+    changed |= m_geometry_instance_info->set("gpu_flags"_sh, (uint32_t)m_gpu_flags);
 
     // Mark as changed if draw in geometry pass.
     bool visible_in_rt = has_draw_flag(render_draw_flags::geometry);
@@ -311,7 +311,7 @@ void render_static_mesh::update_render_data()
     {
         for (tlas_instance& instance : m_registered_tlas_instances)
         {
-            instance.metadata->set("gpu_flags", (uint32_t)m_gpu_flags);
+            instance.metadata->set("gpu_flags"_sh, (uint32_t)m_gpu_flags);
             m_renderer->get_scene_tlas().update_instance(instance.id, transform, m_visible_in_rt ? (uint32_t)instance.mask : (uint32_t)ray_mask::invisible);
         }
     }

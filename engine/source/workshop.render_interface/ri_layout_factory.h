@@ -13,6 +13,8 @@
 #include "workshop.core/math/matrix3.h"
 #include "workshop.core/math/matrix4.h"
 
+#include "workshop.core/hashing/string_hash.h"
+
 #include <span>
 
 namespace ws {
@@ -38,40 +40,40 @@ public:
 	virtual size_t get_instance_size() = 0;
 
 	// bool
-	void add(const char* field_name, const std::vector<uint8_t>& values); // Fucking bools.
-	void add(const char* field_name, const std::vector<vector2b>& values);
-	void add(const char* field_name, const std::vector<vector3b>& values);
-	void add(const char* field_name, const std::vector<vector4b>& values);
+	void add(string_hash field_name, const std::vector<uint8_t>& values); // Fucking bools.
+	void add(string_hash field_name, const std::vector<vector2b>& values);
+	void add(string_hash field_name, const std::vector<vector3b>& values);
+	void add(string_hash field_name, const std::vector<vector4b>& values);
 
 	// int
-	void add(const char* field_name, const std::vector<int32_t>& values);
-	void add(const char* field_name, const std::vector<vector2i>& values);
-	void add(const char* field_name, const std::vector<vector3i>& values);
-	void add(const char* field_name, const std::vector<vector4i>& values);
+	void add(string_hash field_name, const std::vector<int32_t>& values);
+	void add(string_hash field_name, const std::vector<vector2i>& values);
+	void add(string_hash field_name, const std::vector<vector3i>& values);
+	void add(string_hash field_name, const std::vector<vector4i>& values);
 
 	// uint
-	void add(const char* field_name, const std::vector<uint32_t>& values);
-	void add(const char* field_name, const std::vector<vector2u>& values);
-	void add(const char* field_name, const std::vector<vector3u>& values);
-	void add(const char* field_name, const std::vector<vector4u>& values);
+	void add(string_hash field_name, const std::vector<uint32_t>& values);
+	void add(string_hash field_name, const std::vector<vector2u>& values);
+	void add(string_hash field_name, const std::vector<vector3u>& values);
+	void add(string_hash field_name, const std::vector<vector4u>& values);
 
 	// float
-	void add(const char* field_name, const std::vector<float>& values);
-	void add(const char* field_name, const std::vector<vector2>& values);
-	void add(const char* field_name, const std::vector<vector3>& values);
-	void add(const char* field_name, const std::vector<vector4>& values);
-	void add(const char* field_name, const std::vector<matrix2>& values);
-	void add(const char* field_name, const std::vector<matrix3>& values);
-	void add(const char* field_name, const std::vector<matrix4>& values);
+	void add(string_hash field_name, const std::vector<float>& values);
+	void add(string_hash field_name, const std::vector<vector2>& values);
+	void add(string_hash field_name, const std::vector<vector3>& values);
+	void add(string_hash field_name, const std::vector<vector4>& values);
+	void add(string_hash field_name, const std::vector<matrix2>& values);
+	void add(string_hash field_name, const std::vector<matrix3>& values);
+	void add(string_hash field_name, const std::vector<matrix4>& values);
 
 	// double
-	void add(const char* field_name, const std::vector<double>& values);
-	void add(const char* field_name, const std::vector<vector2d>& values);
-	void add(const char* field_name, const std::vector<vector3d>& values);
-	void add(const char* field_name, const std::vector<vector4d>& values);
-	void add(const char* field_name, const std::vector<matrix2d>& values);
-	void add(const char* field_name, const std::vector<matrix3d>& values);
-	void add(const char* field_name, const std::vector<matrix4d>& values);
+	void add(string_hash field_name, const std::vector<double>& values);
+	void add(string_hash field_name, const std::vector<vector2d>& values);
+	void add(string_hash field_name, const std::vector<vector3d>& values);
+	void add(string_hash field_name, const std::vector<vector4d>& values);
+	void add(string_hash field_name, const std::vector<matrix2d>& values);
+	void add(string_hash field_name, const std::vector<matrix3d>& values);
+	void add(string_hash field_name, const std::vector<matrix4d>& values);
 
 	// Creation of buffers from.
 	virtual std::unique_ptr<ri_buffer> create_vertex_buffer(const char* name) = 0;
@@ -82,7 +84,7 @@ public:
 
 	// Add as raw data. Prefer type functions before touching this. This is mainly exposed for 
 	// adding serialized data to the layout factory.
-	virtual void add(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) = 0;
+	virtual void add(string_hash field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) = 0;
 
 };
 

@@ -87,8 +87,8 @@ bool model::load_dependencies()
 
         // Create a model_info param block that points to all the vertex stream buffers.
         std::unique_ptr<ri_param_block> model_info = m_renderer.get_param_block_manager().create_param_block("model_info");
-        model_info->set("index_buffer", *info.index_buffer, false);
-        model_info->set("index_size", (int)params.element_size);
+        model_info->set("index_buffer"_sh, *info.index_buffer, false);
+        model_info->set("index_size"_sh, (int)params.element_size);
         m_model_info_param_blocks.push_back(std::move(model_info));
     }
 
@@ -105,7 +105,7 @@ bool model::load_dependencies()
         {
             for (auto& param_block : m_model_info_param_blocks)
             {
-                param_block->clear_buffer(field_name.c_str());
+                param_block->clear_buffer(string_hash(field_name));
             }
             m_vertex_streams[i] = nullptr;
             continue;
@@ -115,7 +115,7 @@ bool model::load_dependencies()
         stream_layout.fields.push_back({ stream_name, k_vertex_stream_runtime_types[i] });
 
         std::unique_ptr<ri_layout_factory> factory = m_renderer.get_render_interface().create_layout_factory(stream_layout, ri_layout_usage::buffer);
-        factory->add(stream_name, stream->data, stream->element_size, ri_convert_geometry_data_type(stream->data_type));
+        factory->add(string_hash(stream_name), stream->data, stream->element_size, ri_convert_geometry_data_type(stream->data_type));
 
         std::string vertex_buffer_name = string_format("Model Vertex Stream[%s]: %s", stream_name, name.c_str());
 
@@ -124,7 +124,7 @@ bool model::load_dependencies()
 
         for (auto& param_block : m_model_info_param_blocks)
         {
-            param_block->set(field_name.c_str(), *buf->vertex_buffer, false);
+            param_block->set(string_hash(field_name.c_str()), *buf->vertex_buffer, false);
         }
         m_vertex_streams[i] = std::move(buf);
 

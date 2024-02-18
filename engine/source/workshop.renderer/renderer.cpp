@@ -410,14 +410,14 @@ result<void> renderer::recreate_resizable_targets()
 
     // Create param block describing the above.
     m_gbuffer_param_block = m_param_block_manager->create_param_block("gbuffer");
-    m_gbuffer_param_block->set("gbuffer0_texture", *m_gbuffer_textures[0]);
-    m_gbuffer_param_block->set("gbuffer1_texture", *m_gbuffer_textures[1]);
-    m_gbuffer_param_block->set("gbuffer2_texture", *m_gbuffer_textures[2]);
+    m_gbuffer_param_block->set("gbuffer0_texture"_sh, *m_gbuffer_textures[0]);
+    m_gbuffer_param_block->set("gbuffer1_texture"_sh, *m_gbuffer_textures[1]);
+    m_gbuffer_param_block->set("gbuffer2_texture"_sh, *m_gbuffer_textures[2]);
 #ifdef GBUFFER_DEBUG_DATA
-    m_gbuffer_param_block->set("gbuffer3_texture", *m_gbuffer_textures[3]);
+    m_gbuffer_param_block->set("gbuffer3_texture"_sh, *m_gbuffer_textures[3]);
 #endif
-    m_gbuffer_param_block->set("gbuffer_sampler", *m_gbuffer_sampler);
-    m_gbuffer_param_block->set("gbuffer_dimensions", vector2i((int)params.width,  (int)params.height));
+    m_gbuffer_param_block->set("gbuffer_sampler"_sh, *m_gbuffer_sampler);
+    m_gbuffer_param_block->set("gbuffer_dimensions"_sh, vector2i((int)params.width,  (int)params.height));
 
     return true;
 }
@@ -738,6 +738,10 @@ void renderer::render_state(render_world_state& state)
 
     // Grab a list of active views that should be rendered this frame.
     std::vector<render_view*> views = m_scene_manager->get_views();
+    for (render_view* view : views)
+    {
+        view->set_will_render(false);
+    }
 
     // Remove views from list that we no longer care about.
     auto iter = std::remove_if(views.begin(), views.end(), [](render_view* view) { 
@@ -750,7 +754,10 @@ void renderer::render_state(render_world_state& state)
             return true;
         }
 
-        return !view->should_render();
+        bool should_render = view->should_render();
+        view->set_will_render(should_render);
+
+        return !should_render;
 
     });
     if (iter != views.end())
@@ -1151,7 +1158,7 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ind
         position_layout.fields.push_back({ "position", model::k_vertex_stream_runtime_types[(int)geometry_vertex_stream_type::position] });
 
         std::unique_ptr<ri_layout_factory> factory = m_render_interface.create_layout_factory(position_layout, ri_layout_usage::buffer);
-        factory->add("position", { vector3(-1.0f, -1.0f, 0.0f), vector3(1.0f, -1.0f, 0.0f), vector3(-1.0f,  1.0f, 0.0f), vector3(1.0f,  1.0f, 0.0f) });
+        factory->add("position"_sh, { vector3(-1.0f, -1.0f, 0.0f), vector3(1.0f, -1.0f, 0.0f), vector3(-1.0f,  1.0f, 0.0f), vector3(1.0f,  1.0f, 0.0f) });
 
         buffers.position_buffer = factory->create_vertex_buffer("Fullscreen Vertex Stream [position]");
         buffers.index_buffer = factory->create_index_buffer("Fullscreen Index Buffer", std::vector<uint32_t> { 2, 1, 0, 3, 1, 2 });
@@ -1163,16 +1170,16 @@ void renderer::get_fullscreen_buffers(ri_data_layout layout, ri_buffer*& out_ind
         position_layout.fields.push_back({ "uv0", model::k_vertex_stream_runtime_types[(int)geometry_vertex_stream_type::uv0] });
 
         std::unique_ptr<ri_layout_factory> factory = m_render_interface.create_layout_factory(position_layout, ri_layout_usage::buffer);
-        factory->add("uv0", { vector2(0.0f,  1.0f), vector2(1.0f,  1.0f), vector2(0.0f,  0.0f), vector2(1.0f,  0.0f) });
+        factory->add("uv0"_sh, { vector2(0.0f,  1.0f), vector2(1.0f,  1.0f), vector2(0.0f,  0.0f), vector2(1.0f,  0.0f) });
 
         buffers.uv0_buffer = factory->create_vertex_buffer("Fullscreen Vertex Stream [position]");
     }
 
     // Create a model info.
     buffers.model_info_param_block = m_param_block_manager->create_param_block("model_info");
-    buffers.model_info_param_block->set("index_size", (int)buffers.index_buffer->get_element_size());
-    buffers.model_info_param_block->set("position_buffer", *buffers.position_buffer);
-    buffers.model_info_param_block->set("uv0_buffer", *buffers.uv0_buffer);
+    buffers.model_info_param_block->set("index_size"_sh, (int)buffers.index_buffer->get_element_size());
+    buffers.model_info_param_block->set("position_buffer"_sh, *buffers.position_buffer);
+    buffers.model_info_param_block->set("uv0_buffer"_sh, *buffers.uv0_buffer);
 
     out_model_info = buffers.model_info_param_block.get();
     out_index = buffers.index_buffer.get();

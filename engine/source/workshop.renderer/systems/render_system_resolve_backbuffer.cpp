@@ -96,14 +96,14 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
 
     ri_param_block* resolve_luminance_params = view.get_resource_cache().find_or_create_param_block(this, "calculate_luminance_params");
     ri_texture_view texture = &m_renderer.get_system<render_system_lighting>()->get_lighting_buffer();
-    resolve_luminance_params->set("min_log2_luminance", min_luminance);
-    resolve_luminance_params->set("log2_luminance_range", (max_luminance - min_luminance));
-    resolve_luminance_params->set("inverse_log2_luminance_range", 1.0f / (max_luminance - min_luminance));
-    resolve_luminance_params->set("input_target", texture);
-    resolve_luminance_params->set("input_dimensions", vector2i((int)texture.get_width(), (int)texture.get_height()));
-    resolve_luminance_params->set("histogram_buffer", *m_luminance_histogram_buffer, true);
-    resolve_luminance_params->set("average_buffer", *luminance_average_buffer, true);
-    resolve_luminance_params->set("time_coeff", time_coeff);
+    resolve_luminance_params->set("min_log2_luminance"_sh, min_luminance);
+    resolve_luminance_params->set("log2_luminance_range"_sh, (max_luminance - min_luminance));
+    resolve_luminance_params->set("inverse_log2_luminance_range"_sh, 1.0f / (max_luminance - min_luminance));
+    resolve_luminance_params->set("input_target"_sh, texture);
+    resolve_luminance_params->set("input_dimensions"_sh, vector2i((int)texture.get_width(), (int)texture.get_height()));
+    resolve_luminance_params->set("histogram_buffer"_sh, *m_luminance_histogram_buffer, true);
+    resolve_luminance_params->set("average_buffer"_sh, *luminance_average_buffer, true);
+    resolve_luminance_params->set("time_coeff"_sh, time_coeff);
 
     // Calculate the luminance histogram
     std::unique_ptr<render_pass_compute> histogram_pass = std::make_unique<render_pass_compute>();
@@ -156,15 +156,15 @@ void render_system_resolve_backbuffer::build_graph(render_graph& graph, const re
     }
 
     ri_param_block* resolve_param_block = view.get_resource_cache().find_or_create_param_block(this, "resolve_parameters");
-    resolve_param_block->set("visualization_mode", (int)view.get_visualization_mode());
-    resolve_param_block->set("light_buffer_texture", m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
-    resolve_param_block->set("light_buffer_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-    resolve_param_block->set("raytraced_scene_texture", m_renderer.get_system<render_system_raytrace_scene>()->get_output_buffer());
-    resolve_param_block->set("raytraced_scene_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-    resolve_param_block->set("tonemap_enabled", !is_hdr_output && !view.has_flag(render_view_flags::constant_eye_adaption));
-    resolve_param_block->set("white_point_squared", math::square(white_point));    
-    resolve_param_block->set("average_luminance_buffer", *luminance_average_buffer, true);
-    resolve_param_block->set("uv_scale", vector2(
+    resolve_param_block->set("visualization_mode"_sh, (int)view.get_visualization_mode());
+    resolve_param_block->set("light_buffer_texture"_sh, m_renderer.get_system<render_system_lighting>()->get_lighting_buffer());
+    resolve_param_block->set("light_buffer_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color));
+    resolve_param_block->set("raytraced_scene_texture"_sh, m_renderer.get_system<render_system_raytrace_scene>()->get_output_buffer());
+    resolve_param_block->set("raytraced_scene_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color));
+    resolve_param_block->set("tonemap_enabled"_sh, !is_hdr_output && !view.has_flag(render_view_flags::constant_eye_adaption));
+    resolve_param_block->set("white_point_squared"_sh, math::square(white_point));
+    resolve_param_block->set("average_luminance_buffer"_sh, *luminance_average_buffer, true);
+    resolve_param_block->set("uv_scale"_sh, vector2(
         (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
         (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
     ));

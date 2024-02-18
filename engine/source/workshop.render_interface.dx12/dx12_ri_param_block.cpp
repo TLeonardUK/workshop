@@ -78,11 +78,11 @@ void* dx12_ri_param_block::consume()
             if (field.type == ri_data_type::t_byteaddressbuffer || 
                 field.type == ri_data_type::t_rwbyteaddressbuffer)
             {
-                clear_buffer(field.name.c_str());
+                clear_buffer(field.name_hash);
                 continue;
             }
 
-            db_warning(renderer, "Consuming param block but field '%s' has not been set and is undefined.", field.name.c_str());
+            db_warning(renderer, "Consuming param block but field '%s' has not been set and is undefined.", field.name_hash.get_string());
         }
     }
 
@@ -125,7 +125,7 @@ bool dx12_ri_param_block::set(size_t field_index, const std::span<uint8_t>& valu
 
     if (field_info.size != value_size)
     {
-        db_error(renderer, "Value size missmatch for field '%s' on param block. Got '%zi' expected '%zi'.", field_info.name.c_str(), value_size, field_info.size);
+        db_error(renderer, "Value size missmatch for field '%s' on param block. Got '%zi' expected '%zi'.", field_info.name_hash.get_string(), value_size, field_info.size);
         return false;
     }
 
@@ -154,7 +154,7 @@ bool dx12_ri_param_block::set(size_t field_index, const std::span<uint8_t>& valu
     return true;
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
+bool dx12_ri_param_block::set(string_hash field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
 {
     dx12_ri_layout_factory::field field_info;
     if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
@@ -166,7 +166,7 @@ bool dx12_ri_param_block::set(const char* field_name, const std::span<uint8_t>& 
     return set(field_info.index, values, value_size, type);
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_texture& resource)
+bool dx12_ri_param_block::set(string_hash field_name, const ri_texture& resource)
 { 
     return set(field_name, ri_texture_view(const_cast<ri_texture*>(&resource), ri_texture_view::k_unset, ri_texture_view::k_unset), false);
 }
@@ -259,7 +259,7 @@ bool dx12_ri_param_block::set(size_t field_index, const ri_texture_view& resourc
     return false;
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_texture_view& resource, bool writable)
+bool dx12_ri_param_block::set(string_hash field_name, const ri_texture_view& resource, bool writable)
 {
     dx12_ri_layout_factory::field field_info;
     if (!m_archetype.get_layout_factory().get_field_info(field_name, field_info))
@@ -340,7 +340,7 @@ void dx12_ri_param_block::referenced_texture_modified(dx12_ri_texture* texture)
     }
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_sampler& resource)
+bool dx12_ri_param_block::set(string_hash field_name, const ri_sampler& resource)
 {
     const dx12_ri_sampler& dx12_resource = static_cast<const dx12_ri_sampler&>(resource);
     uint32_t table_index = static_cast<uint32_t>(dx12_resource.get_descriptor_table_index());
@@ -348,7 +348,7 @@ bool dx12_ri_param_block::set(const char* field_name, const ri_sampler& resource
     return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_sampler);
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource, bool writable)
+bool dx12_ri_param_block::set(string_hash field_name, const ri_buffer& resource, bool writable)
 {
     const dx12_ri_buffer& dx12_resource = static_cast<const dx12_ri_buffer&>(resource);
 
@@ -369,7 +369,7 @@ bool dx12_ri_param_block::set(const char* field_name, const ri_buffer& resource,
     return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), type);
 }
 
-bool dx12_ri_param_block::set(const char* field_name, const ri_raytracing_tlas& resource)
+bool dx12_ri_param_block::set(string_hash field_name, const ri_raytracing_tlas& resource)
 {
     const dx12_ri_raytracing_tlas& dx12_resource = static_cast<const dx12_ri_raytracing_tlas&>(resource);
     const dx12_ri_buffer& buffer_resource = static_cast<const dx12_ri_buffer&>(dx12_resource.get_tlas_buffer());
@@ -379,7 +379,7 @@ bool dx12_ri_param_block::set(const char* field_name, const ri_raytracing_tlas& 
     return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_tlas);
 }
 
-bool dx12_ri_param_block::clear_buffer(const char* field_name)
+bool dx12_ri_param_block::clear_buffer(string_hash field_name)
 {
     uint32_t table_index = 0;
     return set(field_name, std::span((uint8_t*)&table_index, sizeof(uint32_t)), sizeof(uint32_t), ri_data_type::t_byteaddressbuffer);

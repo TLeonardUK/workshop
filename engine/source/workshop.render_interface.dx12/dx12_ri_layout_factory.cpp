@@ -41,14 +41,14 @@ dx12_ri_layout_factory::dx12_ri_layout_factory(dx12_render_interface& renderer, 
         // TODO: Handle type alignment rules for non param_block usage.
 
         field dst_field;
-        dst_field.name = src_field.name;
+        dst_field.name_hash = string_hash(src_field.name);
         dst_field.type = src_field.data_type;
         dst_field.offset = offset;
         dst_field.size = type_size;
         dst_field.added = false;
         dst_field.index = index++;
 
-        m_fields[dst_field.name] = dst_field;
+        m_fields[dst_field.name_hash] = dst_field;
 
         offset += dst_field.size;
     }
@@ -100,7 +100,7 @@ void dx12_ri_layout_factory::transpose_matrices(void* field, ri_data_type type)
     }
 }
 
-void dx12_ri_layout_factory::add(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
+void dx12_ri_layout_factory::add(string_hash field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type)
 {
     db_assert(!values.empty());
 
@@ -129,11 +129,11 @@ void dx12_ri_layout_factory::add(const char* field_name, const std::span<uint8_t
         {
             if (type != field.type)
             {
-                db_fatal(renderer, "Attempted to add incorrect data type '%s' to layout field '%s' that expected '%s' data type.", to_string(type).c_str(), field.name.c_str(), to_string(field.type).c_str());
+                db_fatal(renderer, "Attempted to add incorrect data type '%s' to layout field '%s' that expected '%s' data type.", to_string(type).c_str(), field.name_hash.get_string(), to_string(field.type).c_str());
             }
             if (value_size != field.size)
             {
-                db_fatal(renderer, "Attempted to add data type with incorrect value size '%zi' to layout field '%s'.", value_size, field.name.c_str());
+                db_fatal(renderer, "Attempted to add data type with incorrect value size '%zi' to layout field '%s'.", value_size, field.name_hash.get_string());
             }
         }
 
@@ -148,7 +148,7 @@ void dx12_ri_layout_factory::add(const char* field_name, const std::span<uint8_t
             {
                 if (type != ri_data_type::t_float3)
                 {
-                    db_fatal(renderer, "Attempted to add compressed unit vector to layout field '%s' with invalid source data type.", field.name.c_str());
+                    db_fatal(renderer, "Attempted to add compressed unit vector to layout field '%s' with invalid source data type.", field.name_hash.get_string());
                 }
 
                 vector3* vec = reinterpret_cast<vector3*>(src);
@@ -174,10 +174,10 @@ void dx12_ri_layout_factory::validate()
 
         if (!field.added)
         {
-            db_warning(renderer, "Attempting to create buffer, but field '%s' has not been filled. Zeroing out.", field.name.c_str());
+            db_warning(renderer, "Attempting to create buffer, but field '%s' has not been filled. Zeroing out.", field.name_hash.get_string());
 
             std::vector<uint8_t> data(field.size * m_element_count, 0);
-            add(pair.second.name.c_str(), std::span(data.data(), data.size()), field.size, field.type);
+            add(pair.second.name_hash, std::span(data.data(), data.size()), field.size, field.type);
         }
     }
 }
@@ -201,7 +201,7 @@ dx12_ri_layout_factory::field dx12_ri_layout_factory::get_field(size_t index)
     return {};
 }
 
-bool dx12_ri_layout_factory::get_field_info(const char* name, field& info)
+bool dx12_ri_layout_factory::get_field_info(string_hash name, field& info)
 {
     if (auto iter = m_fields.find(name); iter != m_fields.end())
     {

@@ -86,9 +86,9 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
 
     ri_param_block* raytrace_scene_parameters = view.get_resource_cache().find_or_create_param_block(this, "raytrace_scene_parameters");
 
-    raytrace_scene_parameters->set("scene_tlas", m_renderer.get_scene_tlas());
-    raytrace_scene_parameters->set("scene_tlas_metadata", *m_renderer.get_scene_tlas().get_metadata_buffer());
-    raytrace_scene_parameters->set("output_texture", ri_texture_view(m_scene_texture.get(), 0, 0), true);
+    raytrace_scene_parameters->set("scene_tlas"_sh, m_renderer.get_scene_tlas());
+    raytrace_scene_parameters->set("scene_tlas_metadata"_sh, *m_renderer.get_scene_tlas().get_metadata_buffer());
+    raytrace_scene_parameters->set("output_texture"_sh, ri_texture_view(m_scene_texture.get(), 0, 0), true);
 
 #if 0
     // Fake view
@@ -106,14 +106,14 @@ void render_system_raytrace_scene::build_graph(render_graph& graph, const render
         100000.0f);
 
     static std::unique_ptr<ri_param_block> fake_view_info = m_renderer.get_param_block_manager().create_param_block("view_info");
-    fake_view_info->set("view_z_near", 0.1f);
-    fake_view_info->set("view_z_far", 100000.0f);
-    fake_view_info->set("view_world_position", fake_position);
-    fake_view_info->set("view_dimensions", vector2((float)m_scene_texture->get_width(), (float)m_scene_texture->get_height()));
-    fake_view_info->set("view_matrix", view_matrix);
-    fake_view_info->set("projection_matrix", projection_matrix);
-    fake_view_info->set("inverse_view_matrix", view_matrix.inverse());
-    fake_view_info->set("inverse_projection_matrix", projection_matrix.inverse());
+    fake_view_info->set("view_z_near"_sh, 0.1f);
+    fake_view_info->set("view_z_far"_sh, 100000.0f);
+    fake_view_info->set("view_world_position"_sh, fake_position);
+    fake_view_info->set("view_dimensions"_sh, vector2((float)m_scene_texture->get_width(), (float)m_scene_texture->get_height()));
+    fake_view_info->set("view_matrix"_sh, view_matrix);
+    fake_view_info->set("projection_matrix"_sh, projection_matrix);
+    fake_view_info->set("inverse_view_matrix"_sh, view_matrix.inverse());
+    fake_view_info->set("inverse_projection_matrix"_sh, projection_matrix.inverse());
 #endif
 
     // Composite the transparent geometry onto the light buffer.

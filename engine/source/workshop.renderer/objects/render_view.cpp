@@ -267,14 +267,14 @@ void render_view::update_view_info_param_block()
     {
         m_view_info_param_block = m_renderer->get_param_block_manager().create_param_block("view_info");
     }
-    m_view_info_param_block->set("view_z_near", m_near_clip);
-    m_view_info_param_block->set("view_z_far", m_far_clip);
-    m_view_info_param_block->set("view_world_position", m_local_location);
-    m_view_info_param_block->set("view_dimensions", vector2((float)m_viewport.width, (float)m_viewport.height));
-    m_view_info_param_block->set("view_matrix", get_view_matrix());
-    m_view_info_param_block->set("projection_matrix", get_projection_matrix());
-    m_view_info_param_block->set("inverse_view_matrix", get_view_matrix().inverse());
-    m_view_info_param_block->set("inverse_projection_matrix", get_projection_matrix().inverse());
+    m_view_info_param_block->set("view_z_near"_sh, m_near_clip);
+    m_view_info_param_block->set("view_z_far"_sh, m_far_clip);
+    m_view_info_param_block->set("view_world_position"_sh, m_local_location);
+    m_view_info_param_block->set("view_dimensions"_sh, vector2((float)m_viewport.width, (float)m_viewport.height));
+    m_view_info_param_block->set("view_matrix"_sh, get_view_matrix());
+    m_view_info_param_block->set("projection_matrix"_sh, get_projection_matrix());
+    m_view_info_param_block->set("inverse_view_matrix"_sh, get_view_matrix().inverse());
+    m_view_info_param_block->set("inverse_projection_matrix"_sh, get_projection_matrix().inverse());
 }
 
 frustum render_view::get_frustum()
@@ -315,6 +315,16 @@ bool render_view::should_render()
         return false;
     }
     return m_should_render;
+}
+
+void render_view::set_will_render(bool value)
+{
+    m_will_render = value;
+}
+
+bool render_view::will_render()
+{
+    return m_will_render;
 }
 
 void render_view::force_render()

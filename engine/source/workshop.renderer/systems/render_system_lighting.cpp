@@ -226,8 +226,8 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
 
             // Add light instance to buffer.
             size_t index, offset;
-            light_state_block->set("shadow_map_start_index", total_shadow_maps);
-            light_state_block->set("shadow_map_count", light->get_shodow_casting() ? (int)shadows.cascades.size() : 0);
+            light_state_block->set("shadow_map_start_index"_sh, total_shadow_maps);
+            light_state_block->set("shadow_map_count"_sh, light->get_shodow_casting() ? (int)shadows.cascades.size() : 0);
             light_state_block->get_table(index, offset);
             light_instance_buffer->add((uint32_t)index, (uint32_t)offset);
 
@@ -260,37 +260,37 @@ void render_system_lighting::build_graph(render_graph& graph, const render_world
         float z_far = 0.0f;
         view.get_clip(z_near, z_far);
 
-        resolve_param_block->set("light_count", total_lights);
-        resolve_param_block->set("light_buffer", light_instance_buffer->get_buffer());
-        resolve_param_block->set("shadow_map_count", total_shadow_maps);
-        resolve_param_block->set("shadow_map_buffer", shadow_map_instance_buffer->get_buffer());
-        resolve_param_block->set("shadow_map_sampler", *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
-        resolve_param_block->set("visualization_mode", (int)view.get_visualization_mode());
-        resolve_param_block->set("light_grid_size", grid_size);
-        resolve_param_block->set("light_cluster_buffer", *m_light_cluster_buffer, true);
-        resolve_param_block->set("light_cluster_visibility_buffer", *m_light_cluster_visibility_buffer, true);
-        resolve_param_block->set("light_cluster_visibility_count_buffer", *m_light_cluster_visibility_count_buffer, true);
-        resolve_param_block->set("uv_scale", vector2(
+        resolve_param_block->set("light_count"_sh, total_lights);
+        resolve_param_block->set("light_buffer"_sh, light_instance_buffer->get_buffer());
+        resolve_param_block->set("shadow_map_count"_sh, total_shadow_maps);
+        resolve_param_block->set("shadow_map_buffer"_sh, shadow_map_instance_buffer->get_buffer());
+        resolve_param_block->set("shadow_map_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::shadow_map));
+        resolve_param_block->set("visualization_mode"_sh, (int)view.get_visualization_mode());
+        resolve_param_block->set("light_grid_size"_sh, grid_size);
+        resolve_param_block->set("light_cluster_buffer"_sh, *m_light_cluster_buffer, true);
+        resolve_param_block->set("light_cluster_visibility_buffer"_sh, *m_light_cluster_visibility_buffer, true);
+        resolve_param_block->set("light_cluster_visibility_count_buffer"_sh, *m_light_cluster_visibility_count_buffer, true);
+        resolve_param_block->set("uv_scale"_sh, vector2(
             (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
             (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
         ));
-        resolve_param_block->set("use_constant_ambient", view.has_flag(render_view_flags::constant_ambient_lighting));
-        resolve_param_block->set("apply_ambient_lighting", !view.has_flag(render_view_flags::disable_ambient_lighting));
-        resolve_param_block->set("apply_direct_lighting", !view.has_flag(render_view_flags::disable_direct_lighting));
-        resolve_param_block->set("light_probe_grid_count", (int)visible_probe_grids.size());
-        resolve_param_block->set("light_probe_grid_buffer", light_probe_grid_instance_buffer->get_buffer());
-        resolve_param_block->set("probe_encoding_gamma", cvar_light_probe_encoding_gamma.get());
-        resolve_param_block->set("reflection_probe_count", (int)visible_reflection_probes.size());
-        resolve_param_block->set("reflection_probe_buffer", reflection_probe_instance_buffer->get_buffer());
-        resolve_param_block->set("brdf_lut", *m_brdf_lut_texture);
-        resolve_param_block->set("brdf_lut_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));       
+        resolve_param_block->set("use_constant_ambient"_sh, view.has_flag(render_view_flags::constant_ambient_lighting));
+        resolve_param_block->set("apply_ambient_lighting"_sh, !view.has_flag(render_view_flags::disable_ambient_lighting));
+        resolve_param_block->set("apply_direct_lighting"_sh, !view.has_flag(render_view_flags::disable_direct_lighting));
+        resolve_param_block->set("light_probe_grid_count"_sh, (int)visible_probe_grids.size());
+        resolve_param_block->set("light_probe_grid_buffer"_sh, light_probe_grid_instance_buffer->get_buffer());
+        resolve_param_block->set("probe_encoding_gamma"_sh, cvar_light_probe_encoding_gamma.get());
+        resolve_param_block->set("reflection_probe_count"_sh, (int)visible_reflection_probes.size());
+        resolve_param_block->set("reflection_probe_buffer"_sh, reflection_probe_instance_buffer->get_buffer());
+        resolve_param_block->set("brdf_lut"_sh, *m_brdf_lut_texture);
+        resolve_param_block->set("brdf_lut_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
 
         ri_texture& ao_texture = *m_renderer.get_system<render_system_ssao>()->get_ssao_mask();
-        resolve_param_block->set("ao_texture", ao_texture);
-        resolve_param_block->set("ao_enabled", cvar_ssao_enabled.get());
-        resolve_param_block->set("ao_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
-        resolve_param_block->set("ao_direct_light_effect", cvar_ssao_direct_light_effect.get());
-        resolve_param_block->set("ao_uv_scale", vector2(cvar_ssao_resolution_scale.get(), cvar_ssao_resolution_scale.get()));
+        resolve_param_block->set("ao_texture"_sh, ao_texture);
+        resolve_param_block->set("ao_enabled"_sh, cvar_ssao_enabled.get());
+        resolve_param_block->set("ao_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
+        resolve_param_block->set("ao_direct_light_effect"_sh, cvar_ssao_direct_light_effect.get());
+        resolve_param_block->set("ao_uv_scale"_sh, vector2(cvar_ssao_resolution_scale.get(), cvar_ssao_resolution_scale.get()));
     }
 
     // Add pass to run compute shader to generate the clusters.

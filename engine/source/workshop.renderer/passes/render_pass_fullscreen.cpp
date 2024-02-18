@@ -48,12 +48,12 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
         size_t model_info_table_offset;
         model_info_buffer->get_table(model_info_table_index, model_info_table_offset);
 
-        vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
-        vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
-        vertex_info_param_block->set("material_info_table", 0);
-        vertex_info_param_block->set("material_info_offset", 0);
+        vertex_info_param_block->set("model_info_table"_sh, (uint32_t)model_info_table_index);
+        vertex_info_param_block->set("model_info_offset"_sh, (uint32_t)model_info_table_offset);
+        vertex_info_param_block->set("material_info_table"_sh, 0);
+        vertex_info_param_block->set("material_info_offset"_sh, 0);
 
-        vertex_info_param_block->clear_buffer("instance_buffer");
+        vertex_info_param_block->clear_buffer("instance_buffer"_sh);
         param_blocks.push_back(vertex_info_param_block);
     }
 

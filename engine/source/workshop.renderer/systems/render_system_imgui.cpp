@@ -40,21 +40,21 @@ void render_system_imgui::build_post_graph(render_graph& graph, const render_wor
     // TODO: When we have multi viewport support add a pass for each swapchain.
 
     m_model_info_param_block = m_renderer.get_param_block_manager().create_param_block("model_info");
-    m_model_info_param_block->set("index_size", (int)m_index_buffer->get_element_size());
-    m_model_info_param_block->set("position_buffer", *m_position_buffer);
-    m_model_info_param_block->set("uv0_buffer", *m_uv0_buffer);
-    m_model_info_param_block->set("color0_buffer", *m_color0_buffer);
+    m_model_info_param_block->set("index_size"_sh, (int)m_index_buffer->get_element_size());
+    m_model_info_param_block->set("position_buffer"_sh, *m_position_buffer);
+    m_model_info_param_block->set("uv0_buffer"_sh, *m_uv0_buffer);
+    m_model_info_param_block->set("color0_buffer"_sh, *m_color0_buffer);
 
     size_t model_info_table_index;
     size_t model_info_table_offset;
     m_model_info_param_block->get_table(model_info_table_index, model_info_table_offset);
 
     m_vertex_info_param_block = m_renderer.get_param_block_manager().create_param_block("vertex_info");
-    m_vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
-    m_vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
-    m_vertex_info_param_block->set("material_info_table", 0);
-    m_vertex_info_param_block->set("material_info_offset", 0);
-    m_vertex_info_param_block->clear_buffer("instance_buffer");
+    m_vertex_info_param_block->set("model_info_table"_sh, (uint32_t)model_info_table_index);
+    m_vertex_info_param_block->set("model_info_offset"_sh, (uint32_t)model_info_table_offset);
+    m_vertex_info_param_block->set("material_info_table"_sh, 0);
+    m_vertex_info_param_block->set("material_info_offset"_sh, 0);
+    m_vertex_info_param_block->clear_buffer("instance_buffer"_sh);
 
     m_imgui_param_blocks.clear();
     if (m_imgui_param_blocks.size() < m_draw_commands.size())

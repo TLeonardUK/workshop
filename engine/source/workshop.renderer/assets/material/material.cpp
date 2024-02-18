@@ -67,21 +67,21 @@ void material::create_material_info_param_block()
 
     m_material_info_param_block = m_renderer.get_param_block_manager().create_param_block("material_info");
     
-    m_material_info_param_block->set("domain", (int)domain);
+    m_material_info_param_block->set("domain"_sh, (int)domain);
     
-    m_material_info_param_block->set("albedo_texture", *get_texture("albedo_texture", default_black));
-    m_material_info_param_block->set("opacity_texture", *get_texture("opacity_texture", default_white));
-    m_material_info_param_block->set("metallic_texture", *get_texture("metallic_texture", default_black));
-    m_material_info_param_block->set("roughness_texture", *get_texture("roughness_texture", default_grey));
-    m_material_info_param_block->set("normal_texture", *get_texture("normal_texture", default_normal));
-    m_material_info_param_block->set("skybox_texture", *get_texture("skybox_texture", default_white));
+    m_material_info_param_block->set("albedo_texture"_sh, *get_texture("albedo_texture", default_black));
+    m_material_info_param_block->set("opacity_texture"_sh, *get_texture("opacity_texture", default_white));
+    m_material_info_param_block->set("metallic_texture"_sh, *get_texture("metallic_texture", default_black));
+    m_material_info_param_block->set("roughness_texture"_sh, *get_texture("roughness_texture", default_grey));
+    m_material_info_param_block->set("normal_texture"_sh, *get_texture("normal_texture", default_normal));
+    m_material_info_param_block->set("skybox_texture"_sh, *get_texture("skybox_texture", default_white));
 
-    m_material_info_param_block->set("albedo_sampler", *get_sampler("albedo_sampler", default_sampler_color));
-    m_material_info_param_block->set("opacity_sampler", *get_sampler("opacity_sampler", default_sampler_color));
-    m_material_info_param_block->set("metallic_sampler", *get_sampler("metallic_sampler", default_sampler_color));
-    m_material_info_param_block->set("roughness_sampler", *get_sampler("roughness_sampler", default_sampler_color));
-    m_material_info_param_block->set("normal_sampler", *get_sampler("normal_sampler", default_sampler_normal));
-    m_material_info_param_block->set("skybox_sampler", *get_sampler("skybox_sampler", default_sampler_color));
+    m_material_info_param_block->set("albedo_sampler"_sh, *get_sampler("albedo_sampler", default_sampler_color));
+    m_material_info_param_block->set("opacity_sampler"_sh, *get_sampler("opacity_sampler", default_sampler_color));
+    m_material_info_param_block->set("metallic_sampler"_sh, *get_sampler("metallic_sampler", default_sampler_color));
+    m_material_info_param_block->set("roughness_sampler"_sh, *get_sampler("roughness_sampler", default_sampler_color));
+    m_material_info_param_block->set("normal_sampler"_sh, *get_sampler("normal_sampler", default_sampler_normal));
+    m_material_info_param_block->set("skybox_sampler"_sh, *get_sampler("skybox_sampler", default_sampler_color));
 }
 
 ri_sampler* material::get_sampler(const char* name, ri_sampler* default_instance)

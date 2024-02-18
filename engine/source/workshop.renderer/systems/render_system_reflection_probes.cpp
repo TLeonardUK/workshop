@@ -164,11 +164,11 @@ void render_system_reflection_probes::build_post_graph(render_graph& graph, cons
                 output_view.mip = mip;
 
                 ri_param_block* block = m_convolve_param_blocks[param_block_index++].get();
-                block->set("source_texture", *info.render_target);
-                block->set("source_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
-                block->set("source_texture_face", (int)face);
-                block->set("source_texture_size", vector2i((int)info.render_target->get_width(), (int)info.render_target->get_height()));
-                block->set("roughness", float(mip) / float(texture.get_mip_levels() - 1));
+                block->set("source_texture"_sh, *info.render_target);
+                block->set("source_texture_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color));
+                block->set("source_texture_face"_sh, (int)face);
+                block->set("source_texture_size"_sh, vector2i((int)info.render_target->get_width(), (int)info.render_target->get_height()));
+                block->set("roughness"_sh, float(mip) / float(texture.get_mip_levels() - 1));
 
                 std::unique_ptr<render_pass_fullscreen> pass = std::make_unique<render_pass_fullscreen>();
                 pass->name = string_format("convolve reflection probe [face:%zi mip:%zi]", face, mip);

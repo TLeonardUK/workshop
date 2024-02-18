@@ -155,9 +155,14 @@ public:
     void set_visualization_mode(visualization_mode mode);
     visualization_mode get_visualization_mode();
 
-    // GEts or sets if this view should be rendered this frame.
+    // GEts or sets if this view wants to be rendered this frame.
     void set_should_render(bool value);
     bool should_render();
+
+    // This is almost the same as should_render except its the definite
+    // rendering state for this frame after all other attributes (such as lazy_rendering)
+    // are taken into account. If this is true the view -will- be rendered this frame.
+    bool will_render();
 
     // Gets or sets if this view is active and visibility calculations/etc should be calculated.
     // This is independent of if it should render or not.
@@ -202,6 +207,10 @@ public:
     virtual void bounds_modified() override;
 
 private:
+    friend class renderer;
+
+    void set_will_render(bool value);
+
     void update_view_info_param_block();
     void update_render_target_flags();
     void update_visibility_flags();
@@ -236,6 +245,8 @@ private:
 
     bool m_should_render = true;
     bool m_active = true;
+
+    bool m_will_render = false;
 
     pixmap* m_readback_pixmap = nullptr;
     std::unique_ptr<ri_texture> m_readback_rt;

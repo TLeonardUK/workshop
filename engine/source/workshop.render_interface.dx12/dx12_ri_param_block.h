@@ -30,13 +30,13 @@ public:
     dx12_ri_param_block(dx12_render_interface& renderer, dx12_ri_param_block_archetype& archetype);
     virtual ~dx12_ri_param_block();
 
-    virtual bool set(const char* field_name, const ri_texture& resource) override;
-    virtual bool set(const char* field_name, const ri_sampler& resource) override;
-    virtual bool set(const char* field_name, const ri_texture_view& resource, bool writable) override;
-    virtual bool set(const char* field_name, const ri_buffer& resource, bool writable) override;
-    virtual bool set(const char* field_name, const ri_raytracing_tlas& resource) override;
+    virtual bool set(string_hash field_name, const ri_texture& resource) override;
+    virtual bool set(string_hash field_name, const ri_sampler& resource) override;
+    virtual bool set(string_hash field_name, const ri_texture_view& resource, bool writable) override;
+    virtual bool set(string_hash field_name, const ri_buffer& resource, bool writable) override;
+    virtual bool set(string_hash field_name, const ri_raytracing_tlas& resource) override;
 
-    virtual bool clear_buffer(const char* field_name) override;
+    virtual bool clear_buffer(string_hash field_name) override;
 
     virtual ri_param_block_archetype* get_archetype() override;
 
@@ -61,7 +61,7 @@ public:
 private:
     void mark_dirty();
 
-    virtual bool set(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
+    virtual bool set(string_hash field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
     bool set(size_t field_index, const std::span<uint8_t>& values, size_t value_size, ri_data_type type);
 
     bool set(size_t field_index, const ri_texture_view& resource, bool writable, bool do_not_add_references);

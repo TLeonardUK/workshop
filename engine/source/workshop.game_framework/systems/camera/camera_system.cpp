@@ -322,6 +322,7 @@ void camera_system::step(const frame_time& time)
             render_command_queue.set_object_draw_flags(camera->view_id, camera->draw_flags);
             render_command_queue.set_view_flags(camera->view_id, camera->view_flags);
             render_command_queue.set_view_should_render(camera->view_id, camera->should_render);
+            render_command_queue.set_view_visualization_mode(camera->view_id, camera->visualization_mode);
 
             if (camera->is_perspective)
             {

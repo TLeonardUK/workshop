@@ -48,9 +48,9 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
             }
 
             ri_param_block* imgui_params = cmd.param_block;
-            imgui_params->set("color_texture", *texture);
-            imgui_params->set("color_sampler", *renderer.get_default_sampler(default_sampler_type::color));
-            imgui_params->set("projection_matrix", matrix4::orthographic(
+            imgui_params->set("color_texture"_sh, *texture);
+            imgui_params->set("color_sampler"_sh, *renderer.get_default_sampler(default_sampler_type::color));
+            imgui_params->set("projection_matrix"_sh, matrix4::orthographic(
                 cmd.display_pos.x,
                 cmd.display_pos.x + cmd.display_size.x,
                 cmd.display_pos.y,
@@ -58,7 +58,7 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
                 0.0f,
                 1.0f
             ));
-            imgui_params->set("correct_srgb", correct_srgb);
+            imgui_params->set("correct_srgb"_sh, correct_srgb);
 
             std::vector<ri_param_block*> blocks = param_blocks;
             blocks.push_back(imgui_params);

@@ -156,23 +156,23 @@ void render_light_probe_grid::recalculate_probes()
         matrix4::translate(m_local_location);
 
     // Update the param block description.
-    m_param_block->set("world_to_grid_matrix", grid_transform.inverse());
-    m_param_block->set("grid_to_world_matrix", grid_transform);
-    m_param_block->set("size", vector3i((int)m_width, (int)m_height, (int)m_depth));
-    m_param_block->set("bounds", bounds);
-    m_param_block->set("density", m_density);
-    m_param_block->set("irradiance_texture", *m_irradiance_texture);
-    m_param_block->set("occlusion_texture", *m_occlusion_texture);
-    m_param_block->set("map_sampler", *m_renderer->get_default_sampler(default_sampler_type::bilinear));
-    m_param_block->set("irradiance_texture_size", (int)m_irradiance_texture->get_width());
-    m_param_block->set("irradiance_map_size", (int)m_irradiance_map_size);
-    m_param_block->set("irradiance_probes_per_row", (int)(m_irradiance_texture->get_width() / irradiance_required_space));
-    m_param_block->set("occlusion_texture_size", (int)m_occlusion_texture->get_width());
-    m_param_block->set("occlusion_map_size", (int)m_occlusion_map_size);
-    m_param_block->set("occlusion_probes_per_row", (int)(m_occlusion_texture->get_width() / occlusion_required_space));
-    m_param_block->set("view_bias", cvar_light_probe_view_bias.get());
-    m_param_block->set("normal_bias", cvar_light_probe_normal_bias.get());
-    m_param_block->set("probe_state_buffer", *m_probe_state_buffer, true);
+    m_param_block->set("world_to_grid_matrix"_sh, grid_transform.inverse());
+    m_param_block->set("grid_to_world_matrix"_sh, grid_transform);
+    m_param_block->set("size"_sh, vector3i((int)m_width, (int)m_height, (int)m_depth));
+    m_param_block->set("bounds"_sh, bounds);
+    m_param_block->set("density"_sh, m_density);
+    m_param_block->set("irradiance_texture"_sh, *m_irradiance_texture);
+    m_param_block->set("occlusion_texture"_sh, *m_occlusion_texture);
+    m_param_block->set("map_sampler"_sh, *m_renderer->get_default_sampler(default_sampler_type::bilinear));
+    m_param_block->set("irradiance_texture_size"_sh, (int)m_irradiance_texture->get_width());
+    m_param_block->set("irradiance_map_size"_sh, (int)m_irradiance_map_size);
+    m_param_block->set("irradiance_probes_per_row"_sh, (int)(m_irradiance_texture->get_width() / irradiance_required_space));
+    m_param_block->set("occlusion_texture_size"_sh, (int)m_occlusion_texture->get_width());
+    m_param_block->set("occlusion_map_size"_sh, (int)m_occlusion_map_size);
+    m_param_block->set("occlusion_probes_per_row"_sh, (int)(m_occlusion_texture->get_width() / occlusion_required_space));
+    m_param_block->set("view_bias"_sh, cvar_light_probe_view_bias.get());
+    m_param_block->set("normal_bias"_sh, cvar_light_probe_normal_bias.get());
+    m_param_block->set("probe_state_buffer"_sh, *m_probe_state_buffer, true);
 
     // Update individual probes.
     for (size_t z = 0; z < m_depth; z++)
@@ -200,29 +200,29 @@ void render_light_probe_grid::recalculate_probes()
                 // Make "normal" param block
                 // TODO: Get rid of this some how, we end up spending more memory on this than the maps!
                 probe.param_block = m_renderer->get_param_block_manager().create_param_block("ddgi_probe_data");
-                probe.param_block->set("probe_origin", probe.origin);
-                probe.param_block->set("probe_index", (int)probe.index);
-                probe.param_block->set("irradiance_texture", ri_texture_view(&get_irradiance_texture(), 0), true);
-                probe.param_block->set("irradiance_map_size", (int)get_irradiance_map_size());
-                probe.param_block->set("irradiance_per_row", (int)(get_irradiance_texture().get_width() / (get_irradiance_map_size() + map_padding)));
-                probe.param_block->set("occlusion_texture", ri_texture_view(&get_occlusion_texture(), 0), true);
-                probe.param_block->set("occlusion_map_size", (int)get_occlusion_map_size());
-                probe.param_block->set("occlusion_per_row", (int)(get_occlusion_texture().get_width() / (get_occlusion_map_size() + map_padding)));
-                probe.param_block->set("probe_spacing", get_density());
-                probe.param_block->set("probe_state_buffer", get_probe_state_buffer(), true);
+                probe.param_block->set("probe_origin"_sh, probe.origin);
+                probe.param_block->set("probe_index"_sh, (int)probe.index);
+                probe.param_block->set("irradiance_texture"_sh, ri_texture_view(&get_irradiance_texture(), 0), true);
+                probe.param_block->set("irradiance_map_size"_sh, (int)get_irradiance_map_size());
+                probe.param_block->set("irradiance_per_row"_sh, (int)(get_irradiance_texture().get_width() / (get_irradiance_map_size() + map_padding)));
+                probe.param_block->set("occlusion_texture"_sh, ri_texture_view(&get_occlusion_texture(), 0), true);
+                probe.param_block->set("occlusion_map_size"_sh, (int)get_occlusion_map_size());
+                probe.param_block->set("occlusion_per_row"_sh, (int)(get_occlusion_texture().get_width() / (get_occlusion_map_size() + map_padding)));
+                probe.param_block->set("probe_spacing"_sh, get_density());
+                probe.param_block->set("probe_state_buffer"_sh, get_probe_state_buffer(), true);
 
                 // Make debug param block.
                 probe.debug_param_block = m_renderer->get_param_block_manager().create_param_block("light_probe_instance_info");
-                probe.debug_param_block->set("model_matrix", matrix4::scale(vector3(25.0f, 25.0f, 25.0f)) * matrix4::translate(probe.origin));
-                probe.debug_param_block->set("scale", vector3(25.0f, 25.0f, 25.0f));
+                probe.debug_param_block->set("model_matrix"_sh, matrix4::scale(vector3(25.0f, 25.0f, 25.0f)) * matrix4::translate(probe.origin));
+                probe.debug_param_block->set("scale"_sh, vector3(25.0f, 25.0f, 25.0f));
 
                 size_t table_index, table_offset;
                 m_param_block->get_table(table_index, table_offset);
 
-                probe.debug_param_block->set("grid_state_table_index", (int)table_index);
-                probe.debug_param_block->set("grid_state_table_offset", (int)table_offset);
+                probe.debug_param_block->set("grid_state_table_index"_sh, (int)table_index);
+                probe.debug_param_block->set("grid_state_table_offset"_sh, (int)table_offset);
 
-                probe.debug_param_block->set("grid_coord", vector3i((int)x, (int)y, (int)z));
+                probe.debug_param_block->set("grid_coord"_sh, vector3i((int)x, (int)y, (int)z));
             }
         }
     }

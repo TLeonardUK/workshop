@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <mutex>
+#include <shared_mutex>
 
 namespace ws {
 
@@ -22,8 +23,8 @@ public:
     string_hash() = default;
     string_hash(const string_hash& hash) = default;
     string_hash(string_hash&& hash) = default;
-    string_hash(const char* value);
-    string_hash(const std::string& value);
+    explicit string_hash(const char* value);
+    explicit string_hash(const std::string& value);
 
     string_hash& operator=(const string_hash& vector) = default;
     string_hash& operator=(string_hash&& vector) = default;
@@ -35,6 +36,9 @@ public:
     const char* get_string();
 
     size_t get_hash() const;
+
+    // Same as get_string, use for interop/replacement of std::string
+    const char* c_str();
 
 private:
     struct db_bucket
@@ -52,10 +56,13 @@ private:
 
     db_index intern(const char* value);
 
+    bool try_find_index(size_t hash, const char* value, string_hash::db_index& index);
+    string_hash::db_index create_index(size_t hash, const char* value);
+
 private:    
     db_index m_index;
 
-    inline static std::mutex m_db_mutex;
+    inline static std::shared_mutex m_db_mutex;
     inline static std::unordered_map<size_t, db_bucket> m_db;
 
 };
@@ -73,3 +80,21 @@ struct std::hash<ws::string_hash>
         return k.get_hash();
     }
 };
+
+// Used defined literal, allows defining a string with a _sh prefix that is only calculated once.
+struct string_hash_container 
+{
+    const char* raw_string;
+
+    constexpr string_hash_container(const char* in_raw_string)
+        : raw_string(in_raw_string)
+    {
+    }
+};
+
+template<string_hash_container container>
+ws::string_hash operator ""_sh()
+{
+    static ws::string_hash hashed(container.raw_string);
+    return hashed;
+}

@@ -24,10 +24,10 @@ void render_point_light::update_render_data()
 {
     render_light::update_render_data();
 
-    m_light_state_param_block->set("type", (int)render_light_type::point);
-    m_light_state_param_block->set("inner_radius", 0.0f);
-    m_light_state_param_block->set("outer_radius", 0.0f);
-    m_light_state_param_block->set("cascade_blend_factor", 0.0f);
+    m_light_state_param_block->set("type"_sh, (int)render_light_type::point);
+    m_light_state_param_block->set("inner_radius"_sh, 0.0f);
+    m_light_state_param_block->set("outer_radius"_sh, 0.0f);
+    m_light_state_param_block->set("cascade_blend_factor"_sh, 0.0f);
 }
 
 obb render_point_light::get_bounds()

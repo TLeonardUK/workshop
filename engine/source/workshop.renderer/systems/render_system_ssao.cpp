@@ -131,15 +131,15 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     ri_param_block* h_blur_params = view.get_resource_cache().find_or_create_param_block(this, "blur_params");
     ri_param_block* v_blur_params = view.get_resource_cache().find_or_create_param_block(this + 1, "blur_params");
 
-    ssao_parameters->set("uv_scale", vector2(
+    ssao_parameters->set("uv_scale"_sh, vector2(
         (float)view.get_viewport().width / m_renderer.get_gbuffer_output().color_targets[0].texture->get_width(),
         (float)view.get_viewport().height / m_renderer.get_gbuffer_output().color_targets[0].texture->get_height()
     ));
-    ssao_parameters->set("noise_texture", *m_noise_texture);
-    ssao_parameters->set("noise_texture_sampler", *m_noise_texture_sampler);
-    ssao_parameters->set("ssao_radius", cvar_ssao_sample_radius.get());
-    ssao_parameters->set("ssao_power", cvar_ssao_intensity_power.get());
-    ssao_parameters->set("ssao_resolution_scale", cvar_ssao_resolution_scale.get());
+    ssao_parameters->set("noise_texture"_sh, *m_noise_texture);
+    ssao_parameters->set("noise_texture_sampler"_sh, *m_noise_texture_sampler);
+    ssao_parameters->set("ssao_radius"_sh, cvar_ssao_sample_radius.get());
+    ssao_parameters->set("ssao_power"_sh, cvar_ssao_intensity_power.get());
+    ssao_parameters->set("ssao_resolution_scale"_sh, cvar_ssao_resolution_scale.get());
 
     // Composite the transparent geometry onto the light buffer.
     std::unique_ptr<render_pass_fullscreen> resolve_pass = std::make_unique<render_pass_fullscreen>();
@@ -159,10 +159,10 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     graph.add_node(std::move(resolve_pass));
 
     // Do horizontal blur.
-    h_blur_params->set("input_texture", *m_ssao_texture.get());
-    h_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
-    h_blur_params->set("input_texture_size", vector2i((int)m_ssao_texture->get_width(), (int)m_ssao_texture->get_height()));
-    h_blur_params->set("input_uv_scale", vector2(
+    h_blur_params->set("input_texture"_sh, *m_ssao_texture.get());
+    h_blur_params->set("input_texture_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
+    h_blur_params->set("input_texture_size"_sh, vector2i((int)m_ssao_texture->get_width(), (int)m_ssao_texture->get_height()));
+    h_blur_params->set("input_uv_scale"_sh, vector2(
         (float)view.get_viewport().width / m_ssao_texture->get_width(),
         (float)view.get_viewport().height / m_ssao_texture->get_height()
     ));
@@ -187,10 +187,10 @@ void render_system_ssao::build_graph(render_graph& graph, const render_world_sta
     graph.add_node(std::move(h_blur_pass));
 
     // Do vertical blur.
-    v_blur_params->set("input_texture", *m_ssao_blur_texture.get());
-    v_blur_params->set("input_texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
-    v_blur_params->set("input_texture_size", vector2i((int)m_ssao_blur_texture->get_width(), (int)m_ssao_blur_texture->get_height()));
-    v_blur_params->set("input_uv_scale", vector2(
+    v_blur_params->set("input_texture"_sh, *m_ssao_blur_texture.get());
+    v_blur_params->set("input_texture_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color_clamped));
+    v_blur_params->set("input_texture_size"_sh, vector2i((int)m_ssao_blur_texture->get_width(), (int)m_ssao_blur_texture->get_height()));
+    v_blur_params->set("input_uv_scale"_sh, vector2(
         (float)view.get_viewport().width / m_ssao_texture->get_width(),
         (float)view.get_viewport().height / m_ssao_texture->get_height()
     ));

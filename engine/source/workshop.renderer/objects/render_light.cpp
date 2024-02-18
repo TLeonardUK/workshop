@@ -117,12 +117,12 @@ void render_light::update_render_data()
     vector3 world_location = m_local_location;
     vector3 world_direction = m_local_rotation * vector3::forward;
 
-    m_light_state_param_block->set("position", world_location);
-    m_light_state_param_block->set("direction", world_direction);
-    m_light_state_param_block->set("color", m_color.rgb());
-    m_light_state_param_block->set("intensity", m_intensity);
-    m_light_state_param_block->set("range", m_range);
-    m_light_state_param_block->set("importance_distance", m_importance_distance);    
+    m_light_state_param_block->set("position"_sh, world_location);
+    m_light_state_param_block->set("direction"_sh, world_direction);
+    m_light_state_param_block->set("color"_sh, m_color.rgb());
+    m_light_state_param_block->set("intensity"_sh, m_intensity);
+    m_light_state_param_block->set("range"_sh, m_range);
+    m_light_state_param_block->set("importance_distance"_sh, m_importance_distance);
 }
 
 ri_param_block* render_light::get_light_state_param_block()

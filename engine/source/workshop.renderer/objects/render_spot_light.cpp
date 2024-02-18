@@ -38,10 +38,10 @@ void render_spot_light::update_render_data()
 {
     render_light::update_render_data();
 
-    m_light_state_param_block->set("type", (int)render_light_type::spotlight);
-    m_light_state_param_block->set("inner_radius", m_inner_radius);
-    m_light_state_param_block->set("outer_radius", m_outer_radius);
-    m_light_state_param_block->set("cascade_blend_factor", 0.0f);
+    m_light_state_param_block->set("type"_sh, (int)render_light_type::spotlight);
+    m_light_state_param_block->set("inner_radius"_sh, m_inner_radius);
+    m_light_state_param_block->set("outer_radius"_sh, m_outer_radius);
+    m_light_state_param_block->set("cascade_blend_factor"_sh, 0.0f);
 }
 
 obb render_spot_light::get_bounds()

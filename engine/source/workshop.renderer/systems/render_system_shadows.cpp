@@ -157,7 +157,7 @@ void render_system_shadows::step(const render_world_state& state)
         for (shadow_info& info : m_shadow_info)
         {
             render_view* base_view = scene_manager.resolve_id_typed<render_view>(info.view_id);
-            bool base_view_is_active = (base_view == nullptr || (base_view->get_active() && base_view->should_render()));
+            bool base_view_is_active = (base_view == nullptr || (base_view->get_active() && base_view->will_render()));
 
             for (cascade_info& cascade : info.cascades)
             {
@@ -575,11 +575,11 @@ void render_system_shadows::step_cascade(shadow_info& info, cascade_info& cascad
 
 void render_system_shadows::update_cascade_param_block(cascade_info& cascade)
 {
-    cascade.shadow_map_state_param_block->set("shadow_matrix", cascade.view_matrix * cascade.projection_matrix);
-    cascade.shadow_map_state_param_block->set("depth_map", *cascade.shadow_map_view.texture);
-    cascade.shadow_map_state_param_block->set("depth_map_size", (int)cascade.map_size);
-    cascade.shadow_map_state_param_block->set("z_far", cascade.z_far);
-    cascade.shadow_map_state_param_block->set("z_near", cascade.z_near);
+    cascade.shadow_map_state_param_block->set("shadow_matrix"_sh, cascade.view_matrix * cascade.projection_matrix);
+    cascade.shadow_map_state_param_block->set("depth_map"_sh, *cascade.shadow_map_view.texture);
+    cascade.shadow_map_state_param_block->set("depth_map_size"_sh, (int)cascade.map_size);
+    cascade.shadow_map_state_param_block->set("z_far"_sh, cascade.z_far);
+    cascade.shadow_map_state_param_block->set("z_near"_sh, cascade.z_near);
 }
 
 }; // namespace ws

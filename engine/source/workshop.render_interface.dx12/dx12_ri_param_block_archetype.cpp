@@ -123,7 +123,7 @@ void dx12_ri_param_block_archetype::free(allocation alloc)
 
 void dx12_ri_param_block_archetype::add_page()
 {
-    memory_scope mem_scope(memory_type::rendering__vram__param_blocks, m_debug_name);
+    memory_scope mem_scope(memory_type::rendering__vram__param_blocks, string_hash(m_debug_name));
 
     std::scoped_lock lock(m_allocation_mutex);
 

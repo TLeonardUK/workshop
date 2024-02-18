@@ -46,9 +46,9 @@ result<void> render_system_transparent_geometry::create_resources()
     m_revealance_buffer = render_interface.create_texture(texture_params, "transparency revealence buffer");
 
     m_resolve_param_block = m_renderer.get_param_block_manager().create_param_block("resolve_transparent_parameters");
-    m_resolve_param_block->set("accumulation_texture", *m_accumulation_buffer);
-    m_resolve_param_block->set("revealance_texture", *m_revealance_buffer);
-    m_resolve_param_block->set("texture_sampler", *m_renderer.get_default_sampler(default_sampler_type::color));
+    m_resolve_param_block->set("accumulation_texture"_sh, *m_accumulation_buffer);
+    m_resolve_param_block->set("revealance_texture"_sh, *m_revealance_buffer);
+    m_resolve_param_block->set("texture_sampler"_sh, *m_renderer.get_default_sampler(default_sampler_type::color));
 
     return true;
 }

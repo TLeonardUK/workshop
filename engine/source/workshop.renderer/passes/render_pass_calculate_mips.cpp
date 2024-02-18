@@ -60,10 +60,10 @@ void render_pass_calculate_mips::generate(renderer& renderer, generated_state& s
                 size_t dest_height = dest_view.get_height();
 
                 std::unique_ptr<ri_param_block> block = renderer.get_param_block_manager().create_param_block("calculate_mips_params");
-                block->set("source_texture", source_view, false);
-                block->set("source_sampler", *renderer.get_default_sampler(default_sampler_type::color));
-                block->set("dest_texture", dest_view, true);
-                block->set("texel_size", vector2(1.0f / dest_width, 1.0f / dest_height));
+                block->set("source_texture"_sh, source_view, false);
+                block->set("source_sampler"_sh, *renderer.get_default_sampler(default_sampler_type::color));
+                block->set("dest_texture"_sh, dest_view, true);
+                block->set("texel_size"_sh, vector2(1.0f / dest_width, 1.0f / dest_height));
 
                 // Put together param block list to use.
                 list.set_param_blocks({ block.get() });

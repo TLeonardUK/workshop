@@ -30,7 +30,7 @@ public:
     virtual void clear() override;
     virtual size_t get_instance_size() override;
 
-    virtual void add(const char* field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
+    virtual void add(string_hash field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
 
     virtual std::unique_ptr<ri_buffer> create_vertex_buffer(const char* name) override;
     #if 0
@@ -42,7 +42,7 @@ public:
 
     struct field
     {
-        std::string name;
+        string_hash name_hash;
         ri_data_type type;
         size_t size;
         size_t offset;
@@ -52,7 +52,7 @@ public:
 
     size_t get_field_count();
     field get_field(size_t index);
-    bool get_field_info(const char* name, field& info);
+    bool get_field_info(string_hash name, field& info);
 
     void transpose_matrices(void* field, ri_data_type type);
 

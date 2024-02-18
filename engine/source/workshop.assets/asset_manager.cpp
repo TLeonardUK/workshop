@@ -930,7 +930,7 @@ void asset_manager::do_load(asset_state* state)
         // Load the resulting compiled asset.
         if (!compiled_path.empty())
         {
-            memory_scope scope(memory_type::asset, state->path);
+            memory_scope scope(memory_type::asset, string_hash(state->path));
 
             state->instance = loader->load(compiled_path.c_str());
 

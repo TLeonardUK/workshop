@@ -19,20 +19,20 @@ namespace ws {
 void render_pass_primitives::generate(renderer& renderer, generated_state& state_output, render_view* view)
 {
     ri_param_block* model_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "model_info");
-    model_info_param_block->set("index_size", (int)index_buffer->get_element_size());
-    model_info_param_block->set("position_buffer", *position_buffer);
-    model_info_param_block->set("color0_buffer", *color0_buffer);
+    model_info_param_block->set("index_size"_sh, (int)index_buffer->get_element_size());
+    model_info_param_block->set("position_buffer"_sh, *position_buffer);
+    model_info_param_block->set("color0_buffer"_sh, *color0_buffer);
 
     size_t model_info_table_index;
     size_t model_info_table_offset;
     model_info_param_block->get_table(model_info_table_index, model_info_table_offset);
 
     ri_param_block* vertex_info_param_block = view->get_resource_cache().find_or_create_param_block(get_cache_key(*view), "vertex_info");
-    vertex_info_param_block->set("model_info_table", (uint32_t)model_info_table_index);
-    vertex_info_param_block->set("model_info_offset", (uint32_t)model_info_table_offset);
-    vertex_info_param_block->set("material_info_table", 0);
-    vertex_info_param_block->set("material_info_offset", 0);
-    vertex_info_param_block->clear_buffer("instance_buffer");
+    vertex_info_param_block->set("model_info_table"_sh, (uint32_t)model_info_table_index);
+    vertex_info_param_block->set("model_info_offset"_sh, (uint32_t)model_info_table_offset);
+    vertex_info_param_block->set("material_info_table"_sh, 0);
+    vertex_info_param_block->set("material_info_offset"_sh, 0);
+    vertex_info_param_block->clear_buffer("instance_buffer"_sh);
 
     ri_command_list& list = renderer.get_render_interface().get_graphics_queue().alloc_command_list();
     list.open();

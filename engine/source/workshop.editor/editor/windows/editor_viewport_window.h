@@ -23,6 +23,7 @@ class transform_component;
 
 enum class viewport_orientation
 {
+    none,
     perspective,
     ortho_x_neg,
     ortho_x_pos,
@@ -78,7 +79,7 @@ private:
     std::vector<std::unique_ptr<ri_texture>> m_render_target_remove_queue;
     ri_texture* m_current_render_target = nullptr;
 
-    viewport_orientation m_orientation = viewport_orientation::perspective;
+    viewport_orientation m_orientation = viewport_orientation::none;
 
     char m_name[128];
     

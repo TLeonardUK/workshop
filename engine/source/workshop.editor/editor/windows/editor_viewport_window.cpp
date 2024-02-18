@@ -74,7 +74,8 @@ void editor_viewport_window::recreate_views()
 
     update_render_target(true);
 
-    /*
+    m_orientation = viewport_orientation::none;
+
     switch (m_viewport_index)
     {
     case 0:     
@@ -98,10 +99,10 @@ void editor_viewport_window::recreate_views()
     case 3:
         {
             camera_sys->set_visualization_mode(m_view_camera, visualization_mode::wireframe);
-            //set_orientation(viewport_orientation::ortho_z_pos); 
+            set_orientation(viewport_orientation::ortho_z_pos); 
             break;
         }
-    }*/
+    }
 }
 
 void editor_viewport_window::update_render_target(bool initial_update)
@@ -128,8 +129,7 @@ void editor_viewport_window::update_render_target(bool initial_update)
     {
         m_viewport_size = vector2(viewport_size.x, viewport_size.y);
         m_new_render_required = true;
-        db_log(core, "New render required: %zi", m_viewport_index);
-
+        
         // Keep old RT around as it may be in use on the render thread.
         if (m_render_target)
         {

@@ -155,20 +155,20 @@ void render_system_light_probes::build_post_graph(render_graph& graph, const ren
 
     m_regeneration_instance_buffer->commit();
 
-    m_regeneration_param_block->set("scene_tlas", m_renderer.get_scene_tlas());
-    m_regeneration_param_block->set("scene_tlas_metadata", *m_renderer.get_scene_tlas().get_metadata_buffer());
-    m_regeneration_param_block->set("probe_far_z", m_probe_far_z);
-    m_regeneration_param_block->set("probe_ray_count", (int)m_probe_ray_count);
-    m_regeneration_param_block->set("scratch_buffer", *m_scratch_buffer, true);
-    m_regeneration_param_block->set("probe_data_buffer", m_regeneration_instance_buffer->get_buffer(), false);
-    m_regeneration_param_block->set("probe_distance_exponent", cvar_light_probe_distance_exponent.get());
-    m_regeneration_param_block->set("probe_blend_hysteresis", cvar_light_probe_blend_hysteresis.get());
-    m_regeneration_param_block->set("probe_large_change_threshold", cvar_light_probe_large_change_threshold.get());
-    m_regeneration_param_block->set("probe_brightness_threshold", cvar_light_probe_brightness_threshold.get());
-    m_regeneration_param_block->set("probe_fixed_ray_backface_threshold", cvar_light_probe_fixed_ray_backface_threshold.get());
-    m_regeneration_param_block->set("probe_random_ray_backface_threshold", cvar_light_probe_random_ray_backface_threshold.get());
-    m_regeneration_param_block->set("probe_min_frontface_distance", cvar_light_probe_min_frontface_distance.get());
-    m_regeneration_param_block->set("random_ray_rotation", vector4(m_random_ray_direction.x, m_random_ray_direction.y, m_random_ray_direction.z, m_random_ray_direction.w));
+    m_regeneration_param_block->set("scene_tlas"_sh, m_renderer.get_scene_tlas());
+    m_regeneration_param_block->set("scene_tlas_metadata"_sh, *m_renderer.get_scene_tlas().get_metadata_buffer());
+    m_regeneration_param_block->set("probe_far_z"_sh, m_probe_far_z);
+    m_regeneration_param_block->set("probe_ray_count"_sh, (int)m_probe_ray_count);
+    m_regeneration_param_block->set("scratch_buffer"_sh, *m_scratch_buffer, true);
+    m_regeneration_param_block->set("probe_data_buffer"_sh, m_regeneration_instance_buffer->get_buffer(), false);
+    m_regeneration_param_block->set("probe_distance_exponent"_sh, cvar_light_probe_distance_exponent.get());
+    m_regeneration_param_block->set("probe_blend_hysteresis"_sh, cvar_light_probe_blend_hysteresis.get());
+    m_regeneration_param_block->set("probe_large_change_threshold"_sh, cvar_light_probe_large_change_threshold.get());
+    m_regeneration_param_block->set("probe_brightness_threshold"_sh, cvar_light_probe_brightness_threshold.get());
+    m_regeneration_param_block->set("probe_fixed_ray_backface_threshold"_sh, cvar_light_probe_fixed_ray_backface_threshold.get());
+    m_regeneration_param_block->set("probe_random_ray_backface_threshold"_sh, cvar_light_probe_random_ray_backface_threshold.get());
+    m_regeneration_param_block->set("probe_min_frontface_distance"_sh, cvar_light_probe_min_frontface_distance.get());
+    m_regeneration_param_block->set("random_ray_rotation"_sh, vector4(m_random_ray_direction.x, m_random_ray_direction.y, m_random_ray_direction.z, m_random_ray_direction.w));
 
     // Start timer.
     std::unique_ptr<render_pass_query> start_query_pass = std::make_unique<render_pass_query>();

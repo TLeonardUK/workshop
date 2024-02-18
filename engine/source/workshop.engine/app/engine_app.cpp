@@ -5,6 +5,7 @@
 #include "workshop.engine/app/engine_app.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.core/utils/init_list.h"
+#include "workshop.core/hashing/string_hash.h"
 
 namespace ws {
 
