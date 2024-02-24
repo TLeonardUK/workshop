@@ -118,6 +118,12 @@ void object_pick_system::fine_intersection_test(pick_request* request, std::vect
     {
         object obj = objects[i];
 
+        // Skip any objects we are ignoring for this pick.
+        if (std::find(request->ignore_objects.begin(), request->ignore_objects.end(), obj) != request->ignore_objects.end())
+        {
+            continue;
+        }
+
         const transform_component* transform = m_manager.get_component<transform_component>(obj);
         static_mesh_component* mesh = m_manager.get_component<static_mesh_component>(obj);
         billboard_component* billboard = m_manager.get_component<billboard_component>(obj);
@@ -195,11 +201,15 @@ void object_pick_system::fine_intersection_test(pick_request* request, std::vect
         // Return the closest hit.
         if (hits.empty())
         {
-            request->promise.set_value(null_object);
+            request->promise.set_value(pick_result { });
         }
         else
         {
-            request->promise.set_value(hits[0].handle);
+            pick_result result;
+            result.hit_object = hits[0].handle;
+            result.hit_location = request->target_ray.start + (hits[0].distance * request->target_ray.direction);
+            result.hit_normal = -request->target_ray.direction;
+            request->promise.set_value(result);
         }
 
         // Remove the request from the active queue.
@@ -246,19 +256,20 @@ void object_pick_system::step(const frame_time& time)
         else
         {
             // If failed to kick off request just return a null object.
-            request->promise.set_value(null_object);
+            request->promise.set_value(pick_result {});
         }
     }
 }
 
-std::future<object> object_pick_system::pick(object camera, const vector2& screen_space_pos)
+std::future<object_pick_system::pick_result> object_pick_system::pick(object camera, const vector2& screen_space_pos, const std::vector<object>& ignore_objects)
 {
     camera_system& cam_system = *m_manager.get_system<camera_system>();
 
     std::unique_ptr<pick_request> request = std::make_unique<pick_request>();
     request->target_ray = cam_system.screen_to_ray(camera, screen_space_pos);
+    request->ignore_objects = ignore_objects;
 
-    std::future<object> future = request->promise.get_future();
+    std::future<pick_result> future = request->promise.get_future();
 
     std::scoped_lock lock(m_request_mutex);
     m_pending_requests.push_back(std::move(request));

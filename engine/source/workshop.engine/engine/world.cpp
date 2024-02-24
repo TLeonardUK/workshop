@@ -10,12 +10,16 @@
 
 #include "workshop.game_framework/components/camera/camera_component.h"
 
+#include "workshop.physics_interface/physics_interface.h"
+#include "workshop.physics_interface/pi_world.h"
+
 namespace ws {
 
 world::world(engine& engine)
     : m_engine(engine)
 {
     m_object_manager = std::make_unique<object_manager>(*this);
+    m_pi_world = m_engine.get_physics_interface().create_world("physics world");
 }
 
 engine& world::get_engine()
@@ -33,6 +37,8 @@ object_manager& world::get_object_manager()
     return *m_object_manager;
 }
 
+// TODO: Nuke this whole thing, the one place we use it (billboards) we should be doing the calculations
+// on the gpu anyway so it works per-view.
 object world::get_primary_camera()
 {
     component_filter<camera_component> filter(*m_object_manager);
@@ -57,14 +63,28 @@ void world::step(const frame_time& time)
     {
         return;
     }
-    
+
     bool in_editor = (m_engine.get_editor().get_editor_mode() == editor_mode::editor);
-    m_object_manager->step(time, in_editor);
+
+    {
+        profile_marker(profile_colors::simulation, "object manager step");
+        m_object_manager->step(time, in_editor);
+    }
+
+    {
+        profile_marker(profile_colors::simulation, "physics step");
+        m_pi_world->step(time);
+    }
 }
 
 void world::set_step_enabled(bool enabled)
 {
     m_step_enabled = enabled;
+}
+
+pi_world& world::get_physics_world()
+{
+    return *m_pi_world;
 }
 
 }; // namespace ws

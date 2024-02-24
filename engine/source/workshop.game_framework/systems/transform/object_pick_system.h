@@ -37,11 +37,18 @@ public:
 
     // Public Commands
 
+    struct pick_result
+    {
+        object  hit_object = null_object;
+        vector3 hit_location;
+        vector3 hit_normal;
+    };
+
     // Determines the closest object at the given screen space position.
     // 
     // This is slow and run in the background. Eventually we will replace this with
     // physics queries. Don't try to use this for any realtime behaviour.
-    std::future<object> pick(object camera, const vector2& screen_space_pos);
+    std::future<pick_result> pick(object camera, const vector2& screen_space_pos, const std::vector<object>& ignore_objects = {});
 
 private:
 
@@ -65,7 +72,8 @@ private:
     struct pick_request
     {
         ray target_ray;
-        std::promise<object> promise;
+        std::vector<object> ignore_objects;
+        std::promise<pick_result> promise;
     };
 
     // Does an intersection test between a model at a given world space transform and a ray

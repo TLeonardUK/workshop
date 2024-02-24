@@ -7,12 +7,14 @@
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.engine/ecs/object_manager.h"
 
+#include "workshop.physics_interface/pi_world.h"
+
 #include <string>
 #include <memory>
 
 namespace ws {
 
-    class engine;
+class engine;
 
 // ================================================================================================
 //  Each world class represents an individual "universe", with its own set of objects 
@@ -44,6 +46,9 @@ public:
     // in the scene that is enabled and is drawing the full scene and not a depth/etc view.
     object get_primary_camera();
 
+    // Gets the physics representation of this world.
+    pi_world& get_physics_world();
+
 protected:
 
 private:
@@ -52,6 +57,7 @@ private:
     bool m_step_enabled = true;
 
     std::unique_ptr<object_manager> m_object_manager;
+    std::unique_ptr<pi_world> m_pi_world;
 
     engine& m_engine;
 

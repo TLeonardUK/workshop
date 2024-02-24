@@ -10,6 +10,8 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.core/utils/event.h"
 
+#include "workshop.game_framework/systems/transform/object_pick_system.h"
+
 #include <future>
 
 struct ImRect;
@@ -59,6 +61,8 @@ private:
 
     void update_object_picking(bool mouse_over_viewport, const ImRect& viewport_rect);
 
+    void update_drag_drop(bool mouse_over_viewport, const ImRect& viewport_rect);
+
 private:
     engine* m_engine;
     editor* m_editor;
@@ -84,13 +88,17 @@ private:
     char m_name[128];
     
     // Object selection
-    std::future<object> m_pick_object_query;
+    std::future<object_pick_system::pick_result> m_pick_object_query;
     bool m_pick_object_add_to_selected = false;
 
     // Lazy update
     bool m_realtime = false;
     bool m_new_render_required = true;
     event<>::delegate_ptr m_transaction_executed_delegate;
+
+    // Drag/Drop
+    std::future<object_pick_system::pick_result> m_drag_drop_pick_query;
+    object m_drag_drop_object = null_object;
 
 };
 

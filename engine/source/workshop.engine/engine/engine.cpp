@@ -46,7 +46,8 @@
 #include "workshop.platform_interface.sdl/sdl_platform_interface.h"
 
 #include "workshop.physics_interface/physics_interface.h"
-#include "workshop.physics_interface.jolt/jolt_physics_interface.h"
+#include "workshop.physics_interface/physics_cvars.h"
+#include "workshop.physics_interface.jolt/jolt_pi_interface.h"
 
 #include "workshop.render_interface/ri_interface.h"
 
@@ -594,7 +595,7 @@ result<void> engine::create_physics_interface(init_list& list)
     {
     case physics_interface_type::jolt:
         {
-            m_physics_interface = std::make_unique<jolt_physics_interface>();
+            m_physics_interface = std::make_unique<jolt_pi_interface>();
             m_physics_interface->register_init(list);
             break;
         }
@@ -720,6 +721,7 @@ result<void> engine::load_config(init_list& list)
     // Register all the relevant cvars.
     register_core_cvars();
     register_render_cvars(*m_render_interface);
+    register_physics_cvars(*m_physics_interface);
 
     cvar_manager& manager = cvar_manager::get();
     if (!manager.add_config_file(engine_config.c_str()) ||

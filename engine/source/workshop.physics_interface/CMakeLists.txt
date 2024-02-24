@@ -8,6 +8,9 @@ project(workshop.physics_interface C CXX)
 SET(SOURCES
     "physics_interface.h"
     "physics_interface.cpp"
+    "physics_cvars.h"
+    "physics_cvars.cpp"
+    "pi_world.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

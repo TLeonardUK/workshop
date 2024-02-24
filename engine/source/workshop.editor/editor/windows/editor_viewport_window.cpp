@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.editor/editor/windows/editor_viewport_window.h"
+#include "workshop.editor/editor/transactions/editor_transaction_create_objects.h"
 #include "workshop.editor/editor/editor.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.assets/asset_manager.h"
@@ -16,6 +17,7 @@
 #include "workshop.game_framework/components/transform/bounds_component.h"
 #include "workshop.game_framework/components/camera/camera_component.h"
 #include "workshop.game_framework/components/camera/editor_camera_movement_component.h"
+#include "workshop.game_framework/components/geometry/static_mesh_component.h"
 
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/camera/camera_system.h"
@@ -389,13 +391,18 @@ void editor_viewport_window::draw()
                 !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup);
 
             update_object_picking(mouse_over_viewport, full_viewport_rect);
+            update_drag_drop(mouse_over_viewport, full_viewport_rect);
         }
         ImGui::End();
     }
 
     // Update if camera movement component should be taking input or not.
     mouse_over_viewport = ImGui::IsMouseHoveringRect(viewport_rect.Min, viewport_rect.Max, false);
-    input_blocked = ImGuizmo::IsUsingAny() || ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) || GImGui->MovingWindow;
+    input_blocked = 
+        ImGuizmo::IsUsingAny() || 
+        ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup) || 
+        GImGui->MovingWindow || 
+        GImGui->DragDropActive;
 
     camera_movement_sys->set_input_state(m_view_camera, recti(
         (int)(viewport_rect.Min.x),
@@ -463,6 +470,83 @@ editor_window_layout editor_viewport_window::get_layout()
     }    
 }
 
+void editor_viewport_window::update_drag_drop(bool mouse_over_viewport, const ImRect& viewport_rect)
+{
+    input_interface& input = m_engine->get_input_interface();
+    object_manager& obj_manager = m_engine->get_default_world().get_object_manager();
+    asset_manager& ass_manager = m_engine->get_asset_manager();
+    transform_system* transform_sys = obj_manager.get_system<transform_system>();
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        // Create preview object when we drag over viewport.
+        if (m_drag_drop_object == null_object)
+        {
+            const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+            if (payload->IsDataType("asset_model"))
+            {
+                std::string path = std::string((const char*)payload->Data, payload->DataSize);
+                
+                m_drag_drop_object = obj_manager.create_object("model");
+                obj_manager.add_component<transform_component>(m_drag_drop_object);
+                obj_manager.add_component<bounds_component>(m_drag_drop_object);
+
+                static_mesh_component* comp = obj_manager.add_component<static_mesh_component>(m_drag_drop_object);
+                comp->model = ass_manager.request_asset<model>(path.c_str(), 0);
+            }
+        }
+
+        if (m_drag_drop_object != null_object)
+        {
+            // Update the world position we are dragging to.
+            if (!m_drag_drop_pick_query.valid())
+            {
+                vector2 mouse_pos = input.get_mouse_position();
+                vector2 screen_space_pos = vector2(
+                    (mouse_pos.x - viewport_rect.Min.x) / viewport_rect.GetWidth(),
+                    (mouse_pos.y - viewport_rect.Min.y) / viewport_rect.GetHeight()
+                );
+
+                object_pick_system& pick_system = *obj_manager.get_system<object_pick_system>();
+                m_drag_drop_pick_query = pick_system.pick(m_view_camera, screen_space_pos, { m_drag_drop_object });
+            }
+            else
+            {
+                if (m_drag_drop_pick_query.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+                {
+                    // Apply position to preview object.
+                    vector3 location = m_drag_drop_pick_query.get().hit_location;
+                    transform_sys->set_world_transform(m_drag_drop_object, location, quat::identity, vector3::one);
+                }
+            }
+
+            // If we have accepted this drag/drop then make the preview object "real" by pushing
+            // a create transaction for it..
+            const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("asset_model", ImGuiDragDropFlags_None);
+            if (payload)
+            {
+                // Create transaction for the creation of the object.
+                std::vector<object> handles = { m_drag_drop_object };
+                m_editor->get_undo_stack().push(std::make_unique<editor_transaction_create_objects>(*m_engine, *m_editor, handles));
+                m_editor->set_selected_objects(handles);
+
+                m_drag_drop_object = null_object;
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+    else
+    {
+        // Destroy preview object if its not actually been used.
+        if (m_drag_drop_object != null_object)
+        {
+            obj_manager.destroy_object(m_drag_drop_object);
+            m_drag_drop_object = null_object;
+        }
+    }
+}
+
 void editor_viewport_window::update_object_picking(bool mouse_over_viewport, const ImRect& viewport_rect)
 {
     input_interface& input = m_engine->get_input_interface();
@@ -489,7 +573,7 @@ void editor_viewport_window::update_object_picking(bool mouse_over_viewport, con
     {
         if (m_pick_object_query.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
         {
-            object picked_object = m_pick_object_query.get();
+            object picked_object = m_pick_object_query.get().hit_object;
             if (obj_manager.is_object_alive(picked_object))
             {
                 std::vector<object> new_selection = m_editor->get_selected_objects();
