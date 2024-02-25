@@ -33,12 +33,12 @@ public:
 
     // Slow, use with care. Hashing should generally
     // be one way outside of debugging.
-    const char* get_string();
+    const char* get_string() const;
 
     size_t get_hash() const;
 
     // Same as get_string, use for interop/replacement of std::string
-    const char* c_str();
+    const char* c_str() const;
 
 private:
     struct db_bucket

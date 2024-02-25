@@ -11,6 +11,8 @@ SET(SOURCES
     
     "jolt_pi_world.h"
     "jolt_pi_world.cpp"
+    "jolt_pi_body.h"
+    "jolt_pi_body.cpp"
     "jolt_pi_job_system.h"
     "jolt_pi_job_system.cpp"
 )

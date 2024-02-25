@@ -38,6 +38,9 @@ public:
     // in use this function will assert.
     size_t insert(size_t index, const element_type& type);
 
+    // Inserts a default element and returns the index it was inserted at.
+    size_t insert_default();
+
     // Removes the given index in the vector and allows it to be reused.
     void remove(size_t index);
 
@@ -167,6 +170,17 @@ inline void sparse_vector<element_type, mem_type>::decommit_region(size_t index)
 template <typename element_type, memory_type mem_type>
 inline size_t sparse_vector<element_type, mem_type>::insert(const element_type& type)
 {
+    size_t index = insert_default();
+
+    element_type* element = reinterpret_cast<element_type*>(m_memory_base + (index * sizeof(element_type)));
+    *element = type;
+
+    return index;
+}
+
+template <typename element_type, memory_type mem_type>
+inline size_t sparse_vector<element_type, mem_type>::insert_default()
+{
     if (m_free_indices.empty())
     {
         db_fatal(core, "Ran out of free indices in sparse_vector.");
@@ -180,7 +194,6 @@ inline size_t sparse_vector<element_type, mem_type>::insert(const element_type& 
 
     element_type* element = reinterpret_cast<element_type*>(m_memory_base + (index * sizeof(element_type)));
     new(element) element_type();
-    *element = type;
 
     return index;
 }

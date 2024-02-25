@@ -11,6 +11,8 @@ SET(SOURCES
     "physics_cvars.h"
     "physics_cvars.cpp"
     "pi_world.h"
+    "pi_body.h"
+    "pi_types.h"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

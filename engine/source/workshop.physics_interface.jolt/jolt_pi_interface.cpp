@@ -23,7 +23,7 @@ JPH::TempAllocatorImpl& jolt_pi_interface::get_temp_allocator()
 
 jolt_pi_job_system& jolt_pi_interface::get_job_system()
 {
-    return m_job_system;
+    return *m_job_system;
 }
 
 void jolt_pi_interface::register_init(init_list& list)
@@ -41,7 +41,8 @@ result<void> jolt_pi_interface::create_jolt(init_list& list)
     JPH::Factory::sInstance = new JPH::Factory();
     JPH::RegisterTypes();
 
-    m_temp_allocator = std::make_unique<JPH::TempAllocatorImpl>(32*1024*1024);
+    m_temp_allocator = std::make_unique<JPH::TempAllocatorImpl>(cvar_physics_temp_buffer_size.get_int());
+    m_job_system = std::make_unique<jolt_pi_job_system>();
 
     return true;
 }
@@ -55,9 +56,9 @@ result<void> jolt_pi_interface::destroy_jolt()
     return true;
 }
 
-std::unique_ptr<pi_world> jolt_pi_interface::create_world(const char* debug_name)
+std::unique_ptr<pi_world> jolt_pi_interface::create_world(const pi_world::create_params& params, const char* debug_name)
 {
-    std::unique_ptr<jolt_pi_world> instance = std::make_unique<jolt_pi_world>(*this, debug_name);
+    std::unique_ptr<jolt_pi_world> instance = std::make_unique<jolt_pi_world>(*this, params, debug_name);
     if (!instance->create_resources())
     {
         return nullptr;

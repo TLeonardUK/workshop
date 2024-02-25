@@ -62,12 +62,12 @@ public:
     // Render target to draw to.
     ri_texture_view render_target = {};
 
+    // ID of the cameras view in the renderer.
+    render_object_id view_id = null_render_object;
+
 private:
 
 	friend class camera_system;
-
-	// ID of the cameras view in the renderer.
-	render_object_id view_id = null_render_object;
 
 	// Tracks the last transform we applied to the render view.
 	size_t last_transform_generation = 0;

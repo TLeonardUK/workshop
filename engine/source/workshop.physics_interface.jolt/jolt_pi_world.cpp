@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.physics_interface.jolt/jolt_pi_world.h"
 #include "workshop.physics_interface.jolt/jolt_pi_interface.h"
+#include "workshop.physics_interface.jolt/jolt_pi_body.h"
 
 #include "workshop.core/perf/profile.h"
 
@@ -57,9 +58,9 @@ public:
 	}
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-	virtual const char* GetBroadPhaseLayerName(BroadPhaseLayer inLayer) const override
+	virtual const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
 	{
-        const pi_collision_type& layer_1_type = m_world.get_layer_collision_type((JPH::BroadPhaseLayer::Type)iinLayer);
+        const pi_collision_type& layer_1_type = m_world.get_layer_collision_type((JPH::BroadPhaseLayer::Type)inLayer);
         return layer_1_type.id.c_str();
 	}
 #endif // JPH_EXTERNAL_PROFILE || JPH_PROFILE_ENABLED
@@ -96,10 +97,13 @@ private:
     jolt_pi_world& m_world;
 };
 
-jolt_pi_world::jolt_pi_world(jolt_pi_interface& in_interface, const char* debug_name)
+jolt_pi_world::jolt_pi_world(jolt_pi_interface& in_interface, const pi_world::create_params& params, const char* debug_name)
     : m_interface(in_interface)
     , m_debug_name(debug_name)
+    , m_create_params(params)
+    , m_collision_types(params.collision_types)
 {
+    db_assert(!m_collision_types.empty());
 }
 
 jolt_pi_world::~jolt_pi_world()
@@ -142,13 +146,6 @@ void jolt_pi_world::step(const frame_time& time)
     );
 }
 
-void jolt_pi_world::set_collision_types(const std::vector<pi_collision_type>& types)
-{
-    m_collision_types = types;
-
-    // TODO: Validate all bodies have valid collision types.
-}
-
 const pi_collision_type& jolt_pi_world::get_layer_collision_type(size_t layer_index)
 {
     return m_collision_types[layer_index];
@@ -157,6 +154,53 @@ const pi_collision_type& jolt_pi_world::get_layer_collision_type(size_t layer_in
 size_t jolt_pi_world::get_layer_count()
 {
     return m_collision_types.size();
+}
+
+JPH::ObjectLayer jolt_pi_world::get_object_layer(const string_hash& collision_type_id)
+{
+    for (size_t i = 0; i < m_collision_types.size(); i++)
+    {
+        if (m_collision_types[i].id == collision_type_id)
+        {
+            return JPH::ObjectLayer(i);
+        }
+    }
+
+    return 0;
+}
+
+JPH::PhysicsSystem& jolt_pi_world::get_physics_system()
+{
+    return *m_physics_system.get();
+}
+
+std::unique_ptr<pi_body> jolt_pi_world::create_body(const pi_body::create_params& create_params, const char* debug_name)
+{
+    std::unique_ptr<jolt_pi_body> instance = std::make_unique<jolt_pi_body>(*this, create_params, debug_name);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+    return instance;
+}
+
+void jolt_pi_world::add_body(pi_body& body)
+{
+    jolt_pi_body& jolt_body = static_cast<jolt_pi_body&>(body);
+
+    m_physics_system->GetBodyInterface().AddBody(
+        jolt_body.get_body_id(),
+        JPH::EActivation::Activate
+    );
+}
+
+void jolt_pi_world::remove_body(pi_body& body)
+{
+    jolt_pi_body& jolt_body = static_cast<jolt_pi_body&>(body);
+
+    m_physics_system->GetBodyInterface().RemoveBody(
+        jolt_body.get_body_id()
+    );
 }
 
 }; // namespace ws

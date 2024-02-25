@@ -14,6 +14,7 @@
 #include "workshop.game_framework/systems/lighting/reflection_probe_system.h"
 #include "workshop.game_framework/systems/geometry/static_mesh_system.h"
 #include "workshop.game_framework/systems/geometry/billboard_system.h"
+#include "workshop.game_framework/systems/physics/physics_system.h"
 #include "workshop.game_framework/systems/transform/transform_system.h"
 #include "workshop.game_framework/systems/transform/bounds_system.h"
 #include "workshop.game_framework/systems/transform/object_pick_system.h"
@@ -23,6 +24,10 @@
 #include "workshop.game_framework/components/camera/editor_camera_movement_component.h"
 #include "workshop.game_framework/components/geometry/static_mesh_component.h"
 #include "workshop.game_framework/components/geometry/billboard_component.h"
+#include "workshop.game_framework/components/physics/physics_component.h"
+#include "workshop.game_framework/components/physics/physics_box_component.h"
+#include "workshop.game_framework/components/physics/physics_sphere_component.h"
+#include "workshop.game_framework/components/physics/physics_capsule_component.h"
 #include "workshop.game_framework/components/lighting/directional_light_component.h"
 #include "workshop.game_framework/components/lighting/light_probe_grid_component.h"
 #include "workshop.game_framework/components/lighting/point_light_component.h"
@@ -58,6 +63,11 @@ void register_default_systems(object_manager& manager)
     manager.register_component<fly_camera_movement_component>();
     manager.register_component<editor_camera_movement_component>();
 
+    manager.register_component<physics_component>();
+    manager.register_component<physics_box_component>();
+    manager.register_component<physics_sphere_component>();
+    manager.register_component<physics_capsule_component>();
+
     // Systems
 
     manager.register_system<transform_system>();
@@ -76,6 +86,8 @@ void register_default_systems(object_manager& manager)
 
     manager.register_system<fly_camera_movement_system>();
     manager.register_system<editor_camera_movement_system>();
+
+    manager.register_system<physics_system>();
 }
 
 }; // namespace ws

@@ -27,7 +27,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Hook memory functions as early as possible.
     ws::memory_tracker mem_tracker;
+#ifndef WS_DEBUG // We use the crt debug heap in debug, the hooks complicate things so we just don't use them here.
     ws::install_memory_hooks();
+#endif
 
     // Magic mystery symbols that only exist on microsoft compilers...
     return ws::entry_point(__argc, __argv);

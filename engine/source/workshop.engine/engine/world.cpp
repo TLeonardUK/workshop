@@ -19,7 +19,15 @@ world::world(engine& engine)
     : m_engine(engine)
 {
     m_object_manager = std::make_unique<object_manager>(*this);
-    m_pi_world = m_engine.get_physics_interface().create_world("physics world");
+
+    pi_world::create_params params;
+    params.collision_types = {
+        //                  id              collides_with                overlaps_with
+        pi_collision_type { "dynamic"_sh, { "static"_sh, "dynamic"_sh }, {} },
+        pi_collision_type { "static"_sh,  { },                           {} },
+    };
+
+    m_pi_world = m_engine.get_physics_interface().create_world(params, "physics world");
 }
 
 engine& world::get_engine()

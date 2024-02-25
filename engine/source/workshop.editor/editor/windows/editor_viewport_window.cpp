@@ -352,6 +352,10 @@ void editor_viewport_window::draw()
                     {
                         toggle_view_flag(render_view_flags::draw_cell_bounds);
                     }
+                    if (ImGui::MenuItem("Collision"))
+                    {
+                        toggle_view_flag(render_view_flags::draw_collision);
+                    }
                     if (ImGui::MenuItem("Freeze Rendering"))
                     {
                         toggle_view_flag(render_view_flags::freeze_rendering);

@@ -33,7 +33,7 @@ class component_filter
 {
 private:
     template <typename a>
-    void filter_type(a value, std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
+    void filter_type(const a& value, std::vector<std::type_index>& include_list, std::vector<std::type_index>& exclude_list)
     {
         include_list.push_back(typeid(a));
     }

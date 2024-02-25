@@ -46,4 +46,11 @@ inline cvar<int> cvar_physics_integration_steps(
     "Number of steps to divide each physics integration into. Higher numbers may be more stable but will be more expensive."
 );
 
+inline cvar<int> cvar_physics_temp_buffer_size(
+    cvar_flag::read_only,
+    128 * 1024 * 1024,
+    "physics_temp_buffer_size",
+    "Size of the temporary buffer used as a stack allocator during simulation steps. The size of this needs to be proportionally increased with physics_max_bodies/physics_max_constraints."
+);
+
 }; // namespace ws

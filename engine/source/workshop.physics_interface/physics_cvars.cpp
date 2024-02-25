@@ -13,6 +13,7 @@ void register_physics_cvars(physics_interface& pi_interface)
     cvar_physics_max_constraints.register_self();
     cvar_physics_collision_steps.register_self();
     cvar_physics_integration_steps.register_self();
+    cvar_physics_temp_buffer_size.register_self();
 }
 
 }; // namespace ws

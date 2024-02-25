@@ -70,18 +70,18 @@ public:
     // ===========================================================================================
 
     // Draws various debug wireframe primitives.
-    void draw_line(const vector3& start, const vector3& end, const color& color);
-    void draw_aabb(const aabb& bounds, const color& color);
-    void draw_obb(const obb& bounds, const color& color);
-    void draw_sphere(const sphere& bounds, const color& color);
-    void draw_frustum(const frustum& bounds, const color& color);
-    void draw_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color);
-    void draw_cylinder(const cylinder& bounds, const color& color);
-    void draw_capsule(const cylinder& bounds, const color& color);
-    void draw_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true);
-    void draw_cone(const vector3& origin, const vector3& end, float radius, const color& color);
-    void draw_arrow(const vector3& start, const vector3& end, const color& color);
-    void draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color);
+    void draw_line(const vector3& start, const vector3& end, const color& color, render_object_id view_id = null_render_object);
+    void draw_aabb(const aabb& bounds, const color& color, render_object_id view_id = null_render_object);
+    void draw_obb(const obb& bounds, const color& color, render_object_id view_id = null_render_object);
+    void draw_sphere(const sphere& bounds, const color& color, render_object_id view_id = null_render_object);
+    void draw_frustum(const frustum& bounds, const color& color, render_object_id view_id = null_render_object);
+    void draw_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color, render_object_id view_id = null_render_object);
+    void draw_cylinder(const cylinder& bounds, const color& color, render_object_id view_id = null_render_object);
+    void draw_capsule(const cylinder& bounds, const color& color, render_object_id view_id = null_render_object);
+    void draw_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands = true, render_object_id view_id = null_render_object);
+    void draw_cone(const vector3& origin, const vector3& end, float radius, const color& color, render_object_id view_id = null_render_object);
+    void draw_arrow(const vector3& start, const vector3& end, const color& color, render_object_id view_id = null_render_object);
+    void draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color, render_object_id view_id = null_render_object);
 
     // ===========================================================================================
     //  Worlds

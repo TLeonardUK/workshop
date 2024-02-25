@@ -193,7 +193,7 @@ private:
             : m_storage(k_max_components)
         {
             // Always allocate the first index so we can assume 0=null.
-            size_t index = m_storage.insert({});
+            size_t index = m_storage.insert_default();
             db_assert(index == 0);
         }
 
@@ -204,7 +204,7 @@ private:
 
         virtual component* alloc() override
         {
-            size_t index = m_storage.insert({});
+            size_t index = m_storage.insert_default();
             return &m_storage[index];
         }
 

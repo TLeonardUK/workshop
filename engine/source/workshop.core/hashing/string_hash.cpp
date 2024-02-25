@@ -104,7 +104,7 @@ string_hash::db_index string_hash::intern(const char* value)
     return create_index(hash, value);
 }
 
-const char* string_hash::get_string()
+const char* string_hash::get_string() const
 {
     std::shared_lock lock(m_db_mutex);
 
@@ -117,7 +117,7 @@ const char* string_hash::get_string()
     return "";
 }
 
-const char* string_hash::c_str()
+const char* string_hash::c_str() const
 {
     return get_string();
 }

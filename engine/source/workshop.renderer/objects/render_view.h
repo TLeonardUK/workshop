@@ -75,9 +75,8 @@ enum class render_view_flags
     // Draws the bounds of individual objects in the rendering octree.
     draw_object_bounds              = 1 << 9,
 
-    // Draws any debug rendering for objects that require it. This is used in the editor
-    // to display things like lighting bounds.
-    draw_object_debug               = 1 << 10,
+    // Draws all physics objects in the scene.
+    draw_collision                  = 1 << 10,
 
     // If false direct lighting is used when rendering the scene.
     disable_direct_lighting         = 1 << 11,

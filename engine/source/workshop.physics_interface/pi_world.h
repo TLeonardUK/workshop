@@ -5,24 +5,12 @@
 #pragma once
 
 #include "workshop.core/hashing/string_hash.h"
+#include "workshop.physics_interface/pi_body.h"
+#include "workshop.physics_interface/pi_types.h"
 
 namespace ws {
 
 class frame_time;
-
-// Represents a collision type an object can have, which dictates how it iteracts with other objects.
-struct pi_collision_type
-{
-    // Identifier for the collision type.
-    string_hash id;
-
-    // Identifiers of all collision types that this type will collide solidly with.
-    std::vector<string_hash> collides_with;
-
-    // Identifiers of all collision types that this type will register overlaps for, but won't behave 
-    // as though they are solid.
-    std::vector<string_hash> overlaps_with;
-};
 
 // ================================================================================================
 //  Represents an independently simulatable envioronment in the physics system.
@@ -30,38 +18,49 @@ struct pi_collision_type
 class pi_world
 {
 public:
+    struct create_params
+    {
+        std::vector<pi_collision_type> collision_types;
+    };
+
+public:
     virtual ~pi_world() {}
 
     // Gets the name this world was created with.
     virtual const char* get_debug_name() = 0;
-
-    // Sets the collision types this world uses. 
-    // This should be called once at creation, if this is called after the world has been populated 
-    // an expensive operation will take place to validate that all bodies have valid collision types.
-    virtual void set_collision_types(const std::vector<pi_collision_type>& types) = 0;
-
+    
     // Steps physics world one simulation step.
     virtual void step(const frame_time& time) = 0;
 
 
-    /*
-        // std::unique_ptr<pi_body> create_body(name)
-        // void add_body(body)
-        // void remove_body(body)
+    // Creates a new physics body. 
+    // The body is not active in the world until add_body is called. 
+    virtual std::unique_ptr<pi_body> create_body(const pi_body::create_params& create_params, const char* name) = 0;
 
-        // void get_body_transform(body);
-        // void set_body_transform();
-        // void get_body_shape
-        // void set_body_shape
-        // void get_body_collision_type
-        // void set_body_collision_type
+    // Adds a body to the world so it participates in simulation.
+    virtual void add_body(pi_body& body) = 0;
 
-        // hit_result cast_ray(start, end)
-        // hit_result cast_shape(start, end, shape)
+    // Removes a body from the world so it no longer participates in simulation.
+    virtual void remove_body(pi_body& body) = 0;
 
-        // step
-    */
+/*
+    // Casts a ray in the physics scene and returns information about the first object hit.
+    virtual cast_hit_result ray_cast(
+        const vector3& start, 
+        const vector3& end, 
+        string_hash collision_type_id,
+        std::vector<pi_body*> exclude_bodies = {},
+        std::vector<pi_body*> include_bodies = {}) = 0;
 
+    // Sweeps a shape through the physics scene and returns information about the first object hit.
+    virtual cast_hit_result shape_cast(
+        const vector3& start, 
+        const vector3& end, 
+        const pi_shape& shape,
+        string_hash collision_type_id,
+        std::vector<pi_body*> exclude_bodies = {},
+        std::vector<pi_body*> include_bodies = {}) = 0;
+*/
 };
 
 }; // namespace ws

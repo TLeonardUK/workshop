@@ -36,87 +36,99 @@ void render_command_queue::set_editor_mode(bool in_editor)
 //  Debug rendering.
 // ===========================================================================================
 
-void render_command_queue::draw_line(const vector3& start, const vector3& end, const color& color)
+void render_command_queue::draw_line(const vector3& start, const vector3& end, const color& color, render_object_id view_id)
 {
-    queue_command("draw_line", [renderer = &m_renderer, start, end, color]() {
-        renderer->get_system<render_system_debug>()->add_line(start, end, color);
+    queue_command("draw_line", [renderer = &m_renderer, start, end, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_line(start, end, color, view);
     });
 }
 
-void render_command_queue::draw_aabb(const aabb& bounds, const color& color)
+void render_command_queue::draw_aabb(const aabb& bounds, const color& color, render_object_id view_id)
 {
-    queue_command("draw_aabb", [renderer = &m_renderer, bounds, color]() {
-        renderer->get_system<render_system_debug>()->add_aabb(bounds, color);
+    queue_command("draw_aabb", [renderer = &m_renderer, bounds, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_aabb(bounds, color, view);
     });
 }
 
-void render_command_queue::draw_obb(const obb& bounds, const color& color)
+void render_command_queue::draw_obb(const obb& bounds, const color& color, render_object_id view_id)
 {
-    queue_command("draw_obb", [renderer = &m_renderer, bounds, color]() {
-        renderer->get_system<render_system_debug>()->add_obb(bounds, color);
+    queue_command("draw_obb", [renderer = &m_renderer, bounds, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_obb(bounds, color, view);
     });
 }
 
-void render_command_queue::draw_sphere(const sphere& bounds, const color& color)
+void render_command_queue::draw_sphere(const sphere& bounds, const color& color, render_object_id view_id)
 {
-    queue_command("draw_sphere", [renderer = &m_renderer, bounds, color]() {
-        renderer->get_system<render_system_debug>()->add_sphere(bounds, color);
+    queue_command("draw_sphere", [renderer = &m_renderer, bounds, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_sphere(bounds, color, view);
     });
 }
 
-void render_command_queue::draw_frustum(const frustum& bounds, const color& color)
+void render_command_queue::draw_frustum(const frustum& bounds, const color& color, render_object_id view_id)
 {
-    queue_command("draw_frustum", [renderer = &m_renderer, bounds, color]() {
-        renderer->get_system<render_system_debug>()->add_frustum(bounds, color);
+    queue_command("draw_frustum", [renderer = &m_renderer, bounds, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_frustum(bounds, color, view);
     });
 }
 
-void render_command_queue::draw_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color)
+void render_command_queue::draw_triangle(const vector3& a, const vector3& b, const vector3& c, const color& color, render_object_id view_id)
 {
-    queue_command("draw_triangle", [renderer = &m_renderer, a, b, c, color]() {
-        renderer->get_system<render_system_debug>()->add_triangle(a, b, c, color);
+    queue_command("draw_triangle", [renderer = &m_renderer, a, b, c, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_triangle(a, b, c, color, view);
     });
 }
 
-void render_command_queue::draw_cylinder(const cylinder& bounds, const color& color)
+void render_command_queue::draw_cylinder(const cylinder& bounds, const color& color, render_object_id view_id)
 {
-    queue_command("draw_cylinder", [renderer = &m_renderer, bounds, color]() {
-        renderer->get_system<render_system_debug>()->add_cylinder(bounds, color);
+    queue_command("draw_cylinder", [renderer = &m_renderer, bounds, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_cylinder(bounds, color, view);
     });
 }
 
-void render_command_queue::draw_capsule(const cylinder& bounds, const color& color)
+void render_command_queue::draw_capsule(const cylinder& bounds, const color& color, render_object_id view_id)
 {
-    queue_command("draw_capsule", [renderer = &m_renderer, bounds, color]() {
-        renderer->get_system<render_system_debug>()->add_capsule(bounds, color);
+    queue_command("draw_capsule", [renderer = &m_renderer, bounds, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_capsule(bounds, color, view);
     });
 }
 
-void render_command_queue::draw_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands)
+void render_command_queue::draw_hemisphere(const hemisphere& bounds, const color& color, bool horizontal_bands, render_object_id view_id)
 {
-    queue_command("draw_hemisphere", [renderer = &m_renderer, bounds, color, horizontal_bands]() {
-        renderer->get_system<render_system_debug>()->add_hemisphere(bounds, color, horizontal_bands);
+    queue_command("draw_hemisphere", [renderer = &m_renderer, bounds, color, horizontal_bands, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_hemisphere(bounds, color, horizontal_bands, view);
     });
 }
 
-void render_command_queue::draw_cone(const vector3& origin, const vector3& end, float radius, const color& color)
+void render_command_queue::draw_cone(const vector3& origin, const vector3& end, float radius, const color& color, render_object_id view_id)
 {
-    queue_command("draw_cone", [renderer = &m_renderer, origin, end, radius, color]() {
-        renderer->get_system<render_system_debug>()->add_cone(origin, end, radius, color);
+    queue_command("draw_cone", [renderer = &m_renderer, origin, end, radius, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_cone(origin, end, radius, color, view);
     });
 }
 
-void render_command_queue::draw_arrow(const vector3& start, const vector3& end, const color& color)
+void render_command_queue::draw_arrow(const vector3& start, const vector3& end, const color& color, render_object_id view_id)
 {
-    queue_command("draw_arrow", [renderer = &m_renderer, start, end, color]() {
-        renderer->get_system<render_system_debug>()->add_arrow(start, end, color);
+    queue_command("draw_arrow", [renderer = &m_renderer, start, end, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_arrow(start, end, color, view);
     });
 }
 
-void render_command_queue::draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color)
+void render_command_queue::draw_truncated_cone(const vector3& start, const vector3& end, float start_radius, float end_radius, const color& color, render_object_id view_id)
 {
-    queue_command("draw_truncated_cone", [renderer = &m_renderer, start, end, start_radius, end_radius, color]() {
-        renderer->get_system<render_system_debug>()->add_truncated_cone(start, end, start_radius, end_radius, color);
+    queue_command("draw_truncated_cone", [renderer = &m_renderer, start, end, start_radius, end_radius, color, view_id]() {
+        render_view* view = renderer->get_scene_manager().resolve_id_typed<render_view>(view_id);
+        renderer->get_system<render_system_debug>()->add_truncated_cone(start, end, start_radius, end_radius, color, view);
     });
 }
 

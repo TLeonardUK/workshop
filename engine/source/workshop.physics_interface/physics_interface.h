@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/utils/init_list.h"
+#include "workshop.physics_interface/pi_world.h"
 
 #include <memory>
 
@@ -33,7 +34,7 @@ public:
 
     // Creates an isolated physics world that can exist and be simulated independently from
     // that others that exist.
-    virtual std::unique_ptr<pi_world> create_world(const char* debug_name = nullptr) = 0;
+    virtual std::unique_ptr<pi_world> create_world(const pi_world::create_params& params, const char* debug_name = nullptr) = 0;
 
 };
 

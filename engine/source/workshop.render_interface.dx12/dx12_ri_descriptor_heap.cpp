@@ -61,8 +61,8 @@ dx12_ri_descriptor_heap::allocation dx12_ri_descriptor_heap::allocate(size_t cou
         db_fatal(render_interface, "Descriptor heap ran out of descriptors while trying to allocate %zi.", count);
     }
     
-    D3D12_CPU_DESCRIPTOR_HANDLE start_cpu;
-    D3D12_GPU_DESCRIPTOR_HANDLE start_gpu;
+    D3D12_CPU_DESCRIPTOR_HANDLE start_cpu = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE start_gpu = {};
 
     D3D12_CPU_DESCRIPTOR_HANDLE heap_start_cpu(m_heap->GetCPUDescriptorHandleForHeapStart());
     start_cpu.ptr = reinterpret_cast<SIZE_T>(reinterpret_cast<char*>(heap_start_cpu.ptr) + (start_index * m_descriptor_increment));
