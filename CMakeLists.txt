@@ -13,8 +13,8 @@ endif()
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/tools/build;${CMAKE_MODULE_PATH}")
 set(ENV_SOURCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/source")
 set(ENV_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
-set(USE_PRECOMPILED_HEADERS 1)
-set(USE_UNITY_BUILDS 1)
+set(USE_PRECOMPILED_HEADERS 0)
+set(USE_UNITY_BUILDS 0)
 
 # Common configuration for all projects.
 include(build)

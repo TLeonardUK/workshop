@@ -11,6 +11,7 @@
 #include "workshop.editor/editor/editor.h"
 
 #include "workshop.core/utils/init_list.h"
+#include "workshop.core/utils/time.h"
 #include "workshop.core/perf/profile.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/async/async.h"

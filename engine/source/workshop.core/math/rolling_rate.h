@@ -4,8 +4,10 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.core/math/quat.h"
 #include "workshop.core/utils/time.h"
+#include <algorithm>
+#include <limits>
+#include <list>
 
 namespace ws {
 

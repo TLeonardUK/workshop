@@ -9,6 +9,7 @@
 #include "workshop.renderer/render_output.h"
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_param_block.h"
+#include "workshop.core/math/rect.h"
 
 namespace ws {
 
