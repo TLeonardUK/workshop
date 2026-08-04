@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 
 namespace ws {

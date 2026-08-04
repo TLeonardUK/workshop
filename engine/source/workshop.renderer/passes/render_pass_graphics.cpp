@@ -5,6 +5,7 @@
 #include "workshop.renderer/passes/render_pass_graphics.h"
 #include "workshop.renderer/render_world_state.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_resource_cache.h"
 #include "workshop.renderer/common_types.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_command_queue.h"

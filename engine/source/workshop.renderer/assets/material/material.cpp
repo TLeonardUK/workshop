@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/assets/material/material.h"
 #include "workshop.render_interface/ri_interface.h"
+#include "workshop.render_interface/ri_param_block.h"
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_effect_manager.h"

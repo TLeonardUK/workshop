@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/systems/render_system_selection_outline.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_resource_cache.h"
 #include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/render_effect_manager.h"

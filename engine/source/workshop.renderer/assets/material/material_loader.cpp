@@ -14,6 +14,11 @@
 #include "workshop.render_interface/ri_shader_compiler.h"
 #include "workshop.render_interface/ri_types.h"
 
+#include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/render_batch_manager.h"
+#include "workshop.renderer/objects/render_view.h"
+
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
 
 #include <semaphore>

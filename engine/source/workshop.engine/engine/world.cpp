@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/engine/engine.h"
+#include "workshop.editor/editor/editor.h"
 #include "workshop.core/perf/profile.h"
 
 #include "workshop.engine/ecs/component_filter.h"

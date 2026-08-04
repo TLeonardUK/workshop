@@ -15,6 +15,7 @@ namespace ws {
 
 class renderer;
 class render_light_probe_grid;
+class ri_query;
 
 // ================================================================================================
 //  Responsible for regenerating diffuse light probes.

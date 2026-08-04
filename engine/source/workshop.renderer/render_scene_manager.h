@@ -10,6 +10,7 @@
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_object.h"
 #include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/objects/render_view.h"
 
 #include <unordered_map>
 

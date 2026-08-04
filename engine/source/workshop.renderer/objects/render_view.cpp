@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.render_interface/ri_interface.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_resource_cache.h"
 #include "workshop.renderer/systems/render_system_debug.h"

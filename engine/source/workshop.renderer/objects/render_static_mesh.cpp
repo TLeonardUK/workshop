@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.render_interface/ri_interface.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/assets/shader/shader.h"

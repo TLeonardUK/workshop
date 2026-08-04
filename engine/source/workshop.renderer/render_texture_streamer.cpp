@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_scene_manager.h"
 #include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/systems/render_system_debug.h"
 #include "workshop.renderer/objects/render_static_mesh.h"

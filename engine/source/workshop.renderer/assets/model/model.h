@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.assets/asset.h"
+#include "workshop.assets/asset_manager.h"
 #include "workshop.core/containers/string.h"
 #include "workshop.core/geometry/geometry.h"
 #include "workshop.core/math/aabb.h"

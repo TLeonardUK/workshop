@@ -4,6 +4,7 @@
 // ================================================================================================
 #include "workshop.renderer/render_imgui_manager.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/render_command_queue.h"
 #include "workshop.renderer/systems/render_system_imgui.h"
 
 #include "workshop.core/perf/profile.h"

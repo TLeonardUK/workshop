@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.engine/ecs/system.h"
+#include "workshop.renderer/renderer.h"
 #include "workshop.renderer/assets/model/model.h"
 
 namespace ws {
