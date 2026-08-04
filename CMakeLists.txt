@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.8)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/tools/build;${CMAKE_MODULE_PATH}")
 set(ENV_SOURCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/engine/source")
 set(ENV_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
-set(USE_PRECOMPILED_HEADERS 0)
+set(USE_PRECOMPILED_HEADERS 1)
 
 # Common configuration for all projects.
 include(build)
