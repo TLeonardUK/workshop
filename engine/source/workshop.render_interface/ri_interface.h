@@ -12,7 +12,6 @@
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_staging_buffer.h"
-#include "workshop.render_interface/ri_layout_factory.h"
 #include "workshop.render_interface/ri_query.h"
 
 namespace ws {
@@ -31,6 +30,8 @@ class ri_query;
 class ri_raytracing_blas;
 class ri_raytracing_tlas;
 class ri_staging_buffer;
+
+enum class ri_layout_usage;
 
 // ================================================================================================
 //  Types of renderer implementations available. Make sure to update if you add new ones.

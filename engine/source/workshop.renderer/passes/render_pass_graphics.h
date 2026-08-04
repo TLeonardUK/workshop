@@ -4,7 +4,6 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_pass.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
@@ -12,6 +11,8 @@
 #include "workshop.render_interface/ri_param_block.h"
 
 namespace ws {
+
+class renderer;
 
 class render_resource_cache;
 

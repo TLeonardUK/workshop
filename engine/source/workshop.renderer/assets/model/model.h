@@ -14,7 +14,6 @@
 
 #include "workshop.renderer/assets/material/material.h"
 
-#include "workshop.renderer/renderer.h"
 #include <array>
 #include <unordered_map>
 

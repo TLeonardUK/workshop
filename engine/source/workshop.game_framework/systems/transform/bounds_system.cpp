@@ -7,6 +7,7 @@
 #include "workshop.engine/ecs/component_filter.h"
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/engine/engine.h"
+#include "workshop.renderer/renderer.h"
 #include "workshop.renderer/assets/model/model.h"
 #include "workshop.game_framework/components/transform/transform_component.h"
 #include "workshop.game_framework/components/transform/bounds_component.h"

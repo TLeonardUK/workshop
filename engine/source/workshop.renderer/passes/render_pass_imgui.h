@@ -4,7 +4,6 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.renderer/renderer.h"
 #include "workshop.renderer/passes/render_pass_graphics.h"
 #include "workshop.renderer/render_effect.h"
 #include "workshop.renderer/render_output.h"
@@ -13,6 +12,8 @@
 #include "workshop.renderer/systems/render_system_imgui.h"
 
 namespace ws {
+
+class renderer;
 
 // ================================================================================================
 //  Render pass that draws a set of imgui draw commands

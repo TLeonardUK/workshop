@@ -11,6 +11,7 @@
 #include "workshop.core/reflection/reflect.h"
 
 #include "workshop.renderer/render_object.h"
+#include "workshop.renderer/renderer.h"
 
 #include "workshop.renderer/assets/model/model.h"
 

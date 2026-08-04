@@ -4,11 +4,14 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.render_interface/ri_interface.h"
+#include "workshop.core/utils/result.h"
 
 #include <string>
 
 namespace ws {
+
+class ri_interface;
+enum class ri_interface_type;
 
 // ================================================================================================
 //  What style this window should show display itself in.

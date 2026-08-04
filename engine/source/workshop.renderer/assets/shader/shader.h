@@ -10,7 +10,6 @@
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_pipeline.h"
 
-#include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_effect_manager.h"
 

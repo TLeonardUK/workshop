@@ -51,6 +51,7 @@
 #include "workshop.render_interface/ri_param_block.h"
 #include "workshop.render_interface/ri_query.h"
 #include "workshop.render_interface/ri_raytracing_tlas.h"
+#include "workshop.render_interface/ri_layout_factory.h"
 
 #include "workshop.assets/asset_manager.h"
 

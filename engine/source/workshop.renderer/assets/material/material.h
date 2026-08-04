@@ -10,7 +10,6 @@
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface/ri_sampler.h"
 
-#include "workshop.renderer/renderer.h"
 #include "workshop.renderer/assets/texture/texture.h"
 
 #include <array>
@@ -22,6 +21,7 @@ class asset;
 class ri_interface;
 class renderer;
 class asset_manager;
+class ri_param_block;
 
 // ================================================================================================
 //  Defines what part of the rendering pipeline this mateiral is going to be used in.

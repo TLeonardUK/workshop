@@ -9,10 +9,10 @@
 #include "workshop.core/drawing/pixmap.h"
 
 #include "workshop.render_interface/ri_types.h"
+#include "workshop.core/utils/traits.h"
 
 #include "workshop.renderer/render_texture_streamer.h"
 
-#include "workshop.renderer/renderer.h"
 #include <array>
 #include <unordered_map>
 
