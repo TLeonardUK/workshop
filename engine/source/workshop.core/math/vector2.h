@@ -5,8 +5,7 @@
 #pragma once
 
 #include "workshop.core/math/math.h"
-#include "workshop.core/filesystem/stream.h"
-#include "workshop.core/utils/yaml.h"
+#include "workshop.core/debug/debug.h"
 
 namespace ws {
 
@@ -299,23 +298,6 @@ template <typename element_type>
 inline bool operator!=(const base_vector2<element_type>& first, const base_vector2<element_type>& second)
 {
 	return !(first == second);
-}
-
-template<>
-inline void stream_serialize(stream& out, vector2& v)
-{
-	stream_serialize(out, v.x);
-	stream_serialize(out, v.y);
-}
-
-template<>
-inline void yaml_serialize(YAML::Node& out, bool is_loading, vector2& value)
-{
-	YAML::Node x = out["x"];
-	YAML::Node y = out["y"];
-
-	yaml_serialize(x, is_loading, value.x);
-	yaml_serialize(y, is_loading, value.y);
 }
 
 }; // namespace ws

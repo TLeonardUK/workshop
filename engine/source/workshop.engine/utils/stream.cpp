@@ -3,15 +3,8 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.engine/utils/stream.h"
-#include "workshop.core/utils/yaml.h"
-#include "workshop.core/math/aabb.h"
-#include "workshop.core/math/vector2.h"
-#include "workshop.core/math/vector3.h"
-#include "workshop.core/math/vector4.h"
-#include "workshop.core/math/quat.h"
-#include "workshop.core/drawing/color.h"
+#include "workshop.core/utils/math_serialization.h"
 #include "workshop.core/reflection/reflect_field.h"
-#include "workshop.core/filesystem/stream.h"
 
 #include "workshop.engine/ecs/component.h"
 #include "workshop.assets/asset_manager.h"

@@ -9,6 +9,7 @@
 #include "workshop.core/filesystem/stream.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/geometry/geometry.h"
+#include "workshop.core/utils/math_serialization.h"
 
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.render_interface/ri_shader_compiler.h"

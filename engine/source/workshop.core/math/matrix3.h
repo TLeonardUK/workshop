@@ -5,6 +5,7 @@
 #pragma once
 
 #include "workshop.core/math/quat.h"
+#include "workshop.core/debug/debug.h"
 
 namespace ws {
 

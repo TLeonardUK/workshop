@@ -6,8 +6,7 @@
 
 #include "workshop.core/math/math.h"
 #include "workshop.core/math/vector2.h"
-#include "workshop.core/filesystem/stream.h"
-#include "workshop.core/utils/yaml.h"
+#include "workshop.core/debug/debug.h"
 
 namespace ws {
 
@@ -385,26 +384,6 @@ template <typename element_type>
 inline bool operator!=(const base_vector3<element_type>& first, const base_vector3<element_type>& second)
 {
 	return !(first == second);
-}
-
-template<>
-inline void stream_serialize(stream& out, vector3& v)
-{
-	stream_serialize(out, v.x);
-	stream_serialize(out, v.y);
-	stream_serialize(out, v.z);
-}
-
-template<>
-inline void yaml_serialize(YAML::Node& out, bool is_loading, vector3& value)
-{
-	YAML::Node x = out["x"];
-	YAML::Node y = out["y"];
-	YAML::Node z = out["z"];
-
-	yaml_serialize(x, is_loading, value.x);
-	yaml_serialize(y, is_loading, value.y);
-	yaml_serialize(z, is_loading, value.z);
 }
 
 // Compresses a unit vector into a single float and back again.

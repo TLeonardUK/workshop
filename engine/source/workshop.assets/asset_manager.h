@@ -8,6 +8,8 @@
 #include "workshop.core/perf/timer.h"
 #include "workshop.core/utils/event.h"
 #include "workshop.core/utils/singleton.h"
+#include "workshop.core/utils/yaml.h"
+#include "workshop.core/filesystem/stream.h"
 #include "workshop.assets/asset_loader.h"
 #include "workshop.assets/asset_importer.h"
 #include "workshop.assets/asset_cache.h"

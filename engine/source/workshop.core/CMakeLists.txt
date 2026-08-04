@@ -90,7 +90,8 @@ SET(SOURCES
     "utils/string_formatter.h"
     "utils/yaml.cpp"
     "utils/yaml.h"
-    
+    "utils/math_serialization.h"
+
     "math/random.h"
     "math/random.cpp"
     "math/math.h"
