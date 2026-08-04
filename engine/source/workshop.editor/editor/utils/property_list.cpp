@@ -6,9 +6,17 @@
 
 #include "workshop.game_framework/components/transform/transform_component.h"
 
+#include "workshop.engine/ecs/component.h"
 #include "workshop.engine/ecs/meta_component.h"
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
+#include "workshop.engine/assets/asset_database.h"
+#include "workshop.engine/assets/scene/scene.h"
+
+#include "workshop.renderer/assets/model/model.h"
+#include "workshop.renderer/assets/texture/texture.h"
+#include "workshop.renderer/assets/shader/shader.h"
+#include "workshop.renderer/assets/material/material.h"
 
 #include "thirdparty/imgui/imgui.h"
 

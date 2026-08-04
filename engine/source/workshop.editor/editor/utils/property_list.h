@@ -12,16 +12,7 @@
 #include "workshop.core/drawing/color.h"
 #include "workshop.assets/asset_manager.h"
 
-#include "workshop.engine/ecs/component.h"
-
-#include "workshop.renderer/assets/model/model.h"
-#include "workshop.renderer/assets/texture/texture.h"
-#include "workshop.renderer/assets/shader/shader.h"
-#include "workshop.renderer/assets/material/material.h"
-
-#include "workshop.engine/assets/scene/scene.h"
-
-#include "workshop.engine/assets/asset_database.h"
+#include "workshop.engine/ecs/object.h"
 
 #include <functional>
 
@@ -29,6 +20,14 @@ namespace ws {
 
 class reflect_class;
 class asset_manager;
+class asset_database;
+class engine;
+class component_ref_base;
+class model;
+class texture;
+class shader;
+class material;
+class scene;
 
 // ================================================================================================
 //  Draws a list of editable properties for the given object.

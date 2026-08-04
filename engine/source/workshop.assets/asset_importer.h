@@ -11,8 +11,6 @@
 #include "workshop.core/utils/traits.h"
 #include "workshop.core/reflection/reflect.h"
 
-#include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
-
 #include <typeinfo>
 
 namespace ws {
