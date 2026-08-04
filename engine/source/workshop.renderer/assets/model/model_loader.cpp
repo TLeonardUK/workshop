@@ -19,12 +19,12 @@ namespace ws {
 
 namespace {
 
-constexpr const char* k_asset_descriptor_type = "model";
-constexpr size_t k_asset_descriptor_minimum_version = 1;
-constexpr size_t k_asset_descriptor_current_version = 1;
+constexpr const char* k_model_asset_descriptor_type = "model";
+constexpr size_t k_model_asset_descriptor_minimum_version = 1;
+constexpr size_t k_model_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 77;
+constexpr size_t k_model_asset_compiled_version = 77;
 
 };
 
@@ -82,7 +82,7 @@ const std::type_info& model_loader::get_type()
 
 const char* model_loader::get_descriptor_type()
 {
-    return k_asset_descriptor_type;
+    return k_model_asset_descriptor_type;
 }
 
 asset* model_loader::get_default_asset()
@@ -122,8 +122,8 @@ bool model_loader::serialize(const char* path, model& asset, bool isSaving)
 
     if (!isSaving)
     {
-        asset.header.type = k_asset_descriptor_type;
-        asset.header.version = k_asset_compiled_version;
+        asset.header.type = k_model_asset_descriptor_type;
+        asset.header.version = k_model_asset_compiled_version;
         asset.name = path;
     }
 
@@ -341,7 +341,7 @@ bool model_loader::parse_file(const char* path, model& asset)
     db_verbose(asset, "[%s] Parsing file", path);
 
     YAML::Node node;
-    if (!load_asset_descriptor(path, node, k_asset_descriptor_type, k_asset_descriptor_minimum_version, k_asset_descriptor_current_version))
+    if (!load_asset_descriptor(path, node, k_model_asset_descriptor_type, k_model_asset_descriptor_minimum_version, k_model_asset_descriptor_current_version))
     {
         return false;
     }
@@ -397,8 +397,8 @@ bool model_loader::compile(const char* input_path, const char* output_path, plat
         return false;
     }
     asset.header.compiled_hash = compiled_key.hash();
-    asset.header.type = k_asset_descriptor_type;
-    asset.header.version = k_asset_compiled_version;
+    asset.header.type = k_model_asset_descriptor_type;
+    asset.header.version = k_model_asset_compiled_version;
 
     // Write binary format to disk.
     if (!save(output_path, asset))
@@ -411,7 +411,7 @@ bool model_loader::compile(const char* input_path, const char* output_path, plat
 
 size_t model_loader::get_compiled_version()
 {
-    return k_asset_compiled_version;
+    return k_model_asset_compiled_version;
 }
 
 void model_loader::hot_reload(asset* instance, asset* new_instance)

@@ -3,6 +3,9 @@
 #  Copyright (C) 2022 Tim Leonard
 # ================================================================================================
 
+# Disable unity builds for all third party code.
+set(CMAKE_UNITY_BUILD OFF)
+
 add_subdirectory(imgui)
 add_subdirectory(sdl2)
 add_subdirectory(nlohmann)

@@ -22,12 +22,12 @@ namespace ws {
 
 namespace {
 
-constexpr const char* k_asset_descriptor_type = "material";
-constexpr size_t k_asset_descriptor_minimum_version = 1;
-constexpr size_t k_asset_descriptor_current_version = 1;
+constexpr const char* k_material_asset_descriptor_type = "material";
+constexpr size_t k_material_asset_descriptor_minimum_version = 1;
+constexpr size_t k_material_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 5;
+constexpr size_t k_material_asset_compiled_version = 5;
 
 };
 
@@ -74,7 +74,7 @@ const std::type_info& material_loader::get_type()
 
 const char* material_loader::get_descriptor_type()
 {
-    return k_asset_descriptor_type;
+    return k_material_asset_descriptor_type;
 }
 
 asset* material_loader::get_default_asset()
@@ -114,8 +114,8 @@ bool material_loader::serialize(const char* path, material& asset, bool isSaving
 
     if (!isSaving)
     {
-        asset.header.type = k_asset_descriptor_type;
-        asset.header.version = k_asset_compiled_version;
+        asset.header.type = k_material_asset_descriptor_type;
+        asset.header.version = k_material_asset_compiled_version;
         asset.name = path;
     }
 
@@ -301,7 +301,7 @@ bool material_loader::parse_file(const char* path, material& asset)
     db_verbose(asset, "[%s] Parsing file", path);
 
     YAML::Node node;
-    if (!load_asset_descriptor(path, node, k_asset_descriptor_type, k_asset_descriptor_minimum_version, k_asset_descriptor_current_version))
+    if (!load_asset_descriptor(path, node, k_material_asset_descriptor_type, k_material_asset_descriptor_minimum_version, k_material_asset_descriptor_current_version))
     {
         return false;
     }
@@ -347,8 +347,8 @@ bool material_loader::compile(const char* input_path, const char* output_path, p
         return false;
     }
     asset.header.compiled_hash = compiled_key.hash();
-    asset.header.type = k_asset_descriptor_type;
-    asset.header.version = k_asset_compiled_version;
+    asset.header.type = k_material_asset_descriptor_type;
+    asset.header.version = k_material_asset_compiled_version;
 
     // Write binary format to disk.
     if (!save(output_path, asset))
@@ -524,7 +524,7 @@ void material_loader::hot_reload(asset* instance, asset* new_instance)
 
 size_t material_loader::get_compiled_version()
 {
-    return k_asset_compiled_version;
+    return k_material_asset_compiled_version;
 }
 
 }; // namespace ws

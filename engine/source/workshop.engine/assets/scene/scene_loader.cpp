@@ -27,12 +27,12 @@ namespace ws {
 
 namespace {
 
-constexpr const char* k_asset_descriptor_type = "scene";
-constexpr size_t k_asset_descriptor_minimum_version = 1;
-constexpr size_t k_asset_descriptor_current_version = 1;
+constexpr const char* k_scene_asset_descriptor_type = "scene";
+constexpr size_t k_scene_asset_descriptor_minimum_version = 1;
+constexpr size_t k_scene_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 11;
+constexpr size_t k_scene_asset_compiled_version = 11;
 
 };
 
@@ -73,7 +73,7 @@ const std::type_info& scene_loader::get_type()
 
 const char* scene_loader::get_descriptor_type()
 {
-    return k_asset_descriptor_type;
+    return k_scene_asset_descriptor_type;
 }
 
 asset* scene_loader::get_default_asset()
@@ -120,8 +120,8 @@ bool scene_loader::compile(const char* input_path, const char* output_path, plat
         return false;
     }
     asset.header.compiled_hash = compiled_key.hash();
-    asset.header.type = k_asset_descriptor_type;
-    asset.header.version = k_asset_compiled_version;
+    asset.header.type = k_scene_asset_descriptor_type;
+    asset.header.version = k_scene_asset_compiled_version;
 
     // Write binary format to disk.
     if (!save(output_path, asset))
@@ -134,7 +134,7 @@ bool scene_loader::compile(const char* input_path, const char* output_path, plat
 
 size_t scene_loader::get_compiled_version()
 {
-    return k_asset_compiled_version;
+    return k_scene_asset_compiled_version;
 }
 
 bool scene_loader::serialize(const char* path, scene& asset, bool isSaving)
@@ -148,8 +148,8 @@ bool scene_loader::serialize(const char* path, scene& asset, bool isSaving)
 
     if (!isSaving)
     {
-        asset.header.type = k_asset_descriptor_type;
-        asset.header.version = k_asset_compiled_version;
+        asset.header.type = k_scene_asset_descriptor_type;
+        asset.header.version = k_scene_asset_compiled_version;
         asset.name = path;
     }
 
@@ -321,7 +321,7 @@ bool scene_loader::parse_file(const char* path, scene& asset)
     db_verbose(asset, "[%s] Parsing file", path);
 
     YAML::Node node;
-    if (!load_asset_descriptor(path, node, k_asset_descriptor_type, k_asset_descriptor_minimum_version, k_asset_descriptor_current_version))
+    if (!load_asset_descriptor(path, node, k_scene_asset_descriptor_type, k_scene_asset_descriptor_minimum_version, k_scene_asset_descriptor_current_version))
     {
         return false;
     }
@@ -356,7 +356,7 @@ bool scene_loader::save_uncompiled(const char* path, asset& instance)
     emitter << YAML::Comment("================================================================================================") << YAML::Newline;
     emitter << YAML::BeginMap;
     emitter << YAML::Key << "type" << YAML::Value << "scene" << YAML::Newline;
-    emitter << YAML::Key << "version" << YAML::Value << k_asset_descriptor_current_version << YAML::Newline;
+    emitter << YAML::Key << "version" << YAML::Value << k_scene_asset_descriptor_current_version << YAML::Newline;
     emitter << YAML::Key << "objects" << YAML::Newline;
     emitter << YAML::BeginMap;
     for (object obj : manager.get_objects())

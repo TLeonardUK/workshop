@@ -19,12 +19,12 @@ namespace ws {
 
 namespace {
 
-constexpr const char* k_asset_descriptor_type = "texture";
-constexpr size_t k_asset_descriptor_minimum_version = 1;
-constexpr size_t k_asset_descriptor_current_version = 1;
+constexpr const char* k_texture_asset_descriptor_type = "texture";
+constexpr size_t k_texture_asset_descriptor_minimum_version = 1;
+constexpr size_t k_texture_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 24;
+constexpr size_t k_texture_asset_compiled_version = 24;
 
 };
 
@@ -48,7 +48,7 @@ const std::type_info& texture_loader::get_type()
 
 const char* texture_loader::get_descriptor_type()
 {
-    return k_asset_descriptor_type;
+    return k_texture_asset_descriptor_type;
 }
 
 asset* texture_loader::get_default_asset()
@@ -88,8 +88,8 @@ bool texture_loader::serialize(const char* path, texture& asset, bool isSaving)
 
     if (!isSaving)
     {
-        asset.header.type = k_asset_descriptor_type;
-        asset.header.version = k_asset_compiled_version;
+        asset.header.type = k_texture_asset_descriptor_type;
+        asset.header.version = k_texture_asset_compiled_version;
         asset.name = path;
     }
 
@@ -313,7 +313,7 @@ bool texture_loader::parse_file(const char* path, texture& asset)
     db_verbose(asset, "[%s] Parsing file", path);
 
     YAML::Node node;
-    if (!load_asset_descriptor(path, node, k_asset_descriptor_type, k_asset_descriptor_minimum_version, k_asset_descriptor_current_version))
+    if (!load_asset_descriptor(path, node, k_texture_asset_descriptor_type, k_texture_asset_descriptor_minimum_version, k_texture_asset_descriptor_current_version))
     {
         return false;
     }
@@ -736,8 +736,8 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
         return false;
     }
     asset.header.compiled_hash = compiled_key.hash();
-    asset.header.type = k_asset_descriptor_type;
-    asset.header.version = k_asset_compiled_version;
+    asset.header.type = k_texture_asset_descriptor_type;
+    asset.header.version = k_texture_asset_compiled_version;
 
     // Write binary format to disk.
     if (!save(output_path, asset))
@@ -775,7 +775,7 @@ void texture_loader::hot_reload(asset* instance, asset* new_instance)
 
 size_t texture_loader::get_compiled_version()
 {
-    return k_asset_compiled_version;
+    return k_texture_asset_compiled_version;
 }
 
 }; // namespace ws

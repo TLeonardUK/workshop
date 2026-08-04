@@ -19,12 +19,12 @@ namespace ws {
 
 namespace {
 
-constexpr const char* k_asset_descriptor_type = "shader";
-constexpr size_t k_asset_descriptor_minimum_version = 1;
-constexpr size_t k_asset_descriptor_current_version = 1;
+constexpr const char* k_shader_asset_descriptor_type = "shader";
+constexpr size_t k_shader_asset_descriptor_minimum_version = 1;
+constexpr size_t k_shader_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_asset_compiled_version = 27;
+constexpr size_t k_shader_asset_compiled_version = 27;
 
 };
 
@@ -151,7 +151,7 @@ const std::type_info& shader_loader::get_type()
 
 const char* shader_loader::get_descriptor_type()
 {
-    return k_asset_descriptor_type;
+    return k_shader_asset_descriptor_type;
 }
 
 asset* shader_loader::get_default_asset()
@@ -191,8 +191,8 @@ bool shader_loader::serialize(const char* path, shader& asset, bool isSaving)
 
     if (!isSaving)
     {
-        asset.header.type = k_asset_descriptor_type;
-        asset.header.version = k_asset_compiled_version;
+        asset.header.type = k_shader_asset_descriptor_type;
+        asset.header.version = k_shader_asset_compiled_version;
         asset.name = path;
     }
 
@@ -1324,7 +1324,7 @@ bool shader_loader::parse_file(const char* path, shader& asset)
     db_verbose(asset, "[%s] Parsing file", path);
 
     YAML::Node node;
-    if (!load_asset_descriptor(path, node, k_asset_descriptor_type, k_asset_descriptor_minimum_version, k_asset_descriptor_current_version))
+    if (!load_asset_descriptor(path, node, k_shader_asset_descriptor_type, k_shader_asset_descriptor_minimum_version, k_shader_asset_descriptor_current_version))
     {
         return false;
     }
@@ -1858,8 +1858,8 @@ bool shader_loader::compile(const char* input_path, const char* output_path, pla
         return false;
     }
     asset.header.compiled_hash = compiled_key.hash();
-    asset.header.type = k_asset_descriptor_type;
-    asset.header.version = k_asset_compiled_version;
+    asset.header.type = k_shader_asset_descriptor_type;
+    asset.header.version = k_shader_asset_compiled_version;
 
     // Write binary format to disk.
     if (!save(output_path, asset))
@@ -1872,7 +1872,7 @@ bool shader_loader::compile(const char* input_path, const char* output_path, pla
 
 size_t shader_loader::get_compiled_version()
 {
-    return k_asset_compiled_version;
+    return k_shader_asset_compiled_version;
 }
 
 void shader_loader::hot_reload(asset* instance, asset* new_instance)

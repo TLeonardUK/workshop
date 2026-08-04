@@ -18,6 +18,9 @@ set(COMPILE_OPTIONS ${COMPILE_OPTIONS} -D_CRT_SECURE_NO_WARNINGS_GLOBALS=1)
 # Ensure we compile in parallel.
 set(COMPILE_OPTIONS ${COMPILE_OPTIONS} /MP)
 
+# Use embedded debug info.
+set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,Profile>:Embedded>")
+
 # Platform type define.
 set(COMPILE_OPTIONS ${COMPILE_OPTIONS} -DWS_WINDOWS)
 
