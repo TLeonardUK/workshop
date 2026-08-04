@@ -1,0 +1,16 @@
+// ================================================================================================
+//  workshop
+//  Copyright (C) 2021 Tim Leonard
+// ================================================================================================
+#pragma once
+
+#include <algorithm>
+#include <unordered_map>
+#include <regex>
+#include <unordered_set>
+#include <functional>
+#include <memory>
+#include <array>
+#include <span>
+#include <string>
+#include <vector>

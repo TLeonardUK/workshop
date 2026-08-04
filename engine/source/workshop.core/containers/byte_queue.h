@@ -6,6 +6,7 @@
 
 #include <mutex>
 #include <array>
+#include <atomic>
 
 namespace ws {
 

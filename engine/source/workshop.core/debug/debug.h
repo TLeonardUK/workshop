@@ -7,6 +7,9 @@
 #include "workshop.core/debug/log.h"
 #include "workshop.core/utils/result.h"
 
+#include <memory>
+#include <climits>
+
 namespace ws {
 
 // Colors that can be used when emitting text to the system console.

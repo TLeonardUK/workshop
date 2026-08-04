@@ -156,6 +156,7 @@ inline std::string to_string(const input_type& input)
 {
     // No implementation exists for this input type.
     db_assert(false);
+    return "";
 }
 
 // ================================================================================================
@@ -167,6 +168,7 @@ inline result<input_type> from_string(const std::string& input)
 {
     // No implementation exists for this input type.
     db_assert(false);
+    return false;
 }
 
 // ================================================================================================

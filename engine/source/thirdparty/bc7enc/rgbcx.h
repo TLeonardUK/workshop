@@ -60,6 +60,12 @@
 #include <stdint.h>
 #include <algorithm>
 #include <assert.h>
+
+// WS_CHANGE: Missing header
+#include <memory>
+#include <cstring>
+#include <cmath>
+#include <cstdint>
 #include <limits.h>
 
 // By default, the table used to accelerate cluster fit on 4 color blocks uses a 969x128 entry table. 

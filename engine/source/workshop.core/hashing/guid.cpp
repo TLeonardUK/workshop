@@ -5,8 +5,8 @@
 #include "workshop.core/hashing/guid.h"
 #include "workshop.core/debug/debug.h"
 
-#include <cassert>
-#include <rpc.h>
+#include <memory>
+#include <cstring>
 
 namespace ws {
 

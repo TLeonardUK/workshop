@@ -11,6 +11,8 @@ include_directories("${ENV_ROOT_PATH}/engine/source")
 add_subdirectory(workshop.core)
 if (WIN32)
     add_subdirectory(workshop.core.win32)
+elseif (LINUX)
+    add_subdirectory(workshop.core.linux)
 endif()
 
 # ================================================================================================
@@ -20,6 +22,8 @@ add_subdirectory(workshop.assets)
 add_subdirectory(workshop.render_interface)
 if (WIN32)
     add_subdirectory(workshop.render_interface.dx12)
+elseif (LINUX)
+    add_subdirectory(workshop.render_interface.vulkan)
 endif()
 add_subdirectory(workshop.renderer)
 

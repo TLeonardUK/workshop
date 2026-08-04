@@ -6,6 +6,7 @@
 #include "workshop.core/utils/time.h"
 
 #include <algorithm>
+#include <cstring>
 
 namespace ws {
 

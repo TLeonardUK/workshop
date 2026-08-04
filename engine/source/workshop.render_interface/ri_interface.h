@@ -39,7 +39,10 @@ enum class ri_layout_usage;
 enum class ri_interface_type
 {
 #ifdef WS_WINDOWS
-    dx12
+    dx12,
+#endif
+#ifdef WS_LINUX
+    vulkan,
 #endif
 };
 

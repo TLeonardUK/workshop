@@ -4,8 +4,6 @@
 // ================================================================================================
 #include "workshop.core/memory/memory_tracker.h"
 
-#include <Windows.h>
-
 namespace ws {
 namespace {
 

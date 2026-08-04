@@ -28,6 +28,8 @@ include(compiler)
 # Include platform specific scripts
 if (WIN32)
     include(platform.win32/win32)
+elseif (LINUX)
+    include(platform.linux/linux)
 endif()
 
 include(compiler-late)

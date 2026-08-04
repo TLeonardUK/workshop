@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+// WS_CHANGE: Missing header
+#include <cstdint>
 
 #include "emitterutils.h"
 #include "exp.h"

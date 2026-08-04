@@ -57,14 +57,20 @@
 
 #include "workshop.render_interface/ri_interface.h"
 
-#ifdef WS_WINDOWS
+#if defined(WS_WINDOWS)
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
+#elif defined(WS_VULKAN)
+#include "workshop.render_interface.vulkan/vulkan_ri_interface.h"
 #endif
 
 namespace ws {
 
 engine::engine()
+#if defined(WS_WINDOWS)
     : m_render_interface_type(ri_interface_type::dx12)
+#elif defined(WS_LINUX)
+    : m_render_interface_type(ri_interface_type::vulkan)
+#endif
     , m_window_interface_type(window_interface_type::sdl)
     , m_input_interface_type(input_interface_type::sdl)
     , m_platform_interface_type(platform_interface_type::sdl)
@@ -666,6 +672,14 @@ result<void> engine::create_render_interface(init_list& list)
     case ri_interface_type::dx12:
         {
             m_render_interface = std::make_unique<dx12_render_interface>((size_t)ray_type::COUNT, (size_t)material_domain::COUNT);
+            m_render_interface->register_init(list);
+            break;
+        }
+#endif
+#ifdef WS_LINUX
+    case ri_interface_type::vulkan:
+        {
+            m_render_interface = std::make_unique<vulkan_render_interface>((size_t)ray_type::COUNT, (size_t)material_domain::COUNT);
             m_render_interface->register_init(list);
             break;
         }

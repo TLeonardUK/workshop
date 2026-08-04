@@ -12,12 +12,14 @@ namespace ws {
 enum class platform_type
 {
     windows,
+    linux,
 
     COUNT
 };
 
 static const char* platform_type_strings[static_cast<int>(platform_type::COUNT)] = {
-    "windows"
+    "windows",
+    "linux"
 };
 
 DEFINE_ENUM_TO_STRING(platform_type, platform_type_strings);
