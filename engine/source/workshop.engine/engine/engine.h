@@ -6,19 +6,11 @@
 
 #include "workshop.core/utils/result.h"
 #include "workshop.core/utils/init_list.h"
-#include "workshop.render_interface/ri_interface.h"
-#include "workshop.input_interface/input_interface.h"
-#include "workshop.platform_interface/platform_interface.h"
-#include "workshop.window_interface/window_interface.h"
-#include "workshop.physics_interface/physics_interface.h"
-#include "workshop.engine/presentation/presenter.h"
-#include "workshop.editor/editor/editor.h"
 #include "workshop.core/utils/frame_time.h"
 #include "workshop.core/utils/singleton.h"
 #include "workshop.core/utils/event.h"
-#include "workshop.core/memory/memory_tracker.h"
-#include "workshop.core/memory/async_copy_manager.h"
 #include "workshop.engine/assets/scene/scene.h"
+#include "workshop.assets/asset_manager.h"
 
 #include <vector>
 #include <memory>
@@ -40,6 +32,20 @@ class task_scheduler;
 class statistics_channel;
 class object_manager;
 class memory_tracker;
+class async_copy_manager;
+class window;
+class ri_interface;
+class input_interface;
+class platform_interface;
+class window_interface;
+class physics_interface;
+
+enum class ri_interface_type;
+enum class input_interface_type;
+enum class platform_interface_type;
+enum class window_interface_type;
+enum class physics_interface_type;
+enum class window_mode;
 
 // ================================================================================================
 //  This is the core engine class, its responsible for owning all the individual pieces (such as
@@ -250,11 +256,11 @@ protected:
     std::unique_ptr<asset_manager> m_asset_manager;
     std::unique_ptr<asset_database> m_asset_database;
 
-    ri_interface_type m_render_interface_type = ri_interface_type::dx12;
-    window_interface_type m_window_interface_type = window_interface_type::sdl;
-    input_interface_type m_input_interface_type = input_interface_type::sdl;
-    platform_interface_type m_platform_interface_type = platform_interface_type::sdl;
-    physics_interface_type m_physics_interface_type = physics_interface_type::jolt;
+    ri_interface_type m_render_interface_type;
+    window_interface_type m_window_interface_type;
+    input_interface_type m_input_interface_type;
+    platform_interface_type m_platform_interface_type;
+    physics_interface_type m_physics_interface_type;
 
     system_registration_callback_t m_system_registration_callback = nullptr;
 
@@ -263,7 +269,7 @@ protected:
     std::string m_window_title = "Workshop Game";
     size_t m_window_width = 1280;
     size_t m_window_height = 720;
-    window_mode m_window_mode = window_mode::windowed;
+    window_mode m_window_mode;
 
     std::filesystem::path m_engine_asset_dir;
     std::filesystem::path m_game_asset_dir;

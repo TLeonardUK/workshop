@@ -7,6 +7,12 @@
 #include "workshop.engine/engine/engine.h"
 #include "workshop.engine/engine/world.h"
 
+#include "workshop.render_interface/ri_interface.h"
+#include "workshop.window_interface/window_interface.h"
+#include "workshop.input_interface/input_interface.h"
+#include "workshop.platform_interface/platform_interface.h"
+#include "workshop.physics_interface/physics_interface.h"
+
 #include "workshop.game_framework/systems/default_systems.h"
 
 std::shared_ptr<ws::app> make_app()

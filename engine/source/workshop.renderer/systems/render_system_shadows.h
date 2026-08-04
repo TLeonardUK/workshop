@@ -13,6 +13,9 @@
 namespace ws {
 
 class renderer;
+class render_directional_light;
+class render_point_light;
+class render_spot_light;
 
 // ================================================================================================
 //  Responsible for generating shadow maps for lights which are then used in the lighting

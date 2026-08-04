@@ -12,6 +12,7 @@
 
 #include "workshop.renderer/render_object.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/objects/render_view.h"
 
 namespace ws {
 

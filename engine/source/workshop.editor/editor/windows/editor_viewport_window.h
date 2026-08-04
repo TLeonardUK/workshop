@@ -8,6 +8,7 @@
 #include "workshop.core/debug/log_handler.h"
 #include "workshop.engine/ecs/object.h"
 #include "workshop.renderer/renderer.h"
+#include "workshop.renderer/objects/render_view.h"
 #include "workshop.core/utils/event.h"
 
 #include "workshop.game_framework/systems/transform/object_pick_system.h"

@@ -23,6 +23,8 @@ class asset;
 class ri_interface;
 class renderer;
 
+enum class material_domain;
+
 // ================================================================================================
 //  Defines the different types of rays that can be cast in the scene which determines
 //  how their shaders are selected from the shader binding table.

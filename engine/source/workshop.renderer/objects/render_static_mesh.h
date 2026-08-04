@@ -10,6 +10,7 @@
 #include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.assets/asset_manager.h"
 #include "workshop.core/utils/event.h"
+#include "workshop.render_interface/ri_raytracing_tlas.h"
 
 namespace ws {
 

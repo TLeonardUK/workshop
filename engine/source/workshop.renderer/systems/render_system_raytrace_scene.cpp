@@ -7,6 +7,7 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
+#include "workshop.render_interface/ri_raytracing_tlas.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/passes/render_pass_raytracing.h"
 #include "workshop.renderer/render_effect_manager.h"

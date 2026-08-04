@@ -24,9 +24,13 @@
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"
 #include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_visibility_manager.h"
 #include "workshop.renderer/render_batch_manager.h"
 #include "workshop.renderer/render_imgui_manager.h"
+#include "workshop.renderer/render_texture_streamer.h"
 #include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/render_world_state.h"
+#include "workshop.renderer/render_output.h"
 #include "workshop.renderer/objects/render_view.h"
 #include "workshop.renderer/objects/render_static_mesh.h"
 #include "workshop.renderer/assets/shader/shader.h"
@@ -46,6 +50,7 @@
 #include "workshop.render_interface/ri_sampler.h"
 #include "workshop.render_interface/ri_param_block.h"
 #include "workshop.render_interface/ri_query.h"
+#include "workshop.render_interface/ri_raytracing_tlas.h"
 
 #include "workshop.assets/asset_manager.h"
 
@@ -70,12 +75,15 @@ renderer::renderer(ri_interface& rhi, input_interface& input, window& main_windo
     , m_input_interface(input)
     , m_window(main_window)
     , m_asset_manager(asset_manager)
+    , m_window_mode(window_mode::windowed)
 {
     for (size_t i = 0; i < k_frame_depth; i++)
     {
         m_command_queues[i] = std::make_unique<render_command_queue>(*this, k_command_queue_size);
     }
 }
+
+renderer::~renderer() = default;
 
 void renderer::register_init(init_list& list)
 {

@@ -6,11 +6,16 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.engine/assets/asset_database.h"
 #include "workshop.engine/assets/scene/scene_loader.h"
+#include "workshop.engine/presentation/presenter.h"
+
+#include "workshop.editor/editor/editor.h"
 
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/perf/profile.h"
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/async/async.h"
+#include "workshop.core/memory/memory_tracker.h"
+#include "workshop.core/memory/async_copy_manager.h"
 #include "workshop.core/statistics/statistics_manager.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
@@ -57,7 +62,16 @@
 
 namespace ws {
 
-engine::engine() = default;
+engine::engine()
+    : m_render_interface_type(ri_interface_type::dx12)
+    , m_window_interface_type(window_interface_type::sdl)
+    , m_input_interface_type(input_interface_type::sdl)
+    , m_platform_interface_type(platform_interface_type::sdl)
+    , m_physics_interface_type(physics_interface_type::jolt)
+    , m_window_mode(window_mode::windowed)
+{
+}
+
 engine::~engine() = default;
 
 void engine::step()

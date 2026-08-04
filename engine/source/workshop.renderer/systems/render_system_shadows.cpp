@@ -9,6 +9,8 @@
 #include "workshop.renderer/renderer.h"
 #include "workshop.renderer/render_cvars.h"
 #include "workshop.renderer/render_graph.h"
+#include "workshop.renderer/render_scene_manager.h"
+#include "workshop.renderer/render_world_state.h"
 #include "workshop.renderer/passes/render_pass_fullscreen.h"
 #include "workshop.renderer/render_effect_manager.h"
 #include "workshop.renderer/render_param_block_manager.h"

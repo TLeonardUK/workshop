@@ -6,24 +6,11 @@
 
 #include "workshop.core/utils/init_list.h"
 #include "workshop.core/async/task_scheduler.h"
-#include "workshop.core/containers/command_queue.h"
 #include "workshop.core/reflection/reflect.h"
 
-#include "workshop.renderer/render_world_state.h"
-#include "workshop.renderer/render_graph.h"
 #include "workshop.renderer/render_system.h"
-#include "workshop.renderer/render_effect.h"
-#include "workshop.renderer/render_output.h"
-#include "workshop.renderer/render_scene_manager.h"
-#include "workshop.renderer/render_visibility_manager.h"
-#include "workshop.renderer/render_batch_manager.h"
-#include "workshop.renderer/render_imgui_manager.h"
-#include "workshop.renderer/render_texture_streamer.h"
-#include "workshop.renderer/render_command_queue.h"
+#include "workshop.renderer/render_pass.h"
 #include "workshop.render_interface/ri_types.h"
-#include "workshop.render_interface/ri_param_block.h"
-#include "workshop.render_interface/ri_raytracing_tlas.h"
-#include "workshop.window_interface/window.h"
 
 #include "workshop.assets/asset_manager.h"
 
@@ -35,18 +22,33 @@ class ri_swapchain;
 class ri_interface;
 class ri_texture;
 class ri_sampler;
-class ri_param_block_archetype; 
+class ri_param_block_archetype;
 class ri_query;
+class ri_param_block;
+class ri_raytracing_tlas;
+class ri_buffer;
+class model;
+class material;
 class render_view;
+class render_world_state;
+class render_output;
 class render_param_block_manager;
 class render_effect_manager;
+class render_scene_manager;
+class render_visibility_manager;
 class render_batch_manager;
+class render_imgui_manager;
 class render_texture_streamer;
+class render_command_queue;
 class asset_manager;
 class window;
 class shader;
 class input_interface;
 class statistics_channel;
+
+enum class window_mode;
+
+using render_object_id = size_t;
 
 // Decribes the usage of a specific default texture, used to select
 // an appropriate one when calling renderer::get_default_texture.
@@ -190,6 +192,7 @@ public:
 
     renderer() = delete;
     renderer(ri_interface& rhi, input_interface& input, window& main_window, asset_manager& asset_manager);
+    ~renderer();
 
     // Registers all the steps required to initialize the renderer.
     void register_init(init_list& list);
@@ -416,7 +419,7 @@ private:
 
     size_t m_window_width = 0;
     size_t m_window_height = 0;
-    window_mode m_window_mode = window_mode::windowed;
+    window_mode m_window_mode;
 
     // Debug models.
 
