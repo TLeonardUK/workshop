@@ -1,0 +1,37 @@
+// ================================================================================================
+//  workshop
+//  Copyright (C) 2021 Tim Leonard
+// ================================================================================================
+#pragma once
+
+#include "workshop.core/math/aabb.h"
+#include "workshop.core/math/math.h"
+#include "workshop.core/math/matrix2.h"
+#include "workshop.core/math/matrix3.h"
+#include "workshop.core/math/matrix4.h"
+#include "workshop.core/math/obb.h"
+#include "workshop.core/math/plane.h"
+#include "workshop.core/math/quat.h"
+#include "workshop.core/math/ray.h"
+#include "workshop.core/math/rect.h"
+#include "workshop.core/math/vector2.h"
+#include "workshop.core/math/vector3.h"
+#include "workshop.core/math/vector4.h"
+
+#include "workshop.core/containers/byte_queue.h"
+#include "workshop.core/containers/command_queue.h"
+#include "workshop.core/containers/json.h"
+#include "workshop.core/containers/memory_heap.h"
+#include "workshop.core/containers/oct_tree.h"
+#include "workshop.core/containers/sparse_vector.h"
+#include "workshop.core/containers/string.h"
+
+#include "workshop.core/async/async.h"
+#include "workshop.core/async/task_scheduler.h"
+
+#include "workshop.core/debug/log.h"
+#include "workshop.core/debug/debug.h"
+
+#include "workshop.core/drawing/color.h"
+
+#include "workshop.core/hashing/string_hash.h"

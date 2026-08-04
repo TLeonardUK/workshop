@@ -8,6 +8,9 @@ project(workshop.platform_interface C CXX)
 SET(SOURCES
     "platform_interface.h"
     "platform_interface.cpp"
+    
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -19,3 +22,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/platform")
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

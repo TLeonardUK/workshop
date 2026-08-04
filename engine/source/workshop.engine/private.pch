@@ -1,0 +1,15 @@
+// ================================================================================================
+//  workshop
+//  Copyright (C) 2021 Tim Leonard
+// ================================================================================================
+#pragma once
+
+#include <array>
+#include <unordered_map>
+#include <typeindex>
+#include <cstdint>
+#include <vector>
+#include <memory>
+#include <filesystem>
+
+#include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"

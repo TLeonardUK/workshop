@@ -14,8 +14,6 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 editor_camera_movement_system::editor_camera_movement_system(object_manager& manager)

@@ -62,7 +62,10 @@ SET(SOURCES
     "systems/transform/object_pick_system.cpp"    
     
     "systems/default_systems.h"    
-    "systems/default_systems.cpp"    
+    "systems/default_systems.cpp"   
+    
+    "public.pch"
+    "private.pch" 
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -73,3 +76,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier2/engine")
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

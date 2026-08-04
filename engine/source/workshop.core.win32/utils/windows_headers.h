@@ -24,4 +24,3 @@
 #include <DbgEng.h>
 #include <DbgHelp.h>
 #include <wrl/client.h>
-

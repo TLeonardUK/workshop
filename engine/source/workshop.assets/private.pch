@@ -1,0 +1,19 @@
+// ================================================================================================
+//  workshop
+//  Copyright (C) 2021 Tim Leonard
+// ================================================================================================
+#pragma once
+
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <typeinfo>
+#include <algorithm>
+#include <thread>
+#include <future>
+#include <array>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <typeindex>

@@ -8,7 +8,6 @@
 #include "workshop.core/containers/memory_heap.h"
 #include "workshop.core/memory/memory_tracker.h"
 
-
 #include "workshop.render_interface.dx12/dx12_headers.h"
 #include <array>
 

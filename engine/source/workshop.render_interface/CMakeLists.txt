@@ -29,6 +29,9 @@ SET(SOURCES
     "ri_layout_factory.h"
     "ri_layout_factory.cpp"
     "ri_staging_buffer.h"
+    
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -41,4 +44,8 @@ target_link_libraries(${PROJECT_NAME}
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} workshop.render_interface.dx12)
+endif()
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
 endif()

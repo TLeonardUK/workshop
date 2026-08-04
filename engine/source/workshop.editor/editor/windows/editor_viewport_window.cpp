@@ -30,8 +30,6 @@
 #include "thirdparty/imgui/imgui.h"
 #include "thirdparty/imgui/imgui_internal.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 editor_viewport_window::editor_viewport_window(editor* in_editor, engine* in_engine, size_t index)

@@ -6,9 +6,6 @@
 
 #include "workshop.core/drawing/color.h"
 
-#include <string>
-#include <utility>
-
 namespace ws {
 
 namespace profile_colors {

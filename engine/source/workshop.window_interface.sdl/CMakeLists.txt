@@ -10,6 +10,9 @@ SET(SOURCES
     "sdl_window.cpp"
     "sdl_window_interface.h"
     "sdl_window_interface.cpp"
+    
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -20,3 +23,7 @@ target_link_libraries(${PROJECT_NAME}
     workshop.core
     sdl2
 )
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

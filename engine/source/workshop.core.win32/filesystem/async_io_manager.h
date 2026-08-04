@@ -9,7 +9,6 @@
 #include "workshop.core/math/rolling_average.h"
 #include "workshop.core/math/rolling_rate.h"
 
-#include <filesystem>
 #include <span>
 #include <mutex>
 #include <cstddef>

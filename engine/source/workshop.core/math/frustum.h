@@ -22,12 +22,12 @@ public:
 
 	enum class planes
 	{
-		left,
-		right,
-		top,
-		bottom,
-		near,
-		far
+		x_left,
+		x_right,
+		y_top,
+		y_bottom,
+		z_near,
+		z_far
 	};
 
 	enum class corner
@@ -82,80 +82,80 @@ inline plane frustum::make_plane(float a, float b, float c, float d)
 inline void frustum::calculate_corners()
 {
 	corners[static_cast<int>(corner::far_top_left)] = plane::intersect(
-		planes[static_cast<int>(planes::far)],
-		planes[static_cast<int>(planes::top)],
-		planes[static_cast<int>(planes::left)]
+		planes[static_cast<int>(planes::z_far)],
+		planes[static_cast<int>(planes::y_top)],
+		planes[static_cast<int>(planes::x_left)]
 	);
 	corners[static_cast<int>(corner::far_top_right)] = plane::intersect(
-		planes[static_cast<int>(planes::far)],
-		planes[static_cast<int>(planes::top)],
-		planes[static_cast<int>(planes::right)]
+		planes[static_cast<int>(planes::z_far)],
+		planes[static_cast<int>(planes::y_top)],
+		planes[static_cast<int>(planes::x_right)]
 	);
 	corners[static_cast<int>(corner::far_bottom_left)] = plane::intersect(
-		planes[static_cast<int>(planes::far)],
-		planes[static_cast<int>(planes::bottom)],
-		planes[static_cast<int>(planes::left)]
+		planes[static_cast<int>(planes::z_far)],
+		planes[static_cast<int>(planes::y_bottom)],
+		planes[static_cast<int>(planes::x_left)]
 	);
 	corners[static_cast<int>(corner::far_bottom_right)] = plane::intersect(
-		planes[static_cast<int>(planes::far)],
-		planes[static_cast<int>(planes::bottom)],
-		planes[static_cast<int>(planes::right)]
+		planes[static_cast<int>(planes::z_far)],
+		planes[static_cast<int>(planes::y_bottom)],
+		planes[static_cast<int>(planes::x_right)]
 	);
 	corners[static_cast<int>(corner::near_top_left)] = plane::intersect(
-		planes[static_cast<int>(planes::near)],
-		planes[static_cast<int>(planes::top)],
-		planes[static_cast<int>(planes::left)]
+		planes[static_cast<int>(planes::z_near)],
+		planes[static_cast<int>(planes::y_top)],
+		planes[static_cast<int>(planes::x_left)]
 	);
 	corners[static_cast<int>(corner::near_top_right)] = plane::intersect(
-		planes[static_cast<int>(planes::near)],
-		planes[static_cast<int>(planes::top)],
-		planes[static_cast<int>(planes::right)]
+		planes[static_cast<int>(planes::z_near)],
+		planes[static_cast<int>(planes::y_top)],
+		planes[static_cast<int>(planes::x_right)]
 	);
 	corners[static_cast<int>(corner::near_bottom_left)] = plane::intersect(
-		planes[static_cast<int>(planes::near)],
-		planes[static_cast<int>(planes::bottom)],
-		planes[static_cast<int>(planes::left)]
+		planes[static_cast<int>(planes::z_near)],
+		planes[static_cast<int>(planes::y_bottom)],
+		planes[static_cast<int>(planes::x_left)]
 	);
 	corners[static_cast<int>(corner::near_bottom_right)] = plane::intersect(
-		planes[static_cast<int>(planes::near)],
-		planes[static_cast<int>(planes::bottom)],
-		planes[static_cast<int>(planes::right)]
+		planes[static_cast<int>(planes::z_near)],
+		planes[static_cast<int>(planes::y_bottom)],
+		planes[static_cast<int>(planes::x_right)]
 	);
 }
 
 inline frustum::frustum(const matrix4& viewProjection)
 {
-	planes[static_cast<int>(planes::left)] = make_plane(
+	planes[static_cast<int>(planes::x_left)] = make_plane(
 		viewProjection[3][0] + viewProjection[0][0],
 		viewProjection[3][1] + viewProjection[0][1],
 		viewProjection[3][2] + viewProjection[0][2],
 		viewProjection[3][3] + viewProjection[0][3]
 	);
-	planes[static_cast<int>(planes::right)] = make_plane(
+	planes[static_cast<int>(planes::x_right)] = make_plane(
 		viewProjection[3][0] - viewProjection[0][0],
 		viewProjection[3][1] - viewProjection[0][1],
 		viewProjection[3][2] - viewProjection[0][2],
 		viewProjection[3][3] - viewProjection[0][3]
 	);
-	planes[static_cast<int>(planes::top)] = make_plane(
+	planes[static_cast<int>(planes::y_top)] = make_plane(
 		viewProjection[3][0] - viewProjection[1][0],
 		viewProjection[3][1] - viewProjection[1][1],
 		viewProjection[3][2] - viewProjection[1][2],
 		viewProjection[3][3] - viewProjection[1][3]
 	);
-	planes[static_cast<int>(planes::bottom)] = make_plane(
+	planes[static_cast<int>(planes::y_bottom)] = make_plane(
 		viewProjection[3][0] + viewProjection[1][0],
 		viewProjection[3][1] + viewProjection[1][1],
 		viewProjection[3][2] + viewProjection[1][2],
 		viewProjection[3][3] + viewProjection[1][3]
 	);
-	planes[static_cast<int>(planes::near)] = make_plane(
+	planes[static_cast<int>(planes::z_near)] = make_plane(
 		viewProjection[2][0],
 		viewProjection[2][1],
 		viewProjection[2][2],
 		viewProjection[2][3]
 	);
-	planes[static_cast<int>(planes::far)] = make_plane(
+	planes[static_cast<int>(planes::z_far)] = make_plane(
 		viewProjection[3][0] - viewProjection[2][0],
 		viewProjection[3][1] - viewProjection[2][1],
 		viewProjection[3][2] - viewProjection[2][2],
@@ -168,15 +168,15 @@ inline frustum::frustum(const matrix4& viewProjection)
 inline vector3 frustum::get_origin() const
 {
 	return plane::intersect(
-		planes[static_cast<int>(planes::right)],
-		planes[static_cast<int>(planes::top)],
-		planes[static_cast<int>(planes::left)]
+		planes[static_cast<int>(planes::x_right)],
+		planes[static_cast<int>(planes::y_top)],
+		planes[static_cast<int>(planes::x_left)]
 	);
 }
 
 inline vector3 frustum::get_direction() const
 {
-	return planes[static_cast<int>(planes::near)].get_normal();
+	return planes[static_cast<int>(planes::z_near)].get_normal();
 }
 
 inline vector3 frustum::get_near_center() const
@@ -209,10 +209,10 @@ inline vector3 frustum::get_center() const
 inline frustum frustum::get_cascade(float nearDistance, float farDistance)
 {
 	frustum frustum;
-	frustum.planes[static_cast<int>(planes::left)] = planes[static_cast<int>(planes::left)];
-	frustum.planes[static_cast<int>(planes::right)] = planes[static_cast<int>(planes::right)];
-	frustum.planes[static_cast<int>(planes::top)] = planes[static_cast<int>(planes::top)];
-	frustum.planes[static_cast<int>(planes::bottom)] = planes[static_cast<int>(planes::bottom)];
+	frustum.planes[static_cast<int>(planes::x_left)] = planes[static_cast<int>(planes::x_left)];
+	frustum.planes[static_cast<int>(planes::x_right)] = planes[static_cast<int>(planes::x_right)];
+	frustum.planes[static_cast<int>(planes::y_top)] = planes[static_cast<int>(planes::y_top)];
+	frustum.planes[static_cast<int>(planes::y_bottom)] = planes[static_cast<int>(planes::y_bottom)];
 
 	// This whole thing is dumb, not had a chance to sort the plane math out yet, so bruteforce ...
 
@@ -221,11 +221,11 @@ inline frustum frustum::get_cascade(float nearDistance, float farDistance)
 	float original_near_distance = (get_near_center() - origin).length();
 	float original_far_distance = (get_far_center() - origin).length();
 
-	plane near_plane = planes[static_cast<int>(planes::near)];
-	plane far_plane = planes[static_cast<int>(planes::far)];
+	plane near_plane = planes[static_cast<int>(planes::z_near)];
+	plane far_plane = planes[static_cast<int>(planes::z_far)];
 
-	frustum.planes[static_cast<int>(planes::near)] = plane(near_plane.x, near_plane.y, near_plane.z, (near_plane.w + original_near_distance) - nearDistance);
-	frustum.planes[static_cast<int>(planes::far)] = plane(far_plane.x, far_plane.y, far_plane.z, (far_plane.w - original_far_distance) + farDistance);
+	frustum.planes[static_cast<int>(planes::z_near)] = plane(near_plane.x, near_plane.y, near_plane.z, (near_plane.w + original_near_distance) - nearDistance);
+	frustum.planes[static_cast<int>(planes::z_far)] = plane(far_plane.x, far_plane.y, far_plane.z, (far_plane.w - original_far_distance) + farDistance);
 
 	frustum.calculate_corners();
 
@@ -285,8 +285,8 @@ inline frustum::intersection frustum::intersects(const obb& bounds) const
 
 	for (int i = 0; i < k_plane_count; i++)
 	{
-		if (i == static_cast<int>(planes::near) ||
-			i == static_cast<int>(planes::far))
+		if (i == static_cast<int>(planes::z_near) ||
+			i == static_cast<int>(planes::z_far))
 		{
 			continue;
 		}

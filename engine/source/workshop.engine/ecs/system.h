@@ -4,10 +4,13 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.core/utils/frame_time.h"
 #include "workshop.core/containers/command_queue.h"
+#include "workshop.core/utils/frame_time.h"
+#include "workshop.core/utils/traits.h"
 #include "workshop.engine/ecs/object.h"
+#include <string>
 #include <typeindex>
+#include <vector>
 
 namespace ws {
 

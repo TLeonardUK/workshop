@@ -15,6 +15,9 @@ SET(SOURCES
     "jolt_pi_body.cpp"
     "jolt_pi_job_system.h"
     "jolt_pi_job_system.cpp"
+    
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -25,3 +28,7 @@ target_link_libraries(${PROJECT_NAME}
     workshop.core
     Jolt
 )
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

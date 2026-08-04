@@ -149,6 +149,9 @@ SET(SOURCES
     "assets/texture/texture_loader.cpp"
     "assets/texture/texture_importer.h"
     "assets/texture/texture_importer.cpp"
+    
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -162,3 +165,7 @@ target_link_libraries(${PROJECT_NAME}
     imgui
     imguizmo
 )
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

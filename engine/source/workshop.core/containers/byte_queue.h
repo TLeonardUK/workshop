@@ -4,12 +4,8 @@
 // ================================================================================================
 #pragma once
 
-#include "workshop.core/utils/result.h"
-#include "workshop.core/containers/string.h"
-
-#include <string>
+#include <mutex>
 #include <array>
-#include <vector>
 
 namespace ws {
 

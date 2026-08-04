@@ -5,7 +5,9 @@
 #pragma once
 
 #include "workshop.core/cvar/cvar_config_lexer.h"
+#include <string>
 #include <variant>
+#include <vector>
 
 namespace ws {
 

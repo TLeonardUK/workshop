@@ -47,7 +47,7 @@ void dx12_ri_tile_manager::allocate_new_heap(size_t minimum_size_in_tiles)
 
     D3D12_HEAP_DESC heap_desc;
     heap_desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-    heap_desc.Flags = D3D12_HEAP_FLAG_NONE;
+    heap_desc.Flags = D3D12_HEAP_FLAG_DENY_BUFFERS | D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES;
     heap_desc.Properties = heap_properties;
     heap_desc.SizeInBytes = state->size_in_tiles * D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 

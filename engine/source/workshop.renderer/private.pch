@@ -1,0 +1,19 @@
+// ================================================================================================
+//  workshop
+//  Copyright (C) 2021 Tim Leonard
+// ================================================================================================
+#pragma once
+
+#include <unordered_map>
+#include <shared_mutex>
+#include <string>
+#include <bitset>
+#include <vector>
+#include <typeindex>
+#include <array>
+#include <queue>
+#include <filesystem>
+#include <semaphore>
+
+#include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
+#include "thirdparty/imgui/imgui.h"

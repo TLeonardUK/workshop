@@ -12,8 +12,6 @@
 #include "workshop.engine/engine/world.h"
 #include "workshop.renderer/renderer.h"
 
-#pragma optimize("", off)
-
 namespace ws {
 
 camera_system::camera_system(object_manager& manager)

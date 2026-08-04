@@ -58,6 +58,9 @@ SET(SOURCES
     "dx12_types.h"
     "dx12_types.cpp"
     "dx12_headers.h"
+    
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -72,3 +75,6 @@ target_link_libraries(${PROJECT_NAME}
     dxgi.lib
 )
 
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

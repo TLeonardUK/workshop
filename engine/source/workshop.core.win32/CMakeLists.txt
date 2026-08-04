@@ -21,11 +21,14 @@ SET(SOURCES
     
     "hashing/guid.cpp"
 
-    "utils/windows_headers.h"
-    
     "perf/profile.cpp"
 
+    "utils/windows_headers.h"
+
     "entry.cpp"
+
+    "public.pch"
+    "private.pch"
 )
  
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
@@ -37,3 +40,7 @@ target_link_libraries(${PROJECT_NAME}
     dbghelp.lib 
     Rpcrt4.lib
 )
+
+if (USE_PRECOMPILED_HEADERS)
+    target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)
+endif()

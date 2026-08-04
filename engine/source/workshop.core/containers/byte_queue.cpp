@@ -3,6 +3,11 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/containers/byte_queue.h"
+#include "workshop.core/debug/log.h"
+#include <algorithm>
+#include <cstdint>
+#include <mutex>
+#include <string.h>
 
 namespace ws {
 

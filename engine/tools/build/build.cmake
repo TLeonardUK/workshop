@@ -22,11 +22,12 @@ foreach(config ${CMAKE_CONFIGURATION_TYPES})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config_upper} ${ENV_ROOT_PATH}/bin/${ENV_ARCHITECTURE}_${config_lower})
 endforeach()
 
-# Include language specific configurations.
-include(cpp-settings)
-
-# Include ide specific configurations.
-include(vs-settings)
-
-# Globally useful macros.
 include(utils)
+include(compiler)
+
+# Include platform specific scripts
+if (WIN32)
+    include(platform.win32/win32)
+endif()
+
+include(compiler-late)
