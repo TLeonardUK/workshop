@@ -5,6 +5,8 @@
 #include "workshop.core/containers/command_queue.h"
 #include "workshop.core/memory/memory_tracker.h"
 
+#include <cstring>
+
 namespace ws {
 
 command_queue::command_queue(size_t capacity)

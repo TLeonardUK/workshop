@@ -4,6 +4,8 @@
 // ================================================================================================
 #include "workshop.assets/asset.h"
 
+#include <algorithm>
+
 namespace ws {
 
 void compiled_asset_header::add_dependency(const char* file)

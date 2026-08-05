@@ -4,6 +4,11 @@
 // ================================================================================================
 #include "workshop.core/filesystem/disk_stream.h"
 
+#ifdef WS_LINUX
+#define _fseeki64 fseeko
+#define _ftelli64 ftello
+#endif
+
 namespace ws {
 
 disk_stream::~disk_stream()

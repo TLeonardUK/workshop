@@ -58,7 +58,7 @@ public:
     render_view_flags view_flags = render_view_flags::normal;
 
     // Debug mode the cameras view is rendered in.
-    visualization_mode visualization_mode = visualization_mode::normal;
+    visualization_mode m_visualization_mode = visualization_mode::normal;
 
     // Render target to draw to.
     ri_texture_view render_target = {};

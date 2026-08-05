@@ -53,7 +53,7 @@ asset_ptr<material> render_static_mesh::get_material(size_t index)
     {
         if (m_model->materials.size() > index)
         {
-            return m_model->materials[index].material;
+            return m_model->materials[index].m_material;
         }
     }
 
@@ -113,8 +113,8 @@ void render_static_mesh::register_asset_change_callbacks()
         {
             model::material_info& mat_info = m_model->materials[i];
 
-            auto callback_key = mat_info.material.register_changed_callback(callback);
-            m_material_change_callback_keys.push_back({ mat_info.material, callback_key });
+            auto callback_key = mat_info.m_material.register_changed_callback(callback);
+            m_material_change_callback_keys.push_back({ mat_info.m_material, callback_key });
         }    
     }
 
@@ -140,7 +140,7 @@ void render_static_mesh::unregister_asset_change_callbacks()
 
     for (material_callback& pair : m_material_change_callback_keys)
     {
-        pair.material.unregister_changed_callback(pair.key);
+        pair.m_material.unregister_changed_callback(pair.key);
     }    
 
     m_model_change_callback_key = 0;
@@ -199,7 +199,7 @@ void render_static_mesh::create_render_data()
         model::mesh_info& mesh_info = m_model->meshes[i];
         model::material_info& mat_info = m_model->materials[mesh_info.material_index];
         
-        asset_ptr<material> mat = mat_info.material;
+        asset_ptr<material> mat = mat_info.m_material;
         if (mesh_info.material_index < m_override_materials.size())
         {
             asset_ptr<material>& override_mat = m_override_materials[mesh_info.material_index];
@@ -223,8 +223,8 @@ void render_static_mesh::create_render_data()
 
         render_batch_key key;
         key.mesh_index = i;
-        key.material = mat;
-        key.model = m_model;
+        key.m_material = mat;
+        key.m_model = m_model;
         key.domain = mat->domain;
         key.usage = render_batch_usage::static_mesh;
 
@@ -327,7 +327,7 @@ obb render_static_mesh::get_bounds()
     else
     {
 
-        return obb(m_model->geometry->bounds, get_transform());
+        return obb(m_model->m_geometry->bounds, get_transform());
     }
 }
 

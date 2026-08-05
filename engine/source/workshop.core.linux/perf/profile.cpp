@@ -5,11 +5,7 @@
 #include "workshop.core/perf/profile.h"
 #include "workshop.core/filesystem/file.h"
 
-#include "workshop.core.win32/utils/windows_headers.h"
-#include "thirdparty/pix/include/pix3.h"
-
 #include <filesystem>
-#include <shlobj.h>
 
 namespace ws {
 

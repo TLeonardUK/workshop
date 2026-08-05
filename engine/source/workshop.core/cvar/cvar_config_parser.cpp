@@ -5,6 +5,8 @@
 #include "workshop.core/cvar/cvar_config_parser.h"
 #include "workshop.core/debug/debug.h"
 
+#include <stdexcept>
+
 namespace ws {
 
 static inline const char* cvar_config_token_type_strings[(int)cvar_config_token_type::COUNT] = {
@@ -285,7 +287,7 @@ void cvar_config_parser::expect_token(cvar_config_token_type type)
             cvar_config_token_type_strings[(int)type]
         );
 
-        throw std::exception();
+        throw std::runtime_error("Unexpected token.");
     }
  }
 
@@ -293,7 +295,7 @@ void cvar_config_parser::unexpected_token(cvar_config_token& token)
 {
     db_error(core, "[%s:%zi] Unexpected token '%s'.", m_path.c_str(), token.line, std::string(token.text).c_str());
 
-    throw std::exception();
+    throw std::runtime_error("Unexpected token.");
 }
 
 cvar_config_token& cvar_config_parser::next_token()

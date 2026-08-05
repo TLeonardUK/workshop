@@ -56,7 +56,7 @@ void billboard_system::component_modified(object handle, component* comp, compon
     // If user modified the component, mark the materials vector as needing an update.
     if (source == component_modification_source::user)
     {
-        if (component->model != component->last_model)
+        if (component->m_model != component->last_model)
         {
             component->materials_array_needs_update = true;
         }
@@ -75,13 +75,13 @@ void billboard_system::set_model(object handle, asset_ptr<model> model)
             renderer& render = engine.get_renderer();
             render_command_queue& render_command_queue = render.get_command_queue();
 
-            comp->model = model;
+            comp->m_model = model;
             comp->materials.clear();
 
             auto default_model = render.get_debug_model(debug_model::plane);
 
             render_command_queue.set_static_mesh_materials(comp->render_id, { });
-            render_command_queue.set_static_mesh_model(comp->render_id, comp->model.is_valid() ? model : default_model);
+            render_command_queue.set_static_mesh_model(comp->render_id, comp->m_model.is_valid() ? model : default_model);
         }
     });
 }
@@ -95,7 +95,7 @@ void billboard_system::set_render_gpu_flags(object handle, render_gpu_flags flag
             engine& engine = m_manager.get_world().get_engine();
             render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
-            comp->render_gpu_flags = flags;
+            comp->m_render_gpu_flags = flags;
             render_command_queue.set_object_gpu_flags(comp->render_id, flags);
         }
     });
@@ -127,14 +127,14 @@ void billboard_system::step(const frame_time& time)
         }
 
         // If materials list is empty fill it out with defaults of the model so the user can modify them.
-        if ((light->materials.empty() || light->materials_array_needs_update) && light->model.is_loaded())
+        if ((light->materials.empty() || light->materials_array_needs_update) && light->m_model.is_loaded())
         {
             light->materials.clear();
-            light->materials.reserve(light->model->materials.size());
+            light->materials.reserve(light->m_model->materials.size());
             
-            for (auto& mat_info : light->model->materials)
+            for (auto& mat_info : light->m_model->materials)
             {
-                light->materials.push_back(mat_info.material);
+                light->materials.push_back(mat_info.m_material);
             }
             
             light->is_dirty = true;
@@ -144,15 +144,15 @@ void billboard_system::step(const frame_time& time)
         // Apply changes if dirty.
         if (light->is_dirty)
         {
-            if (!light->model.is_valid())
+            if (!light->m_model.is_valid())
             {
-                light->model = render.get_debug_model(debug_model::plane);
+                light->m_model = render.get_debug_model(debug_model::plane);
             }
 
             render_command_queue.set_static_mesh_materials(light->render_id, light->materials);
-            render_command_queue.set_static_mesh_model(light->render_id, light->model);
-            render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
-            render_command_queue.set_object_draw_flags(light->render_id, light->render_draw_flags);
+            render_command_queue.set_static_mesh_model(light->render_id, light->m_model);
+            render_command_queue.set_object_gpu_flags(light->render_id, light->m_render_gpu_flags);
+            render_command_queue.set_object_draw_flags(light->render_id, light->m_render_draw_flags);
             light->is_dirty = false;
         }
 
@@ -176,23 +176,23 @@ void billboard_system::step(const frame_time& time)
 
         // Mark the render primitives as selected for the renderer.
         bool should_be_selected = (meta->flags & object_flags::selected) != object_flags::none;
-        bool is_selected = (light->render_gpu_flags & render_gpu_flags::selected) != render_gpu_flags::none;
+        bool is_selected = (light->m_render_gpu_flags & render_gpu_flags::selected) != render_gpu_flags::none;
 
         if (should_be_selected != is_selected)
         {
             if (should_be_selected)
             {
-                light->render_gpu_flags = light->render_gpu_flags | render_gpu_flags::selected;
+                light->m_render_gpu_flags = light->m_render_gpu_flags | render_gpu_flags::selected;
             }
             else
             {
-                light->render_gpu_flags = light->render_gpu_flags & ~render_gpu_flags::selected;
+                light->m_render_gpu_flags = light->m_render_gpu_flags & ~render_gpu_flags::selected;
             }
 
-            render_command_queue.set_object_gpu_flags(light->render_id, light->render_gpu_flags);
+            render_command_queue.set_object_gpu_flags(light->render_id, light->m_render_gpu_flags);
         }
 
-        light->last_model = light->model;
+        light->last_model = light->m_model;
     }
 
     // Execute all commands after creating the render objects.

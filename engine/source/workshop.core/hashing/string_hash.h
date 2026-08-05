@@ -4,10 +4,13 @@
 // ================================================================================================
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 #include <mutex>
 #include <shared_mutex>
+#include <memory>
+#include <vector>
 
 namespace ws {
 
@@ -82,13 +85,14 @@ struct std::hash<ws::string_hash>
 };
 
 // Used defined literal, allows defining a string with a _sh prefix that is only calculated once.
-struct string_hash_container 
+template<size_t N>
+struct string_hash_container
 {
-    const char* raw_string;
+    char raw_string[N];
 
-    constexpr string_hash_container(const char* in_raw_string)
-        : raw_string(in_raw_string)
+    constexpr string_hash_container(const char (&in_raw_string)[N])
     {
+        std::copy_n(in_raw_string, N, raw_string);
     }
 };
 

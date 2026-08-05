@@ -5,6 +5,7 @@
 #pragma once
 
 #include "thirdparty/yamlcpp/include/yaml-cpp/yaml.h"
+#include "workshop.core/debug/log.h"
 
 #include <array>
 #include <vector>

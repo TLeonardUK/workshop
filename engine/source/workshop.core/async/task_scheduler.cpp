@@ -8,6 +8,7 @@
 #include "workshop.core/perf/profile.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <thread>
 #include <future>
 #include <array>
@@ -215,7 +216,7 @@ task_scheduler::task_scheduler(init_state& states)
     for (size_t i = 0; i < states.worker_count; i++)
     {
         worker_state& worker = m_workers[i];
-        worker.thread = std::make_unique<std::thread>([=, &worker]() {
+        worker.thread = std::make_unique<std::thread>([=, this, &worker]() {
             
             std::string queue_string;
             for (auto& value : worker.queues)
@@ -258,7 +259,7 @@ task_handle task_scheduler::create_task(const char* name, task_queue queue, task
     task_index_t index = alloc_task_index();
     task_state& state = m_tasks[index];
 
-    strcpy_s(state.name, sizeof(state.name), name);
+    snprintf(state.name, sizeof(state.name), "%s", name);
     state.index = index;
     state.queue = queue;
     state.state = task_run_state::pending_dispatch;
@@ -280,7 +281,7 @@ std::vector<task_handle> task_scheduler::create_tasks(size_t count, const char* 
         task_index_t index = alloc_task_index_lockless();
         task_state& state = m_tasks[index];
 
-        strcpy_s(state.name, sizeof(state.name), name);
+        snprintf(state.name, sizeof(state.name), "%s", name);
         state.index = index;
         state.queue = queue;
         state.state = task_run_state::pending_dispatch;

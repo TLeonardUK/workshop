@@ -68,8 +68,8 @@ void render_pass_calculate_mips::generate(renderer& renderer, generated_state& s
                 // Put together param block list to use.
                 list.set_param_blocks({ block.get() });
                 list.dispatch(
-                    std::max(dest_width / group_size_x, 1llu), 
-                    std::max(dest_height / group_size_y, 1llu),
+                    std::max(dest_width / group_size_x, size_t{1}), 
+                    std::max(dest_height / group_size_y, size_t{1}),
                     1
                 );
             }

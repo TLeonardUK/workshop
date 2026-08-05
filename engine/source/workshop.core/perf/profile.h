@@ -87,8 +87,10 @@ struct scoped_profile_marker
 #define profile_marker(color, name, ...)
 #define profile_variable(value, name, ...)
 #else
-#define profile_marker(color, name, ...)        scoped_profile_marker pm_##__LINE__(color, name, __VA_ARGS__)
-#define profile_variable(value, name, ...)      platform_perf_variable(value, name, __VA_ARGS__)
+#define profile_marker_concat_2(x, y) x##y
+#define profile_marker_concat(x, y) profile_marker_concat_2(x, y)
+#define profile_marker(color, name, ...)        scoped_profile_marker profile_marker_concat(pm_, __LINE__)(color, name __VA_OPT__(,) __VA_ARGS__)
+#define profile_variable(value, name, ...)      platform_perf_variable(value, name __VA_OPT__(,) __VA_ARGS__)
 #endif
 
 }; // namespace workshop

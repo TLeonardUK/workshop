@@ -92,7 +92,7 @@ private:
 
     struct material_callback
     {
-        asset_ptr<material> material;
+        asset_ptr<material> m_material;
         event<>::key_t key;
     };
 

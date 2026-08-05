@@ -126,7 +126,7 @@ void render_light_probe_grid::recalculate_probes()
     ri_param_block_archetype* state_archetype = m_renderer->get_param_block_manager().get_param_block_archetype("light_probe_state");
 
     ri_buffer::create_params buffer_params;
-    buffer_params.element_count = std::max(1llu, m_probes.size());
+    buffer_params.element_count = std::max(size_t{1}, m_probes.size());
     buffer_params.element_size = state_archetype->get_size();
     buffer_params.usage = ri_buffer_usage::generic;
     m_probe_state_buffer = m_renderer->get_render_interface().create_buffer(buffer_params, "light grid probe state buffer");

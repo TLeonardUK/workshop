@@ -6,6 +6,8 @@
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/perf/profile.h"
 
+#include <cstring>
+
 namespace ws {
 
 async_copy_request::async_copy_request(async_copy_manager* manager, size_t id)

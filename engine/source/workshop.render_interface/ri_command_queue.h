@@ -71,12 +71,12 @@ private:
     ri_command_list* m_list = nullptr;
 };
 
-#define profile_gpu_marker_make_id_2(x) x
-#define profile_gpu_marker_make_id(name, line) profile_gpu_marker_make_id_2(name)##profile_gpu_marker_make_id_2(line)
+#define profile_gpu_marker_make_id_2(x, y) x##y
+#define profile_gpu_marker_make_id(name, line) profile_gpu_marker_make_id_2(name, line)
 #ifdef WS_RELEASE
 #define profile_gpu_marker(queue, color, name, ...)
 #else
-#define profile_gpu_marker(queue, color, name, ...) ri_scoped_gpu_profile_marker profile_gpu_marker_make_id(pm_gpu_, __LINE__)(queue, color, name, __VA_ARGS__)
+#define profile_gpu_marker(queue, color, name, ...) ri_scoped_gpu_profile_marker profile_gpu_marker_make_id(pm_gpu_, __LINE__)(queue, color, name __VA_OPT__(,) __VA_ARGS__)
 #endif
 
 }; // namespace ws

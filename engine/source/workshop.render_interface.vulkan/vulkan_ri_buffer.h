@@ -5,18 +5,11 @@
 #pragma once
 
 #include "workshop.render_interface/ri_buffer.h"
-#include "workshop.render_interface/ri_command_list.h"
-#include "workshop.render_interface.dx12/dx12_ri_descriptor_table.h"
-#include "workshop.render_interface.dx12/dx12_ri_small_buffer_allocator.h"
-#include "workshop.core/utils/result.h"
-#include "workshop.render_interface.dx12/dx12_headers.h"
-#include <array>
+
 #include <string>
+#include <vector>
 
 namespace ws {
-
-class engine;
-class dx12_render_interface;
 
 // ================================================================================================
 //  Implementation of a gpu buffer using Vulkan.
@@ -24,10 +17,7 @@ class dx12_render_interface;
 class vulkan_ri_buffer : public ri_buffer
 {
 public:
-    vulkan_ri_buffer(vulkan_render_interface& renderer, const char* debug_name, const ri_buffer::create_params& params);
-    virtual ~vulkan_ri_buffer();
-
-    result<void> create_resources();
+    vulkan_ri_buffer(const create_params& params, const char* debug_name);
 
     virtual size_t get_element_count() override;
     virtual size_t get_element_size() override;
@@ -40,9 +30,9 @@ public:
     virtual void unmap(void* pointer) override;
 
 private:
-    vulkan_render_interface& m_renderer;
+    create_params m_params;
     std::string m_debug_name;
-    ri_buffer::create_params m_create_params;
+    std::vector<uint8_t> m_backing_store;
 
 };
 

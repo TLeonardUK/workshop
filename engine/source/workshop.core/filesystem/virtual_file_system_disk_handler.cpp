@@ -7,6 +7,7 @@
 #include "workshop.core/filesystem/disk_stream.h"
 #include "workshop.core/filesystem/path_watcher.h"
 
+#include <algorithm>
 #include <filesystem>
 
 namespace ws {
@@ -76,8 +77,11 @@ virtual_file_system_path_type virtual_file_system_disk_handler::type(const char*
     std::filesystem::path fspath = resolve_path(path);
 
     std::filesystem::file_status status = std::filesystem::status(fspath);
-    if (status.type() == std::filesystem::file_type::directory ||
-        status.type() == std::filesystem::file_type::junction)
+    if (status.type() == std::filesystem::file_type::directory
+#ifdef WS_WINDOWS
+        || status.type() == std::filesystem::file_type::junction
+#endif
+        )
     {
         return virtual_file_system_path_type::directory;
     }
@@ -186,7 +190,7 @@ bool virtual_file_system_disk_handler::modified_time(const char* path, virtual_f
     if (std::filesystem::exists(fspath))
     {
         std::filesystem::file_time_type time = std::filesystem::last_write_time(fspath);
-        timepoint = std::chrono::file_clock::to_utc(time).time_since_epoch().count();
+        timepoint = time.time_since_epoch().count();
 
         return true;
     }

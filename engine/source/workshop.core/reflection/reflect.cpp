@@ -7,6 +7,7 @@
 #include "workshop.core/reflection/reflect_enum.h"
 
 #include <algorithm>
+#include <cstring>
 #include <unordered_map>
 
 namespace ws {

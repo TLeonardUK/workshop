@@ -208,7 +208,7 @@ inline base_vector2<element_type> base_vector2<element_type>::abs() const
 }
 
 template <typename element_type>
-inline static base_vector2<element_type> base_vector2<element_type>::min(const base_vector2& a, const base_vector2& b)
+inline base_vector2<element_type> base_vector2<element_type>::min(const base_vector2& a, const base_vector2& b)
 {
 	return base_vector2(
 		a.x < b.x ? a.x : b.x,
@@ -217,7 +217,7 @@ inline static base_vector2<element_type> base_vector2<element_type>::min(const b
 }
 
 template <typename element_type>
-inline static base_vector2<element_type> base_vector2<element_type>::max(const base_vector2& a, const base_vector2& b)
+inline base_vector2<element_type> base_vector2<element_type>::max(const base_vector2& a, const base_vector2& b)
 {
 	return base_vector2(
 		a.x > b.x ? a.x : b.x,

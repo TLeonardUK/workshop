@@ -8,7 +8,10 @@
 #include "workshop.core/hashing/string_hash.h"
 
 #include <array>
+#include <atomic>
+#include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace ws {
 

@@ -5,6 +5,9 @@
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/debug/log_handler_file.h"
 
+#include <cstdio>
+#include <ctime>
+
 namespace ws {
 
 log_handler_file::log_handler_file(const std::filesystem::path& root_directory, size_t file_count, size_t max_file_size)
@@ -58,7 +61,11 @@ std::filesystem::path log_handler_file::get_target_file(bool no_append)
     // Otherwise make a new file.
     time_t current_time = time(0);
     struct tm current_time_tstruct;
+#ifdef WS_WINDOWS
     localtime_s(&current_time_tstruct, &current_time);
+#else
+    localtime_r(&current_time, &current_time_tstruct);
+#endif
 
     char time_buffer[128];
     strftime(time_buffer, sizeof(time_buffer), "%Y%m%d_%H%M%S", &current_time_tstruct);
@@ -81,7 +88,11 @@ void log_handler_file::open_target_file(bool no_append)
 
     bool is_new_file = !std::filesystem::exists(new_path);
 
+#ifdef WS_WINDOWS
     fopen_s(&m_current_file, new_path.string().c_str(), "a+c"); // c causes windows to commit when flushed.
+#else
+    m_current_file = fopen(new_path.string().c_str(), "a+");
+#endif
     m_current_file_path = new_path;
     if (m_current_file != nullptr)
     {

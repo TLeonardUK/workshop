@@ -6,10 +6,6 @@
 
 #include "thirdparty/nativefiledialog/src/include/nfd.h"
 
-#include <Windows.h>
-#include <psapi.h>
-#include <sysinfoapi.h>
-
 namespace ws {
 
 platform_type get_platform()

@@ -7,6 +7,10 @@
 #include "workshop.core/async/task_scheduler.h"
 #include "workshop.core/perf/profile.h"
 
+#include <algorithm>
+#include <atomic>
+#include <vector>
+
 namespace ws {
 
 // ================================================================================================
@@ -35,7 +39,7 @@ void parallel_for(const char* name, task_queue queue, size_t count, work_t work,
 
     size_t worker_count = scheduler.get_worker_count(queue);
     size_t task_count = std::min(worker_count, count);
-    size_t chunk_size = std::max(1llu, count / task_count / k_chunks_per_task);
+    size_t chunk_size = std::max(size_t{1}, count / task_count / k_chunks_per_task);
 
     // For very small amount of threads allocate them individually so every worker gets something.
     if (do_not_chunk || count < worker_count * 2)

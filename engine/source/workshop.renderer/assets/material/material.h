@@ -66,7 +66,7 @@ public:
         std::string name;
         std::string path;
 
-        asset_ptr<texture> texture;
+        asset_ptr<texture> m_texture;
     };
 
     struct sampler_info
@@ -87,7 +87,7 @@ public:
 
         int max_anisotropy = 0;
 
-        std::unique_ptr<ri_sampler> ri_sampler;
+        std::unique_ptr<ri_sampler> m_ri_sampler;
     };
 
     struct parameter_info

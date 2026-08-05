@@ -169,14 +169,14 @@ void camera_system::set_visualization_mode(object handle, visualization_mode mod
         camera_component* component = m_manager.get_component<camera_component>(handle);
         if (component)
         {
-            component->visualization_mode = mode;
+            component->m_visualization_mode = mode;
 
             if (component->view_id != null_render_object)
             {
                 engine& engine = m_manager.get_world().get_engine();
                 render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
-                render_command_queue.set_view_visualization_mode(component->view_id, component->visualization_mode);
+                render_command_queue.set_view_visualization_mode(component->view_id, component->m_visualization_mode);
             }
         }
     });
@@ -320,7 +320,7 @@ void camera_system::step(const frame_time& time)
             render_command_queue.set_object_draw_flags(camera->view_id, camera->draw_flags);
             render_command_queue.set_view_flags(camera->view_id, camera->view_flags);
             render_command_queue.set_view_should_render(camera->view_id, camera->should_render);
-            render_command_queue.set_view_visualization_mode(camera->view_id, camera->visualization_mode);
+            render_command_queue.set_view_visualization_mode(camera->view_id, camera->m_visualization_mode);
 
             if (camera->is_perspective)
             {

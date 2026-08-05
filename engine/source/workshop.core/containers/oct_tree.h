@@ -11,6 +11,11 @@
 #include "workshop.core/async/async.h"
 #include "workshop.core/utils/time.h"
 
+#include <atomic>
+#include <cstring>
+#include <memory>
+#include <vector>
+
 #include <string>
 #include <array>
 #include <vector>
@@ -77,19 +82,19 @@ public:
     public:
         bool is_valid()
         {
-            return cell != nullptr;
+            return m_cell != nullptr;
         }
 
         void reset()
         {
-            cell = nullptr;
+            m_cell = nullptr;
         }
 
     private:
         friend class oct_tree<element_type>;
 
         entry_id id;
-        cell* cell = nullptr;
+        cell* m_cell = nullptr;
     };
 
 
@@ -190,7 +195,7 @@ inline void oct_tree<element_type>::clear()
 }
 
 template <typename element_type>
-inline oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& bounds, element_type value)
+inline typename oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& bounds, element_type value)
 {
     entry entry;
     entry.id = m_next_entry_id++;
@@ -202,7 +207,7 @@ inline oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& 
 }
 
 template <typename element_type>
-inline oct_tree<element_type>::token oct_tree<element_type>::modify(token token, const aabb& bounds, element_type value)
+inline typename oct_tree<element_type>::token oct_tree<element_type>::modify(token token, const aabb& bounds, element_type value)
 {
     remove(token);
     return insert(bounds, value);
@@ -214,7 +219,7 @@ void oct_tree<element_type>::remove(token token)
     // This is very slow, but better than slow linear access for queries.
     bool removed = false;
 
-    auto& entries = token.cell->elements;
+    auto& entries = token.m_cell->elements;
     for (size_t i = 0; i < entries.size(); i++)
     {
         entry& entry = entries[i];
@@ -233,10 +238,10 @@ void oct_tree<element_type>::remove(token token)
     }
 
     // Mark cell as changed.
-    propogate_change(token.cell);
+    propogate_change(token.m_cell);
 
     // Reduce child count up the tree, and remove any empty cells along the way.
-    cell* iter = token.cell;
+    cell* iter = token.m_cell;
     while (iter != nullptr)
     {
         auto parent = iter->parent;
@@ -290,7 +295,7 @@ void oct_tree<element_type>::remove_cell(cell& cell)
 }
 
 template <typename element_type>
-oct_tree<element_type>::cell_list_t oct_tree<element_type>::get_cells()
+typename oct_tree<element_type>::cell_list_t oct_tree<element_type>::get_cells()
 {
     cell_list_t result;
     result.reserve(m_cells.size());
@@ -302,7 +307,7 @@ oct_tree<element_type>::cell_list_t oct_tree<element_type>::get_cells()
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const ray& bounds, bool coarse, bool parallel) const
+typename oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const ray& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds);
@@ -316,7 +321,7 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const sphere& bounds, bool coarse, bool parallel) const
+typename oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const sphere& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds);
@@ -330,7 +335,7 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const aabb& bounds, bool coarse, bool parallel) const
+typename oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const aabb& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds);
@@ -344,7 +349,7 @@ oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const
 }
 
 template <typename element_type>
-oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const frustum& bounds, bool coarse, bool parallel) const
+typename oct_tree<element_type>::intersect_result oct_tree<element_type>::intersect(const frustum& bounds, bool coarse, bool parallel) const
 {
     intersect_function_t func = [&bounds](const aabb& cell_bounds) -> bool {
         return bounds.intersects(cell_bounds) != frustum::intersection::outside;
@@ -365,13 +370,13 @@ typename oct_tree<element_type>::cell& oct_tree<element_type>::get_root()
 }
 
 template <typename element_type>
-typename const oct_tree<element_type>::cell& oct_tree<element_type>::get_root() const
+const typename oct_tree<element_type>::cell& oct_tree<element_type>::get_root() const
 {
     return *m_cells[0];
 }
 
 template <typename element_type>
-oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& bounds, entry entry, cell& insert_cell)
+typename oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& bounds, entry entry, cell& insert_cell)
 {
     size_t fits_in_child = 0;
     size_t fits_in_child_count = 0;
@@ -426,7 +431,7 @@ oct_tree<element_type>::token oct_tree<element_type>::insert(const aabb& bounds,
 
         token ret;
         ret.id = entry.id;
-        ret.cell = &insert_cell;
+        ret.m_cell = &insert_cell;
 
         return ret;
     }

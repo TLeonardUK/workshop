@@ -39,7 +39,7 @@ public:
         std::string name;
         std::string file;
 
-        asset_ptr<material> material;
+        asset_ptr<material> m_material;
     };
 
     struct mesh_info
@@ -62,7 +62,7 @@ public:
 
     struct vertex_buffer
     {
-        std::unique_ptr<ri_buffer> vertex_buffer;
+        std::unique_ptr<ri_buffer> m_buffer;
     };
 
     // If you modify these, ensure you update model_info in common.yaml
@@ -107,7 +107,7 @@ public:
 public:
     std::vector<material_info> materials;
     std::vector<mesh_info> meshes;
-    std::unique_ptr<geometry> geometry;
+    std::unique_ptr<geometry> m_geometry;
     std::string source_node;
 
 protected:

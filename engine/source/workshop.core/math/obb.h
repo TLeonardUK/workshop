@@ -8,6 +8,10 @@
 #include "workshop.core/math/matrix4.h"
 #include "workshop.core/math/sphere.h"
 
+#include <algorithm>
+#include <cfloat>
+#include <vector>
+
 namespace ws {
 
 class obb

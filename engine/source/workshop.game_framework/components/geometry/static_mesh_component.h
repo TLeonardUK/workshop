@@ -25,13 +25,13 @@ class static_mesh_component : public component
 public:
 
 	// The model this static mesh should render.
-	asset_ptr<model> model;
+	asset_ptr<model> m_model;
 
     // What gpu flags are used to effect how this component is rendered.
-    render_draw_flags render_draw_flags = render_draw_flags::geometry;
+    render_draw_flags m_render_draw_flags = render_draw_flags::geometry;
 
 	// What gpu flags are used to effect how this component is rendered.
-	render_gpu_flags render_gpu_flags = render_gpu_flags::none;
+	render_gpu_flags m_render_gpu_flags = render_gpu_flags::none;
 
     // Material overrides for model. 
     std::vector<asset_ptr<material>> materials;
@@ -59,10 +59,10 @@ private:
 public:
 
     BEGIN_REFLECT(static_mesh_component, "Static Mesh", component, reflect_class_flags::none)
-        REFLECT_FIELD_REF(model,                  "Model",        "Model asset this component displays.")
+        REFLECT_FIELD_REF(m_model,                "Model",        "Model asset this component displays.")
         REFLECT_FIELD_LIST_REF(materials,         "Materials",    "Materials to display on the meshes model.\nIf empty the defaults set in the model are used.")
-        REFLECT_FIELD_ENUM(render_draw_flags,     "Draw Flags",   "Dictates what camera views the mesh will be rendered in.")
-        REFLECT_FIELD_ENUM(render_gpu_flags,      "GPU Flags",    "Flags passed to the gpu to effect rendering of the mesh.")
+        REFLECT_FIELD_ENUM(m_render_draw_flags,   "Draw Flags",   "Dictates what camera views the mesh will be rendered in.")
+        REFLECT_FIELD_ENUM(m_render_gpu_flags,    "GPU Flags",    "Flags passed to the gpu to effect rendering of the mesh.")
     END_REFLECT()
 
 };

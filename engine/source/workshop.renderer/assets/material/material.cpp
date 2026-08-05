@@ -39,12 +39,12 @@ bool material::load_dependencies()
         params.mip_lod_bias = info.mip_lod_bias;
         params.max_anisotropy = info.max_anisotropy;
 
-        info.ri_sampler = m_ri_interface.create_sampler(params, info.name.c_str());
+        info.m_ri_sampler = m_ri_interface.create_sampler(params, info.name.c_str());
     }
 
     for (texture_info& info : textures)
     {
-        info.texture = m_asset_manager.request_asset<texture>(info.path.c_str(), 0);
+        info.m_texture = m_asset_manager.request_asset<texture>(info.path.c_str(), 0);
     }
 
     return true;
@@ -91,7 +91,7 @@ ri_sampler* material::get_sampler(const char* name, ri_sampler* default_instance
     {
         if (info.name == name)
         {
-            return info.ri_sampler.get();
+            return info.m_ri_sampler.get();
         }
     }
     return default_instance;
@@ -101,9 +101,9 @@ ri_texture* material::get_texture(const char* name, ri_texture* default_instance
 {
     for (texture_info& info : textures)
     {
-        if (info.name == name && info.texture.is_loaded())
+        if (info.name == name && info.m_texture.is_loaded())
         {
-            return info.texture->ri_instance.get();
+            return info.m_texture->ri_instance.get();
         }
     }
     return default_instance;

@@ -432,7 +432,7 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
     sphere sphere_bounds = tex_bounds.bounds.get_sphere();
 
     // Calculate the texel density of the mesh.
-    float texture_size = (float)std::max(tex_bounds.texture->width, tex_bounds.texture->height);
+    float texture_size = (float)std::max(tex_bounds.m_texture->width, tex_bounds.m_texture->height);
     float uv_density = tex_bounds.uv_density;
 
     // Get projected radius of sphere in screen spcae.
@@ -444,7 +444,7 @@ size_t render_texture_streamer::calculate_ideal_mip_count(const texture_bounds& 
     float screen_space_area = projected_radius_viewport * projected_radius_viewport;
 
     // Calculate the ideal mip count.
-    size_t mip_count = tex_bounds.texture->ri_instance->get_mip_levels();
+    size_t mip_count = tex_bounds.m_texture->ri_instance->get_mip_levels();
     float ideal_mip_float = 0.5f * log2(screen_space_area / uv_density);
                                                                                     // The -1 is because the algorithm we use overestimates the texture usage
                                                                                     // this brings it down to a more accurate value.
@@ -496,15 +496,15 @@ void render_texture_streamer::gather_texture_bounds(std::vector<render_view*>& v
 
                         for (const material::texture_info& tex : mat->textures)
                         {
-                            if (!tex.texture.is_loaded())
+                            if (!tex.m_texture.is_loaded())
                             {
                                 continue;
                             }
 
-                            if (tex.texture->streamed)
+                            if (tex.m_texture->streamed)
                             {
                                 texture_bounds.emplace_back(
-                                    tex.texture.get(), 
+                                    tex.m_texture.get(), 
                                     view, 
                                     mesh_bounds,
                                     mesh_info.min_texel_area,
@@ -701,19 +701,19 @@ void render_texture_streamer::calculate_in_view_mips()
     for (texture_bounds& bounds : m_texture_bounds)
     {
         // Don't update any textures that are currently awaiting mip downloads.
-        if (bounds.texture->streaming_info->state == texture_state::waiting_for_mips)
+        if (bounds.m_texture->streaming_info->state == texture_state::waiting_for_mips)
         {
             continue;
         }
 
         // Ignore locked textures, we are going to set them to the full mip level regardless.
-        if (bounds.texture->streaming_info->locked_count.load() > 0)
+        if (bounds.m_texture->streaming_info->locked_count.load() > 0)
         {
             continue;
         }
 
         size_t new_ideal_mips = calculate_ideal_mip_count(bounds);
-        highest_texture_mips[bounds.texture] = std::max(highest_texture_mips[bounds.texture], new_ideal_mips);
+        highest_texture_mips[bounds.m_texture] = std::max(highest_texture_mips[bounds.m_texture], new_ideal_mips);
     }
 
     for (auto& [texture, highest_mip] : highest_texture_mips)

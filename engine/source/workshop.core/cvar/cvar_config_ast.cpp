@@ -6,6 +6,9 @@
 #include "workshop.core/cvar/cvar_manager.h"
 #include "workshop.core/cvar/cvar.h"
 #include "workshop.core/debug/debug.h"
+#include "workshop.core/containers/string.h"
+
+#include <cstring>
 
 namespace ws {
 

@@ -11,6 +11,7 @@
 #include "workshop.core/async/async.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/memory/memory_tracker.h"
+#include <cstring>
 
 #include <algorithm>
 #include <thread>

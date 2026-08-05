@@ -89,7 +89,7 @@ pixmap_format_metrics get_pixmap_format_metrics(pixmap_format value)
         pixmap_format_metrics { .pixel_size=0, .channels={}, .channel_size=0, .channel_format=pixmap_channel_format::t_signed_int, .is_mutable=false, .block_size=4, .encoded_block_size=16 },        // BC6H_UF16,
     };
 
-    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    if (size_t index = static_cast<int>(value); math::in_range(index, size_t{0}, conversion.size()))
     {
         return conversion[index];
     }
@@ -339,8 +339,8 @@ color pixmap::sample(float x, float y, pixmap_filter filter)
             float delta_x = x - sample_x;
             float delta_y = y - sample_y;
 
-            size_t src_x = std::clamp((delta_x < 0.5f ? sample_x : sample_x + 1), 0llu, m_width - 1);
-            size_t src_y = std::clamp((delta_y < 0.5f ? sample_y : sample_y + 1), 0llu, m_height - 1);
+            size_t src_x = std::clamp((delta_x < 0.5f ? sample_x : sample_x + 1), size_t{0}, m_width - 1);
+            size_t src_y = std::clamp((delta_y < 0.5f ? sample_y : sample_y + 1), size_t{0}, m_height - 1);
             
             return get(src_x, src_y);
         }
@@ -351,10 +351,10 @@ color pixmap::sample(float x, float y, pixmap_filter filter)
             float delta_x = x - sample_x;
             float delta_y = y - sample_y;
                 
-            size_t src_min_x = std::clamp(sample_x,     0llu, m_width - 1);
-            size_t src_max_x = std::clamp(sample_x + 1, 0llu, m_width - 1);
-            size_t src_min_y = std::clamp(sample_y,     0llu, m_height - 1);
-            size_t src_max_y = std::clamp(sample_y + 1, 0llu, m_height - 1);
+            size_t src_min_x = std::clamp(sample_x,     size_t{0}, m_width - 1);
+            size_t src_max_x = std::clamp(sample_x + 1, size_t{0}, m_width - 1);
+            size_t src_min_y = std::clamp(sample_y,     size_t{0}, m_height - 1);
+            size_t src_max_y = std::clamp(sample_y + 1, size_t{0}, m_height - 1);
 
             color top_left      = get(src_min_x, src_min_y);
             color top_right     = get(src_max_x, src_min_y);
@@ -419,8 +419,8 @@ std::unique_ptr<pixmap> pixmap::block_encode(pixmap_format new_format, const enc
 
     db_assert_message(m_format_metrics.is_mutable, "Attempting to encode a non-mutable format, this is not supported.");
 
-    size_t total_blocks_x = std::max(1llu, m_width / block_size);
-    size_t total_blocks_y = std::max(1llu, m_height / block_size);
+    size_t total_blocks_x = std::max(size_t{1}, m_width / block_size);
+    size_t total_blocks_y = std::max(size_t{1}, m_height / block_size);
 
     std::vector<uint8_t> output_data;
     output_data.resize(total_blocks_x * total_blocks_y * output_block_size, 0);
@@ -477,8 +477,8 @@ std::unique_ptr<pixmap> pixmap::block_decode(pixmap_format new_format, const dec
 //    db_assert_message((m_width % block_size) == 0, "Width is not multiple of compression block size.");
 //    db_assert_message((m_height % block_size) == 0, "Height is not multiple of compression block size.");
 
-    size_t total_blocks_x = std::max(1llu, m_width / block_size);
-    size_t total_blocks_y = std::max(1llu, m_height / block_size);
+    size_t total_blocks_x = std::max(size_t{1}, m_width / block_size);
+    size_t total_blocks_y = std::max(size_t{1}, m_height / block_size);
 
     std::vector<color> pixels_rgba;
     pixels_rgba.resize((block_size * block_size), color::white);

@@ -76,7 +76,7 @@ void light_system::set_light_color(object id, color value)
             engine& engine = m_manager.get_world().get_engine();
             render_command_queue& render_command_queue = engine.get_renderer().get_command_queue();
 
-            comp->color = value;
+            comp->m_color = value;
             render_command_queue.set_light_color(comp->render_id, value);
         }
     });
@@ -159,7 +159,7 @@ void light_system::step(const frame_time& time)
             render_command_queue.set_light_intensity(light->render_id, light->intensity);
             render_command_queue.set_light_range(light->render_id, light->range);
             render_command_queue.set_light_importance_distance(light->render_id, light->importance_range);
-            render_command_queue.set_light_color(light->render_id, light->color);
+            render_command_queue.set_light_color(light->render_id, light->m_color);
             render_command_queue.set_light_shadow_casting(light->render_id, light->shadow_casting);
             render_command_queue.set_light_shadow_map_size(light->render_id, light->shadow_map_size);
             render_command_queue.set_light_shadow_max_distance(light->render_id, light->shadow_map_distance);

@@ -33,7 +33,7 @@ public:
 	float importance_range = 5000.0f;
 
 	// Color of the light.
-	color color = color::white;
+	color m_color = color::white;
 	
 	// If true this light will cast shadows.
 	bool shadow_casting = false;
@@ -67,7 +67,7 @@ public:
         REFLECT_FIELD(intensity,            "Intensity",                "Arbitrary scale to the lights radiance.")
         REFLECT_FIELD(range,                "Range",                    "Maximum distance away from light that it attenuates to nothing.")
         REFLECT_FIELD(importance_range,     "Importance Range",         "How far away the view has to be from the light before its faded out.")
-        REFLECT_FIELD(color,                "Color",                    "Color of the light.")
+        REFLECT_FIELD(m_color,               "Color",                    "Color of the light.")
         REFLECT_FIELD(shadow_casting,       "Shadow Casting",           "If true this light will cast shadows.")
         REFLECT_FIELD(shadow_map_size,      "Shadow Map Size",          "The size of the texture map that is used to render the lights view for shadow casting.")
         REFLECT_FIELD(shadow_map_distance,  "Shadow Map Distance",      "Maximum distance from the light before the shadwo factor is faded out.")

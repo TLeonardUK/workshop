@@ -8,6 +8,7 @@
 #include "workshop.core/containers/string.h"
 
 #include <algorithm>
+#include <cstring>
 #include <filesystem>
 
 namespace ws {

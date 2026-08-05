@@ -47,7 +47,7 @@ public:
         matrix4 projection_matrix;
         matrix4 view_matrix;
         frustum view_frustum;
-        frustum frustum;
+        frustum m_frustum;
 
         bool needs_render = true;
         size_t last_rendered_frame = 0;

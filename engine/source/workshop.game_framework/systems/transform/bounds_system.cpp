@@ -62,11 +62,11 @@ void bounds_system::step(const frame_time& time)
         asset_ptr<model> model;
         if (mesh)
         {
-            model = mesh->model;
+            model = mesh->m_model;
         }
         else if (billboard)
         {
-            model = billboard->model;
+            model = billboard->m_model;
             model_transform = billboard->transform;
         }
 
@@ -80,8 +80,8 @@ void bounds_system::step(const frame_time& time)
             model.get_version() != bounds->last_model_version ||
             model.get_hash() != bounds->last_model_hash)
         {
-            bounds->local_bounds = obb(model->geometry->bounds, model_transform * matrix4::identity);
-            bounds->world_bounds = obb(model->geometry->bounds, model_transform * transform->local_to_world);
+            bounds->local_bounds = obb(model->m_geometry->bounds, model_transform * matrix4::identity);
+            bounds->world_bounds = obb(model->m_geometry->bounds, model_transform * transform->local_to_world);
 
             bounds->last_model_transform = model_transform;
             bounds->last_transform_generation = transform->generation;

@@ -7,6 +7,8 @@
 #include "workshop.editor/editor/editor_window.h"
 #include "workshop.core/debug/log_handler.h"
 
+#include <memory>
+
 namespace ws {
 
 class editor_log_window;

@@ -18,7 +18,7 @@
 #include "workshop.render_interface/ri_buffer.h"
 #include "workshop.render_interface/ri_layout_factory.h"
 
-#include <Windows.h>
+#include <algorithm>
 
 namespace ws {
 
@@ -74,7 +74,7 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
     auto callback = [&chunk_offset, chunk_size, &batches, &renderer, this, &view, &state_output, &triangles_rendered, &draw_calls, &drawn_instances, &culled_instances, &output_list_mutex](size_t i) mutable
     {
         size_t batch_start = chunk_offset.fetch_add(chunk_size);
-        size_t batch_end = min(batches.size(), batch_start + chunk_size);
+        size_t batch_end = std::min(batches.size(), batch_start + chunk_size);
 
         if (batch_start >= batches.size())
         {
@@ -109,8 +109,8 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
                 render_batch_key key = batch->get_key();
                 const std::vector<render_batch_instance>& instances = batch->get_instances();
 
-                model::mesh_info& mesh_info = key.model->meshes[key.mesh_index];
-                asset_ptr<material>& mat = key.material;
+                model::mesh_info& mesh_info = key.m_model->meshes[key.mesh_index];
+                asset_ptr<material>& mat = key.m_material;
 
                 profile_gpu_marker(list, profile_colors::gpu_pass, "batch %s : %s", mesh_info.name.c_str(), mat->name.c_str());
 
@@ -163,11 +163,11 @@ void render_pass_geometry::generate(renderer& renderer, generated_state& state_o
 
                     size_t model_info_table_index;
                     size_t model_info_table_offset;
-                    key.model->get_model_info_param_block(key.mesh_index).get_table(model_info_table_index, model_info_table_offset);               
+                    key.m_model->get_model_info_param_block(key.mesh_index).get_table(model_info_table_index, model_info_table_offset);               
 
                     size_t material_info_table_index;
                     size_t material_info_table_offset;
-                    key.material->get_material_info_param_block()->get_table(material_info_table_index, material_info_table_offset);                
+                    key.m_material->get_material_info_param_block()->get_table(material_info_table_index, material_info_table_offset);                
 
                     vertex_info_param_block->set("model_info_table"_sh, (uint32_t)model_info_table_index);
                     vertex_info_param_block->set("model_info_offset"_sh, (uint32_t)model_info_table_offset);

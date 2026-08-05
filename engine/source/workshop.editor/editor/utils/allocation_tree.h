@@ -7,6 +7,8 @@
 #include "workshop.core/debug/log_handler.h"
 
 #include <functional>
+#include <memory>
+#include <vector>
 
 namespace ws {
 

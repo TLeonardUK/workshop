@@ -8,6 +8,9 @@
 #include <vector>
 #include <mutex>
 #include <array>
+#include <atomic>
+#include <condition_variable>
+#include <thread>
 
 namespace ws {
 

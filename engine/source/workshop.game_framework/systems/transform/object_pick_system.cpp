@@ -34,7 +34,7 @@ void object_pick_system::model_ray_intersects(object handle, const ray& target_r
 {
     profile_marker(profile_colors::system, "model_ray_intersection");
 
-    geometry_vertex_stream* position_vertex_stream = instance.geometry->find_vertex_stream(geometry_vertex_stream_type::position);
+    geometry_vertex_stream* position_vertex_stream = instance.m_geometry->find_vertex_stream(geometry_vertex_stream_type::position);
     if (position_vertex_stream == nullptr)
     {
         return;
@@ -66,7 +66,7 @@ void object_pick_system::model_ray_intersects(object handle, const ray& target_r
     // Transform all verts outside of the loop to avoid doing the same calculations multiple times.
     // Note: We are intentionally not using an std::vector3 to avoid the default constructor penality which can get pretty insane
     //       with large number of vertices.
-    size_t vertex_count = instance.geometry->get_vertex_count();
+    size_t vertex_count = instance.m_geometry->get_vertex_count();
     std::unique_ptr<vector3[]> transformed_verts(new vector3[vertex_count]);
 
     {
@@ -131,21 +131,21 @@ void object_pick_system::fine_intersection_test(pick_request* request, std::vect
 
         meta_component* meta = m_manager.get_component<meta_component>(obj);
 
-        if (mesh != nullptr && mesh->model.is_loaded())
+        if (mesh != nullptr && mesh->m_model.is_loaded())
         {
             intersection_test& test = tests.emplace_back();
             test.coarse = false;
             test.handle = obj;
             test.transform = transform->local_to_world;
-            test.model = mesh->model;
+            test.m_model = mesh->m_model;
         }
-        else if (billboard != nullptr && billboard->model.is_loaded())
+        else if (billboard != nullptr && billboard->m_model.is_loaded())
         {
             intersection_test& test = tests.emplace_back();
             test.coarse = false;
             test.handle = obj;
             test.transform = billboard->transform * transform->local_to_world;
-            test.model = billboard->model;
+            test.m_model = billboard->m_model;
         }
         else if (bounds != nullptr)
         {
@@ -184,7 +184,7 @@ void object_pick_system::fine_intersection_test(pick_request* request, std::vect
             }
             else
             {
-                model_ray_intersects(test.handle, request->target_ray, *test.model.get(), test.transform, hits);
+                model_ray_intersects(test.handle, request->target_ray, *test.m_model.get(), test.transform, hits);
             }
         }
 

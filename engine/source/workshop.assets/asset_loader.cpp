@@ -11,6 +11,8 @@
 
 #include "workshop.core/containers/string.h"
 
+#include <stdexcept>
+
 namespace ws {
 
 template<>
@@ -42,20 +44,20 @@ bool asset_loader::load_asset_descriptor(const char* path, YAML::Node& node, con
 
         if (!type_node.IsDefined())
         {
-            throw std::exception("type node is not defined.");
+            throw std::runtime_error("type node is not defined.");
         }
         if (type_node.Type() != YAML::NodeType::Scalar)
         {
-            throw std::exception("type node is the wrong type, expected a string.");
+            throw std::runtime_error("type node is the wrong type, expected a string.");
         }
 
         if (!version_node.IsDefined())
         {
-            throw std::exception("version node is not defined.");
+            throw std::runtime_error("version node is not defined.");
         }
         if (version_node.Type() != YAML::NodeType::Scalar)
         {
-            throw std::exception("version node is the wrong type, expected a string.");
+            throw std::runtime_error("version node is the wrong type, expected a string.");
         }
 
         std::string type = type_node.as<std::string>();
@@ -63,16 +65,16 @@ bool asset_loader::load_asset_descriptor(const char* path, YAML::Node& node, con
 
         if (type != expected_type)
         {
-            throw std::exception(string_format("Type '%s' is not of expected type '%s'.", type.c_str(), expected_type).c_str());
+            throw std::runtime_error(string_format("Type '%s' is not of expected type '%s'.", type.c_str(), expected_type).c_str());
         }
 
         if (version < min_version)
         {
-            throw std::exception(string_format("Version '%zi' is older than the minimum supported '%zi'.", version, min_version).c_str());
+            throw std::runtime_error(string_format("Version '%zi' is older than the minimum supported '%zi'.", version, min_version).c_str());
         }
         if (version > max_version)
         {
-            throw std::exception(string_format("Version '%zi' is newer than the maximum supported '%zi'.", version, min_version).c_str());
+            throw std::runtime_error(string_format("Version '%zi' is newer than the maximum supported '%zi'.", version, min_version).c_str());
         }
     }
     catch (YAML::ParserException& exception)

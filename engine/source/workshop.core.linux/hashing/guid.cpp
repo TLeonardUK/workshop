@@ -4,8 +4,6 @@
 // ================================================================================================
 #include "workshop.core/hashing/guid.h"
 
-#include <rpc.h>
-
 namespace ws {
 
 guid guid::generate()

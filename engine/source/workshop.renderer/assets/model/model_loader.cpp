@@ -140,12 +140,12 @@ bool model_loader::serialize(const char* path, model& asset, bool isSaving)
 
     if (!isSaving)
     {
-        asset.geometry = std::make_unique<geometry>();
+        asset.m_geometry = std::make_unique<geometry>();
     }
 
     stream_serialize_list(*stream, asset.materials);
     stream_serialize_list(*stream, asset.meshes);
-    stream_serialize(*stream, *asset.geometry);
+    stream_serialize(*stream, *asset.m_geometry);
 
     return true;
 }
@@ -195,11 +195,11 @@ bool model_loader::parse_properties(const char* path, YAML::Node& node, model& a
         return false;
     }
 
-    asset.geometry = geometry::load(source.c_str(), geo_settings);
+    asset.m_geometry = geometry::load(source.c_str(), geo_settings);
     asset.source_node = source_node;
     asset.header.add_dependency(source.c_str());
 
-    if (!asset.geometry)
+    if (!asset.m_geometry)
     {
         db_error(asset, "[%s] failed to load geometry from: %s", path, source.c_str());
         return false;
@@ -239,7 +239,7 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
             std::string value = iter->second.as<std::string>();
 
             // Only add the material if the geometry actual uses it.
-            geometry_material* geo_mat = asset.geometry->get_material(name.c_str());
+            geometry_material* geo_mat = asset.m_geometry->get_material(name.c_str());
             if (geo_mat != nullptr)
             {
                 // Note: Don't add as dependency. We don't want to trigger a rebuild of the
@@ -251,7 +251,7 @@ bool model_loader::parse_materials(const char* path, YAML::Node& node, model& as
                 mat.file = value;    
 
                 // Add all the meshes that use this material.
-                for (geometry_mesh& mesh : asset.geometry->get_meshes())
+                for (geometry_mesh& mesh : asset.m_geometry->get_meshes())
                 {
                     if (mesh.material_index == geo_mat->index)
                     {
@@ -373,12 +373,12 @@ bool model_loader::parse_file(const char* path, model& asset)
     {
         if (first_mesh)
         {
-            asset.geometry->bounds = info.bounds;
+            asset.m_geometry->bounds = info.bounds;
             first_mesh = false;
         }
         else
         {
-            asset.geometry->bounds = asset.geometry->bounds.combine(info.bounds);
+            asset.m_geometry->bounds = asset.m_geometry->bounds.combine(info.bounds);
         }
     }
 
@@ -450,20 +450,20 @@ std::unique_ptr<pixmap> model_loader::generate_thumbnail(const char* path, size_
 
     for (model::material_info& mat : model_asset->materials)
     {
-        if (!mat.material.is_loaded())
+        if (!mat.m_material.is_loaded())
         {
             continue;
         }
 
-        for (material::texture_info& tex : mat.material->textures)
+        for (material::texture_info& tex : mat.m_material->textures)
         {
-            if (!tex.texture.is_loaded())
+            if (!tex.m_texture.is_loaded())
             {
                 continue;
             }
 
-            textures.push_back(tex.texture.get());
-            m_renderer.get_texture_streamer().lock_texture(tex.texture.get());
+            textures.push_back(tex.m_texture.get());
+            m_renderer.get_texture_streamer().lock_texture(tex.m_texture.get());
         }
     }
 
@@ -510,7 +510,7 @@ std::unique_ptr<pixmap> model_loader::generate_thumbnail(const char* path, size_
         world_id = cmd_queue.create_world("thumbnail world");
 
         // Calculate the projected bounds of the model and zoom out to a good position to frame it all.
-        sphere sphere_bounds = obb(model_asset->geometry->bounds, matrix4::identity).get_sphere();
+        sphere sphere_bounds = obb(model_asset->m_geometry->bounds, matrix4::identity).get_sphere();
 
         vector3 light_location = vector3(1.0f, -1.0f, -1.0f);
         vector3 light_normal = light_location.normalize();
@@ -561,7 +561,7 @@ std::unique_ptr<pixmap> model_loader::generate_thumbnail(const char* path, size_
         // Create model/skybox/light
         model_id = cmd_queue.create_static_mesh("thumbnail_model");
         cmd_queue.set_static_mesh_model(model_id, model_asset);
-        cmd_queue.set_object_transform(model_id, -model_asset->geometry->bounds.get_center(), quat::identity, vector3(1.0f, 1.0f, 1.0f));
+        cmd_queue.set_object_transform(model_id, -model_asset->m_geometry->bounds.get_center(), quat::identity, vector3(1.0f, 1.0f, 1.0f));
         cmd_queue.set_object_world(model_id, world_id);
 
         skybox_id = cmd_queue.create_static_mesh("thumbnail_skybox_model");

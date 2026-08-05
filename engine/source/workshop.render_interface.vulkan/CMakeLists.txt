@@ -57,7 +57,7 @@ util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 
 target_link_libraries(${PROJECT_NAME} 
     workshop.core
-    sdl2
+    SDL2::SDL2
 )
 
 if (USE_PRECOMPILED_HEADERS)

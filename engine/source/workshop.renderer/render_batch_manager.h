@@ -41,17 +41,17 @@ enum class render_batch_usage
 // ================================================================================================
 struct render_batch_key
 {
-    asset_ptr<model> model;
-    asset_ptr<material> material;
+    asset_ptr<model> m_model;
+    asset_ptr<material> m_material;
     size_t mesh_index;
     material_domain domain;
     render_batch_usage usage;
 
     bool operator==(const render_batch_key& other) const
     {
-        return model == other.model && 
+        return m_model == other.m_model &&
                mesh_index == other.mesh_index &&
-               material == other.material && 
+               m_material == other.m_material &&
                domain == other.domain &&
                usage == other.usage;
     }
@@ -91,9 +91,9 @@ struct std::hash<ws::render_batch_key>
     std::size_t operator()(const ws::render_batch_key& k) const
     {
         size_t hash = 0;
-        ws::hash_combine(hash, k.material);
+        ws::hash_combine(hash, k.m_material);
         ws::hash_combine(hash, k.mesh_index);
-        ws::hash_combine(hash, k.model);
+        ws::hash_combine(hash, k.m_model);
         ws::hash_combine(hash, k.domain);
         ws::hash_combine(hash, k.usage);
         return hash;

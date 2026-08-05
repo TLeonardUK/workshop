@@ -8,6 +8,8 @@
 #include "workshop.core/math/triangle.h"
 #include "workshop.core/math/math.h"
 
+#include <cfloat>
+
 #include "thirdparty/assimp/include/assimp/Importer.hpp"
 #include "thirdparty/assimp/include/assimp/scene.h"
 #include "thirdparty/assimp/include/assimp/mesh.h"

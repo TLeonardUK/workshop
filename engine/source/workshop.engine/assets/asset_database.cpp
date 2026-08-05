@@ -12,6 +12,9 @@
 #include "workshop.assets/asset_manager.h"
 #include "workshop.render_interface/ri_texture_compiler.h"
 
+#include <cstring>
+#include <stdexcept>
+
 namespace ws {
 namespace {
 
@@ -478,7 +481,7 @@ std::unique_ptr<asset_database_metadata> asset_database::generate_metadata(const
 
         if (!type_node.IsDefined() || type_node.Type() != YAML::NodeType::Scalar)
         {
-            throw std::exception("type node is malformed.");
+            throw std::runtime_error("type node is malformed.");
         }
         else
         {

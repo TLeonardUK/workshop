@@ -11,6 +11,8 @@
 
 #include "thirdparty/imgui/imgui.h"
 
+#include <cstdio>
+
 namespace ws {
 
 editor_cvar_window::editor_cvar_window()
@@ -109,7 +111,7 @@ void editor_cvar_window::draw()
                         std::string value = instance->get_string();
 
                         char buffer[2048];
-                        strcpy_s(buffer, value.c_str());
+                        snprintf(buffer, sizeof(buffer), "%s", value.c_str());
 
                         if (ImGui::InputText("", buffer, sizeof(buffer), instance->has_flag(cvar_flag::read_only) ? ImGuiInputTextFlags_ReadOnly : 0))
                         {

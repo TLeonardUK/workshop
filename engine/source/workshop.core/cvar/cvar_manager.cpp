@@ -11,6 +11,7 @@
 #include "workshop.core/containers/string.h"
 #include "workshop.core/utils/time.h"
 
+#include <stdexcept>
 #include <string>
 
 // TODO: 
@@ -166,20 +167,20 @@ bool cvar_manager::load_descriptor(const char* path, YAML::Node& node)
 
         if (!type_node.IsDefined())
         {
-            throw std::exception("type node is not defined.");
+            throw std::runtime_error("type node is not defined.");
         }
         if (type_node.Type() != YAML::NodeType::Scalar)
         {
-            throw std::exception("type node is the wrong type, expected a string.");
+            throw std::runtime_error("type node is the wrong type, expected a string.");
         }
 
         if (!version_node.IsDefined())
         {
-            throw std::exception("version node is not defined.");
+            throw std::runtime_error("version node is not defined.");
         }
         if (version_node.Type() != YAML::NodeType::Scalar)
         {
-            throw std::exception("version node is the wrong type, expected a string.");
+            throw std::runtime_error("version node is the wrong type, expected a string.");
         }
 
         std::string type = type_node.as<std::string>();
@@ -187,16 +188,16 @@ bool cvar_manager::load_descriptor(const char* path, YAML::Node& node)
 
         if (type != k_cvar_save_descriptor_type)
         {
-            throw std::exception(string_format("Type '%s' is not of expected type '%s'.", type.c_str(), k_cvar_save_descriptor_type).c_str());
+            throw std::runtime_error(string_format("Type '%s' is not of expected type '%s'.", type.c_str(), k_cvar_save_descriptor_type).c_str());
         }
 
         if (version < k_cvar_save_descriptor_minimum_version)
         {
-            throw std::exception(string_format("Version '%zi' is older than the minimum supported '%zi'.", version, k_cvar_save_descriptor_minimum_version).c_str());
+            throw std::runtime_error(string_format("Version '%zi' is older than the minimum supported '%zi'.", version, k_cvar_save_descriptor_minimum_version).c_str());
         }
         if (version > k_cvar_save_descriptor_current_version)
         {
-            throw std::exception(string_format("Version '%zi' is newer than the maximum supported '%zi'.", version, k_cvar_save_descriptor_current_version).c_str());
+            throw std::runtime_error(string_format("Version '%zi' is newer than the maximum supported '%zi'.", version, k_cvar_save_descriptor_current_version).c_str());
         }
     }
     catch (YAML::ParserException& exception)

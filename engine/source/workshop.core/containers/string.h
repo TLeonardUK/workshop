@@ -12,6 +12,11 @@
 #include <vector>
 #include <memory>
 
+#ifdef WS_LINUX
+#include <strings.h>
+#define _stricmp strcasecmp
+#endif
+
 namespace ws {
 
 // ================================================================================================

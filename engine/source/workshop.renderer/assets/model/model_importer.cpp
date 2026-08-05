@@ -8,6 +8,7 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/file.h"
 
+#include <cstring>
 #include <filesystem>
 #include <unordered_map>
 

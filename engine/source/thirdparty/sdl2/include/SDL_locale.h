@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,9 +20,9 @@
 */
 
 /**
- *  \file SDL_locale.h
+ * # CategoryLocale
  *
- *  Include file for SDL locale services
+ * Include file for SDL locale services
  */
 
 #ifndef _SDL_locale_h
@@ -39,12 +39,24 @@ extern "C" {
 /* *INDENT-ON* */
 #endif
 
-
+/**
+ * A struct to provide locale data.
+ *
+ * Locale data is split into a spoken language, like English, and an optional
+ * country, like Canada. The language will be in ISO-639 format (so English
+ * would be "en"), and the country, if not NULL, will be an ISO-3166 country
+ * code (so Canada would be "CA").
+ *
+ * \since This struct is available since SDL 2.0.14.
+ *
+ * \sa SDL_GetPreferredLocales
+ */
 typedef struct SDL_Locale
 {
     const char *language;  /**< A language name, like "en" for English. */
     const char *country;  /**< A country, like "US" for America. Can be NULL. */
 } SDL_Locale;
+
 
 /**
  * Report the user's preferred locale.

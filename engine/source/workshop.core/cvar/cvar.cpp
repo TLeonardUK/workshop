@@ -7,6 +7,8 @@
 #include "workshop.core/debug/debug.h"
 #include "workshop.core/containers/string.h"
 
+#include <cstring>
+
 namespace ws {
 
 cvar_base::cvar_base(std::type_index value_type, cvar_flag flags, const char* name, const char* description)

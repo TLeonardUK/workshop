@@ -4,6 +4,8 @@
 // ================================================================================================
 #include "workshop.core/filesystem/ram_stream.h"
 
+#include <cstring>
+
 namespace ws {
     
 ram_stream::ram_stream(const std::vector<uint8_t>& buffer)

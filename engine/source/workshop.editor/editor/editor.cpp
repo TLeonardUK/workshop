@@ -499,7 +499,7 @@ void editor::process_pending_save_load()
         size_t queue_size = ass_manager.get_queue_size();
         m_peak_pending_operations = std::max(m_peak_pending_operations, queue_size);
         size_t completed = m_peak_pending_operations - queue_size;
-        popup->set_progress(static_cast<float>(completed) / std::max(m_peak_pending_operations, 1llu));
+        popup->set_progress(static_cast<float>(completed) / std::max(m_peak_pending_operations, size_t{1}));
 
         if (m_pending_open_scene.get_state() == asset_loading_state::loaded ||
             m_pending_open_scene.get_state() == asset_loading_state::failed)

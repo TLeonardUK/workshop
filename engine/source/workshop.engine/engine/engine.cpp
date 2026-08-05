@@ -59,7 +59,7 @@
 
 #if defined(WS_WINDOWS)
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
-#elif defined(WS_VULKAN)
+#elif defined(WS_LINUX)
 #include "workshop.render_interface.vulkan/vulkan_ri_interface.h"
 #endif
 

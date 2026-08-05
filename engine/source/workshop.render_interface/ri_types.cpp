@@ -63,7 +63,7 @@ size_t ri_bytes_for_data_type(ri_data_type value)
         4, // t_compressed_unit_vector
     };
 
-    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    if (size_t index = static_cast<int>(value); math::in_range(index, size_t{0}, conversion.size()))
     {
         return conversion[index];
     }
@@ -113,7 +113,7 @@ ri_data_type ri_convert_geometry_data_type(geometry_data_type value)
 	    ri_data_type::t_double4x4, // t_double4x4,
     };
 
-    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    if (size_t index = static_cast<int>(value); math::in_range(index, size_t{0}, conversion.size()))
     {
         return conversion[index];
     }
@@ -208,7 +208,7 @@ size_t ri_bytes_per_texel(ri_texture_format value)
         4  // BC7_SRGB,
     };
 
-    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    if (size_t index = static_cast<int>(value); math::in_range(index, size_t{0}, conversion.size()))
     {
         return conversion[index];
     }
@@ -296,7 +296,7 @@ size_t ri_format_block_size(ri_texture_format value)
         4  // BC7_SRGB,
     };
 
-    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    if (size_t index = static_cast<int>(value); math::in_range(index, size_t{0}, conversion.size()))
     {
         return conversion[index];
     }
@@ -361,7 +361,7 @@ ri_texture_format ri_convert_pixmap_format(pixmap_format value)
         ri_texture_format::BC6H_UF16            // BC6_UF16,
     };
 
-    if (size_t index = static_cast<int>(value); math::in_range(index, 0llu, conversion.size()))
+    if (size_t index = static_cast<int>(value); math::in_range(index, size_t{0}, conversion.size()))
     {
         return conversion[index];
     }

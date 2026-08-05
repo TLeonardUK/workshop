@@ -494,7 +494,7 @@ void editor_viewport_window::update_drag_drop(bool mouse_over_viewport, const Im
                 obj_manager.add_component<bounds_component>(m_drag_drop_object);
 
                 static_mesh_component* comp = obj_manager.add_component<static_mesh_component>(m_drag_drop_object);
-                comp->model = ass_manager.request_asset<model>(path.c_str(), 0);
+                comp->m_model = ass_manager.request_asset<model>(path.c_str(), 0);
             }
         }
 

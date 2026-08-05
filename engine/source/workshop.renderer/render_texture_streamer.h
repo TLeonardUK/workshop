@@ -130,7 +130,7 @@ private:
 
     struct texture_bounds
     {
-        texture*        texture;
+        texture*        m_texture;
         render_view*    view;
         obb             bounds;
 

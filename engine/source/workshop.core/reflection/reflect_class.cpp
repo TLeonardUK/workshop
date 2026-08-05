@@ -6,6 +6,7 @@
 #include "workshop.core/reflection/reflect_field.h"
 #include "workshop.core/reflection/reflect_constraint.h"
 #include "workshop.core/reflection/reflect.h"
+#include <cstring>
 
 #include <algorithm>
 

@@ -386,11 +386,11 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
     // Lock all textures in the texture streamer so they will be fully streamed in.
     for (material::texture_info& tex : material_asset->textures)
     {
-        if (!tex.texture.is_loaded())
+        if (!tex.m_texture.is_loaded())
         {
             continue;
         }
-        m_renderer.get_texture_streamer().lock_texture(tex.texture.get());
+        m_renderer.get_texture_streamer().lock_texture(tex.m_texture.get());
     }
 
     // Wait until all mips are streamed in.
@@ -400,12 +400,12 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
 
         for (material::texture_info& tex : material_asset->textures)
         {
-            if (!tex.texture.is_loaded())
+            if (!tex.m_texture.is_loaded())
             {
                 continue;
             }
 
-            if (!m_renderer.get_texture_streamer().is_texture_fully_resident(tex.texture.get()))
+            if (!m_renderer.get_texture_streamer().is_texture_fully_resident(tex.m_texture.get()))
             {
                 fully_resident = false;
                 break;
@@ -505,12 +505,12 @@ std::unique_ptr<pixmap> material_loader::generate_thumbnail(const char* path, si
     // Unlock all the textures that were previously locked.
     for (material::texture_info& tex : material_asset->textures)
     {
-        if (!tex.texture.is_loaded())
+        if (!tex.m_texture.is_loaded())
         {
             continue;
         }
 
-        m_renderer.get_texture_streamer().unlock_texture(tex.texture.get());
+        m_renderer.get_texture_streamer().unlock_texture(tex.m_texture.get());
     }
 
     return output;

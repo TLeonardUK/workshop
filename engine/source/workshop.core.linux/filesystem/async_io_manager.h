@@ -11,6 +11,7 @@
 #include <span>
 #include <mutex>
 #include <cstddef>
+#include <string>
 #include <unordered_map>
 
 namespace ws {
@@ -30,6 +31,27 @@ public:
     virtual std::span<uint8_t> data() override;
 
 private:
+    friend class linux_async_io_manager;
+
+    enum class state
+    {
+        pending,
+        outstanding,
+        completed,
+        failed
+    };
+
+    void set_state(state new_state);
+
+private:
+    std::string m_path;
+    size_t m_offset;
+    size_t m_size;
+    async_io_request_options m_options;
+
+    linux_async_io_manager* m_manager;
+
+    state m_state = state::pending;
 
 };
 
@@ -45,13 +67,15 @@ public:
 
     // Starts a request to load the given block of data on the filesystem poinetd to by path
     // with the given offset and size.
-    // 
-    // No virtualization is performed on the path, this path is expected to be the 
+    //
+    // No virtualization is performed on the path, this path is expected to be the
     // raw on-disk path.
     async_io_request::ptr request(const char* path, size_t offset, size_t size, async_io_request_options options);
 
 private:
     friend class linux_async_io_request;
+
+    void worker_thread();
 
 private:
 

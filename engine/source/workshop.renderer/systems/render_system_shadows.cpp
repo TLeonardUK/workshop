@@ -451,7 +451,7 @@ void render_system_shadows::step_point_shadow(render_view* view, render_point_li
         cascade.use_linear_depth = true;
 
         // Calculate the frustum from the projection matrix.
-        cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
+        cascade.m_frustum = frustum(light_view_matrix * cascade.projection_matrix);
     }
 }
 
@@ -506,7 +506,7 @@ void render_system_shadows::step_spot_shadow(render_view* view, render_spot_ligh
     cascade.z_far = cascade_far_z;
 
     // Calculate the frustum from the projection matrix.
-    cascade.frustum = frustum(light_view_matrix * cascade.projection_matrix);
+    cascade.m_frustum = frustum(light_view_matrix * cascade.projection_matrix);
 }
 
 void render_system_shadows::destroy_cascade(cascade_info& info)

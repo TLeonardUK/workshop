@@ -34,7 +34,7 @@ bool model::load_dependencies()
         material_info& mat = materials[i];
 
         // Load the appropriate material.    
-        mat.material = m_asset_manager.request_asset<material>(mat.file.c_str(), 0);
+        mat.m_material = m_asset_manager.request_asset<material>(mat.file.c_str(), 0);
     }
 
     // Create index buffer for each sub-mesh.
@@ -101,7 +101,7 @@ bool model::load_dependencies()
         const char* stream_name = geometry_vertex_stream_type_strings[i];
         std::string field_name = string_format("%s_buffer", stream_name);
 
-        geometry_vertex_stream* stream = geometry->find_vertex_stream(stream_type);
+        geometry_vertex_stream* stream = m_geometry->find_vertex_stream(stream_type);
         if (!stream)
         {
             for (auto& param_block : m_model_info_param_blocks)
@@ -121,18 +121,18 @@ bool model::load_dependencies()
         std::string vertex_buffer_name = string_format("Model Vertex Stream[%s]: %s", stream_name, name.c_str());
 
         std::unique_ptr<vertex_buffer> buf = std::make_unique<vertex_buffer>();
-        buf->vertex_buffer = factory->create_vertex_buffer(vertex_buffer_name.c_str());;
+        buf->m_buffer = factory->create_vertex_buffer(vertex_buffer_name.c_str());;
 
         for (auto& param_block : m_model_info_param_blocks)
         {
-            param_block->set(string_hash(field_name.c_str()), *buf->vertex_buffer, false);
+            param_block->set(string_hash(field_name.c_str()), *buf->m_buffer, false);
         }
         m_vertex_streams[i] = std::move(buf);
 
         // We can clear out the cpu information for all streams except position (we use position for picking).
         if (stream_type != geometry_vertex_stream_type::position)
         {
-            geometry->clear_vertex_stream_data(stream_type);
+            m_geometry->clear_vertex_stream_data(stream_type);
         }
     }
 
@@ -159,7 +159,7 @@ ri_raytracing_blas* model::find_or_create_blas(size_t mesh_index)
 
         std::string blas_name = string_format("Model BLAS[%zi]: %s", mesh_index, name.c_str());
         info.blas = m_renderer.get_render_interface().create_raytracing_blas(blas_name.c_str());
-        info.blas->update(buffer->vertex_buffer.get(), info.index_buffer.get());
+        info.blas->update(buffer->m_buffer.get(), info.index_buffer.get());
     
         return info.blas.get();
     }
@@ -205,7 +205,7 @@ void model::swap(model* other)
 
     std::swap(materials, other->materials);
     std::swap(meshes, other->meshes);
-    std::swap(geometry, other->geometry);
+    std::swap(m_geometry, other->m_geometry);
 
     // Cleared cached data as these point to old data.
     m_param_blocks.clear();

@@ -116,7 +116,6 @@ std::vector<render_batch*> render_batch_manager::get_batches(material_domain dom
 
     for (auto& [key, batch] : m_batches)
     {
-        const render_batch_key& key = batch->get_key();
         if (key.domain == domain && key.usage == usage)
         {
             result.push_back(batch.get());
@@ -130,18 +129,17 @@ void render_batch_manager::clear_cached_material_data(material* material)
 {
     for (auto& [key, batch] : m_batches)
     {
-        render_batch_key key = batch->get_key();
         if (key.domain != material->domain)
         {
             continue;
         }
 
-        if (!key.material.is_loaded())
+        if (!key.m_material.is_loaded())
         {
             continue;
         }
 
-        if (key.material.get() == material)
+        if (key.m_material.get() == material)
         {
             batch->get_resource_cache().clear();
         }

@@ -97,7 +97,7 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
 
             size_t material_info_table_index;
             size_t material_info_table_offset;
-            material_info.material->get_material_info_param_block()->get_table(material_info_table_index, material_info_table_offset);
+            material_info.m_material->get_material_info_param_block()->get_table(material_info_table_index, material_info_table_offset);
 
             vertex_info_param_block->set("model_info_table"_sh, (uint32_t)model_info_table_index);
             vertex_info_param_block->set("model_info_offset"_sh, (uint32_t)model_info_table_offset);

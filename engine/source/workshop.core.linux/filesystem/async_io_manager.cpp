@@ -5,7 +5,6 @@
 #include "workshop.core/filesystem/async_io_manager.h"
 #include "workshop.core/math/math.h"
 #include "workshop.core/utils/time.h"
-#include "workshop.core.linux/utils/windows_headers.h"
 #include "workshop.core.linux/filesystem/async_io_manager.h"
 #include "workshop.core/memory/memory_tracker.h"
 #include "workshop.core/perf/profile.h"

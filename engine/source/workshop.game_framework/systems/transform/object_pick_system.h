@@ -65,7 +65,7 @@ private:
         bool coarse;
         object handle;
         matrix4 transform;
-        asset_ptr<model> model;
+        asset_ptr<model> m_model;
         aabb bounds;
     };
 

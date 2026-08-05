@@ -4,6 +4,8 @@
 // ================================================================================================
 #pragma once
 
+#include <cstddef>
+
 namespace ws {
 
 class ri_command_queue;

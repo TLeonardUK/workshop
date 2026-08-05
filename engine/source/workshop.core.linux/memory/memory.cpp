@@ -4,8 +4,6 @@
 // ================================================================================================
 #include "workshop.core/memory/memory.h"
 
-#include <Windows.h>
-
 namespace ws {
 
 void* reserve_virtual_memory(size_t size)

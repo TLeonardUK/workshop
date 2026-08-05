@@ -156,7 +156,11 @@ void log_handler::static_write_formatted_to_handlers(log_level level, log_source
 {
     time_t current_time = time(0);
     struct tm current_time_tstruct;
+#ifdef WS_WINDOWS
     localtime_s(&current_time_tstruct, &current_time);
+#else
+    localtime_r(&current_time, &current_time_tstruct);
+#endif
 
     char time_buffer[32];
     strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %X", &current_time_tstruct);

@@ -8,6 +8,8 @@
 #include "workshop.core/filesystem/disk_stream.h"
 #include "workshop.core/hashing/guid.h"
 
+#include <thread>
+
 namespace ws {
 
 asset_cache_disk::asset_cache_disk(const std::string& storage_protocol, const std::string& access_protocol, bool read_only)

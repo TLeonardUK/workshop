@@ -29,7 +29,11 @@ std::string example_game_app::get_name()
 
 void example_game_app::configure_engine(engine& engine)
 {
+#if defined(WS_WINDOWS)
     engine.set_render_interface_type(ri_interface_type::dx12);
+#elif defined(WS_LINUX)
+    engine.set_render_interface_type(ri_interface_type::vulkan);
+#endif
     engine.set_window_interface_type(window_interface_type::sdl);
     engine.set_input_interface_type(input_interface_type::sdl);
     engine.set_platform_interface_type(platform_interface_type::sdl);

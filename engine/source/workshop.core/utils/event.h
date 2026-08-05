@@ -6,7 +6,9 @@
 
 #include <functional>
 #include <algorithm>
+#include <atomic>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <mutex>
 
@@ -121,7 +123,6 @@ public:
         return result;
     }
 
-    template<typename... parameters>
     void broadcast(parameters... Args)
     {
         std::scoped_lock lock(m_event_state->mutex);

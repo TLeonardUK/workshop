@@ -3,7 +3,6 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/entry.h"
-#include "workshop.core.win32/utils/windows_headers.h"
 #include "workshop.core/memory/memory.h"
 #include "workshop.core/memory/memory_tracker.h"
 

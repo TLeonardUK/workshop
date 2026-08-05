@@ -3,37 +3,24 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.render_interface.vulkan/vulkan_ri_buffer.h"
-#include "workshop.render_interface.vulkan/vulkan_ri_interface.h"
-#include "workshop.core/memory/memory_tracker.h"
 
 namespace ws {
 
-// vulkan-todo
-
-vulkan_ri_buffer::vulkan_ri_buffer(vulkan_render_interface& renderer, const char* debug_name, const ri_buffer::create_params& params)
-    : m_renderer(renderer)
-    , m_debug_name(debug_name)
-    , m_create_params(params)
+vulkan_ri_buffer::vulkan_ri_buffer(const create_params& params, const char* debug_name)
+    : m_params(params)
+    , m_debug_name(debug_name ? debug_name : "")
+    , m_backing_store(params.element_count * params.element_size)
 {
-}
-
-vulkan_ri_buffer::~vulkan_ri_buffer()
-{
-}
-
-result<void> vulkan_ri_buffer::create_resources()
-{
-    return false;
 }
 
 size_t vulkan_ri_buffer::get_element_count()
 {
-    return m_create_params.element_count;
+    return m_params.element_count;
 }
 
 size_t vulkan_ri_buffer::get_element_size()
 {
-    return m_create_params.element_size;
+    return m_params.element_size;
 }
 
 const char* vulkan_ri_buffer::get_debug_name()
@@ -43,12 +30,16 @@ const char* vulkan_ri_buffer::get_debug_name()
 
 ri_resource_state vulkan_ri_buffer::get_initial_state()
 {
-    return m_common_state;
+    return ri_resource_state::initial;
 }
 
 void* vulkan_ri_buffer::map(size_t offset, size_t size)
 {
-    return nullptr;
+    if (m_backing_store.empty())
+    {
+        return nullptr;
+    }
+    return m_backing_store.data() + offset;
 }
 
 void vulkan_ri_buffer::unmap(void* pointer)

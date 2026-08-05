@@ -46,7 +46,7 @@ void db_terminate()
 
 void db_console_write(const char* text, console_color color)
 {
-    printf("\003[%im%s", console_color_codes[(int)color], text.c_str());
+    printf("\003[%im%s", console_color_codes[(int)color], text);
 }
 
 result<void> db_load_symbols()

@@ -3,6 +3,12 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.core/memory/memory_tracker.h"
+#include "workshop.core/debug/debug.h"
+
+#ifdef WS_LINUX
+#include <malloc.h>
+#define _msize malloc_usable_size
+#endif
 
 namespace ws {
 namespace {
@@ -163,7 +169,7 @@ void memory_tracker::record_alloc(memory_type type, string_hash asset_id, size_t
 
     if (type == memory_type::engine__command_queue && asset_id != string_hash::empty)
     {
-        __debugbreak();
+        db_break();
     }
 
 	bucket.allocation_count.fetch_add(1);
