@@ -3792,3 +3792,10 @@ set(CMAKE_OBJC_FLAGS "${CMAKE_OBJC_FLAGS} ${CMAKE_C_FLAGS}")
 if(TARGET SDL2::SDL2-static AND NOT TARGET SDL2::SDL2)
   add_library(SDL2::SDL2 ALIAS SDL2-static)
 endif()
+
+# WS_CHANGE
+foreach(sdl2_target SDL2 SDL2-static)
+    if (TARGET ${sdl2_target})
+        target_compile_options(${sdl2_target} PRIVATE -Wno-discarded-qualifiers)
+    endif()
+endforeach()

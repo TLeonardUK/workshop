@@ -50,7 +50,8 @@
 #if defined(WIN32) || defined(_WIN64)
 #define ALIGN_16 __declspec(align(16))
 #else  // !WIN32 && !_WIN64
-#define ALIGN_16
+// WS_CHANGE
+#define ALIGN_16 __attribute__((aligned(16)))
 #endif  // !WIN32 && !_WIN64
 #endif
 
