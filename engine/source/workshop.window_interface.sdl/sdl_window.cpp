@@ -27,7 +27,11 @@ void* sdl_window::get_platform_handle()
 
     SDL_GetWindowWMInfo(m_window, &info);
 
+#if defined(WS_WINDOWS)
     return reinterpret_cast<void*>(info.info.win.window);
+#elif defined(WS_LINUX)
+    return nullptr;
+#endif
 }
 
 SDL_Window* sdl_window::get_sdl_handle()
@@ -85,7 +89,11 @@ result<void> sdl_window::apply_changes()
     {
         int flags = SDL_WINDOW_ALLOW_HIGHDPI;
 
+#if defined(WS_WINDOWS)
         if (m_compatibility != ri_interface_type::dx12)
+#elif defined(WS_LINUX)
+        if (m_compatibility != ri_interface_type::vulkan)
+#endif
         {
             db_error(window, "Requested compatibility of SDL window with unsupported renderer.");
             return standard_errors::invalid_parameter;

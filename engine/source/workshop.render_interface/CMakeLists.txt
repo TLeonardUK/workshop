@@ -44,6 +44,8 @@ target_link_libraries(${PROJECT_NAME}
 
 if (WIN32)
     target_link_libraries(${PROJECT_NAME} workshop.render_interface.dx12)
+elseif (LINUX)
+    target_link_libraries(${PROJECT_NAME} workshop.render_interface.vulkan)
 endif()
 
 if (USE_PRECOMPILED_HEADERS)

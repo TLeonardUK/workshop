@@ -184,10 +184,12 @@ set(PLATFORM_LIB "")
 
 # Link to appropriate platform implementation.
 if (WIN32)
-    set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.win32)
+    set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.win32 nativefiledialog)
+elseif (LINUX)
+    set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.linux)
 endif()
 
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
     lodepng
     bc7enc
     assimp
@@ -195,7 +197,6 @@ target_link_libraries(${PROJECT_NAME}
     dds-ktx
     stb
     CMP_Core
-    nativefiledialog
     yamlcpp
     ${PLATFORM_LIB}
 )
