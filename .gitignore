@@ -8,6 +8,8 @@ tests/
 /junk/
 .vs/
 .idea/
+CMakeFiles/
+CMakeCache.txt
 
 # Ignore exclusions
 !source/thirdparty/**
