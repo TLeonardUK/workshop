@@ -37,7 +37,9 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 11)
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC -DHAVE_UNISTD_H=1)
+if (NOT WIN32)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DHAVE_UNISTD_H=1)
+endif()
 target_compile_definitions(${PROJECT_NAME} PUBLIC -DHAVE_STDARG_H=1)
 target_compile_definitions(${PROJECT_NAME} PUBLIC -D_LARGEFILE64_SOURCE=1)
 
