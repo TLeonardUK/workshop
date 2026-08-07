@@ -5,15 +5,22 @@
 #include "example/app.h"
 
 #include "workshop.engine/engine/engine.h"
-#include "workshop.engine/engine/world.h"
 
+#include "workshop.input_interface/input_interface.h"
+#include "workshop.physics_interface/physics_interface.h"
+#include "workshop.platform_interface/platform_interface.h"
 #include "workshop.render_interface/ri_interface.h"
 #include "workshop.window_interface/window_interface.h"
-#include "workshop.input_interface/input_interface.h"
-#include "workshop.platform_interface/platform_interface.h"
-#include "workshop.physics_interface/physics_interface.h"
 
+#include "workshop.core/app/app.h"
+#include "workshop.core/utils/frame_time.h"
+#include "workshop.core/utils/result.h"
+#include "workshop.engine/ecs/object_manager.h"
 #include "workshop.game_framework/systems/default_systems.h"
+#include "workshop.window_interface/window.h"
+
+#include <memory>
+#include <string>
 
 std::shared_ptr<ws::app> make_app()
 {
@@ -29,15 +36,6 @@ std::string example_game_app::get_name()
 
 void example_game_app::configure_engine(engine& engine)
 {
-#if defined(WS_WINDOWS)
-    engine.set_render_interface_type(ri_interface_type::dx12);
-#elif defined(WS_LINUX)
-    engine.set_render_interface_type(ri_interface_type::vulkan);
-#endif
-    engine.set_window_interface_type(window_interface_type::sdl);
-    engine.set_input_interface_type(input_interface_type::sdl);
-    engine.set_platform_interface_type(platform_interface_type::sdl);
-    engine.set_physics_interface_type(physics_interface_type::jolt);
     engine.set_window_mode(get_name(), 1920, 1080, ws::window_mode::windowed);
     engine.set_system_registration_callback([](object_manager& obj_manager) {
         register_default_systems(obj_manager);

@@ -6,13 +6,18 @@
 
 #include "workshop.core/utils/init_list.h"
 
-#include "workshop.render_interface/ri_pipeline.h"
-#include "workshop.render_interface/ri_param_block_archetype.h"
-#include "workshop.render_interface/ri_texture.h"
-#include "workshop.render_interface/ri_sampler.h"
+#include "ri_types.h"
 #include "workshop.render_interface/ri_buffer.h"
-#include "workshop.render_interface/ri_staging_buffer.h"
+#include "workshop.render_interface/ri_param_block_archetype.h"
+#include "workshop.render_interface/ri_pipeline.h"
 #include "workshop.render_interface/ri_query.h"
+#include "workshop.render_interface/ri_sampler.h"
+#include "workshop.render_interface/ri_staging_buffer.h"
+#include "workshop.render_interface/ri_texture.h"
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <span>
 
 namespace ws {
 
@@ -38,10 +43,10 @@ enum class ri_layout_usage;
 // ================================================================================================
 enum class ri_interface_type
 {
-#ifdef WS_WINDOWS
+#if defined(WS_WINDOWS)
     dx12,
 #endif
-#ifdef WS_LINUX
+#if defined(WS_WINDOWS) || defined(WS_LINUX)
     vulkan,
 #endif
 };

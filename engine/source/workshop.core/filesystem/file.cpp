@@ -4,16 +4,19 @@
 // ================================================================================================
 #include "workshop.core/filesystem/file.h"
 #include "workshop.core/containers/string.h"
+#include "workshop.core/utils/lexer.h"
 
 #include <filesystem>
 #include <array>
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 namespace {
 
 std::filesystem::path g_application_path;
 std::vector<std::string> g_command_line;
+std::unordered_map<std::string, std::string> g_options;
 std::array<std::filesystem::path, static_cast<int>(ws::special_path::count)> g_special_paths;
 
 };
@@ -40,25 +43,69 @@ std::filesystem::path get_application_path()
     return g_application_path;
 }
 
-std::vector<std::string> get_command_line()
+const std::vector<std::string>& get_command_line()
 {
     return g_command_line;
 }
 
 bool is_option_set(const char* name)
 { 
-    // TODO: Parse this stuff better.
-    std::string option_1 = "-" + std::string(name);
-    std::string option_2 = "--" + std::string(name);
+    std::string option_name = string_lower(name);
+    return (g_options.find(option_name) != g_options.end());
+}
 
-    for (std::string& value : g_command_line)
+bool get_option_bool(const char* name, bool default_value)
+{
+    std::string option_name = string_lower(name);
+
+    auto iter = g_options.find(option_name);
+    if (iter == g_options.end())
     {
-        if (value == option_1 || value == option_2)
-        {
-            return true;
-        }
+        return default_value;
     }
-    return false;
+
+    return (_stricmp(iter->second.c_str(), "1") == 0 || 
+            _stricmp(iter->second.c_str(), "true") == 0 || 
+            _stricmp(iter->second.c_str(), "on") == 0);
+}
+
+std::string get_option_string(const char* name, std::string default_value)
+{
+    std::string option_name = string_lower(name);
+
+    auto iter = g_options.find(option_name);
+    if (iter == g_options.end())
+    {
+        return default_value;
+    }
+
+    return iter->second;
+}
+
+float get_option_float(const char* name, float default_value)
+{
+    std::string option_name = string_lower(name);
+
+    auto iter = g_options.find(option_name);
+    if (iter == g_options.end())
+    {
+        return default_value;
+    }
+
+    return (float)atof(iter->second.c_str());
+}
+
+int get_option_int(const char* name, int default_value)
+{
+    std::string option_name = string_lower(name);
+
+    auto iter = g_options.find(option_name);
+    if (iter == g_options.end())
+    {
+        return default_value;
+    }
+
+    return (int)atoi(iter->second.c_str());
 }
 
 void set_command_line(const std::vector<std::string>& args)
@@ -67,6 +114,82 @@ void set_command_line(const std::vector<std::string>& args)
 
     g_command_line = std::vector<std::string>(args.begin() + 1, args.end());
     g_application_path = args[0];
+
+    // Parse options out of the command line.
+    //
+    // Options can be declared in the following formats:
+    //      +something
+    //      -something
+    //      --something
+    //
+    //      +something=test
+    //      -something=test
+    //      --something=test
+    // 
+    //      +something test
+    //      -something test
+    //      --something test
+    //
+    std::string joined = string_join(g_command_line, " ");
+
+    lexer lex;
+    token tok;
+    lex.load(joined.c_str());
+
+    int first_argument = true;
+
+    while (lex.read(tok))
+    {
+        // -something or +something
+        if (tok.type == token_type::op_sub || tok.type == token_type::op_add)
+        {
+            token_type original_tok = tok.type;
+
+            // Read the identifier (or the next - or identifier)
+            if (!lex.read(tok))
+            {
+                break;
+            }
+
+            // Secondary - (--something)
+            if (original_tok == token_type::op_sub && tok.type == token_type::op_sub)
+            {
+                // Read identifier
+                if (!lex.read(tok))
+                {
+                    break;
+                }
+            }
+        }
+
+        // Expect identifier next.
+        if (tok.type != token_type::literal_identifier)
+        {
+            db_error(core, "Unexpected command line '%s'.", tok.buffer);
+            break;
+        }
+
+        std::string option_name = tok.buffer;
+        std::string option_value = "1";
+
+        // Accept optional assignment token.
+        if (lex.peek(tok) && tok.type == token_type::op_assign)
+        {
+            lex.read(tok);
+        }
+
+        // Read value if one is available.
+        if (lex.peek(tok) && (tok.type == token_type::literal_float || 
+                              tok.type == token_type::literal_int || 
+                              tok.type == token_type::literal_identifier || 
+                              tok.type == token_type::literal_string))
+        {
+            lex.read(tok);
+            option_value = tok.buffer;
+        }
+
+        g_options.insert({ string_lower(option_name), option_value });
+    }
 }
 
 char get_drive_letter(const std::filesystem::path& path)

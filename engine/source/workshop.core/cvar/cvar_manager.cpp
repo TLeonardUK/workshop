@@ -55,6 +55,27 @@ void cvar_manager::register_cvar(cvar_base* value)
         return;
     }
     m_cvars.push_back(value);
+
+    // If option is set on command line then set our value.
+    if (is_option_set(value->get_name()))
+    {
+        if (value->get_value_type() == typeid(int))
+        {
+            value->set_int(get_option_int(value->get_name(), 1), cvar_source::set_by_command_line);
+        }
+        else if (value->get_value_type() == typeid(bool))
+        {
+            value->set_bool(get_option_bool(value->get_name(), false), cvar_source::set_by_command_line);
+        }
+        else if (value->get_value_type() == typeid(float))
+        {
+            value->set_float(get_option_float(value->get_name(), 0.0f), cvar_source::set_by_command_line);
+        }
+        else if (value->get_value_type() == typeid(std::string))
+        {
+            value->set_string(get_option_string(value->get_name(), "").c_str(), cvar_source::set_by_command_line);
+        }
+    }
 }
 
 void cvar_manager::unregister_cvar(cvar_base* value)

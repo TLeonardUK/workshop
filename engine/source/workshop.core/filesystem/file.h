@@ -48,7 +48,7 @@ void set_special_path(special_path path, const std::filesystem::path& physical_p
 //  Gets the command line arguments passed to the application.
 //  Arguments DO NOT include first argument that contains the path to the application.
 // ================================================================================================
-std::vector<std::string> get_command_line();
+const std::vector<std::string>& get_command_line();
 
 // ================================================================================================
 //  Sets the command line arguments passed to the application. Shouldn't normally be used
@@ -61,6 +61,26 @@ void set_command_line(const std::vector<std::string>& args);
 //  Gets if a command line option is set.
 // ================================================================================================
 bool is_option_set(const char* name);
+
+// ================================================================================================
+//  Gets the value of an option as bool or the default if not set.
+// ================================================================================================
+bool get_option_bool(const char* name, bool default_value);
+
+// ================================================================================================
+//  Gets the value of an option as string or the default if not set.
+// ================================================================================================
+std::string get_option_string(const char* name, std::string default_value);
+
+// ================================================================================================
+//  Gets the value of an option as float or the default if not set.
+// ================================================================================================
+float get_option_float(const char* name, float default_value);
+
+// ================================================================================================
+//  Gets the value of an option as int or the default if not set.
+// ================================================================================================
+int get_option_int(const char* name, int default_value);
 
 // ================================================================================================
 //  Gets the directory non-roadming application data should be stored in.

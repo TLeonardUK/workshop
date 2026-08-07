@@ -63,6 +63,9 @@ enum class cvar_source
     // Some area of code has explicitly set the value.
     set_by_code = 6,
 
+    // Set vy a command line argument.
+    set_by_command_line = 7,
+
     COUNT,
 };
 
@@ -74,6 +77,7 @@ static inline const char* cvar_source_strings[(int)cvar_source::COUNT] = {
     "set_by_save",
     "set_by_user",
     "set_by_code",
+    "set_by_command_line"
 };
 
 // Base class for all cvar's, don't use directly, use the 

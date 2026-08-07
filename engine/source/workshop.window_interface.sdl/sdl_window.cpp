@@ -6,6 +6,19 @@
 #include "workshop.window_interface.sdl/sdl_window_interface.h"
 
 #include "thirdparty/sdl2/include/SDL_syswm.h"
+#include <functional>
+#include <thirdparty/sdl2/include/SDL_error.h>
+#include <thirdparty/sdl2/include/SDL_events.h>
+#include <thirdparty/sdl2/include/SDL_keycode.h>
+#include <thirdparty/sdl2/include/SDL_stdinc.h>
+#include <thirdparty/sdl2/include/SDL_version.h>
+#include <thirdparty/sdl2/include/SDL_video.h>
+#include <workshop.core/debug/debug.h>
+#include <workshop.core/debug/log.h>
+#include <workshop.core/utils/result.h>
+#include <workshop.platform_interface.sdl/sdl_platform_interface.h>
+#include <workshop.render_interface/ri_interface.h>
+#include <workshop.window_interface/window.h>
 
 namespace ws {
 
@@ -89,11 +102,8 @@ result<void> sdl_window::apply_changes()
     {
         int flags = SDL_WINDOW_ALLOW_HIGHDPI;
 
-#if defined(WS_WINDOWS)
-        if (m_compatibility != ri_interface_type::dx12)
-#elif defined(WS_LINUX)
-        if (m_compatibility != ri_interface_type::vulkan)
-#endif
+        if (m_compatibility != ri_interface_type::dx12 && 
+            m_compatibility != ri_interface_type::vulkan)
         {
             db_error(window, "Requested compatibility of SDL window with unsupported renderer.");
             return standard_errors::invalid_parameter;
@@ -117,6 +127,10 @@ result<void> sdl_window::apply_changes()
                 flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
                 break;
             }
+        }
+
+        if (m_compatibility == ri_interface_type::vulkan) {
+            flags |= SDL_WINDOW_VULKAN;
         }
 
 #ifndef WS_RELEASE

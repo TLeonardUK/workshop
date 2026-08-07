@@ -32,6 +32,8 @@ int entry_point(int argc, char* argv[])
         command_line[i] = argv[i];
     }
 
+    log_handler_console console_logger;
+
     set_command_line(command_line);
 
     // Setup application we are running.
@@ -39,10 +41,9 @@ int entry_point(int argc, char* argv[])
 
     // Setup default logging handlers.
     set_special_path(special_path::common_data, ws::get_local_appdata_directory() / "workshop" / "common");
-    set_special_path(special_path::app_data,    ws::get_local_appdata_directory() / "workshop" / app->get_name());
-    set_special_path(special_path::app_logs,    ws::get_local_appdata_directory() / "workshop" / app->get_name() / "logs");
-    
-    log_handler_console console_logger;
+    set_special_path(special_path::app_data, ws::get_local_appdata_directory() / "workshop" / app->get_name());
+    set_special_path(special_path::app_logs, ws::get_local_appdata_directory() / "workshop" / app->get_name() / "logs");
+
     log_handler_file file_logger(get_special_path(special_path::app_logs), 5, 16 * 1024 * 1024);
 
     version_info version = get_version();

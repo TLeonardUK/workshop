@@ -2,81 +2,126 @@
 //  workshop
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
-#include "workshop.engine/engine/engine.h"
-#include "workshop.engine/engine/world.h"
 #include "workshop.engine/assets/asset_database.h"
 #include "workshop.engine/assets/scene/scene_loader.h"
+#include "workshop.engine/engine/engine.h"
+#include "workshop.engine/engine/world.h"
 #include "workshop.engine/presentation/presenter.h"
 
 #include "workshop.editor/editor/editor.h"
 
-#include "workshop.core/utils/init_list.h"
-#include "workshop.core/utils/time.h"
-#include "workshop.core/perf/profile.h"
+#include "workshop.core/app/app.h"
 #include "workshop.core/async/task_scheduler.h"
-#include "workshop.core/async/async.h"
-#include "workshop.core/memory/memory_tracker.h"
-#include "workshop.core/memory/async_copy_manager.h"
-#include "workshop.core/statistics/statistics_manager.h"
+#include "workshop.core/cvar/core_cvars.h"
+#include "workshop.core/filesystem/async_io_manager.h"
+#include "workshop.core/filesystem/file.h"
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/virtual_file_system_disk_handler.h"
 #include "workshop.core/filesystem/virtual_file_system_redirect_handler.h"
-#include "workshop.core/filesystem/file.h"
-#include "workshop.core/filesystem/stream.h"
-#include "workshop.core/filesystem/async_io_manager.h"
-#include "workshop.core/app/app.h"
-#include "workshop.core/statistics/statistics_manager.h"
+#include "workshop.core/memory/async_copy_manager.h"
+#include "workshop.core/memory/memory_tracker.h"
+#include "workshop.core/perf/profile.h"
 #include "workshop.core/perf/timer.h"
-#include "workshop.core/cvar/core_cvars.h"
+#include "workshop.core/statistics/statistics_manager.h"
+#include "workshop.core/utils/init_list.h"
+#include "workshop.core/utils/time.h"
 
-#include "workshop.core/cvar/cvar.h"
 #include "workshop.core/cvar/cvar_manager.h"
 
 #include "workshop.assets/asset_manager.h"
 #include "workshop.assets/caches/asset_cache_disk.h"
+#include <workshop.core/debug/log.h>
+#include <workshop.core/perf/timer.h>
+#include <workshop.core/platform/platform.h>
+#include <workshop.core/utils/frame_time.h>
+#include <workshop.core/utils/init_list.h>
+#include <workshop.core/utils/result.h>
+#include <workshop.engine/assets/scene/scene.h>
 
-#include "workshop.renderer/renderer.h"
-#include "workshop.renderer/render_effect.h"
-#include "workshop.renderer/assets/shader/shader.h"
-#include "workshop.renderer/assets/shader/shader_loader.h"
 #include "workshop.renderer/assets/material/material.h"
+#include "workshop.renderer/assets/shader/shader.h"
 #include "workshop.renderer/render_cvars.h"
+#include "workshop.renderer/renderer.h"
 
-#include "workshop.window_interface/window_interface.h"
 #include "workshop.window_interface.sdl/sdl_window_interface.h"
+#include "workshop.window_interface/window_interface.h"
 
-#include "workshop.input_interface/input_interface.h"
 #include "workshop.input_interface.sdl/sdl_input_interface.h"
+#include "workshop.input_interface/input_interface.h"
 
-#include "workshop.platform_interface/platform_interface.h"
 #include "workshop.platform_interface.sdl/sdl_platform_interface.h"
+#include "workshop.platform_interface/platform_interface.h"
 
-#include "workshop.physics_interface/physics_interface.h"
-#include "workshop.physics_interface/physics_cvars.h"
 #include "workshop.physics_interface.jolt/jolt_pi_interface.h"
+#include "workshop.physics_interface/physics_cvars.h"
+#include "workshop.physics_interface/physics_interface.h"
 
 #include "workshop.render_interface/ri_interface.h"
 
 #if defined(WS_WINDOWS)
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
-#elif defined(WS_LINUX)
+#endif
+
+#include "workshop.core/debug/log.h"
+#include "workshop.core/platform/platform.h"
+#include "workshop.core/utils/frame_time.h"
+#include "workshop.core/utils/result.h"
+#include "workshop.engine/assets/scene/scene.h"
+#include "workshop.window_interface/window.h"
+#if defined(WS_WINDOWS) || defined(WS_LINUX)
 #include "workshop.render_interface.vulkan/vulkan_ri_interface.h"
 #endif
+#include "workshop.core/cvar/cvar.h"
+#include <algorithm>
+#include <filesystem>
+#include <memory>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
+#include <workshop.assets/asset_manager.h>
+
+#include <algorithm>
+#include <filesystem>
+#include <memory>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 namespace ws {
 
+inline cvar<bool> cvar_dx12(cvar_flag::read_only, false, "dx12", "Sets the renderer to default to dx12.");
+inline cvar<bool> cvar_vulkan(cvar_flag::read_only, false, "vulkan", "Sets the renderer to default to vulkan.");
+
 engine::engine()
-#if defined(WS_WINDOWS)
-    : m_render_interface_type(ri_interface_type::dx12)
-#elif defined(WS_LINUX)
-    : m_render_interface_type(ri_interface_type::vulkan)
-#endif
-    , m_window_interface_type(window_interface_type::sdl)
+    : m_window_interface_type(window_interface_type::sdl)
     , m_input_interface_type(input_interface_type::sdl)
     , m_platform_interface_type(platform_interface_type::sdl)
     , m_physics_interface_type(physics_interface_type::jolt)
     , m_window_mode(window_mode::windowed)
 {
+    cvar_dx12.register_self();
+    cvar_vulkan.register_self();
+
+#if defined(WS_WINDOWS)
+	m_render_interface_type = ri_interface_type::dx12;
+#elif defined(WS_LINUX)
+    m_render_interface_type = ri_interface_type::vulkan;
+#endif
+
+#if defined(WS_WINDOWS) || defined(WS_LINUX)
+	if (cvar_vulkan.get_bool()) 
+    {
+		m_render_interface_type = ri_interface_type::vulkan;
+	}
+#endif
+#if defined(WS_WINDOWS)
+	if (cvar_dx12.get_bool()) 
+    {
+		m_render_interface_type = ri_interface_type::dx12;
+	}
+#endif
 }
 
 engine::~engine() = default;
@@ -668,7 +713,7 @@ result<void> engine::create_render_interface(init_list& list)
 {
     switch (m_render_interface_type)
     {
-#ifdef WS_WINDOWS
+#if defined(WS_WINDOWS)
     case ri_interface_type::dx12:
         {
             m_render_interface = std::make_unique<dx12_render_interface>((size_t)ray_type::COUNT, (size_t)material_domain::COUNT);
@@ -676,7 +721,7 @@ result<void> engine::create_render_interface(init_list& list)
             break;
         }
 #endif
-#ifdef WS_LINUX
+#if defined(WS_WINDOWS) || defined(WS_LINUX)
     case ri_interface_type::vulkan:
         {
             m_render_interface = std::make_unique<vulkan_render_interface>((size_t)ray_type::COUNT, (size_t)material_domain::COUNT);

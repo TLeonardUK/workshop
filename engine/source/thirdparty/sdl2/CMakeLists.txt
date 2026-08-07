@@ -526,6 +526,17 @@ if(VITA)
   set_option(VIDEO_VITA_PVR  "Build with PSVita PVR gles/gles2 support" OFF)
 endif()
 
+# WS_CHANGE
+set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
+set(SDL_TEST_ENABLED_BY_DEFAULT OFF)
+set(SDL_SHARED OFF)
+set(SDL_TEST OFF)
+set(SDL_TESTS OFF)
+set(SDL_INSTALL_TESTS OFF)
+set(SDL2_DISABLE_INSTALL ON)
+set(SDL2_DISABLE_UNINSTALL ON)
+set(SDL2_DISABLE_SDL2MAIN ON)
+
 # General source files
 file(GLOB SOURCE_FILES
   ${SDL2_SOURCE_DIR}/src/*.c
@@ -3799,5 +3810,8 @@ foreach(sdl2_target SDL2 SDL2-static)
         if (NOT MSVC)
             target_compile_options(${sdl2_target} PRIVATE -Wno-discarded-qualifiers)
         endif()
-    endif()
+    endif()    
+endforeach()
+foreach(sdl2_target SDL2-static sdl_headers_copy)
+  util_setup_folder_structure(${sdl2_target} SOURCES "engine/thirdparty")
 endforeach()
