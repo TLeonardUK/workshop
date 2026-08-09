@@ -61,6 +61,7 @@ public:
 protected:
 
     friend class sdl_window_interface;
+    friend class stub_window_interface;
 
     void set_compatibility(ri_interface_type value);
 

@@ -44,19 +44,24 @@
 #include "workshop.renderer/renderer.h"
 
 #include "workshop.window_interface.sdl/sdl_window_interface.h"
+#include "workshop.window_interface.stub/stub_window_interface.h"
 #include "workshop.window_interface/window_interface.h"
 
 #include "workshop.input_interface.sdl/sdl_input_interface.h"
+#include "workshop.input_interface.stub/stub_input_interface.h"
 #include "workshop.input_interface/input_interface.h"
 
 #include "workshop.platform_interface.sdl/sdl_platform_interface.h"
+#include "workshop.platform_interface.stub/stub_platform_interface.h"
 #include "workshop.platform_interface/platform_interface.h"
 
 #include "workshop.physics_interface.jolt/jolt_pi_interface.h"
+#include "workshop.physics_interface.stub/stub_pi_interface.h"
 #include "workshop.physics_interface/physics_cvars.h"
 #include "workshop.physics_interface/physics_interface.h"
 
 #include "workshop.render_interface/ri_interface.h"
+#include "workshop.render_interface.stub/stub_ri_interface.h"
 
 #if defined(WS_WINDOWS)
 #include "workshop.render_interface.dx12/dx12_ri_interface.h"
@@ -611,6 +616,12 @@ result<void> engine::create_window_interface(init_list& list)
             m_window_interface->register_init(list);
             break;
         }
+    case window_interface_type::stub:
+        {
+            m_window_interface = std::make_unique<stub_window_interface>(m_platform_interface.get());
+            m_window_interface->register_init(list);
+            break;
+        }
     default:
         {
             db_error(core, "Windowing type requested is not implemented.");
@@ -635,6 +646,12 @@ result<void> engine::create_input_interface(init_list& list)
     case input_interface_type::sdl:
         {
             m_input_interface = std::make_unique<sdl_input_interface>(m_platform_interface.get(), m_window.get());
+            m_input_interface->register_init(list);
+            break;
+        }
+    case input_interface_type::stub:
+        {
+            m_input_interface = std::make_unique<stub_input_interface>(m_platform_interface.get(), m_window.get());
             m_input_interface->register_init(list);
             break;
         }
@@ -665,6 +682,12 @@ result<void> engine::create_physics_interface(init_list& list)
             m_physics_interface->register_init(list);
             break;
         }
+    case physics_interface_type::stub:
+        {
+            m_physics_interface = std::make_unique<stub_pi_interface>();
+            m_physics_interface->register_init(list);
+            break;
+        }
     default:
         {
             db_error(core, "Physics interface type requested is not implemented.");
@@ -689,6 +712,12 @@ result<void> engine::create_platform_interface(init_list& list)
     case platform_interface_type::sdl:
         {
             m_platform_interface = std::make_unique<sdl_platform_interface>();
+            m_platform_interface->register_init(list);
+            break;
+        }
+    case platform_interface_type::stub:
+        {
+            m_platform_interface = std::make_unique<stub_platform_interface>();
             m_platform_interface->register_init(list);
             break;
         }
@@ -729,6 +758,12 @@ result<void> engine::create_render_interface(init_list& list)
             break;
         }
 #endif
+    case ri_interface_type::stub:
+        {
+            m_render_interface = std::make_unique<stub_render_interface>((size_t)ray_type::COUNT, (size_t)material_domain::COUNT);
+            m_render_interface->register_init(list);
+            break;
+        }
     default:
         {
             db_error(core, "Renderer type requested is not implemented.");

@@ -49,6 +49,7 @@ enum class ri_interface_type
 #if defined(WS_WINDOWS) || defined(WS_LINUX)
     vulkan,
 #endif
+    stub,
 };
 
 // ================================================================================================

@@ -16,9 +16,10 @@ SET(SOURCES
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 # Link appropriate implementation libraries.
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
     workshop.core
     workshop.input_interface.sdl
+    workshop.input_interface.stub
 )
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/input")

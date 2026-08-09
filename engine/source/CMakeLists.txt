@@ -13,6 +13,8 @@ if (WIN32)
     add_subdirectory(workshop.core.win32)
 elseif (LINUX)
     add_subdirectory(workshop.core.linux)
+else()
+    add_subdirectory(workshop.core.stub)
 endif()
 
 # ================================================================================================
@@ -26,19 +28,24 @@ endif()
 if (WIN32 OR LINUX)
     add_subdirectory(workshop.render_interface.vulkan)
 endif()
+add_subdirectory(workshop.render_interface.stub)
 add_subdirectory(workshop.renderer)
 
 add_subdirectory(workshop.platform_interface)
 add_subdirectory(workshop.platform_interface.sdl)
+add_subdirectory(workshop.platform_interface.stub)
 
 add_subdirectory(workshop.window_interface)
 add_subdirectory(workshop.window_interface.sdl)
+add_subdirectory(workshop.window_interface.stub)
 
 add_subdirectory(workshop.input_interface)
 add_subdirectory(workshop.input_interface.sdl)
+add_subdirectory(workshop.input_interface.stub)
 
 add_subdirectory(workshop.physics_interface)
 add_subdirectory(workshop.physics_interface.jolt)
+add_subdirectory(workshop.physics_interface.stub)
 
 # ================================================================================================
 #  Tier 2 - Engine functionality

@@ -48,6 +48,7 @@ endif()
 if (WIN32 OR LINUX)
     target_link_libraries(${PROJECT_NAME} workshop.render_interface.vulkan)
 endif()
+target_link_libraries(${PROJECT_NAME} workshop.render_interface.stub)
 
 if (USE_PRECOMPILED_HEADERS)
     target_precompile_headers(${PROJECT_NAME} PUBLIC public.pch PRIVATE private.pch)

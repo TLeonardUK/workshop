@@ -13,13 +13,15 @@ enum class platform_type
 {
     windows,
     linux,
+    stub,
 
     COUNT
 };
 
 static const char* platform_type_strings[static_cast<int>(platform_type::COUNT)] = {
     "windows",
-    "linux"
+    "linux",
+    "stub"
 };
 
 DEFINE_ENUM_TO_STRING(platform_type, platform_type_strings);
