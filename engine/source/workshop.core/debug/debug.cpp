@@ -53,11 +53,11 @@ void db_assert_failed(const char* expression, const char* file, size_t line, con
         db_callstack::frame& frame = callstack->frames[i];
         if (frame.function.empty())
         {
-            db_error(core, "[%zi] 0x%p", i, frame.address);
+            db_error(core, "[%zi] %p", i, frame.address);
         }
         else
         {
-            db_error(core, "[%zi] 0x%p %s!%s (%s:%zi)", i, frame.address, frame.module.c_str(), frame.function.c_str(), frame.filename.c_str(), frame.line);
+            db_error(core, "[%zi] %p %s!%s (%s:%zi)", i, frame.address, frame.module.c_str(), frame.function.c_str(), frame.filename.c_str(), frame.line);
         }
     }
 

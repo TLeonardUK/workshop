@@ -11,24 +11,22 @@ namespace ws {
 
 void platform_perf_init()
 {
-#ifndef WS_RELEASE
-    // linux-todo
-#endif
+    // No supported profiler on linux
 }
 
 void platform_perf_begin_marker(const color& color, const char* format, ...)
 {
-    // linux-todo
+    // No supported profiler on linux
 }
 
 void platform_perf_end_marker()
 {
-    // linux-todo
+    // No supported profiler on linux
 }
 
 void platform_perf_variable(double value, const char* format, ...)
 {
-    // linux-todo
+    // No supported profiler on linux
 }
 
 }; // namespace workshop

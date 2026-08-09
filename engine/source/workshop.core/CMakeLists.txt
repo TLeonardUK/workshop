@@ -188,7 +188,7 @@ set(PLATFORM_LIB "")
 if (WIN32)
     set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.win32 nativefiledialog)
 elseif (LINUX)
-    set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.linux)
+    set(PLATFORM_LIB ${PLATFORM_LIB} workshop.core.linux nativefiledialog)
 endif()
 
 target_link_libraries(${PROJECT_NAME}

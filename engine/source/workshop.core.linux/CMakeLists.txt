@@ -33,8 +33,18 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier0/core")
 
+find_library(UUID_LIBRARY uuid REQUIRED)
+
+find_path(DW_INCLUDE_DIR NAMES elfutils/libdwfl.h REQUIRED)
+find_library(DW_LIBRARY NAMES dw REQUIRED)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${DW_INCLUDE_DIR})
+
 target_link_libraries(${PROJECT_NAME}
     workshop.core
+    SDL2::SDL2
+    ${UUID_LIBRARY}
+    ${DW_LIBRARY}
 )
 
 if (USE_PRECOMPILED_HEADERS)

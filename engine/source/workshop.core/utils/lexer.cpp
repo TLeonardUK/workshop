@@ -5,6 +5,7 @@
 #include "workshop.core/utils/lexer.h"
 #include "workshop.core/utils/string_formatter.h"
 #include "workshop.core/debug/log.h"
+#include <cstring>
 
 namespace ws {
 
@@ -47,7 +48,7 @@ void lexer::log_error(const char* location, const char* format, ...)
     char error_msg[512];
 
     va_list va;
-    va_start(va, error_msg);
+    va_start(va, format);
     vsnprintf(error_msg, sizeof(error_msg), format, va);
     va_end(va);
 

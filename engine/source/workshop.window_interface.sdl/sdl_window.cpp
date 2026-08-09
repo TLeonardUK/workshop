@@ -102,8 +102,15 @@ result<void> sdl_window::apply_changes()
     {
         int flags = SDL_WINDOW_ALLOW_HIGHDPI;
 
-        if (m_compatibility != ri_interface_type::dx12 && 
-            m_compatibility != ri_interface_type::vulkan)
+        bool compatible_renderer = false;
+#if defined(WS_WINDOWS)
+        compatible_renderer |= (m_compatibility == ri_interface_type::dx12);
+#endif
+#if defined(WS_WINDOWS) || defined(WS_LINUX)
+        compatible_renderer |= (m_compatibility == ri_interface_type::vulkan);
+#endif
+
+        if (!compatible_renderer)
         {
             db_error(window, "Requested compatibility of SDL window with unsupported renderer.");
             return standard_errors::invalid_parameter;
