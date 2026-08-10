@@ -310,8 +310,6 @@ bool texture_loader::parse_properties(const char* path, YAML::Node& node, textur
 
 bool texture_loader::parse_file(const char* path, texture& asset)
 {
-    db_verbose(asset, "[%s] Parsing file", path);
-
     YAML::Node node;
     if (!load_asset_descriptor(path, node, k_texture_asset_descriptor_type, k_texture_asset_descriptor_minimum_version, k_texture_asset_descriptor_current_version))
     {

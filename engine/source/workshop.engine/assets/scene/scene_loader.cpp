@@ -318,8 +318,6 @@ bool scene_loader::parse_objects(const char* path, YAML::Node& node, scene& asse
 
 bool scene_loader::parse_file(const char* path, scene& asset)
 {
-    db_verbose(asset, "[%s] Parsing file", path);
-
     YAML::Node node;
     if (!load_asset_descriptor(path, node, k_scene_asset_descriptor_type, k_scene_asset_descriptor_minimum_version, k_scene_asset_descriptor_current_version))
     {

@@ -43,7 +43,7 @@ void* sdl_window::get_platform_handle()
 #if defined(WS_WINDOWS)
     return reinterpret_cast<void*>(info.info.win.window);
 #elif defined(WS_LINUX)
-    return nullptr;
+    return reinterpret_cast<void*>(m_window);
 #endif
 }
 

@@ -484,7 +484,6 @@ void asset_manager::process_asset(asset_state* state, bool release_operation_ref
     if (release_operation_reference)
     {
         state->current_operations.fetch_sub(1);
-        db_verbose(asset, "[%s] Reduced operation count to %zi", state->path.c_str(), state->current_operations.load());
     }
 
     // A different thread is already operating on this asset. We don't need to do anything
@@ -861,7 +860,7 @@ bool asset_manager::get_asset_compiled_path(asset_loader* loader, asset_state* s
         // Always compile if no compiled asset is found.
         if (compiled_path.empty())
         {
-            db_log(asset, "[%s] No compiled version available, compiling now.", state->path.c_str());
+            //db_log(asset, "[%s] No compiled version available, compiling now.", state->path.c_str());
             needs_compile = true;
         }
         // If compile asset exists, read the dependency header block and generate a cache key from the data

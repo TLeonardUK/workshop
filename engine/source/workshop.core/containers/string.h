@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cstdarg>
 
 #ifdef WS_LINUX
 #include <strings.h>
@@ -72,10 +73,15 @@ inline std::string string_format(const char* format, Args... args)
 // ================================================================================================
 inline std::string string_format_va(const char* format, va_list list)
 {
+    va_list list_copy;
+    va_copy(list_copy, list);
+
     size_t size = static_cast<size_t>(vsnprintf(nullptr, 0, format, list)) + 1; // Extra space for '\0'
 
     std::unique_ptr<char[]> buffer(new char[size]);
-    vsnprintf(buffer.get(), size, format, list);
+    vsnprintf(buffer.get(), size, format, list_copy);
+
+    va_end(list_copy);
 
     return std::string(buffer.get(), buffer.get() + size - 1); // We don't want the '\0' inside
 }

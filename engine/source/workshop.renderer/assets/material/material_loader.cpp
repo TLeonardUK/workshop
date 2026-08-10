@@ -303,8 +303,6 @@ bool material_loader::parse_parameters(const char* path, YAML::Node& node, mater
 
 bool material_loader::parse_file(const char* path, material& asset)
 {
-    db_verbose(asset, "[%s] Parsing file", path);
-
     YAML::Node node;
     if (!load_asset_descriptor(path, node, k_material_asset_descriptor_type, k_material_asset_descriptor_minimum_version, k_material_asset_descriptor_current_version))
     {

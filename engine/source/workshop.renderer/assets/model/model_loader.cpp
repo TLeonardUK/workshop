@@ -344,8 +344,6 @@ bool model_loader::parse_blacklist(const char* path, YAML::Node& node, model& as
 
 bool model_loader::parse_file(const char* path, model& asset)
 {
-    db_verbose(asset, "[%s] Parsing file", path);
-
     YAML::Node node;
     if (!load_asset_descriptor(path, node, k_model_asset_descriptor_type, k_model_asset_descriptor_minimum_version, k_model_asset_descriptor_current_version))
     {

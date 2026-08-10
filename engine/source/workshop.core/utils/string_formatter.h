@@ -41,6 +41,9 @@ inline void string_formatter<stack_space>::format_va(const char* format, va_list
     char* buffer_to_use = m_stack_space.data();
     m_using_stack = true;
 
+    va_list list_copy;
+    va_copy(list_copy, list);
+
     int ret = vsnprintf(buffer_to_use, m_stack_space.size(), format, list);
     int space_required = ret + 1;
 
@@ -51,8 +54,10 @@ inline void string_formatter<stack_space>::format_va(const char* format, va_list
         m_heap_space.resize(space_required);
 		m_using_stack = false;
 
-        vsnprintf(m_heap_space.data(), space_required, format, list);
+        vsnprintf(m_heap_space.data(), space_required, format, list_copy);
     }
+
+    va_end(list_copy);
 }
 
 template <int stack_space>
