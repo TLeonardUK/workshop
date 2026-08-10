@@ -22,8 +22,6 @@ add_subdirectory(stb)
 add_subdirectory(compressonator)
 add_subdirectory(JoltPhysics)
 
-if (WIN32)
-    add_subdirectory(dxcompiler)
-endif()
+add_subdirectory(dxcompiler)
 
 add_subdirectory(nativefiledialog)
