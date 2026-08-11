@@ -77,6 +77,8 @@ SET(SOURCES
     "passes/render_pass_query.cpp"
     "passes/render_pass_readback.h"
     "passes/render_pass_readback.cpp"
+    "passes/render_pass_readback_buffer.h"
+    "passes/render_pass_readback_buffer.cpp"
     
     "objects/render_world.h"
     "objects/render_world.cpp"
@@ -119,6 +121,8 @@ SET(SOURCES
     "systems/render_system_transparent_geometry.cpp"
     "systems/render_system_debug.h"
     "systems/render_system_debug.cpp"
+    "systems/render_system_gpu_logs.h"
+    "systems/render_system_gpu_logs.cpp"
     "systems/render_system_ssao.h"
     "systems/render_system_ssao.cpp"
     "systems/render_system_selection_outline.h"

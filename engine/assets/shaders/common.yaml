@@ -104,6 +104,13 @@ output_targets:
     color: [ R16_FLOAT ] # Only needs 1 channel, 4 for debugging.
 
 param_blocks:
+  # Contains debug functionality, included in all non-release shaders.
+  debug_info:
+    scope: draw
+    fields:
+      debug_output_buffer_size: int
+      debug_output_buffer_write_offset: rwbyteaddressbuffer
+      debug_output_buffer: rwbyteaddressbuffer
   # Contains all the parameters needed to read/write from the gbuffer.
   gbuffer:
     scope: draw

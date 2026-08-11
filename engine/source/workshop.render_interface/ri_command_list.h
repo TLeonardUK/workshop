@@ -105,6 +105,12 @@ public:
     // Copies a textures contents to a buffer.
     virtual void copy_texture(ri_texture* texture, ri_buffer* buffer) = 0;
 
+    // Copies a buffer to another buffer.
+    virtual void copy_buffer(ri_buffer* destination, ri_buffer* source) = 0;
+
+    // Clears the contents of a buffer to 0.
+    virtual void clear_buffer(ri_buffer* destination) = 0;
+
 };
 
 }; // namespace ws

@@ -68,6 +68,8 @@ void render_pass_compute::generate(renderer& renderer, generated_state& state_ou
             blocks = bind_param_blocks(view->get_resource_cache());
         }
 
+        blocks.push_back(renderer.get_debug_info_param_block());
+
         // Put together param block list to use.
         list.set_pipeline(*technique->pipeline);
         list.set_param_blocks(blocks);

@@ -47,6 +47,7 @@ void render_pass_primitives::generate(renderer& renderer, generated_state& state
         list.set_primitive_topology(ri_primitive::line_list);
         list.set_index_buffer(*index_buffer);
         list.set_param_blocks({
+            renderer.get_debug_info_param_block(),
             vertex_info_param_block,
             view->get_view_info_param_block()
             });

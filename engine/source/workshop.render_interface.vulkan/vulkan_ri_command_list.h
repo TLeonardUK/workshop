@@ -44,6 +44,9 @@ public:
     virtual void end_query(ri_query* query) override;
 
     virtual void copy_texture(ri_texture* texture, ri_buffer* buffer) override;
+    virtual void copy_buffer(ri_buffer* destination, ri_buffer* source) override;
+    virtual void clear_buffer(ri_buffer* destination) override;
+
 
 };
 

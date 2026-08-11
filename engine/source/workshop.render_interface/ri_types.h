@@ -352,6 +352,7 @@ enum class ri_descriptor_table
     sampler,
     buffer,
     rwbuffer,
+    rwbuffer_shader_invisible,
     rwtexture_2d,
     tlas,
 
@@ -370,6 +371,7 @@ inline static const char* ri_descriptor_table_strings[static_cast<int>(ri_descri
     "sampler",
     "buffer",
     "rwbuffer",
+    "rwbuffer_shader_invisible",
     "rwtexture_2d",
     "tlas",
 

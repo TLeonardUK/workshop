@@ -90,17 +90,23 @@ void render_pass_fullscreen::generate(renderer& renderer, generated_state& state
             list.set_pipeline(*technique->pipeline.get());
             list.set_render_targets(output.color_targets, output.depth_target);
 
+            std::vector<ri_param_block*> blocks;
+
             recti use_viewport;
             if (view)
             {
-                list.set_param_blocks(bind_param_blocks(view->get_resource_cache()));
+                blocks = bind_param_blocks(view->get_resource_cache());
                 use_viewport = view->get_viewport();
             }
             else
             {
-                list.set_param_blocks(param_blocks);
+                blocks = param_blocks;
                 use_viewport = { 0, 0, (int)output.color_targets[0].get_width(), (int)output.color_targets[0].get_height() };
             }
+
+            blocks.push_back(renderer.get_debug_info_param_block());
+
+            list.set_param_blocks(blocks);
 
             if (viewport != recti::empty)
             {

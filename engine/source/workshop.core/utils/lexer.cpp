@@ -43,6 +43,11 @@ void lexer::restore_state(const lexer_state& state)
 	m_state = state;
 }
 
+const char* lexer::get_cursor()
+{
+    return m_state.cursor;
+}
+
 void lexer::log_error(const char* location, const char* format, ...)
 {
     char error_msg[512];
@@ -98,6 +103,11 @@ void lexer::log_error(const char* location, const char* format, ...)
     db_error(core, "%s\n%s\n%s", error_msg, line, cursor_line);
 }
 
+bool lexer::expect(token& result, token_type type)
+{
+    return read(result) && result.type == type;
+}
+
 bool lexer::read(token& result)
 {
 	// Consume whitespace before token.
@@ -138,6 +148,7 @@ bool lexer::read(token& result)
         case ')': result.type = token_type::op_parenthesis_close;   break;
         case '~': result.type = token_type::op_bitwise_not;         break;
         case '^': result.type = token_type::op_bitwise_xor;         break;
+        case ';': result.type = token_type::op_semicolon;           break;
         case '=': 
         {
             if (m_state.cursor[0] == '=') 

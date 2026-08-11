@@ -43,7 +43,7 @@ public:
     };
 
 public:
-    dx12_ri_descriptor_heap(dx12_render_interface& renderer, D3D12_DESCRIPTOR_HEAP_TYPE heap_type, size_t count);
+    dx12_ri_descriptor_heap(dx12_render_interface& renderer, D3D12_DESCRIPTOR_HEAP_TYPE heap_type, D3D12_DESCRIPTOR_HEAP_FLAGS heap_flags, size_t count);
     virtual ~dx12_ri_descriptor_heap();
 
     // Creates the dx12 resources required by this swapchain.
@@ -59,6 +59,7 @@ private:
 
     dx12_render_interface& m_renderer;
     D3D12_DESCRIPTOR_HEAP_TYPE m_heap_type;
+    D3D12_DESCRIPTOR_HEAP_FLAGS m_heap_flags;
     size_t m_count;
 
     std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;

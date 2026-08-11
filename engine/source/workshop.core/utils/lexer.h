@@ -32,6 +32,7 @@ enum class token_type
     op_bitwise_xor,
     op_parenthesis_open,
     op_parenthesis_close,
+    op_semicolon,
 
 	literal_identifier,
 	literal_string,
@@ -73,6 +74,10 @@ public:
     // Returns true if a token was read, false if we got to the end of the input.
     bool read(token& result);
 
+    // Reads the next token in the input stream. 
+    // Returns true if a token was read and is the expected type, false otherwise.
+    bool expect(token& result, token_type type);
+
     // Peeks the next token in the input stream. 
     // Returns true if a token was read, false if we got to the end of the input.
     bool peek(token& result);
@@ -82,6 +87,9 @@ public:
 
     // Resets the lexer back to a previously saved position.
     void restore_state(const lexer_state& state);
+
+    // Gets the current location the lexer is at.
+    const char* get_cursor();
 
 private:
     void log_error(const char* location, const char* format, ...);

@@ -9,9 +9,10 @@
 
 namespace ws {
 
-dx12_ri_descriptor_heap::dx12_ri_descriptor_heap(dx12_render_interface& renderer, D3D12_DESCRIPTOR_HEAP_TYPE heap_type, size_t count)
+dx12_ri_descriptor_heap::dx12_ri_descriptor_heap(dx12_render_interface& renderer, D3D12_DESCRIPTOR_HEAP_TYPE heap_type, D3D12_DESCRIPTOR_HEAP_FLAGS heap_flags, size_t count)
     : m_renderer(renderer)
     , m_heap_type(heap_type)
+    , m_heap_flags(heap_flags)
     , m_count(count)
 {
     m_allocation_heap = std::make_unique<memory_heap>(m_count);
@@ -29,13 +30,7 @@ result<void> dx12_ri_descriptor_heap::create_resources()
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.NumDescriptors = static_cast<UINT>(m_count);
     desc.Type = m_heap_type;
-
-    // Sampler and SRV heaps are visible as they are used for bindless descriptor tables.
-    if (m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER || 
-        m_heap_type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-    {
-        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    }
+    desc.Flags = m_heap_flags;
 
     HRESULT hr = m_renderer.get_device()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_heap));
     if (!m_renderer.check_result(hr, "CreateDescriptorHeap"))

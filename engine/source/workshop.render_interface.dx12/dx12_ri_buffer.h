@@ -48,6 +48,7 @@ public:
 public:
     dx12_ri_descriptor_table::allocation get_srv() const;
     dx12_ri_descriptor_table::allocation get_uav() const;
+    dx12_ri_descriptor_table::allocation get_shader_invisible_uav() const;
 
     dx12_ri_small_buffer_allocator::handle get_small_buffer_allocation() const;
 
@@ -69,9 +70,11 @@ private:
 
     ri_descriptor_table m_srv_table;
     ri_descriptor_table m_uav_table;
+    ri_descriptor_table m_shader_invisible_uav_table;
 
     dx12_ri_descriptor_table::allocation m_srv;
     dx12_ri_descriptor_table::allocation m_uav;
+    dx12_ri_descriptor_table::allocation m_shader_invisible_uav;
 
     bool m_is_small_buffer = false;
     dx12_ri_small_buffer_allocator::handle m_small_buffer_allocation;
