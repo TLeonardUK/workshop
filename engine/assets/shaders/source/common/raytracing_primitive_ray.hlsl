@@ -42,15 +42,15 @@ float4 ray_primitive_common(inout primitive_ray_payload payload, BuiltInTriangle
     float3 world_tangent = mul(object_to_world, float4(data.params.tangent, 0.0f));
     float3 world_position = mul(object_to_world, float4(data.params.position, 1.0f));
 
-    float4 albedo = data.mat.albedo_texture.SampleLevel(data.mat.albedo_sampler, data.params.uv0, 0);
+    float4 albedo = sample_material_albedo_level(data.mat, data.params.uv0, 0);
 
     gbuffer_fragment f;
     f.albedo = albedo.rgb;
     f.flags = data.metadata.gpu_flags;
-    f.metallic = data.mat.metallic_texture.SampleLevel(data.mat.metallic_sampler, data.params.uv0, 0).r;
-    f.roughness = data.mat.roughness_texture.SampleLevel(data.mat.roughness_sampler, data.params.uv0, 0).r;
+    f.metallic = sample_material_metallic_level(data.mat, data.params.uv0, 0).r;
+    f.roughness = sample_material_roughness_level(data.mat, data.params.uv0, 0).r;
     f.world_normal = calculate_world_normal(
-        unpack_compressed_normal(data.mat.normal_texture.SampleLevel(data.mat.normal_sampler, data.params.uv0, 0).xy),
+        unpack_compressed_normal(sample_material_normal_level(data.mat, data.params.uv0, 0).xy),
         normalize(world_normal).xyz,
         normalize(world_tangent).xyz
     );
@@ -88,7 +88,7 @@ void ray_primitive_masked_closest_hit(inout primitive_ray_payload payload, Built
 void ray_primitive_masked_any_hit(inout primitive_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     ray_shading_data data = load_ray_shading_data(attrib.barycentrics);
-    float alpha = data.mat.albedo_texture.SampleLevel(data.mat.albedo_sampler, data.params.uv0, 0).a;
+    float alpha = sample_material_albedo_level(data.mat, data.params.uv0, 0).a;
 
     if (alpha <= 0.0f)
     {
@@ -112,7 +112,7 @@ void ray_primitive_sky_closest_hit(inout primitive_ray_payload payload, BuiltInT
     tlas_metadata metadata = load_tlas_metadata();
     material mat = load_tlas_material(metadata);
 
-    payload.color = mat.skybox_texture.SampleLevel(mat.skybox_sampler, WorldRayDirection(), 0.0f);    
+    payload.color = sample_material_skybox_level(mat, WorldRayDirection(), 0.0f);
     payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE; // Count all hits as frontfacing for the sky seeing as its essentially inverted.
 }
 #endif

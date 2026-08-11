@@ -6,11 +6,77 @@
 #include "workshop.core/filesystem/virtual_file_system.h"
 #include "workshop.core/filesystem/disk_stream.h"
 #include "workshop.core/filesystem/path_watcher.h"
+#include "workshop.core/containers/string.h"
 
 #include <algorithm>
 #include <filesystem>
 
 namespace ws {
+
+namespace {
+
+// virtual_file_system::normalize() lowercases every vfs path for cross-platform path identity
+// (eg. so cache keys and asset dedup are consistent regardless of how a path was cased at the
+// call site). That resolves directly only on case-insensitive filesystems (eg. Windows/NTFS) -
+// on a case-sensitive filesystem (eg. Linux/ext4), a lowercased path silently fails to exist
+// for any real file with capitals in its name. Recover the real on-disk casing by walking the
+// path component by component and, wherever the given casing doesn't exist verbatim, scanning
+// the parent directory for a case-insensitive match.
+std::filesystem::path resolve_case_insensitive(const std::filesystem::path& fspath)
+{
+    std::error_code exists_ec;
+    if (fspath.empty() || std::filesystem::exists(fspath, exists_ec))
+    {
+        return fspath;
+    }
+
+    auto iter = fspath.begin();
+    if (iter == fspath.end())
+    {
+        return fspath;
+    }
+
+    std::filesystem::path result = *iter;
+    ++iter;
+
+    for (; iter != fspath.end(); ++iter)
+    {
+        std::filesystem::path candidate = result / *iter;
+
+        std::error_code candidate_ec;
+        if (std::filesystem::exists(candidate, candidate_ec))
+        {
+            result = candidate;
+            continue;
+        }
+
+        std::string wanted = string_lower(iter->string());
+        bool found = false;
+
+        std::error_code scan_ec;
+        for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(result, scan_ec))
+        {
+            if (string_lower(entry.path().filename().string()) == wanted)
+            {
+                result = entry.path();
+                found = true;
+                break;
+            }
+        }
+
+        // No case-insensitive match either - nothing more we can recover, so return the
+        // original path and let the caller's own exists()/error handling take over as normal
+        // (eg. this component genuinely doesn't exist yet because it's about to be created).
+        if (!found)
+        {
+            return fspath;
+        }
+    }
+
+    return result;
+}
+
+}; // namespace
 
 virtual_file_system_disk_handler::virtual_file_system_disk_handler(const std::string& root, bool read_only)
     : m_root(root)
@@ -24,14 +90,17 @@ virtual_file_system_disk_handler::virtual_file_system_disk_handler(const std::st
 
 std::filesystem::path virtual_file_system_disk_handler::resolve_path(const char* path)
 {
+    std::filesystem::path fspath;
     if (m_root.empty())
     {
-        return path;
+        fspath = path;
     }
     else
     {
-        return m_root + "/" + path;
+        fspath = m_root + "/" + path;
     }
+
+    return resolve_case_insensitive(fspath);
 }
 
 std::unique_ptr<stream> virtual_file_system_disk_handler::open(const char* path, bool for_writing)

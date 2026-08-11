@@ -5,11 +5,20 @@
 #pragma once
 
 #include "workshop.render_interface/ri_param_block_archetype.h"
+#include "workshop.render_interface.vulkan/vulkan_headers.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_descriptor_table.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_buffer.h"
+#include "workshop.core/utils/result.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 #include <memory>
-#include <string>
+#include <mutex>
 
 namespace ws {
+
+class vulkan_render_interface;
+class vulkan_ri_layout_factory;
+class ri_layout_factory;
 
 // ================================================================================================
 //  Implementation of a param block archetype using Vulkan.
@@ -17,18 +26,79 @@ namespace ws {
 class vulkan_ri_param_block_archetype : public ri_param_block_archetype
 {
 public:
-    vulkan_ri_param_block_archetype(const create_params& params, const char* debug_name);
+    vulkan_ri_param_block_archetype(vulkan_render_interface& renderer, const ri_param_block_archetype::create_params& params, const char* debug_name);
+    virtual ~vulkan_ri_param_block_archetype();
+
+    result<void> create_resources();
+
+public:
+    struct allocation
+    {
+    public:
+        vulkan_ri_buffer* buffer = nullptr;
+        size_t offset = 0;
+        size_t size = 0;
+
+        VkDeviceAddress address_gpu = 0;
+
+        bool is_valid() const;
+
+    private:
+        friend class vulkan_ri_param_block_archetype;
+
+        size_t pool_index = 0;
+        uint16_t allocation_index = 0;
+        bool valid = false;
+    };
 
     virtual std::unique_ptr<ri_param_block> create_param_block() override;
 
-    virtual const create_params& get_create_params() override;
-    virtual const char* get_name() override;
+    allocation allocate();
+    void free(allocation alloc);
 
+    vulkan_ri_layout_factory& get_layout_factory();
+
+    virtual const char* get_name() override;
+    virtual const create_params& get_create_params() override;
     virtual size_t get_size() override;
 
+    void get_table(allocation alloc, size_t& index, size_t& offset);
+
 private:
-    create_params m_params;
+    void add_page();
+
+private:
+    // How many param block elements to allocate per page.
+    static constexpr inline size_t k_page_size = 1024;
+
+    // Alignment of each individual instance. Padding will be added to instances to ensure this.
+    static constexpr inline size_t k_instance_alignment = 512;
+
+    struct alloc_page
+    {
+        std::unique_ptr<ri_buffer> buffer;
+
+        std::vector<uint16_t> free_list;
+
+        VkDeviceAddress base_address_gpu = 0;
+
+        vulkan_ri_descriptor_table::allocation srv;
+
+        std::unique_ptr<memory_allocation> memory_allocation_info = nullptr;
+    };
+
+    std::recursive_mutex m_allocation_mutex;
+
+    vulkan_render_interface& m_renderer;
     std::string m_debug_name;
+
+    ri_param_block_archetype::create_params m_create_params;
+
+    std::unique_ptr<ri_layout_factory> m_layout_factory;
+    size_t m_instance_size = 0;
+    size_t m_instance_stride = 0;
+
+    std::vector<alloc_page> m_pages;
 
 };
 

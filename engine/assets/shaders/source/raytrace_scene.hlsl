@@ -30,8 +30,7 @@ void ray_generation()
 
     // Trace scene and get result.
     raytrace_scene_result result = raytrace_scene(
-        scene_tlas,
-        ray_origin, 
+        ray_origin,
         ray_direction,
         view_z_near + view_z_far
     );

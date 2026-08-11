@@ -59,7 +59,7 @@ void ray_occlusion_masked_closest_hit(inout occlusion_ray_payload payload, Built
 void ray_occlusion_masked_any_hit(inout occlusion_ray_payload payload, BuiltInTriangleIntersectionAttributes attrib)
 {
     ray_shading_data data = load_ray_shading_data(attrib.barycentrics);
-    float alpha = data.mat.albedo_texture.SampleLevel(data.mat.albedo_sampler, data.params.uv0, 0).a;
+    float alpha = sample_material_albedo_level(data.mat, data.params.uv0, 0).a;
 
     if (alpha <= 0.0f)
     {

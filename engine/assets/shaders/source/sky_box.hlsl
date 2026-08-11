@@ -34,7 +34,7 @@ gbuffer_output_with_depth pshader(geometry_pinput input)
     material mat = load_material();
 
     float3 direction = normalize(input.world_position - view_world_position);
-    float4 albedo = mat.skybox_texture.Sample(mat.skybox_sampler, direction);
+    float4 albedo = sample_material_skybox(mat, direction);
 
     gbuffer_fragment f;
     f.albedo = albedo.rgb;

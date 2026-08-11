@@ -173,10 +173,10 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
             //float3 delta = saturate((local_position - (min_coords * grid_state.density)) / grid_state.density);
             float3 delta = clamp(local_position / grid_state.density - min_coords, float3(0.0f, 0.0f, 0.0f), float3(1.0f, 1.0f, 1.0f));
 
-            // Sample the 8 probes surrounding the position.
-            Texture2D irradiance_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.irradiance_texture_index)];
-            Texture2D occlusion_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.occlusion_texture_index)];
-            sampler map_sampler = table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)];
+            // Note: the bindless textures/sampler are looked up separately at each sample site
+            // below rather than once into shared locals here - SPIR-V does not allow an opaque
+            // resource handle (Texture2D/sampler/etc) to be stored to a variable that's then
+            // read across multiple loop iterations.
 
             // Calculate the coordinates of all adjacent probes within the grid.
             int3 sample_locations[] = {
@@ -231,7 +231,7 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
                 float2 occlusion_octant_coords = get_octahedral_coordinates(-probe_to_frag);
                 float2 occlusion_probe_texture_uv = get_probe_uv(grid_coord, grid_state.size, occlusion_octant_coords, grid_state.occlusion_map_size, grid_state.occlusion_texture_size, grid_state.occlusion_probes_per_row, grid_state);
 
-                float2 filtered_distance = 2.f * occlusion_texture_map.SampleLevel(map_sampler, occlusion_probe_texture_uv, 0).rg;
+                float2 filtered_distance = 2.f * table_texture_2d[NonUniformResourceIndex(grid_state.occlusion_texture_index)].SampleLevel(table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)], occlusion_probe_texture_uv, 0).rg;
                 float distance_variance = abs((filtered_distance.x * filtered_distance.x) - filtered_distance.y);
 
                 // Chebyshev occlusion test.
@@ -260,7 +260,7 @@ float3 sample_light_probe_grids(int grid_count, ByteAddressBuffer grid_buffer, f
                 // Sample irradiance.
                 float2 irradiance_octant_coords = get_octahedral_coordinates(world_normal);
                 float2 irradiance_probe_texture_uv = get_probe_uv(grid_coord, grid_state.size, irradiance_octant_coords, grid_state.irradiance_map_size, grid_state.irradiance_texture_size, grid_state.irradiance_probes_per_row, grid_state);
-                float3 irradiance_sample = irradiance_texture_map.SampleLevel(map_sampler, irradiance_probe_texture_uv, 0).rgb;
+                float3 irradiance_sample = table_texture_2d[NonUniformResourceIndex(grid_state.irradiance_texture_index)].SampleLevel(table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)], irradiance_probe_texture_uv, 0).rgb;
 
                 // Decode tonemapping
                 float3 tone_mapping_exponent = probe_encoding_gamma * 0.5f;

@@ -187,7 +187,7 @@ void dx12_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& tra
     mark_dirty();
 }
 
-ri_buffer* dx12_ri_raytracing_tlas::get_metadata_buffer()
+ri_buffer* dx12_ri_raytracing_tlas::get_metadata_buffer() const
 {
     return m_metadata_buffer.get();
 }

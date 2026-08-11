@@ -38,26 +38,44 @@ SET(SOURCES
     "vulkan_ri_param_block_archetype.cpp"
     "vulkan_ri_staging_buffer.h"
     "vulkan_ri_staging_buffer.cpp"
-    
+
     "vulkan_ri_raytracing_tlas.h"
     "vulkan_ri_raytracing_tlas.cpp"
     "vulkan_ri_raytracing_blas.h"
     "vulkan_ri_raytracing_blas.cpp"
+
+    "vulkan_ri_descriptor_heap.h"
+    "vulkan_ri_descriptor_heap.cpp"
+    "vulkan_ri_descriptor_table.h"
+    "vulkan_ri_descriptor_table.cpp"
+    "vulkan_ri_upload_manager.h"
+    "vulkan_ri_upload_manager.cpp"
+    "vulkan_ri_tile_manager.h"
+    "vulkan_ri_tile_manager.cpp"
+    "vulkan_ri_query_manager.h"
+    "vulkan_ri_query_manager.cpp"
+    "vulkan_ri_small_buffer_allocator.h"
+    "vulkan_ri_small_buffer_allocator.cpp"
+
     "vulkan_types.h"
     "vulkan_types.cpp"
     "vulkan_headers.h"
-    
+
     "public.pch"
     "private.pch"
 )
- 
+
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 
-target_link_libraries(${PROJECT_NAME} 
+find_package(Vulkan REQUIRED)
+
+target_link_libraries(${PROJECT_NAME}
     workshop.core
     SDL2::SDL2
+    Vulkan::Vulkan
+    dxcompiler
 )
 
 if (USE_PRECOMPILED_HEADERS)
