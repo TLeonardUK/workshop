@@ -123,8 +123,14 @@ void reflect_class::add_field(
     reflect_field_container_type field_type, 
     std::unique_ptr<reflect_field_container_helper> container_helper)
 {
+    std::string clean_name = name;
+    if (clean_name.starts_with("m_"))
+    {
+        clean_name = clean_name.substr(2, clean_name.size() - 2);
+    }
+
     std::unique_ptr<reflect_field> field = std::make_unique<reflect_field>(
-        name, 
+        clean_name.c_str(),
         offset, 
         element_size,
         type, 
