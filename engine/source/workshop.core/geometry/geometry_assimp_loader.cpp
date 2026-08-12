@@ -268,8 +268,6 @@ bool walk_scene(aiNode* node, const aiScene* scene, import_context& output, matr
     return true;
 }
 
-#pragma optimize("", off)
-
 // Imports all materials from a scene into the context.
 bool import_materials(const aiScene* scene, import_context& context)
 {

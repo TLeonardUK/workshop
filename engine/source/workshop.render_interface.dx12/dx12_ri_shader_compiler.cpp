@@ -246,7 +246,7 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
     // Strip unrequired stuff.
     arguments.push_back(L"-HV 2018");
 
-    if (false)//!debug)
+    if (!debug)
     {
         // We need an "rtm" type profile for this.
 #if 0

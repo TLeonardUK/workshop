@@ -240,7 +240,15 @@ ri_shader_compiler_output vulkan_ri_shader_compiler::compile(
     arguments.push_back(L"-fspv-target-env=vulkan1.2");
     arguments.push_back(L"-Qembed_debug");
     arguments.push_back(L"-Zi");
-    arguments.push_back(L"-O0");
+
+    if (!debug)
+    {
+        arguments.push_back(L"-O3");            // Highest optimization.
+    }
+    else
+    {
+        arguments.push_back(L"-O0");            // Lowest optimization.
+    }
 
     CComPtr<IDxcBlobEncoding> sourceBlob;
     HRESULT ret = m_library->CreateBlobWithEncodingOnHeapCopy(source, static_cast<UINT>(strlen(source)), CP_UTF8, &sourceBlob);

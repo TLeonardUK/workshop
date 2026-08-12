@@ -106,3 +106,5 @@ Use `db_verbose/db_log/db_success/db_warning/db_error/db_fatal(source, format, .
 
 - Do not add explanatory comments above code except in cases where the behaviour is not apparently from the code itself.
 - Code is compiled for both linux and windows, do not add anything to non-platform projects that would break this.
+- Changes should not be made in third party code unless absolutely neccessary.
+- If changes are made to third party code the line before the change should be the explicit comment: // WS_CHANGE

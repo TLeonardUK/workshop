@@ -27,7 +27,7 @@ constexpr size_t k_shader_asset_descriptor_minimum_version = 1;
 constexpr size_t k_shader_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_shader_asset_compiled_version = 34;
+constexpr size_t k_shader_asset_compiled_version = 35;
 
 };
 
