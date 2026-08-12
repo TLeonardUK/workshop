@@ -40,7 +40,10 @@ dx12_ri_buffer::~dx12_ri_buffer()
             dx12_ri_small_buffer_allocator& small_allocator = renderer->get_small_buffer_allocator();
             small_allocator.free(small_handle);
         }
-        //CheckedRelease(handle);    
+        else
+        {
+            CheckedRelease(handle);
+        }
     });
 }
 
@@ -168,9 +171,9 @@ result<void> dx12_ri_buffer::create_resources()
     // Param blocks expect to be linearly indexable inside its buffer
     // so we don't currently support small buffer optimization.
     // TODO: Maybe resolve in future?
-    // DEBUG DEBUG DEBUG
-    if (true)//m_create_params.usage == ri_buffer_usage::param_block)
-    // DEBUG DEBUG DEBUG
+    if (m_create_params.usage == ri_buffer_usage::param_block ||
+        m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::readback)
     {
         m_is_small_buffer = false;
     }
