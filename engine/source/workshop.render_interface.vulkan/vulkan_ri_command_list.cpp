@@ -583,4 +583,14 @@ void vulkan_ri_command_list::copy_texture(ri_texture* texture, ri_buffer* buffer
     vkCmdCopyImageToBuffer2(m_command_buffer, &copy_info);
 }
 
+void vulkan_ri_command_list::copy_buffer(ri_buffer* destination, ri_buffer* source)
+{
+
+}
+
+void vulkan_ri_command_list::clear_buffer(ri_buffer* destination)
+{ 
+
+}
+
 }; // namespace ws

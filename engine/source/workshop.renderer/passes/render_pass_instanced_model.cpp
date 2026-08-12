@@ -107,6 +107,7 @@ void render_pass_instanced_model::generate(renderer& renderer, generated_state& 
 
             // Put together param block list to use.
             std::vector<ri_param_block*> blocks = bind_param_blocks(view->get_resource_cache());
+            blocks.push_back(renderer.get_debug_info_param_block());
             blocks.push_back(view->get_view_info_param_block());
             blocks.push_back(vertex_info_param_block);
             list.set_param_blocks(blocks);

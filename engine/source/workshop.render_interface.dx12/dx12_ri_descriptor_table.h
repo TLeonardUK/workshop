@@ -45,7 +45,7 @@ public:
     };
 
 public:
-    dx12_ri_descriptor_table(dx12_render_interface& renderer, ri_descriptor_table table_type);
+    dx12_ri_descriptor_table(dx12_render_interface& renderer, ri_descriptor_table table_type, bool shader_invisible);
     virtual ~dx12_ri_descriptor_table();
 
     // Creates the dx12 resources required by this swapchain.

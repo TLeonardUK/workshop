@@ -53,6 +53,9 @@ public:
     virtual void begin_query(ri_query* query) override;
     virtual void end_query(ri_query* query) override;
     virtual void copy_texture(ri_texture* texture, ri_buffer* buffer) override;
+    virtual void copy_buffer(ri_buffer* destination, ri_buffer* source) override;
+    virtual void clear_buffer(ri_buffer* destination) override;
+
 
     // Inserts a barrier against a raw vulkan image (used by resources that aren't ri_textures,
     // such as swapchain-owned images).

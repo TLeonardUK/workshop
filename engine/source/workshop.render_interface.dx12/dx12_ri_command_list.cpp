@@ -508,4 +508,28 @@ void dx12_ri_command_list::copy_texture(ri_texture* texture, ri_buffer* buffer)
     m_command_list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
 }
 
+void dx12_ri_command_list::copy_buffer(ri_buffer* destination, ri_buffer* source)
+{
+    ID3D12Resource* src = static_cast<dx12_ri_buffer*>(source)->get_resource();
+    ID3D12Resource* dst = static_cast<dx12_ri_buffer*>(destination)->get_resource();
+
+    m_command_list->CopyBufferRegion(dst, 0, src, 0, source->get_element_size() * source->get_element_count());
+}
+
+void dx12_ri_command_list::clear_buffer(ri_buffer* destination)
+{
+    dx12_ri_buffer* dx_dst = static_cast<dx12_ri_buffer*>(destination);
+
+    const UINT clearValue[4] = { 0, 0, 0 };
+
+    m_command_list->ClearUnorderedAccessViewUint(
+        dx_dst->get_uav().gpu_handle,
+        dx_dst->get_shader_invisible_uav().cpu_handle,
+        dx_dst->get_resource(),
+        clearValue,
+        0,
+        nullptr
+    );
+}
+
 }; // namespace ws

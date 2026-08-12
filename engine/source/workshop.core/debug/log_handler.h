@@ -51,6 +51,7 @@ enum class log_source
     render_interface,
     renderer,
     asset,
+    gpu,
 
     count
 };
@@ -62,7 +63,8 @@ static inline constexpr std::array<const char*, static_cast<int>(log_source::cou
     "window",
     "render interface",
     "renderer",
-    "asset"
+    "asset",
+    "gpu"
 };
 
 // ================================================================================================

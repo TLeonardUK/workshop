@@ -12,6 +12,7 @@
 #include "workshop.renderer/systems/render_system_geometry.h"
 #include "workshop.renderer/systems/render_system_transparent_geometry.h"
 #include "workshop.renderer/systems/render_system_debug.h"
+#include "workshop.renderer/systems/render_system_gpu_logs.h"
 #include "workshop.renderer/systems/render_system_shadows.h"
 #include "workshop.renderer/systems/render_system_ssao.h"
 #include "workshop.renderer/systems/render_system_light_probes.h"
@@ -146,6 +147,7 @@ result<void> renderer::create_systems(init_list& list)
     m_systems.push_back(std::make_unique<render_system_debug>(*this));
     m_systems.push_back(std::make_unique<render_system_selection_outline>(*this));
     m_systems.push_back(std::make_unique<render_system_imgui>(*this));
+    m_systems.push_back(std::make_unique<render_system_gpu_logs>(*this));
 
     for (auto& system : m_systems)
     {
@@ -470,6 +472,11 @@ render_output renderer::get_gbuffer_output()
 ri_param_block* renderer::get_gbuffer_param_block()
 {
     return m_gbuffer_param_block.get();
+}
+
+ri_param_block* renderer::get_debug_info_param_block()
+{
+    return get_system<render_system_gpu_logs>()->get_param_block();
 }
 
 render_param_block_manager& renderer::get_param_block_manager()

@@ -61,6 +61,7 @@ void render_pass_imgui::generate(renderer& renderer, generated_state& state_outp
             imgui_params->set("correct_srgb"_sh, correct_srgb);
 
             std::vector<ri_param_block*> blocks = param_blocks;
+            blocks.push_back(renderer.get_debug_info_param_block());
             blocks.push_back(imgui_params);
 
             list.set_param_blocks(blocks);

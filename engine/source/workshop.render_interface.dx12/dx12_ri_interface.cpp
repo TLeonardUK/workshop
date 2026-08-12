@@ -243,6 +243,11 @@ dx12_ri_descriptor_heap& dx12_render_interface::get_srv_descriptor_heap()
     return *m_srv_descriptor_heap;
 }
 
+dx12_ri_descriptor_heap& dx12_render_interface::get_srv_shader_invisible_descriptor_heap()
+{
+    return *m_srv_shader_invisible_descriptor_heap;
+}
+
 dx12_ri_descriptor_heap& dx12_render_interface::get_sampler_descriptor_heap()
 {
     return *m_sampler_descriptor_heap;
@@ -309,10 +314,6 @@ result<void> dx12_render_interface::create_device()
 
     bool should_debug = false;
     bool should_dred_debug = false;
-#ifdef WS_DEBUG
-    should_debug = true;
-    should_dred_debug = true;
-#endif
     if (ws::is_option_set("directx_debug"))
     {
         should_debug = true;
@@ -610,25 +611,31 @@ result<void> dx12_render_interface::create_heaps()
         }
     }
 
-    m_srv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, srv_heap_size);
+    m_srv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, srv_heap_size);
     if (!m_srv_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_sampler_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, sampler_heap_size);
+    m_srv_shader_invisible_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, srv_heap_size);
+    if (!m_srv_shader_invisible_descriptor_heap->create_resources())
+    {
+        return false;
+    }
+
+    m_sampler_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, sampler_heap_size);
     if (!m_sampler_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_rtv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtv_heap_size);
+    m_rtv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, rtv_heap_size);
     if (!m_rtv_descriptor_heap->create_resources())
     {
         return false;
     }
 
-    m_dsv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, dsv_heap_size);
+    m_dsv_descriptor_heap = std::make_unique<dx12_ri_descriptor_heap>(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, dsv_heap_size);
     if (!m_dsv_descriptor_heap->create_resources())
     {
         return false;
@@ -639,7 +646,9 @@ result<void> dx12_render_interface::create_heaps()
     {
         std::unique_ptr<dx12_ri_descriptor_table>& table = m_descriptor_tables[i];
         
-        table = std::make_unique<dx12_ri_descriptor_table>(*this, static_cast<ri_descriptor_table>(i));
+        bool shader_invisible = (i == (int)ri_descriptor_table::rwbuffer_shader_invisible);
+
+        table = std::make_unique<dx12_ri_descriptor_table>(*this, static_cast<ri_descriptor_table>(i), shader_invisible);
         if (!table->create_resources())
         {
             return false;
@@ -652,6 +661,7 @@ result<void> dx12_render_interface::create_heaps()
 result<void> dx12_render_interface::destroy_heaps()
 {
     m_srv_descriptor_heap = nullptr;
+    m_srv_shader_invisible_descriptor_heap = nullptr;
     m_sampler_descriptor_heap = nullptr;
     m_rtv_descriptor_heap = nullptr;
     m_dsv_descriptor_heap = nullptr;

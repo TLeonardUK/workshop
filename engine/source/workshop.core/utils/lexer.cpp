@@ -43,6 +43,11 @@ void lexer::restore_state(const lexer_state& state)
 	m_state = state;
 }
 
+const char* lexer::get_cursor()
+{
+    return m_state.cursor;
+}
+
 void lexer::log_error(const char* location, const char* format, ...)
 {
     char error_msg[512];
@@ -98,6 +103,11 @@ void lexer::log_error(const char* location, const char* format, ...)
     db_error(core, "%s\n%s\n%s", error_msg, line, cursor_line);
 }
 
+bool lexer::expect(token& result, token_type type)
+{
+    return read(result) && result.type == type;
+}
+
 bool lexer::read(token& result)
 {
 	// Consume whitespace before token.
@@ -128,16 +138,144 @@ bool lexer::read(token& result)
 
 	switch (c)
 	{
-        case '*': result.type = token_type::op_mul;                 break;
-        case '/': result.type = token_type::op_div;                 break;
-        case '%': result.type = token_type::op_mod;                 break;
-        case '+': result.type = token_type::op_add;                 break;
-        case '-': result.type = token_type::op_sub;                 break;
         case ',': result.type = token_type::op_comma;               break;
         case '(': result.type = token_type::op_parenthesis_open;    break;
         case ')': result.type = token_type::op_parenthesis_close;   break;
-        case '~': result.type = token_type::op_bitwise_not;         break;
-        case '^': result.type = token_type::op_bitwise_xor;         break;
+        case '[': result.type = token_type::op_bracket_open;        break;
+        case ']': result.type = token_type::op_bracket_close;       break;
+        case '{': result.type = token_type::op_brace_open;          break;
+        case '}': result.type = token_type::op_brace_close;         break;
+        case ';': result.type = token_type::op_semicolon;           break;
+        case '.': result.type = token_type::op_dot;                 break;
+        case '?': result.type = token_type::op_question;            break;
+        case '#': result.type = token_type::op_hash;                break;
+        case '~':
+        {
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_bitwise_not;
+            }
+            else
+            {
+                result.type = token_type::op_bitwise_not;
+            }
+            break;
+        }
+        case '^':
+        {
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_bitwise_xor;
+            }
+            else
+            {
+                result.type = token_type::op_bitwise_xor;
+            }
+            break;
+        }
+        case '*':
+        {
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_mul;
+            }
+            else
+            {
+                result.type = token_type::op_mul;
+            }
+            break;
+        }
+        case '+':
+        {
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_add;
+            }
+            else
+            {
+                result.type = token_type::op_add;
+            }
+            break;
+        }
+        case '-':
+        {
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_sub;
+            }
+            else
+            {
+                result.type = token_type::op_sub;
+            }
+            break;
+        }
+        case '%':
+        {
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_mod;
+            }
+            else
+            {
+                result.type = token_type::op_mod;
+            }
+            break;
+        }
+        case '/':
+        {
+            // Single line comment.
+            if (m_state.cursor[0] == '/')
+            {
+                while (1)
+                {
+                    c = m_state.cursor[0];
+                    m_state.cursor++;
+
+                    if (c == '\0' || c == '\n' || c == '\r')
+                    {
+                        break;
+                    }
+                }
+            }
+            // Block comment
+            else if (m_state.cursor[0] == '*')
+            {
+                while (1)
+                {
+                    c = m_state.cursor[0];
+                    m_state.cursor++;
+
+                    if (c == '*' && m_state.cursor[0] == '/')
+                    {
+                        m_state.cursor++;
+                        break;
+                    }
+                    else if (c == '\0')
+                    {
+                        log_error(m_state.cursor, "Unterminated block comment.");
+                        return false;
+                    }
+                }
+            }
+            // Assign division
+            else if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_div;
+            }
+            // Standard division
+            else
+            {
+                result.type = token_type::op_div;
+            }
+            break;
+        }
         case '=': 
         {
             if (m_state.cursor[0] == '=') 
@@ -192,7 +330,12 @@ bool lexer::read(token& result)
         }
         case '&': 
         {
-            if (m_state.cursor[0] == '&') 
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_bitwise_and;
+            }
+            else if (m_state.cursor[0] == '&') 
             {
                 result.type = token_type::op_logical_and;
                 m_state.cursor++;
@@ -205,7 +348,12 @@ bool lexer::read(token& result)
         }
         case '|': 
         {
-            if (m_state.cursor[0] == '|') 
+            if (m_state.cursor[0] == '=')
+            {
+                m_state.cursor++;
+                result.type = token_type::op_assign_bitwise_or;
+            }
+            else if (m_state.cursor[0] == '|') 
             {
                 result.type = token_type::op_logical_or;
                 m_state.cursor++;

@@ -98,4 +98,14 @@ void stub_ri_command_list::copy_texture(ri_texture* texture, ri_buffer* buffer)
 {
 }
 
+void stub_ri_command_list::copy_buffer(ri_buffer* destination, ri_buffer* source)
+{
+
+}
+
+void stub_ri_command_list::clear_buffer(ri_buffer* destination)
+{
+
+}
+
 }; // namespace ws

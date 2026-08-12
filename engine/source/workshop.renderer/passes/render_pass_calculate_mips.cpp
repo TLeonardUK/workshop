@@ -66,7 +66,10 @@ void render_pass_calculate_mips::generate(renderer& renderer, generated_state& s
                 block->set("texel_size"_sh, vector2(1.0f / dest_width, 1.0f / dest_height));
 
                 // Put together param block list to use.
-                list.set_param_blocks({ block.get() });
+                list.set_param_blocks({ 
+                    renderer.get_debug_info_param_block(),
+                    block.get() 
+                });
                 list.dispatch(
                     std::max(dest_width / group_size_x, size_t{1}), 
                     std::max(dest_height / group_size_y, size_t{1}),

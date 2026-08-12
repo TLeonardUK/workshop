@@ -9,7 +9,7 @@
 
 namespace ws {
 
-dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& renderer, ri_descriptor_table table_type)
+dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& renderer, ri_descriptor_table table_type, bool shader_invisible)
     : m_renderer(renderer)
     , m_table_type(table_type)
 {
@@ -25,9 +25,17 @@ dx12_ri_descriptor_table::dx12_ri_descriptor_table(dx12_render_interface& render
         case ri_descriptor_table::buffer:
         case ri_descriptor_table::rwtexture_2d:
         case ri_descriptor_table::rwbuffer:
+        case ri_descriptor_table::rwbuffer_shader_invisible:
         case ri_descriptor_table::tlas:
-        {
-            m_heap = &m_renderer.get_srv_descriptor_heap();
+        { 
+            if (shader_invisible)
+            {
+                m_heap = &m_renderer.get_srv_shader_invisible_descriptor_heap();
+            }
+            else
+            {
+                m_heap = &m_renderer.get_srv_descriptor_heap();
+            }
             break;
         }
         case ri_descriptor_table::sampler:

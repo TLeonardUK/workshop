@@ -43,8 +43,9 @@ public:
         1000,   // texture_3d
         100,    // texture_cube
         100,    // sampler
-        300000, // buffer
-        300000, // rwbuffer
+        200000, // buffer
+        200000, // rwbuffer
+        200000, // rwbuffer_shader_invisible
         1000,   // rwtexture_2d
         100000, // tlas
         1000,   // render_target
@@ -113,6 +114,7 @@ public:
     Microsoft::WRL::ComPtr<ID3D12Device5> get_device();
 
     dx12_ri_descriptor_heap& get_srv_descriptor_heap();
+    dx12_ri_descriptor_heap& get_srv_shader_invisible_descriptor_heap();
     dx12_ri_descriptor_heap& get_sampler_descriptor_heap();
     dx12_ri_descriptor_heap& get_rtv_descriptor_heap();
     dx12_ri_descriptor_heap& get_dsv_descriptor_heap();
@@ -178,6 +180,7 @@ private:
     std::unique_ptr<dx12_ri_query_manager> m_query_manager = nullptr;
 
     std::unique_ptr<dx12_ri_descriptor_heap> m_srv_descriptor_heap = nullptr;
+    std::unique_ptr<dx12_ri_descriptor_heap> m_srv_shader_invisible_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_sampler_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_rtv_descriptor_heap = nullptr;
     std::unique_ptr<dx12_ri_descriptor_heap> m_dsv_descriptor_heap = nullptr;

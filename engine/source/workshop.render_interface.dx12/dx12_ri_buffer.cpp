@@ -21,7 +21,7 @@ dx12_ri_buffer::dx12_ri_buffer(dx12_render_interface& renderer, const char* debu
 
 dx12_ri_buffer::~dx12_ri_buffer()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav, srv_table = m_srv_table, uav_table = m_uav_table, is_small = m_is_small_buffer, small_handle = m_small_buffer_allocation]() mutable
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav, shader_invisible_uav = m_shader_invisible_uav, srv_table = m_srv_table, uav_table = m_uav_table, shader_invisible_uav_table = m_shader_invisible_uav_table, is_small = m_is_small_buffer, small_handle = m_small_buffer_allocation]() mutable
     {
         if (srv.is_valid())
         {
@@ -30,6 +30,10 @@ dx12_ri_buffer::~dx12_ri_buffer()
         if (uav.is_valid())
         {
             renderer->get_descriptor_table(uav_table).free(uav);
+        }
+        if (shader_invisible_uav.is_valid())
+        {
+            renderer->get_descriptor_table(shader_invisible_uav_table).free(shader_invisible_uav);
         }
         if (is_small)
         {
@@ -164,7 +168,9 @@ result<void> dx12_ri_buffer::create_resources()
     // Param blocks expect to be linearly indexable inside its buffer
     // so we don't currently support small buffer optimization.
     // TODO: Maybe resolve in future?
-    if (m_create_params.usage == ri_buffer_usage::param_block)
+    // DEBUG DEBUG DEBUG
+    if (true)//m_create_params.usage == ri_buffer_usage::param_block)
+    // DEBUG DEBUG DEBUG
     {
         m_is_small_buffer = false;
     }
@@ -174,6 +180,7 @@ result<void> dx12_ri_buffer::create_resources()
     }
 
     m_uav_table = ri_descriptor_table::rwbuffer;
+    m_shader_invisible_uav_table = ri_descriptor_table::rwbuffer_shader_invisible;
     m_srv_table = ri_descriptor_table::buffer;
 
     switch (m_create_params.usage)
@@ -306,6 +313,9 @@ result<void> dx12_ri_buffer::create_resources()
 
         m_uav = m_renderer.get_descriptor_table(m_uav_table).allocate();
         m_renderer.get_device()->CreateUnorderedAccessView(get_resource(), nullptr, &uav_view_desc, m_uav.cpu_handle);
+
+        m_shader_invisible_uav = m_renderer.get_descriptor_table(m_shader_invisible_uav_table).allocate();
+        m_renderer.get_device()->CreateUnorderedAccessView(get_resource(), nullptr, &uav_view_desc, m_shader_invisible_uav.cpu_handle);
     }
 
     return true;
@@ -365,6 +375,12 @@ dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_uav() const
 {
     db_assert(m_uav.is_valid());
     return m_uav;
+}
+
+dx12_ri_descriptor_table::allocation dx12_ri_buffer::get_shader_invisible_uav() const
+{
+    db_assert(m_shader_invisible_uav.is_valid());
+    return m_shader_invisible_uav;
 }
 
 dx12_ri_small_buffer_allocator::handle dx12_ri_buffer::get_small_buffer_allocation() const

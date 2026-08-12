@@ -244,6 +244,9 @@ public:
     // and writing to the gbuffer.
     ri_param_block* get_gbuffer_param_block();
 
+    // Gets the global debug information param block used for db_log/etc.
+    ri_param_block* get_debug_info_param_block();
+
     // Gets the imgui manager.
     render_imgui_manager& get_imgui_manager();
 
@@ -390,10 +393,12 @@ private:
     // Sets if we are in the editor or not.
     void set_editor_mode(bool in_editor);
 
-private:
+public:
 
     // How many frames can be in the pipeline at a given time.
     constexpr static inline size_t k_frame_depth = 3;
+
+private:
 
     // How much data we need to store in each command queue per frame.
     constexpr static inline size_t k_command_queue_size = 16'000'000;
