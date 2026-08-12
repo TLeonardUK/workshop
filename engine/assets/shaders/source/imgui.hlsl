@@ -27,11 +27,6 @@ imgui_pinput vshader(vertex_input input)
     result.uv0 = v.uv0;
     result.color0 = v.color0;
 
-    uint index = input.vertex_id;
-    float uv0x = v.uv0.x;
-    float uv0y = v.uv0.y;
-    db_log(gpu, "vertex_id=%i uv0.x=%f uv0.y=%f", index, uv0x, uv0y);
-
     return result;
 }
 

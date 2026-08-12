@@ -8,6 +8,7 @@
 
 // ================================================================================================
 //  These all write various different levels of logs to whatever log handlers are registered.
+//  Note: These macros will also work in shader code!
 // ================================================================================================
 #define db_verbose(Source, Format, ...)  ws::log_handler::static_write(ws::log_level::verbose,      ws::log_source::Source, Format __VA_OPT__(,) __VA_ARGS__);
 #define db_log(Source, Format, ...)      ws::log_handler::static_write(ws::log_level::log,          ws::log_source::Source, Format __VA_OPT__(,) __VA_ARGS__);

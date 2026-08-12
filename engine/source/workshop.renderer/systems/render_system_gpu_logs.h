@@ -49,15 +49,19 @@ private:
     result<void> create_resources();
     result<void> destroy_resources();
 
+    static void emit_message(render_gpu_log_type type, int category, const char* format, const std::vector<uint32_t>& args);
+
 private:
-    static const size_t k_output_buffer_size = 2 * 1024;
+    static const size_t k_output_buffer_size = 32 * 1024;
 
     struct buffer
     {
         std::unique_ptr<ri_buffer> m_output_buffer_write_offset_buffer;
+        std::unique_ptr<ri_buffer> m_output_buffer_write_count_buffer;
         std::unique_ptr<ri_buffer> m_output_buffer;
 
         std::unique_ptr<ri_buffer> m_cpu_output_buffer_write_offset_buffer;
+        std::unique_ptr<ri_buffer> m_cpu_output_buffer_write_count_buffer;
         std::unique_ptr<ri_buffer> m_cpu_output_buffer;
 
         std::unique_ptr<ri_param_block> m_debug_param_block;

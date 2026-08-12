@@ -27,7 +27,7 @@ constexpr size_t k_shader_asset_descriptor_minimum_version = 1;
 constexpr size_t k_shader_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_shader_asset_compiled_version = 30;
+constexpr size_t k_shader_asset_compiled_version = 34;
 
 };
 
@@ -1631,38 +1631,51 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
     }
 
     // Read each argument.
-    std::vector<token> arguments;
-    while (!lex.eof() && lex.peek(tok) && tok.type != token_type::op_parenthesis_close)
+    std::vector<std::string> arguments;
+    bool arguments_done = false;
+    while (!lex.eof() && !arguments_done)
     {
-        if (!lex.read(tok))
+        // Keep parsing tokens until we get to the end of the argument.
+        std::string arg = "";
+        int sub_expr_depth = 0;
+        while (true)
         {
-            db_error(asset, "[%s] Malformed preprocessor function '%s', encountered eof while reading arguments.", path, function_name.c_str());
-            return false;
+            if (!lex.read(tok))
+            {
+                db_error(asset, "[%s] Malformed preprocessor function '%s', encountered eof while reading arguments.", path, function_name.c_str());
+                return false;
+            }
+
+            // Starting sub-expression.
+            if (tok.type == token_type::op_parenthesis_open)
+            {
+                sub_expr_depth++;
+            }
+            // Closing either the full argument list or a sub-expression.
+            else if (tok.type == token_type::op_parenthesis_close)
+            {
+                arguments_done = true;
+                sub_expr_depth--;
+                if (sub_expr_depth < 0)
+                {
+                    break;
+                }
+            }
+            // Next argument
+            else if (tok.type == token_type::op_comma && sub_expr_depth == 0)
+            {
+                break;
+            }
+            else
+            {
+                arg += tok.buffer;
+            }
         }
 
-        if (tok.type != token_type::literal_identifier &&
-            tok.type != token_type::litearl_bool &&
-            tok.type != token_type::literal_float &&
-            tok.type != token_type::literal_int &&
-            tok.type != token_type::literal_string)
+        if (!arg.empty())
         {
-            db_error(asset, "[%s] Malformed preprocessor function '%s', found token '%s' while reading argument list (arguments must be literals, compound expressions are not supported.).", path, function_name.c_str(), tok.buffer);
-            return false;
+            arguments.push_back(arg);
         }
-
-        arguments.push_back(tok);
-
-        if (lex.peek(tok) && tok.type == token_type::op_comma)
-        {
-            lex.read(tok);
-        }
-    }
-
-    // Read argument list end.
-    if (!lex.expect(tok, token_type::op_parenthesis_close))
-    {
-        db_error(asset, "[%s] Malformed preprocessor function '%s', expected ).", path, function_name.c_str());
-        return false;
     }
 
     // Read semi-colon at end of expression.
@@ -1686,15 +1699,6 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
         function_name == "db_error" ||
         function_name == "db_fatal")
     {
-        //  Ensure arguments are correct.
-        if (arguments.size() < 2 ||
-            arguments[0].type != token_type::literal_identifier ||
-            arguments[1].type != token_type::literal_string)
-        {
-            db_error(asset, "[%s] Malformed preprocessor function '%s', unexpected arguments, arguments should match C++ implementation.", path, function_name.c_str());
-            return false;
-        }
-
         for (int i = 2; i < arguments.size(); i++)
         {
             args_to_store.push_back(i);
@@ -1704,23 +1708,16 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
         category = (int)log_source::gpu;
         for (size_t i = 0; i < (size_t)log_source::count; i++)
         {
-            if (strcmp(log_source_strings[i], arguments[0].buffer) == 0)
+            if (strcmp(log_source_strings[i], arguments[0].c_str()) == 0)
             {
                 category = (int)i;
             }
         }
-        format = arguments[1].buffer;
+        format = arguments[1];
     }
     // assert with no message
     else if (function_name == "db_assert")
     {
-        //  Ensure arguments are correct.
-        if (arguments.size() != 1)
-        {
-            db_error(asset, "[%s] Malformed preprocessor function '%s', unexpected arguments, arguments should match C++ implementation.", path, function_name.c_str());
-            return false;
-        }
-
         args_to_pass.push_back(0);
         category = (int)log_source::gpu;
         format = "Assert Failed"; // todo: insert file and line
@@ -1728,14 +1725,6 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
     // assert with message
     else if (function_name == "db_assert_message")
     {
-        //  Ensure arguments are correct.
-        if (arguments.size() < 2 ||
-            arguments[1].type != token_type::literal_string)
-        {
-            db_error(asset, "[%s] Malformed preprocessor function '%s', unexpected arguments, arguments should match C++ implementation.", path, function_name.c_str());
-            return false;
-        }
-
         args_to_pass.push_back(0);
         for (int i = 2; i < arguments.size(); i++)
         {
@@ -1744,13 +1733,13 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
         }
 
         category = (int)log_source::gpu;
-        format = arguments[0].buffer;
+        format = arguments[0];
     }
 
     // Create generated function that writes to the shared buffer.
     std::string generated_func_name = string_format("generated_%s_%i", function_name.c_str(), function_index);
 
-    int bytes_required = 16;                                            // Signature + Type + Size + Category
+    int bytes_required = 16;                                            // Type + Size + Category + Arg Count
     bytes_required += ((((int)format.size() + 1) + 3) / 4) * 4;         // Format (Rounded up to DWORD's)
     bytes_required += ((int)args_to_store.size()) * 4;                  // Arguments, one DWORD each
 
@@ -1813,12 +1802,15 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
             stub += "\tdebug_output_buffer_write_offset.InterlockedAdd(0, bytes_required, write_ptr);\n";
             stub += "\tif (write_ptr + bytes_required < debug_output_buffer_size)\n";
             stub += "\t{\n";
+            stub += "\t\tuint write_count;\n";
+            stub += "\t\tdebug_output_buffer_write_count.InterlockedAdd(0, 1, write_count);\n";
             stub += string_format("\t\tdebug_output_buffer.Store(write_ptr, %i);\n", type);                                  // Type
             stub += string_format("\t\tdebug_output_buffer.Store(write_ptr + 4, %i);\n", bytes_required);                    // Size
             stub += string_format("\t\tdebug_output_buffer.Store(write_ptr + 8, %i);\n", category);                          // Category
+            stub += string_format("\t\tdebug_output_buffer.Store(write_ptr + 12, %i);\n", (int)args_to_store.size());        // Arg Count
             
             // Write out the string format
-            uint32_t offset = 12;
+            uint32_t offset = 16;
             for (size_t i = 0; i < format.size(); i += 4)
             {
                 uint32_t dword = 0;
@@ -1845,7 +1837,7 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
                     text += format[i + 3];
                 }
 
-                stub += string_format("\t\tdebug_output_buffer.Store(write_ptr + %i, %i); // %s\n", offset, bytes_required, text.c_str());   // Format DWORD
+                stub += string_format("\t\tdebug_output_buffer.Store(write_ptr + %i, 0x%08x); // %s\n", offset, dword, text.c_str());   // Format DWORD
                 offset += 4;
             }
 
@@ -1876,7 +1868,7 @@ bool shader_loader::preprocess_replaced_function(const char* path, const char*& 
     for (size_t i = 0; i < args_to_pass.size(); i++)
     {
         // bitcast to dword
-        result += string_format("asuint(%s)", arguments[args_to_pass[i]].buffer);
+        result += string_format("asuint(%s)", arguments[args_to_pass[i]].c_str());
         if (i + 1 < args_to_pass.size())
         {
             result += ", ";

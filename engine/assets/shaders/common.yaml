@@ -110,6 +110,7 @@ param_blocks:
     fields:
       debug_output_buffer_size: int
       debug_output_buffer_write_offset: rwbyteaddressbuffer
+      debug_output_buffer_write_count: rwbyteaddressbuffer
       debug_output_buffer: rwbyteaddressbuffer
   # Contains all the parameters needed to read/write from the gbuffer.
   gbuffer:

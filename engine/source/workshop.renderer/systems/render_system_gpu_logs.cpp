@@ -60,9 +60,16 @@ result<void> render_system_gpu_logs::create_resources()
         buffer_params.usage = ri_buffer_usage::readback;
         m_frame_buffers[i]->m_cpu_output_buffer_write_offset_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "gpu logs write offset buffer [cpu]");
 
+        buffer_params.usage = ri_buffer_usage::generic;
+        m_frame_buffers[i]->m_output_buffer_write_count_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "gpu logs write count buffer");
+
+        buffer_params.usage = ri_buffer_usage::readback;
+        m_frame_buffers[i]->m_cpu_output_buffer_write_count_buffer = m_renderer.get_render_interface().create_buffer(buffer_params, "gpu logs write count buffer [cpu]");
+
         m_frame_buffers[i]->m_debug_param_block = m_renderer.get_param_block_manager().create_param_block("debug_info");
         m_frame_buffers[i]->m_debug_param_block->set("debug_output_buffer_size"_sh, (uint32_t)k_output_buffer_size);
         m_frame_buffers[i]->m_debug_param_block->set("debug_output_buffer_write_offset"_sh, *m_frame_buffers[i]->m_output_buffer_write_offset_buffer, true);
+        m_frame_buffers[i]->m_debug_param_block->set("debug_output_buffer_write_count"_sh, *m_frame_buffers[i]->m_output_buffer_write_count_buffer, true);
         m_frame_buffers[i]->m_debug_param_block->set("debug_output_buffer"_sh, *m_frame_buffers[i]->m_output_buffer, true);
     }
 
@@ -85,11 +92,125 @@ ri_param_block* render_system_gpu_logs::get_param_block()
     return m_frame_buffers[index]->m_debug_param_block.get();
 }
 
+void render_system_gpu_logs::emit_message(render_gpu_log_type type, int category, const char* format, const std::vector<uint32_t>& args)
+{
+    // Format the message.
+    std::string message = "";
+    const char* format_ptr = format;
+    int arg_index = 0;
+    while (format_ptr[0] != '\0')
+    {
+        char c = format_ptr[0];
+        if (c == '%')
+        {
+            format_ptr++;
+            if (format_ptr[0] == '%')
+            {
+                message += "%";
+                format_ptr++;
+            }
+            else
+            {
+                bool is_float = false;
+
+                std::string format_arg = "%";
+                while (format_ptr[0] != '\0')
+                {
+                    c = format_ptr[0];
+                    format_arg += c;
+                    format_ptr++;
+
+                    if (c == 'f' || c == 'F' ||
+                        c == 'e' || c == 'E' ||
+                        c == 'g' || c == 'G' ||
+                        c == 'a' || c == 'A')
+                    {
+                        is_float = true;
+                    }
+
+                    // Final character in format string.
+                    if (c == 'd' || c == 'i' ||
+                        c == 'u' || c == 'x' ||
+                        c == 'X' || c == 'f' ||
+                        c == 'F' || c == 'e' ||
+                        c == 'E' || c == 'g' ||
+                        c == 'G' || c == 'a' ||
+                        c == 'A' || c == 'c' ||
+                        c == 's' || c == 'p')
+                    {
+                        break;
+                    }
+                }
+
+                char buffer[128];
+                uint32_t arg = args[arg_index++];
+                if (is_float)
+                {
+                    snprintf(buffer, sizeof(buffer), format_arg.c_str(), *((float*)&arg));
+                }
+                else
+                {
+                    snprintf(buffer, sizeof(buffer), format_arg.c_str(), arg);
+                }
+                message += buffer;
+            }
+        }
+        else
+        {
+            format_ptr++;
+            message += c;
+        }
+    }
+
+    // Emit the message.
+    switch (type)
+    {
+        case render_gpu_log_type::verbose:
+        {
+            ws::log_handler::static_write(ws::log_level::verbose, (log_source)category, "%s", message.c_str());
+            break;
+        }
+        case render_gpu_log_type::log:
+        {
+            ws::log_handler::static_write(ws::log_level::log, (log_source)category, "%s", message.c_str());
+            break;
+        }
+        case render_gpu_log_type::success:
+        {
+            ws::log_handler::static_write(ws::log_level::success, (log_source)category, "%s", message.c_str());
+            break;
+        }
+        case render_gpu_log_type::warning:
+        {
+            ws::log_handler::static_write(ws::log_level::warning, (log_source)category, "%s", message.c_str());
+            break;
+        }
+        case render_gpu_log_type::error:
+        {
+            ws::log_handler::static_write(ws::log_level::error, (log_source)category, "%s", message.c_str());
+            break;
+        }
+        case render_gpu_log_type::fatal:
+        {
+            ws::log_handler::static_write(ws::log_level::fatal, (log_source)category, "%s", message.c_str());
+            break;
+        }
+        case render_gpu_log_type::assert:
+        {
+            db_assert_message(false, "%s", message.c_str());
+            break;
+        }
+        default:
+        {
+            db_assert_message(false, "Recieved unexpected or unimplemented log type '%i' from GPU.", (int)type);
+            break;
+        }
+    }
+}
+
 void render_system_gpu_logs::build_post_graph(render_graph& graph, const render_world_state& state)
 {
     size_t index = m_renderer.get_frame_index() % renderer::k_frame_depth;
-
-    // TODO: add a pre_graph to zero out the write offset.
 
     // TODO: Could just put this in host coherent memory?
 
@@ -110,46 +231,101 @@ void render_system_gpu_logs::build_post_graph(render_graph& graph, const render_
     readback_pass->clear_source = true;
     graph.add_node(std::move(readback_pass));
 
-    m_renderer.queue_frame_complete_callback([i = index, data_length_buffer = m_frame_buffers[index]->m_cpu_output_buffer_write_offset_buffer.get(), data_buffer = m_frame_buffers[index]->m_cpu_output_buffer.get()]()
+    // Read back the count buffer.
+    readback_pass = std::make_unique<render_pass_readback_buffer>();
+    readback_pass->name = "readback gpu logs count";
+    readback_pass->system = this;
+    readback_pass->source_buffer = m_frame_buffers[index]->m_output_buffer_write_count_buffer.get();
+    readback_pass->destination_buffer = m_frame_buffers[index]->m_cpu_output_buffer_write_count_buffer.get();
+    readback_pass->clear_source = true;
+    graph.add_node(std::move(readback_pass));
+
+    m_renderer.queue_frame_complete_callback([i = index, 
+        data_offset_buffer = m_frame_buffers[index]->m_cpu_output_buffer_write_offset_buffer.get(), 
+        data_count_buffer = m_frame_buffers[index]->m_cpu_output_buffer_write_count_buffer.get(),
+        data_buffer = m_frame_buffers[index]->m_cpu_output_buffer.get()]()
     {
-        uint32_t* length_ptr = (uint32_t*)data_length_buffer->map(0, 4);
+        uint32_t* length_ptr = (uint32_t*)data_offset_buffer->map(0, 4);
         uint32_t length = std::min((uint32_t)k_output_buffer_size, *length_ptr);
-        db_log(core, "Reading %i - %i\n", i, length);
-        if (length > 0)
+
+        uint32_t* count_ptr = (uint32_t*)data_count_buffer->map(0, 4);
+        uint32_t count = *count_ptr;
+
+        if (count > 0)
         {
+            if (*length_ptr > (uint32_t)k_output_buffer_size)
+            {
+                db_warning(gpu, "GPU log output is larger than available buffer, output will be truncated.");
+            }
+
             uint8_t* data_ptr = (uint8_t*)data_buffer->map(0, length);
             uint8_t* start_ptr = data_ptr;
 
-            while (std::distance(start_ptr, data_ptr) < length)
+            for (size_t i = 0; i < count; i++)
             {
-                // Decode the header.
-                uint32_t signature = *((uint32_t*)data_ptr);
-                data_ptr += 4;
-
-                if (signature != 0xBEEFCAFE)
-                {
-                    break;
-                }
-
+                // Decode the header
                 uint32_t type = *((uint32_t*)data_ptr);
                 data_ptr += 4;
                 uint32_t size = *((uint32_t*)data_ptr);
                 data_ptr += 4;
                 uint32_t category = *((uint32_t*)data_ptr);
                 data_ptr += 4;
+                uint32_t arg_count = *((uint32_t*)data_ptr);
+                data_ptr += 4;
 
                 // Decode the format.
+                std::string format = "";
+                std::vector<uint32_t> args;
+                while (true)
+                {
+                    uint32_t dword = *((uint32_t*)data_ptr);
+                    data_ptr += 4;
+
+                    uint8_t byte1 = (dword) & 0xFF;
+                    uint8_t byte2 = (dword >> 8) & 0xFF;
+                    uint8_t byte3 = (dword >> 16) & 0xFF;
+                    uint8_t byte4 = (dword >> 24) & 0xFF;
+
+                    if (byte1 != 0)
+                    {
+                        format += (char)byte1;
+                    }
+                    if (byte2 != 0)
+                    {
+                        format += (char)byte2;
+                    }
+                    if (byte3 != 0)
+                    {
+                        format += (char)byte3;
+                    }
+                    if (byte4 != 0)
+                    {
+                        format += (char)byte4;
+                    }
+
+                    // Break once we've found null terminator.
+                    if (byte1 == 0 || byte2 == 0 || byte3 == 0 || byte4 == 0)
+                    {
+                        break;
+                    }
+                }
 
                 // Decode the arguments.
-            }
+                for (size_t j = 0; j < arg_count; j++)
+                {
+                    uint32_t arg = *((uint32_t*)data_ptr);
+                    data_ptr += 4;
+                    args.push_back(arg);
+                }
 
-            // Consume the logs.
-            db_log(core, "Logs available: %i..\n", length);
+                emit_message((render_gpu_log_type)type, category, format.c_str(), args);
+            }
 
             data_buffer->unmap(data_ptr);
         }
 
-        data_length_buffer->unmap(length_ptr);
+        data_count_buffer->unmap(count_ptr);
+        data_offset_buffer->unmap(length_ptr);
     });
 }
 
