@@ -33,3 +33,8 @@ endif()
 set(DEBUG_COMPILE_OPTIONS   ${COMPILE_OPTIONS} -DWS_DEBUG)
 set(PROFILE_COMPILE_OPTIONS ${COMPILE_OPTIONS} -DWS_PROFILE)
 set(RELEASE_COMPILE_OPTIONS ${COMPILE_OPTIONS} -DWS_RELEASE)
+
+# Remove RTC flags - we don't use them as they are imcompatible with different optimization levels 
+# in different source files.
+STRING(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}") 
+STRING (REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")

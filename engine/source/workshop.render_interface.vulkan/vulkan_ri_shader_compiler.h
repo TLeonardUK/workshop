@@ -8,6 +8,13 @@
 #include "workshop.core/utils/result.h"
 #include "workshop.render_interface.vulkan/vulkan_headers.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <atlbase.h>
+#endif
+
 #include <dxcapi.h>
 
 namespace ws {

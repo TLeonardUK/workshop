@@ -6,6 +6,9 @@
 # Disable unity builds for all third party code.
 set(CMAKE_UNITY_BUILD OFF)
 
+# Always optimize even in debug builds for these libraries.
+add_compile_options("$<$<CONFIG:Debug>:-O2>")
+
 add_subdirectory(imgui)
 add_subdirectory(sdl2)
 add_subdirectory(nlohmann)

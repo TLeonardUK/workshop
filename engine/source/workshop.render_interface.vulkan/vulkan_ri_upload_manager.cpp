@@ -167,8 +167,8 @@ void vulkan_ri_upload_manager::upload(vulkan_ri_texture& texture, std::span<uint
             size_t mip_size = 0;
             texture.calculate_linear_data_mip_range(array_index, mip_index, mip_offset, mip_size);
 
-            uint32_t mip_width = std::max(size_t{1}, texture.get_width() >> mip_index);
-            uint32_t mip_height = std::max(size_t{1}, texture.get_height() >> mip_index);
+            uint32_t mip_width = static_cast<uint32_t>(std::max(size_t{1}, texture.get_width() >> mip_index));
+            uint32_t mip_height = static_cast<uint32_t>(std::max(size_t{1}, texture.get_height() >> mip_index));
 
             VkBufferImageCopy2 region = {};
             region.sType = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2;
