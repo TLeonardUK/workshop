@@ -21,7 +21,6 @@ add_subdirectory(assimp)
 add_subdirectory(stb)
 add_subdirectory(compressonator)
 add_subdirectory(JoltPhysics)
-
 add_subdirectory(dxcompiler)
-
 add_subdirectory(nativefiledialog)
+add_subdirectory(vulkan)

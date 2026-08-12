@@ -69,12 +69,10 @@ add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 util_setup_folder_structure(${PROJECT_NAME} SOURCES "engine/tier1/rendering")
 
-find_package(Vulkan REQUIRED)
-
 target_link_libraries(${PROJECT_NAME}
     workshop.core
     SDL2::SDL2
-    Vulkan::Vulkan
+    vulkan
     dxcompiler
 )
 

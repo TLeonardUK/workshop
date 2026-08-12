@@ -1,0 +1,427 @@
+{
+    "file_format_version": "1.2.0",
+    "layer": {
+        "name": "VK_LAYER_LUNARG_crash_diagnostic",
+        "type": "GLOBAL",
+        "status": "BETA",
+        "library_path": ".\\VkLayer_crash_diagnostic.dll",
+        "api_version": "1.4.357",
+        "implementation_version": "1",
+        "description": "Crash Diagnostic Layer is a crash/hang debugging tool that helps determines GPU progress in a Vulkan application.",
+        "platforms": [
+            "WINDOWS",
+            "LINUX",
+            "ANDROID"
+        ],
+        "url": "https://vulkan.lunarg.com/doc/sdk/latest/windows/crash_diagnostic_layer.html",
+        "enable_environment": {
+            "VK_CRASH_DIAGNOSTIC_ENABLE": "1"
+        },
+        "disable_environment": {
+            "VK_CRASH_DIAGNOSTIC_DISABLE": "1"
+        },
+        "instance_extensions": [
+            {
+                "name": "VK_EXT_debug_report",
+                "spec_version": "10"
+            },
+            {
+                "name": "VK_EXT_debug_utils",
+                "spec_version": "1"
+            },
+            {
+                "name": "VK_EXT_layer_settings",
+                "spec_version": "2"
+            }
+        ],
+        "device_extensions": [
+            {
+                "name": "VK_EXT_debug_report",
+                "spec_version": "10",
+                "entrypoints": [
+                    "vkCreateDebugReportCallbackEXT",
+                    "vkDebugReportMessageEXT",
+                    "vkDestroyDebugReportCallbackEXT"
+                ]
+            },
+            {
+                "name": "VK_EXT_tooling_info",
+                "spec_version": "1",
+                "entrypoints": [
+                    "vkGetPhysicalDeviceToolPropertiesEXT"
+                ]
+            }
+        ],
+        "features": {
+            "settings": [
+                {
+                    "key": "state",
+                    "label": "State Tracking",
+                    "description": "Control of state tracking.",
+                    "type": "GROUP",
+                    "expanded": true,
+                    "settings": [
+                        {
+                            "key": "sync_after_commands",
+                            "env": "CDL_SYNC_AFTER_COMMANDS",
+                            "label": "Synchronize commands",
+                            "description": "Add pipeline barriers after instrumented commands to help identify whether a Vulkan crash is due to a synchronization issue.",
+                            "detailed": "VK_KHR_dynamic_rendering usage is required for this feature otherwise Validation layer errors will be generated.",
+                            "type": "BOOL",
+                            "default": false,
+                            "messages": [
+                                {
+                                    "key": "sync_after_commands_msg0",
+                                    "title": "'Synchronize commands' is incompatible with Vulkan RenderPass",
+                                    "version": 1,
+                                    "description": "'Synchronize commands' add pipeline barriers after instrumented commands. This feature is not supported for Vulkan application using Vulkan RenderPass which would generate Validation layer errors.",
+                                    "informative": "Are you sure you want to enable 'Synchronize commands'?",
+                                    "severity": "WARNING",
+                                    "conditions": [
+                                        {
+                                            "setting": {
+                                                "key": "sync_after_commands",
+                                                "value": true
+                                            }
+                                        }
+                                    ],
+                                    "actions": {
+                                        "default": "BUTTON0",
+                                        "BUTTON0": {
+                                            "type": "OK",
+                                            "changes": [
+                                                {
+                                                    "setting": {
+                                                        "key": "sync_after_commands",
+                                                        "value": true
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "BUTTON1": {
+                                            "type": "CANCEL",
+                                            "changes": [
+                                                {
+                                                    "setting": {
+                                                        "key": "sync_after_commands",
+                                                        "value": false
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "key": "instrument_all_commands",
+                            "env": "CDL_INSTRUMENT_ALL_COMMANDS",
+                            "label": "Add markers on each Vulkan command",
+                            "description": "Include completion markers around every vulkan command",
+                            "detailed": "This may allow more accuratute fault locations at the expense of larger command buffers and reduced performance",
+                            "type": "BOOL",
+                            "default": false
+                        }
+                    ]
+                },
+                {
+                    "key": "dump",
+                    "label": "Crash dump file",
+                    "description": "Control of dump files",
+                    "type": "GROUP",
+                    "expanded": true,
+                    "settings": [
+                        {
+                            "key": "output_path",
+                            "env": "CDL_OUTPUT_PATH",
+                            "label": "Output Path",
+                            "description": "The directory where dump files and shader binaries are written.",
+                            "type": "SAVE_FOLDER",
+                            "default": ""
+                        },
+                        {
+                            "key": "triggers",
+                            "label": "Crash Dump Triggers",
+                            "description": "Additional crash detection methods beyond a VK_ERROR_DEVICE_LOST error returned by the Vulkan driver.",
+                            "type": "GROUP",
+                            "expanded": true,
+                            "settings": [
+                                {
+                                    "key": "trigger_watchdog_timeout",
+                                    "env": "CDL_TRIGGER_WATCHDOG_TIMEOUT",
+                                    "label": "Watchdog Timer",
+                                    "description": "If the application fails to submit new commands within a set time, a crash dump will be created as if the a lost device error was encountered.",
+                                    "type": "BOOL",
+                                    "default": true,
+                                    "settings": [
+                                        {
+                                            "key": "watchdog_timeout_ms",
+                                            "env": "CDL_WATCHDOG_TIMEOUT_MS",
+                                            "label": "Watchdog Timeout (ms)",
+                                            "description": "Time in milliseconds the application has to submit a new command before creating a crash dump.",
+                                            "type": "INT",
+                                            "default": 30000,
+                                            "range": {
+                                                "min": 1
+                                            },
+                                            "dependence": {
+                                                "mode": "ALL",
+                                                "settings": [
+                                                    {
+                                                        "key": "trigger_watchdog_timeout",
+                                                        "value": true
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "key": "track_semaphores",
+                            "env": "CDL_TRACK_SEMAPHORES",
+                            "label": "Dump semaphores",
+                            "description": "Include semaphore state reporting in runtime logging and crash dump files",
+                            "type": "BOOL",
+                            "default": false
+                        },
+                        {
+                            "key": "dump_queue_submits",
+                            "env": "CDL_DUMP_QUEUE_SUBMITS",
+                            "label": "Dump queue submissions",
+                            "description": "Control which queue submissions are included in the dump.",
+                            "type": "ENUM",
+                            "default": "running",
+                            "flags": [
+                                {
+                                    "key": "running",
+                                    "label": "Running",
+                                    "description": "Submissions that were executing at the time of the dump."
+                                },
+                                {
+                                    "key": "pending",
+                                    "label": "Pending",
+                                    "description": "Submissions executing or pending at the time of the dump."
+                                }
+                            ]
+                        },
+                        {
+                            "key": "dump_command_buffers",
+                            "env": "CDL_DUMP_COMMAND_BUFFERS",
+                            "label": "Dump command buffers",
+                            "description": "Control which command buffers are included in the dump.",
+                            "type": "ENUM",
+                            "default": "running",
+                            "flags": [
+                                {
+                                    "key": "running",
+                                    "label": "Running",
+                                    "description": "Command Buffers that were executing at the time of the dump."
+                                },
+                                {
+                                    "key": "pending",
+                                    "label": "Pending",
+                                    "description": "Command Buffers executing or pending at the time of the dump."
+                                },
+                                {
+                                    "key": "all",
+                                    "label": "All",
+                                    "description": "All known Command Buffers."
+                                }
+                            ]
+                        },
+                        {
+                            "key": "dump_commands",
+                            "env": "CDL_DUMP_COMMANDS",
+                            "label": "Dump commands",
+                            "description": "Control which commands are included in the dump.",
+                            "type": "ENUM",
+                            "default": "running",
+                            "flags": [
+                                {
+                                    "key": "running",
+                                    "label": "Running",
+                                    "description": "Command Buffers that were executing at the time of the dump."
+                                },
+                                {
+                                    "key": "pending",
+                                    "label": "Pending",
+                                    "description": "Commands executing or pending at the time of the dump."
+                                },
+                                {
+                                    "key": "all",
+                                    "label": "All",
+                                    "description": "All known Commands."
+                                }
+                            ]
+                        },
+                        {
+                            "key": "dump_shaders",
+                            "env": "CDL_DUMP_SHADERS",
+                            "label": "Dump shaders",
+                            "description": "Control of shader dumping.",
+                            "type": "ENUM",
+                            "default": "off",
+                            "flags": [
+                                {
+                                    "key": "off",
+                                    "label": "Off",
+                                    "description": "Never dump shaders."
+                                },
+                                {
+                                    "key": "on_crash",
+                                    "label": "On Crash",
+                                    "description": "Dump currently bound shaders after a crash is detected."
+                                },
+                                {
+                                    "key": "on_bind",
+                                    "label": "On Bind",
+                                    "description": "Dump only bound shaders."
+                                },
+                                {
+                                    "key": "all",
+                                    "label": "All",
+                                    "description": "Dump all shaders."
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "logging",
+                    "label": "Logging",
+                    "description": "Control of logging",
+                    "type": "GROUP",
+                    "expanded": true,
+                    "settings": [
+                        {
+                            "key": "log_file",
+                            "env": "CDL_LOG_FILE",
+                            "label": "Log Filename",
+                            "description": "none = no logging, stderr or stdout = to the console, otherwise an absolute or relative path.",
+                            "filter": "*.txt",
+                            "type": "SAVE_FILE",
+                            "default": "stderr",
+                            "platforms": [
+                                "WINDOWS",
+                                "LINUX",
+                                "MACOS"
+                            ]
+                        },
+                        {
+                            "key": "message_group",
+                            "label": "Log Message Areas",
+                            "description": "",
+                            "type": "GROUP",
+                            "expanded": true,
+                            "settings": [
+                                {
+                                    "key": "trace_on",
+                                    "env": "CDL_TRACE_ON",
+                                    "label": "Log main submission and synchronization Vulkan commands",
+                                    "description": "Add Vulkan API calls intercepted by the layer will be logged to the console.",
+                                    "detailed": "This includes: vkDeviceWaitIdle, vkQueueWaitIdle, vkQueuePresentKHR, vkWaitForFences, vkGetFenceStatus, vkAcquireNextImageKHR, vkCreateCommandPool, vkDestroyCommandPool, vkResetCommandPool, vkAllocateCommandBuffers, vkFreeCommandBuffers, vkQueueSubmit, vkQueueSubmit2, vkQueueSubmit2KHR and vkQueueBindSparse",
+                                    "type": "BOOL",
+                                    "default": false
+                                },
+                                {
+                                    "key": "trace_all_semaphores",
+                                    "env": "CDL_TRACE_ALL_SEMAPHORES",
+                                    "label": "Log Vulkan commands that use semaphores",
+                                    "description": "Add logging messages about every vulkan command that uses semaphores",
+                                    "type": "BOOL",
+                                    "default": false,
+                                    "dependence": {
+                                        "mode": "ALL",
+                                        "settings": [
+                                            {
+                                                "key": "track_semaphores",
+                                                "value": true
+                                            }
+                                        ]
+                                    },
+                                    "messages": [
+                                        {
+                                            "key": "trace_all_semaphores_msg0",
+                                            "title": "'Log Vulkan commands that use semaphores' requires 'Track semaphores' to be enabled",
+                                            "version": 1,
+                                            "description": "'Log Vulkan commands that use semaphores' requires 'Track semaphores' to be enabled",
+                                            "informative": "Are you sure you want to enable 'Log Vulkan commands that use semaphores'?",
+                                            "severity": "INFORMATION",
+                                            "conditions": [
+                                                {
+                                                    "setting": {
+                                                        "key": "track_semaphores",
+                                                        "value": false
+                                                    }
+                                                }
+                                            ],
+                                            "actions": {
+                                                "default": "BUTTON0",
+                                                "BUTTON0": {
+                                                    "type": "OK",
+                                                    "changes": [
+                                                        {
+                                                            "setting": {
+                                                                "key": "track_semaphores",
+                                                                "value": true
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                "BUTTON1": {
+                                                    "type": "CANCEL",
+                                                    "changes": [
+                                                        {
+                                                            "setting": {
+                                                                "key": "track_semaphores",
+                                                                "value": false
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "key": "message_severity",
+                            "label": "Message Severity",
+                            "description": "Comma-delineated list of options specifying the types of log messages to be reported.",
+                            "type": "FLAGS",
+                            "flags": [
+                                {
+                                    "key": "error",
+                                    "label": "Error",
+                                    "description": "Report errors such as device lost or setup problems in the layer."
+                                },
+                                {
+                                    "key": "warn",
+                                    "label": "Warning",
+                                    "description": "Report non-fatal problems that may interfere with operation of the layer"
+                                },
+                                {
+                                    "key": "info",
+                                    "label": "Info",
+                                    "description": "Report informational messages."
+                                },
+                                {
+                                    "key": "verbose",
+                                    "label": "Debug",
+                                    "description": "For layer development. Report messages for debugging layer behavior.",
+                                    "view": "DEBUG"
+                                }
+                            ],
+                            "default": [
+                                "error"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
