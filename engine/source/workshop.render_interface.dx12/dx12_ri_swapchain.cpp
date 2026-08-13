@@ -9,6 +9,8 @@
 #include "workshop.render_interface.dx12/dx12_ri_descriptor_heap.h"
 #include "workshop.render_interface.dx12/dx12_ri_texture.h"
 #include "workshop.render_interface.dx12/dx12_types.h"
+#include "thirdparty/sdl2/include/SDL.h"
+#include "thirdparty/sdl2/include/SDL_syswm.h"
 #include "workshop.core/perf/profile.h"
 #include "workshop.window_interface/window.h"
 
@@ -49,7 +51,11 @@ result<void> dx12_ri_swapchain::create_resources()
     m_window_height = m_window.get_height();
     m_window_mode = m_window.get_mode();
 
-    HWND hwnd = reinterpret_cast<HWND>(m_window.get_platform_handle());
+    // Remove this it breaks abstraction.
+    SDL_SysWMinfo info;
+    SDL_VERSION(&info.version);
+    SDL_GetWindowWMInfo(reinterpret_cast<SDL_Window*>(m_window.get_platform_handle()), &info);
+    HWND hwnd = info.info.win.window;
 
     dx12_ri_command_queue& graphics_command_queue = static_cast<dx12_ri_command_queue&>(
         m_renderer.get_graphics_queue()

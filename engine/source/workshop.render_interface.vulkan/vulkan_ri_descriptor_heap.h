@@ -29,15 +29,8 @@ public:
     size_t get_size();
 
 private:
-    vulkan_render_interface& m_renderer;
     ri_descriptor_table m_table_type;
     size_t m_size;
-
-    VkDescriptorType m_descriptor_type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-
-    VkDescriptorPool m_pool = VK_NULL_HANDLE;
-    VkDescriptorSetLayout m_layout = VK_NULL_HANDLE;
-    VkDescriptorSet m_set = VK_NULL_HANDLE;
 
 };
 

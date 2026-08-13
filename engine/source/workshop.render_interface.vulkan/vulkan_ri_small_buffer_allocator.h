@@ -6,17 +6,12 @@
 
 #include "workshop.render_interface.vulkan/vulkan_headers.h"
 #include "workshop.render_interface/ri_buffer.h"
-#include "workshop.core/containers/memory_heap.h"
-
-#include <vector>
-#include <memory>
-#include <mutex>
+#include "workshop.core/utils/result.h"
 
 namespace ws {
 
 class vulkan_render_interface;
 class vulkan_ri_buffer;
-class ri_buffer;
 
 // ================================================================================================
 //  This class handles allocating of small buffers that would normally end up creating a large
@@ -44,31 +39,6 @@ public:
     void free(handle in_handle);
 
     size_t get_max_size();
-
-private:
-    void add_new_buffer(ri_buffer_usage usage);
-
-private:
-    // Maximum size of allocation allowed inside the buffer allocator.
-    static inline constexpr size_t k_max_allocation_size = 65535;
-
-    // Size of each backing buffer that sub-buffers are packed into.
-    static inline constexpr size_t k_buffer_size = 8 * 1024 * 1024;
-
-    // Alignment of sub allocations.
-    static inline constexpr size_t k_allocation_alignment = 256;
-
-    struct buffer
-    {
-        std::unique_ptr<ri_buffer> buf;
-        std::unique_ptr<memory_heap> heap;
-        ri_buffer_usage usage;
-    };
-
-    std::mutex m_mutex;
-
-    vulkan_render_interface& m_renderer;
-    std::vector<buffer> m_buffers;
 
 };
 

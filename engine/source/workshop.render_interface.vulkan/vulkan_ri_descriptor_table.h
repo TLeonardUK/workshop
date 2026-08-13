@@ -8,15 +8,9 @@
 #include "workshop.render_interface/ri_types.h"
 #include "workshop.core/utils/result.h"
 
-#include <atomic>
-#include <memory>
-#include <mutex>
-#include <vector>
-
 namespace ws {
 
 class vulkan_render_interface;
-class vulkan_ri_descriptor_heap;
 
 // ================================================================================================
 //  The descriptor tables take a chunk of allocations out of one of the descriptor heap's and
@@ -51,21 +45,8 @@ public:
     void write_sampler(allocation alloc, VkSampler sampler);
     void write_acceleration_structure(allocation alloc, VkAccelerationStructureKHR structure);
 
-    VkDescriptorSet get_descriptor_set();
-    VkDescriptorSetLayout get_descriptor_set_layout();
-
-    size_t get_used_count();
-    size_t get_total_count();
-
 private:
-    vulkan_render_interface& m_renderer;
     ri_descriptor_table m_table_type;
-    size_t m_size;
-
-    std::unique_ptr<vulkan_ri_descriptor_heap> m_heap;
-
-    std::mutex m_mutex;
-    std::vector<size_t> m_free_list;
 
 };
 

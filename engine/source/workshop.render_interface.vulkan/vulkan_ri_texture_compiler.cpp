@@ -14,21 +14,7 @@ bool vulkan_ri_texture_compiler::compile(
     std::vector<texture_face>& faces,
     std::vector<uint8_t>& output)
 {
-    // TODO: Tightly packed data. We should do this fancier and match the format
-    // as used at runtime, we need to build the correct resource_desc's/etc to do this.
-
-    for (texture_face& face : faces)
-    {
-        for (auto& pix : face.mips)
-        {
-            output.insert(output.end(),
-                pix->get_data().data(),
-                pix->get_data().data() + pix->get_data().size()
-            );
-        }
-    }
-
-    return true;
+    return false;
 }
 
 }; // namespace ws

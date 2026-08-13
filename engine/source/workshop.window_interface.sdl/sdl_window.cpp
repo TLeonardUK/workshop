@@ -35,16 +35,9 @@ sdl_window::~sdl_window()
 
 void* sdl_window::get_platform_handle()
 {
-    SDL_SysWMinfo info;
-    SDL_VERSION(&info.version);
-
-    SDL_GetWindowWMInfo(m_window, &info);
-
-#if defined(WS_WINDOWS)
-    return reinterpret_cast<void*>(info.info.win.window);
-#elif defined(WS_LINUX)
+    // TODO: Get rid of this is breaks the abstraction. We should
+    // only be returning the platform handle, not pulling SDL into other areas.
     return reinterpret_cast<void*>(m_window);
-#endif
 }
 
 SDL_Window* sdl_window::get_sdl_handle()
