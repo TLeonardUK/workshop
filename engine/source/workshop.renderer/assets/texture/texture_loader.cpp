@@ -24,7 +24,7 @@ constexpr size_t k_texture_asset_descriptor_minimum_version = 1;
 constexpr size_t k_texture_asset_descriptor_current_version = 1;
 
 // Bump if compiled format ever changes.
-constexpr size_t k_texture_asset_compiled_version = 24;
+constexpr size_t k_texture_asset_compiled_version = 25;
 
 };
 
@@ -310,8 +310,6 @@ bool texture_loader::parse_properties(const char* path, YAML::Node& node, textur
 
 bool texture_loader::parse_file(const char* path, texture& asset)
 {
-    db_verbose(asset, "[%s] Parsing file", path);
-
     YAML::Node node;
     if (!load_asset_descriptor(path, node, k_texture_asset_descriptor_type, k_texture_asset_descriptor_minimum_version, k_texture_asset_descriptor_current_version))
     {
@@ -616,15 +614,18 @@ bool texture_loader::generate_mipchain(const char* path, texture& asset)
     return true;
 }
 
-bool texture_loader::perform_encoding(const char* path, texture& asset, asset_flags flags)
+bool texture_loader::perform_encoding(const char* path, texture& asset, config_type asset_config, asset_flags flags)
 {
     for (texture::face& face : asset.faces)
     {
-        for (size_t i = 0; i < face.mips.size(); i++)    
+        for (size_t i = 0; i < face.mips.size(); i++)
         {
             if (face.mips[i]->get_format() != asset.format)
             {
-                bool high_quality = (static_cast<size_t>(flags) & static_cast<size_t>(asset_flags::hot_reload)) == 0;
+                // Debug builds use the same fast (lower quality) encode path as hot-reload -
+                // asset iteration speed matters more than compression quality while debugging.
+                bool is_hot_reload = (static_cast<size_t>(flags) & static_cast<size_t>(asset_flags::hot_reload)) != 0;
+                bool high_quality = !is_hot_reload && asset_config != config_type::debug;
 
                 face.mips[i] = face.mips[i]->convert(asset.format, high_quality);
             }
@@ -717,7 +718,7 @@ bool texture_loader::compile(const char* input_path, const char* output_path, pl
     }
 
     // Convert texture into expected format.
-    if (!perform_encoding(input_path, asset, flags))
+    if (!perform_encoding(input_path, asset, asset_config, flags))
     {
         return false;
     }

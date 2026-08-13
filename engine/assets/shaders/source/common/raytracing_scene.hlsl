@@ -15,8 +15,8 @@ struct raytrace_scene_result
     uint   hit_kind;
 };
 
-raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float3 origin, float3 direction, float max_distance)
-{    
+raytrace_scene_result raytrace_scene(float3 origin, float3 direction, float max_distance)
+{
     RayDesc ray;
     ray.Origin = origin;
     ray.Direction = direction;
@@ -29,8 +29,11 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     occlusion_payload.hit_t = -1.0f;
     occlusion_payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
 
+    // Note: scene_tlas is referenced directly here (a global resource, not passed as a
+    // parameter) - SPIR-V does not allow an opaque resource handle (RaytracingAccelerationStructure
+    // included) to be passed by value into a function.
     TraceRay(
-        tlas,
+        scene_tlas,
         RAY_FLAG_NONE,
         ray_mask::ray_mask_all_visible,
         ray_type::occlusion,
@@ -61,7 +64,7 @@ raytrace_scene_result raytrace_scene(RaytracingAccelerationStructure tlas, float
     payload.hit_kind = HIT_KIND_TRIANGLE_FRONT_FACE;
 
     TraceRay(
-        tlas,
+        scene_tlas,
         RAY_FLAG_NONE,
         ray_mask::ray_mask_all_visible,
         ray_type::primitive,

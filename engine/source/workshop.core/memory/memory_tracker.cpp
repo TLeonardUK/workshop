@@ -15,6 +15,10 @@ namespace {
 
 static thread_local memory_scope* g_tls_memory_scope = nullptr;
 
+// Upper bound used to sanity-check sizes reported by _msize() for pointers that may not
+// have originated from our own hooked malloc/calloc - see record_raw_free.
+constexpr size_t k_max_plausible_alloc_size = 64ull * 1024ull * 1024ull * 1024ull;
+
 };
 
 memory_allocation::memory_allocation(memory_type type, string_hash asset_id, size_t size)
@@ -202,6 +206,10 @@ void memory_tracker::record_free(memory_type type, string_hash asset_id, size_t 
 		std::scoped_lock lock(m_asset_mutex);
 
 		auto iter = bucket.assets.find(asset_id);
+		if (iter == bucket.assets.end())
+		{
+			return;
+		}
 
 		asset_bucket& asset_bucket = iter->second;
 		asset_bucket.allocation_bytes.fetch_sub(size);
@@ -232,14 +240,28 @@ void memory_tracker::record_raw_alloc(void* ptr, size_t size)
 
 void memory_tracker::record_raw_free(void* ptr)
 {
+    // Process-wide malloc/free interposition means third-party libraries (eg. proprietary
+    // GPU drivers dlopen'd for shader compilation) can end up routing frees through here for
+    // pointers they allocated via their own private allocator, never seen by record_raw_alloc.
+    // _msize() on such a pointer is undefined behaviour and can return a garbage size, so
+    // everything derived from it - the tag pointer, and the tag's own fields - has to be
+    // sanity-checked before use rather than trusted outright.
     size_t buffer_size = _msize(ptr);
-    if (buffer_size < sizeof(raw_alloc_tag))
+    if (buffer_size < sizeof(raw_alloc_tag) || buffer_size > k_max_plausible_alloc_size)
     {
         return;
     }
 
     raw_alloc_tag* tag = reinterpret_cast<raw_alloc_tag*>((uint8_t*)ptr + buffer_size - sizeof(raw_alloc_tag));
     if (tag->magic != k_raw_alloc_tag_magic)
+    {
+        return;
+    }
+    if (tag->type >= (uint16_t)memory_type::COUNT)
+    {
+        return;
+    }
+    if (tag->size < sizeof(raw_alloc_tag) || tag->size > buffer_size)
     {
         return;
     }

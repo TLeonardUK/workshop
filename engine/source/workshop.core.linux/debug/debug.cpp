@@ -169,6 +169,13 @@ std::unique_ptr<db_callstack> db_capture_callstack(size_t frame_offset, size_t f
             if (open_paren != std::string::npos)
             {
                 frame.module = symbol.substr(0, open_paren);
+
+                // Strip path to the module, we just want the name.
+                size_t last_slash = symbol.find_last_of("\\/");
+                if (last_slash != std::string::npos)
+                {
+                    frame.module = frame.module.substr(last_slash + 1);
+                }
             }
             if (open_paren != std::string::npos && plus != std::string::npos && plus > open_paren)
             {
@@ -185,7 +192,24 @@ std::unique_ptr<db_callstack> db_capture_callstack(size_t frame_offset, size_t f
                 {
                     frame.function = mangled;
                 }
+
+                // Strip function arguments.
+                size_t last_parent_open = frame.function.find_last_of("(");
+                if (last_parent_open != std::string::npos)
+                {
+                    frame.function = frame.function.substr(0, last_parent_open);
+                }
             }
+            else
+            {
+                frame.function = "<inline or external>";
+            }
+        }
+
+        // If we have no data for the call frame then skip it.
+        if (frame.module.empty())
+        {
+            result->frames.pop_back();
         }
     }
 

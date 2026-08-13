@@ -3,6 +3,7 @@
 //  Copyright (C) 2021 Tim Leonard
 // ================================================================================================
 #include "workshop.render_interface.vulkan/vulkan_ri_raytracing_tlas.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_interface.h"
 
 namespace ws {
 
@@ -17,8 +18,8 @@ ri_buffer::create_params make_metadata_buffer_params()
 
 }; // namespace
 
-vulkan_ri_raytracing_tlas::vulkan_ri_raytracing_tlas()
-    : m_metadata_buffer(make_metadata_buffer_params(), "Vulkan TLAS Metadata Buffer")
+vulkan_ri_raytracing_tlas::vulkan_ri_raytracing_tlas(vulkan_render_interface& renderer, const char* debug_name)
+    : m_metadata_buffer(renderer.create_buffer(make_metadata_buffer_params(), "Vulkan TLAS Metadata Buffer"))
 {
 }
 
@@ -35,9 +36,9 @@ void vulkan_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& t
 {
 }
 
-ri_buffer* vulkan_ri_raytracing_tlas::get_metadata_buffer()
+ri_buffer* vulkan_ri_raytracing_tlas::get_metadata_buffer() const
 {
-    return &m_metadata_buffer;
+    return m_metadata_buffer.get();
 }
 
 }; // namespace ws

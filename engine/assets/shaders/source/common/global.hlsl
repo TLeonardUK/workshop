@@ -98,19 +98,23 @@ struct material
 {
     material_domain domain;
 
-    Texture2D albedo_texture;
-    Texture2D opacity_texture;
-    Texture2D metallic_texture;
-    Texture2D roughness_texture;
-    Texture2D normal_texture;
-    TextureCube skybox_texture;
+    // Bindless table indices rather than the resources themselves - SPIR-V does not allow
+    // opaque resource handles (Texture2D/sampler/etc) to be stored to a variable or struct
+    // field, only indexed and used directly at the point of sampling. Storing them here (as
+    // this struct used to) compiles fine for DXIL but produces invalid SPIR-V for Vulkan.
+    uint albedo_texture_index;
+    uint opacity_texture_index;
+    uint metallic_texture_index;
+    uint roughness_texture_index;
+    uint normal_texture_index;
+    uint skybox_texture_index;
 
-    sampler albedo_sampler;
-    sampler opacity_sampler;
-    sampler metallic_sampler;
-    sampler roughness_sampler;
-    sampler normal_sampler;
-    sampler skybox_sampler;
+    uint albedo_sampler_index;
+    uint opacity_sampler_index;
+    uint metallic_sampler_index;
+    uint roughness_sampler_index;
+    uint normal_sampler_index;
+    uint skybox_sampler_index;
 };
 
 material load_material_from_table(uint table, uint offset)
@@ -118,24 +122,74 @@ material load_material_from_table(uint table, uint offset)
     material_info info = table_byte_buffers[table].Load<material_info>(offset);
 
     material mat;
-    
+
     mat.domain = (material_domain)info.domain;
 
-    mat.albedo_texture = table_texture_2d[info.albedo_texture_index];
-    mat.opacity_texture = table_texture_2d[info.opacity_texture_index];
-    mat.metallic_texture = table_texture_2d[info.metallic_texture_index];
-    mat.roughness_texture = table_texture_2d[info.roughness_texture_index];
-    mat.normal_texture = table_texture_2d[info.normal_texture_index];
-    mat.skybox_texture = table_texture_cube[info.skybox_texture_index];
+    mat.albedo_texture_index = info.albedo_texture_index;
+    mat.opacity_texture_index = info.opacity_texture_index;
+    mat.metallic_texture_index = info.metallic_texture_index;
+    mat.roughness_texture_index = info.roughness_texture_index;
+    mat.normal_texture_index = info.normal_texture_index;
+    mat.skybox_texture_index = info.skybox_texture_index;
 
-    mat.albedo_sampler = table_samplers[info.albedo_sampler_index];
-    mat.opacity_sampler = table_samplers[info.opacity_sampler_index];
-    mat.metallic_sampler = table_samplers[info.metallic_sampler_index];
-    mat.roughness_sampler = table_samplers[info.roughness_sampler_index];
-    mat.normal_sampler = table_samplers[info.normal_sampler_index];
-    mat.skybox_sampler = table_samplers[info.skybox_sampler_index];
+    mat.albedo_sampler_index = info.albedo_sampler_index;
+    mat.opacity_sampler_index = info.opacity_sampler_index;
+    mat.metallic_sampler_index = info.metallic_sampler_index;
+    mat.roughness_sampler_index = info.roughness_sampler_index;
+    mat.normal_sampler_index = info.normal_sampler_index;
+    mat.skybox_sampler_index = info.skybox_sampler_index;
 
     return mat;
+}
+
+float4 sample_material_albedo(material mat, float2 uv)
+{
+    return table_texture_2d[mat.albedo_texture_index].Sample(table_samplers[mat.albedo_sampler_index], uv);
+}
+
+float4 sample_material_albedo_level(material mat, float2 uv, float level)
+{
+    return table_texture_2d[mat.albedo_texture_index].SampleLevel(table_samplers[mat.albedo_sampler_index], uv, level);
+}
+
+float4 sample_material_metallic(material mat, float2 uv)
+{
+    return table_texture_2d[mat.metallic_texture_index].Sample(table_samplers[mat.metallic_sampler_index], uv);
+}
+
+float4 sample_material_metallic_level(material mat, float2 uv, float level)
+{
+    return table_texture_2d[mat.metallic_texture_index].SampleLevel(table_samplers[mat.metallic_sampler_index], uv, level);
+}
+
+float4 sample_material_roughness(material mat, float2 uv)
+{
+    return table_texture_2d[mat.roughness_texture_index].Sample(table_samplers[mat.roughness_sampler_index], uv);
+}
+
+float4 sample_material_roughness_level(material mat, float2 uv, float level)
+{
+    return table_texture_2d[mat.roughness_texture_index].SampleLevel(table_samplers[mat.roughness_sampler_index], uv, level);
+}
+
+float4 sample_material_normal(material mat, float2 uv)
+{
+    return table_texture_2d[mat.normal_texture_index].Sample(table_samplers[mat.normal_sampler_index], uv);
+}
+
+float4 sample_material_normal_level(material mat, float2 uv, float level)
+{
+    return table_texture_2d[mat.normal_texture_index].SampleLevel(table_samplers[mat.normal_sampler_index], uv, level);
+}
+
+float4 sample_material_skybox(material mat, float3 direction)
+{
+    return table_texture_cube[mat.skybox_texture_index].Sample(table_samplers[mat.skybox_sampler_index], direction);
+}
+
+float4 sample_material_skybox_level(material mat, float3 direction, float level)
+{
+    return table_texture_cube[mat.skybox_texture_index].SampleLevel(table_samplers[mat.skybox_sampler_index], direction, level);
 }
 
 #endif

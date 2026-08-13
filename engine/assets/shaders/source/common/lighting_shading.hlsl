@@ -130,13 +130,15 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
     float result = 0.0f;
     
     // Filter if required.
-    Texture2D shadow_map =  table_texture_2d[NonUniformResourceIndex(state.depth_map_index)];
+    // Note: the bindless texture is looked up separately at each sample site below rather than
+    // once into a shared local - SPIR-V does not allow an opaque resource handle (Texture2D/etc)
+    // to be stored to a variable that's then read across multiple switch-case branches.
     switch (filter)
     {
         default:
         case shadow_filter::no_filter:
         {
-            float depth = shadow_map.SampleLevel(shadow_map_sampler, shadow_map_coord, 0).r;
+            float depth = table_texture_2d[NonUniformResourceIndex(state.depth_map_index)].SampleLevel(shadow_map_sampler, shadow_map_coord, 0).r;
 
             result = (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
             break;
@@ -151,7 +153,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
                 for (int x = -direction_samples; x <= direction_samples; x++)
                 {
                     float2 uv = shadow_map_coord + float2(x, y) * texel_size;      
-                    float depth = shadow_map.SampleLevel(shadow_map_sampler, uv, 0).r;
+                    float depth = table_texture_2d[NonUniformResourceIndex(state.depth_map_index)].SampleLevel(shadow_map_sampler, uv, 0).r;
                     result += (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
                     sample_count++;
                 }
@@ -182,7 +184,7 @@ float sample_shadow_map(gbuffer_fragment frag, light_state light, int cascade_in
                 );
        
                 float2 uv = shadow_map_coord + poisson_offset * texel_size * kernel_size;
-                float depth = shadow_map.SampleLevel(shadow_map_sampler, uv, 0).r;
+                float depth = table_texture_2d[NonUniformResourceIndex(state.depth_map_index)].SampleLevel(shadow_map_sampler, uv, 0).r;
                 result += (depth < world_position_light_clip_space.z - bias ? 0.0 : 1.0);
             }
 
@@ -216,7 +218,9 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
     float bias = state.z_near;
     float result = 0.0f;
 
-    TextureCube shadow_map_cube = table_texture_cube[NonUniformResourceIndex(state.depth_map_index)];
+    // Note: the bindless texture is looked up separately at each sample site below rather than
+    // once into a shared local - SPIR-V does not allow an opaque resource handle (TextureCube/etc)
+    // to be stored to a variable that's then read across multiple switch-case branches.
     switch (filter)
     {
         // TODO: Calculate sampled UV's so we can do "normal" filtering.
@@ -226,7 +230,7 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
         {
             float3 frag_to_light = frag.world_position.xyz - light.position.xyz;
             float current_depth = length(frag_to_light);        
-            float depth = shadow_map_cube.SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
+            float depth = table_texture_cube[NonUniformResourceIndex(state.depth_map_index)].SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
 
             result += (depth < current_depth - bias ? 0.0 : 1.0);
 
@@ -251,7 +255,7 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
                     float3 frag_to_light = (frag.world_position.xyz + offset) - light.position.xyz;
                     float current_depth = length(frag_to_light);        
         
-                    float depth = shadow_map_cube.SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
+                    float depth = table_texture_cube[NonUniformResourceIndex(state.depth_map_index)].SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
                     result += (depth < current_depth - bias ? 0.0 : 1.0);
                     sample_count++;
                 }
@@ -285,7 +289,7 @@ float sample_shadow_cubemap(gbuffer_fragment frag, light_state light, int cascad
                 float3 frag_to_light = (frag.world_position.xyz + offset) - light.position.xyz;
                 float current_depth = length(frag_to_light);        
        
-                float depth = shadow_map_cube.SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
+                float depth = table_texture_cube[NonUniformResourceIndex(state.depth_map_index)].SampleLevel(shadow_map_sampler, frag_to_light, 0).r * state.z_far;
                 result += (depth < current_depth - bias ? 0.0 : 1.0);
             }
 

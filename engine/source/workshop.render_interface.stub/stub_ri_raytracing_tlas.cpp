@@ -18,7 +18,7 @@ ri_buffer::create_params make_metadata_buffer_params()
 }; // namespace
 
 stub_ri_raytracing_tlas::stub_ri_raytracing_tlas()
-    : m_metadata_buffer(make_metadata_buffer_params(), "Stub TLAS Metadata Buffer")
+    : m_metadata_buffer(std::make_unique<stub_ri_buffer>(make_metadata_buffer_params(), "Stub TLAS Metadata Buffer"))
 {
 }
 
@@ -35,9 +35,9 @@ void stub_ri_raytracing_tlas::update_instance(instance_id id, const matrix4& tra
 {
 }
 
-ri_buffer* stub_ri_raytracing_tlas::get_metadata_buffer()
+ri_buffer* stub_ri_raytracing_tlas::get_metadata_buffer() const
 {
-    return &m_metadata_buffer;
+    return m_metadata_buffer.get();
 }
 
 }; // namespace ws

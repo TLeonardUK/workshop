@@ -67,6 +67,7 @@ private:
     std::unique_ptr<ri_buffer> m_light_cluster_buffer;
     std::unique_ptr<ri_buffer> m_light_cluster_visibility_buffer;
     std::unique_ptr<ri_buffer> m_light_cluster_visibility_count_buffer;
+
     render_output m_lighting_output;
 
     frustum m_cluster_prime_frustum;

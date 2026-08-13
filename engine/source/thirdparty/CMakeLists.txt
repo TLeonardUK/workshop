@@ -6,6 +6,9 @@
 # Disable unity builds for all third party code.
 set(CMAKE_UNITY_BUILD OFF)
 
+# Always optimize even in debug builds for these libraries.
+add_compile_options("$<$<CONFIG:Debug>:-O2>")
+
 add_subdirectory(imgui)
 add_subdirectory(sdl2)
 add_subdirectory(nlohmann)
@@ -21,9 +24,6 @@ add_subdirectory(assimp)
 add_subdirectory(stb)
 add_subdirectory(compressonator)
 add_subdirectory(JoltPhysics)
-
-if (WIN32)
-    add_subdirectory(dxcompiler)
-endif()
-
+add_subdirectory(dxcompiler)
 add_subdirectory(nativefiledialog)
+add_subdirectory(vulkan)

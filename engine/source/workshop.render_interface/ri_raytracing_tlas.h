@@ -42,7 +42,7 @@ public:
 
     // Returns a buffer that contains a linearly ordered set table index/offset pairs used to reference metadata param blocks passed in by add_instance.
     // This can be indexed into using the InstanceID in the raytracing shader.
-    virtual ri_buffer* get_metadata_buffer() = 0;
+    virtual ri_buffer* get_metadata_buffer() const = 0;
 
 };
 

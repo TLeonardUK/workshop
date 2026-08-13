@@ -50,15 +50,15 @@ geometry_poutput pshader(geometry_pinput input)
 {
     material mat = load_material();
 
-    float4 albedo = mat.albedo_texture.Sample(mat.albedo_sampler, input.uv0);;
+    float4 albedo = sample_material_albedo(mat, input.uv0);;
 
     gbuffer_fragment f;
     f.albedo = albedo.rgb;
     f.flags = input.flags;
-    f.metallic = mat.metallic_texture.Sample(mat.metallic_sampler, input.uv0).r;
-    f.roughness = mat.roughness_texture.Sample(mat.roughness_sampler, input.uv0).r;
+    f.metallic = sample_material_metallic(mat, input.uv0).r;
+    f.roughness = sample_material_roughness(mat, input.uv0).r;
     f.world_normal = calculate_world_normal(
-        unpack_compressed_normal(mat.normal_texture.Sample(mat.normal_sampler, input.uv0).xy),
+        unpack_compressed_normal(sample_material_normal(mat, input.uv0).xy),
         normalize(input.world_normal).xyz,
         normalize(input.world_tangent).xyz
     );

@@ -17,7 +17,7 @@ ri_shader_compiler_output vulkan_ri_shader_compiler::compile(
     ri_shader_compiler_output output;
 
     ri_shader_compiler_output::log error;
-    error.message = "Vulkan shader compilation is not yet implemented.";
+    error.message = "Shader compilation is not supported by the stubbed vulkan render interface.";
     error.file = file ? file : "";
     error.line = 0;
     error.column = 0;

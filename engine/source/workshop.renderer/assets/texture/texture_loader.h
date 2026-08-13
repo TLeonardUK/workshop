@@ -51,7 +51,7 @@ private:
     bool apply_channel_flags(const char* path, texture& asset);
     bool perform_resize(const char* path, texture& asset);
     bool generate_mipchain(const char* path, texture& asset);
-    bool perform_encoding(const char* path, texture& asset, asset_flags flags);
+    bool perform_encoding(const char* path, texture& asset, config_type asset_config, asset_flags flags);
     bool compile_render_data(const char* path, texture& asset);
 
 private:

@@ -722,6 +722,11 @@ inline asset_type* asset_ptr<asset_type>::operator->() const
 template <typename asset_type>
 inline asset_ptr<asset_type>& asset_ptr<asset_type>::operator=(const asset_ptr<asset_type>& other)
 {
+    if (m_state)
+    {
+        m_asset_manager->decrement_ref(m_state);
+    }
+
     m_asset_manager = other.m_asset_manager;
     m_state = other.m_state;
 

@@ -5,7 +5,16 @@
 #pragma once
 
 #include "workshop.render_interface/ri_interface.h"
+#include "workshop.render_interface.vulkan/vulkan_headers.h"
+#include "workshop.render_interface/ri_types.h"
 #include "workshop.render_interface.vulkan/vulkan_ri_command_queue.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_descriptor_table.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_small_buffer_allocator.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_upload_manager.h"
+#include "workshop.core/utils/result.h"
+
+#include <array>
+#include <memory>
 
 namespace ws {
 
@@ -19,12 +28,9 @@ public:
     virtual ~vulkan_render_interface();
 
     virtual void register_init(init_list& list) override;
-
     virtual void begin_frame() override;
     virtual void end_frame() override;
-
     virtual void flush_uploads() override;
-
     virtual std::unique_ptr<ri_swapchain> create_swapchain(window& for_window, const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_fence> create_fence(const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_shader_compiler> create_shader_compiler() override;
@@ -39,20 +45,28 @@ public:
     virtual std::unique_ptr<ri_raytracing_blas> create_raytracing_blas(const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_raytracing_tlas> create_raytracing_tlas(const char* debug_name = nullptr) override;
     virtual std::unique_ptr<ri_staging_buffer> create_staging_buffer(const ri_staging_buffer::create_params& params, std::span<uint8_t> linear_data) override;
-
     virtual ri_command_queue& get_graphics_queue() override;
     virtual ri_command_queue& get_copy_queue() override;
-
     virtual size_t get_pipeline_depth() override;
-
     virtual void defer_delete(deferred_delete_function_t&& func) override;
-
     virtual void get_vram_usage(size_t& out_local, size_t& out_non_local) override;
     virtual void get_vram_total(size_t& out_local_total, size_t& out_non_local_total) override;
-
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
-
     virtual bool check_feature(ri_feature feature) override;
+
+    // Vulkan-specific accessors kept only because vulkan_ri_buffer (the one real
+    // implementation left in this module) still calls them. All trivial/no-op here since
+    // there is no real vulkan device backing this stub implementation.
+    bool check_result(VkResult result, const char* context);
+    void assert_result(VkResult result, const char* context);
+
+    VkDevice get_device();
+
+    result<uint32_t> find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties);
+
+    vulkan_ri_descriptor_table& get_descriptor_table(ri_descriptor_table table);
+    vulkan_ri_small_buffer_allocator& get_small_buffer_allocator();
+    vulkan_ri_upload_manager& get_upload_manager();
 
 private:
     constexpr static size_t k_pipeline_depth = 3;
@@ -62,6 +76,11 @@ private:
 
     vulkan_ri_command_queue m_graphics_queue;
     vulkan_ri_command_queue m_copy_queue;
+
+    vulkan_ri_upload_manager m_upload_manager;
+    vulkan_ri_small_buffer_allocator m_small_buffer_allocator;
+
+    std::array<std::unique_ptr<vulkan_ri_descriptor_table>, static_cast<int>(ri_descriptor_table::COUNT)> m_descriptor_tables;
 
 };
 

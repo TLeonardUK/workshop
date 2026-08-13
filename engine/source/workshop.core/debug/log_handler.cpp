@@ -198,13 +198,18 @@ void log_handler::static_write(log_level level, log_source source, const char* f
     va_list list;
     va_start(list, format);
 
+    va_list list_copy;
+    va_copy(list_copy, list);
+
     int ret = vsnprintf(buffer_to_use, k_stack_space, format, list);
     int space_required = ret + 1;
     if (ret >= k_stack_space)
     {
         buffer_to_use = new char[space_required];
-        vsnprintf(buffer_to_use, space_required, format, list);
+        vsnprintf(buffer_to_use, space_required, format, list_copy);
     }
+
+    va_end(list_copy);
 
     static_write_formatted(level, source, buffer_to_use);
 

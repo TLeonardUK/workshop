@@ -6,6 +6,8 @@ noredist/
 /intermediate/
 tests/
 /junk/
+saved/
+logs/
 .vs/
 .idea/
 CMakeFiles/

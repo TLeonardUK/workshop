@@ -7,6 +7,8 @@
 #include "workshop.render_interface/ri_raytracing_tlas.h"
 #include "workshop.render_interface.stub/stub_ri_buffer.h"
 
+#include <memory>
+
 namespace ws {
 
 // ================================================================================================
@@ -21,10 +23,10 @@ public:
     virtual void remove_instance(instance_id id) override;
     virtual void update_instance(instance_id id, const matrix4& transform, uint32_t mask) override;
 
-    virtual ri_buffer* get_metadata_buffer() override;
+    virtual ri_buffer* get_metadata_buffer() const override;
 
 private:
-    stub_ri_buffer m_metadata_buffer;
+    std::unique_ptr<stub_ri_buffer> m_metadata_buffer;
     instance_id m_next_instance_id = 1;
 
 };

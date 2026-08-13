@@ -21,6 +21,8 @@ dx12_ri_buffer::dx12_ri_buffer(dx12_render_interface& renderer, const char* debu
 
 dx12_ri_buffer::~dx12_ri_buffer()
 {
+    db_assert(m_buffers.size() == 0);
+
     m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, srv = m_srv, uav = m_uav, shader_invisible_uav = m_shader_invisible_uav, srv_table = m_srv_table, uav_table = m_uav_table, shader_invisible_uav_table = m_shader_invisible_uav_table, is_small = m_is_small_buffer, small_handle = m_small_buffer_allocation]() mutable
     {
         if (srv.is_valid())
@@ -40,7 +42,10 @@ dx12_ri_buffer::~dx12_ri_buffer()
             dx12_ri_small_buffer_allocator& small_allocator = renderer->get_small_buffer_allocator();
             small_allocator.free(small_handle);
         }
-        //CheckedRelease(handle);    
+        else
+        {
+            CheckedRelease(handle);
+        }
     });
 }
 
@@ -66,36 +71,36 @@ result<void> dx12_ri_buffer::create_exclusive_buffer()
     memory_type mem_type;
     switch (m_create_params.usage)
     {
-    case ri_buffer_usage::index_buffer:
-    {
-        mem_type = memory_type::rendering__vram__index_buffer;
-        break;
-    }
-    case ri_buffer_usage::vertex_buffer:
-    {
-        mem_type = memory_type::rendering__vram__vertex_buffer;
-        break;
-    }    
-    case ri_buffer_usage::raytracing_as:
-    case ri_buffer_usage::raytracing_as_instance_data:
-    case ri_buffer_usage::raytracing_as_scratch:
-    case ri_buffer_usage::raytracing_shader_binding_table:
-    {
-        mem_type = memory_type::rendering__vram__raytracing_buffer;
-        break;
-    }
-    case ri_buffer_usage::param_block:
-    {
-        mem_type = memory_type::rendering__vram__param_blocks;
-        break;
-    }
-    case ri_buffer_usage::generic:
-    case ri_buffer_usage::readback:
-    default:
-    {
-        mem_type = memory_type::rendering__vram__generic_buffer;
-        break;
-    }
+        case ri_buffer_usage::index_buffer:
+        {
+            mem_type = memory_type::rendering__vram__index_buffer;
+            break;
+        }
+        case ri_buffer_usage::vertex_buffer:
+        {
+            mem_type = memory_type::rendering__vram__vertex_buffer;
+            break;
+        }    
+        case ri_buffer_usage::raytracing_as:
+        case ri_buffer_usage::raytracing_as_instance_data:
+        case ri_buffer_usage::raytracing_as_scratch:
+        case ri_buffer_usage::raytracing_shader_binding_table:
+        {
+            mem_type = memory_type::rendering__vram__raytracing_buffer;
+            break;
+        }
+        case ri_buffer_usage::param_block:
+        {
+            mem_type = memory_type::rendering__vram__param_blocks;
+            break;
+        }
+        case ri_buffer_usage::generic:
+        case ri_buffer_usage::readback:
+        default:
+        {
+            mem_type = memory_type::rendering__vram__generic_buffer;
+            break;
+        }
     }
 
     memory_scope mem_scope(mem_type, string_hash::empty, string_hash(m_debug_name));
@@ -168,9 +173,9 @@ result<void> dx12_ri_buffer::create_resources()
     // Param blocks expect to be linearly indexable inside its buffer
     // so we don't currently support small buffer optimization.
     // TODO: Maybe resolve in future?
-    // DEBUG DEBUG DEBUG
-    if (true)//m_create_params.usage == ri_buffer_usage::param_block)
-    // DEBUG DEBUG DEBUG
+    if (m_create_params.usage == ri_buffer_usage::param_block ||
+        m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::readback)
     {
         m_is_small_buffer = false;
     }

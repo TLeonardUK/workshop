@@ -74,10 +74,11 @@ void ray_generation()
     // Generate a puedo-random population of ray normals
     float3 ray_normal = get_ray_direction(probe_ray_index, probe_ray_count);
 
+    float3 ray_origin = probe_data.probe_origin + probe_state.position_offset;
+
     // Trace scene and get result.
     raytrace_scene_result result = raytrace_scene(
-        scene_tlas,
-        probe_data.probe_origin + probe_state.position_offset, 
+        ray_origin,
         ray_normal,
         probe_far_z
     );

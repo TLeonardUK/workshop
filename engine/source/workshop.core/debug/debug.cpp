@@ -26,13 +26,18 @@ void db_assert_failed(const char* expression, const char* file, size_t line, con
         va_list list;
         va_start(list, msg_format);
 
+        va_list list_copy;
+        va_copy(list_copy, list);
+
         int ret = vsnprintf(buffer_to_use, k_stack_space, msg_format, list);
         int space_required = ret + 1;
         if (ret >= k_stack_space)
         {
             buffer_to_use = new char[space_required];
-            vsnprintf(buffer_to_use, space_required, msg_format, list);
+            vsnprintf(buffer_to_use, space_required, msg_format, list_copy);
         }
+
+        va_end(list_copy);
 
         db_error(core, "Message: %s", buffer_to_use);
 
@@ -53,11 +58,11 @@ void db_assert_failed(const char* expression, const char* file, size_t line, con
         db_callstack::frame& frame = callstack->frames[i];
         if (frame.function.empty())
         {
-            db_error(core, "[%zi] %p", i, frame.address);
+            db_error(core, "[%3zi] %016p", i, frame.address);
         }
         else
         {
-            db_error(core, "[%zi] %p %s!%s (%s:%zi)", i, frame.address, frame.module.c_str(), frame.function.c_str(), frame.filename.c_str(), frame.line);
+            db_error(core, "[%3zi] %016p %-10s %-50s (%s:%zi)", i, frame.address, frame.module.c_str(), frame.function.c_str(), frame.filename.c_str(), frame.line);
         }
     }
 

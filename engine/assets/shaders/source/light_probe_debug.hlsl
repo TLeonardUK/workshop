@@ -56,19 +56,15 @@ light_probe_poutput pshader(light_probe_pinput input)
 
     light_probe_grid_state grid_state = table_byte_buffers[NonUniformResourceIndex(input.grid_state_location[0])].Load<light_probe_grid_state>(input.grid_state_location[1]);
 
-    Texture2D irradiance_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.irradiance_texture_index)];
-    Texture2D occlusion_texture_map = table_texture_2d[NonUniformResourceIndex(grid_state.occlusion_texture_index)];
-    sampler map_sampler = table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)];
-
     if (input.classification == probe_classification::active)
     {
         float2 octant_coords = get_octahedral_coordinates(sample_normal);
-#if 1        
+#if 1
         float2 probe_texture_uv = get_probe_uv(input.probe_grid_coord, grid_state.size, octant_coords, grid_state.irradiance_map_size, grid_state.irradiance_texture_size, grid_state.irradiance_probes_per_row, grid_state);
-        float3 diffuse = irradiance_texture_map.SampleLevel(map_sampler, probe_texture_uv, 0).rgb;
+        float3 diffuse = table_texture_2d[NonUniformResourceIndex(grid_state.irradiance_texture_index)].SampleLevel(table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)], probe_texture_uv, 0).rgb;
 #else
         float2 probe_texture_uv = get_probe_uv(input.probe_grid_coord, grid_state.size, octant_coords, grid_state.occlusion_map_size, grid_state.occlusion_texture_size, grid_state.occlusion_probes_per_row, grid_state);
-        float3 diffuse = occlusion_texture_map.SampleLevel(map_sampler, probe_texture_uv, 0).rgb;
+        float3 diffuse = table_texture_2d[NonUniformResourceIndex(grid_state.occlusion_texture_index)].SampleLevel(table_samplers[NonUniformResourceIndex(grid_state.map_sampler_index)], probe_texture_uv, 0).rgb;
         diffuse.rgb = diffuse.r / 150.0f;
 #endif
 

@@ -1,0 +1,64 @@
+<Packages>
+    <ApplicationName>Vulkan SDK 1.4.357.0</ApplicationName>
+    <ApplicationVersion>1.0.0</ApplicationVersion>
+    <Package>
+        <Name>com.lunarg.vulkan</Name>
+        <Title>The Vulkan SDK</Title>
+        <Description>Install the Vulkan SDK and optional components.</Description>
+        <SortingPriority>20</SortingPriority>
+        <TreeName moveChildren="false"></TreeName>
+        <Version>1.4.357.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2026-08-12</InstallDate>
+        <Size>0</Size>
+        <ForcedInstallation>true</ForcedInstallation>
+    </Package>
+    <Package>
+        <Name>com.lunarg.vulkan.core</Name>
+        <Title>The Vulkan SDK Core (Always Installed)</Title>
+        <Description>These components make up the core Vulkan SDK. This includes the Vulkan Loader, Layers, VkConfig, and other essential shader development tools.</Description>
+        <SortingPriority>99</SortingPriority>
+        <TreeName moveChildren="false"></TreeName>
+        <Version>1.4.357.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2026-08-12</InstallDate>
+        <Size>1787864038</Size>
+        <ForcedInstallation>true</ForcedInstallation>
+    </Package>
+    <Package>
+        <Name>com.lunarg.vulkan.glm</Name>
+        <Title>GLM Headers.</Title>
+        <Description>This installs the GLM headers.</Description>
+        <SortingPriority>50</SortingPriority>
+        <TreeName moveChildren="false"></TreeName>
+        <Version>1.4.357.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2026-08-12</InstallDate>
+        <Size>2246060</Size>
+        <Checkable>true</Checkable>
+    </Package>
+    <Package>
+        <Name>com.lunarg.vulkan.sdl2</Name>
+        <Title>SDL libraries and headers.</Title>
+        <Description>This installs SDL2 and SDL3 libraries and headers.</Description>
+        <SortingPriority>25</SortingPriority>
+        <TreeName moveChildren="false"></TreeName>
+        <Version>1.2.170.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2026-08-12</InstallDate>
+        <Size>146310762</Size>
+        <Checkable>true</Checkable>
+    </Package>
+    <Package>
+        <Name>com.lunarg.vulkan.volk</Name>
+        <Title>Volk header, source, and library.</Title>
+        <Description>This installs the Volk headers, source file, and library.</Description>
+        <SortingPriority>15</SortingPriority>
+        <TreeName moveChildren="false"></TreeName>
+        <Version>1.4.357.0</Version>
+        <LastUpdateDate></LastUpdateDate>
+        <InstallDate>2026-08-12</InstallDate>
+        <Size>2251462</Size>
+        <Checkable>true</Checkable>
+    </Package>
+</Packages>

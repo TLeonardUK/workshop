@@ -218,6 +218,8 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
     std::unordered_map<std::string, std::string>& defines,
     bool debug)
 {
+    defines["TARGET_DX12"] = "1";
+
     std::array<std::wstring, static_cast<int>(ri_shader_stage::COUNT)> stage_target_profiles = {
         L"vs_6_3",
         L"ps_6_3",
@@ -244,7 +246,7 @@ ri_shader_compiler_output dx12_ri_shader_compiler::compile(
     // Strip unrequired stuff.
     arguments.push_back(L"-HV 2018");
 
-    if (false)//!debug)
+    if (!debug)
     {
         // We need an "rtm" type profile for this.
 #if 0

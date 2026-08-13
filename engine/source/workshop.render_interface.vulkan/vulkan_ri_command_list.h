@@ -47,7 +47,6 @@ public:
     virtual void copy_buffer(ri_buffer* destination, ri_buffer* source) override;
     virtual void clear_buffer(ri_buffer* destination) override;
 
-
 };
 
 }; // namespace ws

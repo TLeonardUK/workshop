@@ -23,7 +23,13 @@ namespace ws {
 vulkan_render_interface::vulkan_render_interface(size_t ray_type_count, size_t ray_domain_count)
     : m_ray_type_count(ray_type_count)
     , m_ray_domain_count(ray_domain_count)
+    , m_upload_manager(*this)
+    , m_small_buffer_allocator(*this)
 {
+    for (size_t i = 0; i < m_descriptor_tables.size(); i++)
+    {
+        m_descriptor_tables[i] = std::make_unique<vulkan_ri_descriptor_table>(*this, static_cast<ri_descriptor_table>(i));
+    }
 }
 
 vulkan_render_interface::~vulkan_render_interface() = default;
@@ -86,12 +92,18 @@ std::unique_ptr<ri_sampler> vulkan_render_interface::create_sampler(const ri_sam
 
 std::unique_ptr<ri_buffer> vulkan_render_interface::create_buffer(const ri_buffer::create_params& params, const char* debug_name)
 {
-    return std::make_unique<vulkan_ri_buffer>(params, debug_name);
+    std::unique_ptr<vulkan_ri_buffer> instance = std::make_unique<vulkan_ri_buffer>(*this, debug_name, params);
+    if (!instance->create_resources())
+    {
+        return nullptr;
+    }
+
+    return instance;
 }
 
 std::unique_ptr<ri_layout_factory> vulkan_render_interface::create_layout_factory(ri_data_layout layout, ri_layout_usage usage)
 {
-    return std::make_unique<vulkan_ri_layout_factory>(layout, usage);
+    return std::make_unique<vulkan_ri_layout_factory>(*this, layout, usage);
 }
 
 std::unique_ptr<ri_query> vulkan_render_interface::create_query(const ri_query::create_params& params, const char* debug_name)
@@ -106,7 +118,7 @@ std::unique_ptr<ri_raytracing_blas> vulkan_render_interface::create_raytracing_b
 
 std::unique_ptr<ri_raytracing_tlas> vulkan_render_interface::create_raytracing_tlas(const char* debug_name)
 {
-    return std::make_unique<vulkan_ri_raytracing_tlas>();
+    return std::make_unique<vulkan_ri_raytracing_tlas>(*this, debug_name);
 }
 
 std::unique_ptr<ri_staging_buffer> vulkan_render_interface::create_staging_buffer(const ri_staging_buffer::create_params& params, std::span<uint8_t> linear_data)
@@ -154,6 +166,40 @@ size_t vulkan_render_interface::get_cube_map_face_index(ri_cube_map_face face)
 bool vulkan_render_interface::check_feature(ri_feature feature)
 {
     return false;
+}
+
+bool vulkan_render_interface::check_result(VkResult result, const char* context)
+{
+    return result == VK_SUCCESS;
+}
+
+void vulkan_render_interface::assert_result(VkResult result, const char* context)
+{
+}
+
+VkDevice vulkan_render_interface::get_device()
+{
+    return VK_NULL_HANDLE;
+}
+
+result<uint32_t> vulkan_render_interface::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties)
+{
+    return standard_errors::failed;
+}
+
+vulkan_ri_descriptor_table& vulkan_render_interface::get_descriptor_table(ri_descriptor_table table)
+{
+    return *m_descriptor_tables[static_cast<int>(table)];
+}
+
+vulkan_ri_small_buffer_allocator& vulkan_render_interface::get_small_buffer_allocator()
+{
+    return m_small_buffer_allocator;
+}
+
+vulkan_ri_upload_manager& vulkan_render_interface::get_upload_manager()
+{
+    return m_upload_manager;
 }
 
 }; // namespace ws
