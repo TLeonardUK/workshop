@@ -9,6 +9,7 @@
 #include "workshop.render_interface.vulkan/vulkan_ri_descriptor_table.h"
 #include "workshop.render_interface.vulkan/vulkan_ri_small_buffer_allocator.h"
 #include "workshop.core/utils/result.h"
+#include "workshop.core/memory/memory_tracker.h"
 
 #include <string>
 #include <mutex>
@@ -58,11 +59,12 @@ private:
     std::string m_debug_name;
     ri_buffer::create_params m_create_params;
 
+    std::unique_ptr<memory_allocation> m_memory_allocation_info = nullptr;
+
     ri_resource_state m_common_state = ri_resource_state::initial;
 
     VkBuffer m_handle = VK_NULL_HANDLE;
     VkDeviceMemory m_memory = VK_NULL_HANDLE;
-    uint8_t* m_mapped_ptr = nullptr;
 
     ri_descriptor_table m_srv_table = ri_descriptor_table::buffer;
     ri_descriptor_table m_uav_table = ri_descriptor_table::rwbuffer;
@@ -72,6 +74,20 @@ private:
 
     bool m_is_small_buffer = false;
     vulkan_ri_small_buffer_allocator::handle m_small_buffer_allocation;
+
+    struct mapped_buffer
+    {
+        size_t offset;
+        size_t size;
+        std::vector<uint8_t> data;
+        void* ptr;
+    };
+
+    std::mutex m_buffers_mutex;
+    std::vector<mapped_buffer> m_buffers;
+
+    std::atomic<size_t> m_map_counter;
+    void* m_mapped_ptr = nullptr;
 
 };
 

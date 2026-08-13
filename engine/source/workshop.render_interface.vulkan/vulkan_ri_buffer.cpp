@@ -5,8 +5,10 @@
 #include "workshop.render_interface.vulkan/vulkan_ri_buffer.h"
 #include "workshop.render_interface.vulkan/vulkan_ri_interface.h"
 #include "workshop.render_interface.vulkan/vulkan_ri_descriptor_table.h"
+#include "workshop.render_interface.vulkan/vulkan_ri_upload_manager.h"
 
 #include <cstring>
+#include <cstdint>
 
 namespace ws {
 
@@ -19,7 +21,9 @@ vulkan_ri_buffer::vulkan_ri_buffer(vulkan_render_interface& renderer, const char
 
 vulkan_ri_buffer::~vulkan_ri_buffer()
 {
-    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, memory = m_memory, mapped_ptr = m_mapped_ptr, srv = m_srv, uav = m_uav, srv_table = m_srv_table, uav_table = m_uav_table, is_small = m_is_small_buffer, small_handle = m_small_buffer_allocation]() mutable
+    db_assert(m_buffers.size() == 0);
+
+    m_renderer.defer_delete([renderer = &m_renderer, handle = m_handle, memory = m_memory, srv = m_srv, uav = m_uav, srv_table = m_srv_table, uav_table = m_uav_table, is_small = m_is_small_buffer, small_handle = m_small_buffer_allocation]() mutable
     {
         if (srv.is_valid)
         {
@@ -39,10 +43,6 @@ vulkan_ri_buffer::~vulkan_ri_buffer()
         }
         if (memory != VK_NULL_HANDLE)
         {
-            if (mapped_ptr != nullptr)
-            {
-                vkUnmapMemory(renderer->get_device(), memory);
-            }
             vkFreeMemory(renderer->get_device(), memory, nullptr);
         }
     });
@@ -72,32 +72,62 @@ result<void> vulkan_ri_buffer::create_exclusive_buffer()
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-    if (m_create_params.usage == ri_buffer_usage::index_buffer)
+    memory_type mem_type;
+    switch (m_create_params.usage)
     {
-        usage_flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    }
-
-    if (m_renderer.check_feature(ri_feature::raytracing))
-    {
-        if (m_create_params.usage == ri_buffer_usage::raytracing_as)
+        case ri_buffer_usage::index_buffer:
         {
+            mem_type = memory_type::rendering__vram__index_buffer;
+            usage_flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+            if (m_renderer.check_feature(ri_feature::raytracing))
+            {
+                usage_flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            }
+            break;
+        }
+        case ri_buffer_usage::vertex_buffer:
+        {
+            mem_type = memory_type::rendering__vram__vertex_buffer;
+            usage_flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+            if (m_renderer.check_feature(ri_feature::raytracing))
+            {
+                usage_flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            }
+            break;
+        }
+        case ri_buffer_usage::raytracing_as:
+        case ri_buffer_usage::raytracing_as_instance_data:
+        case ri_buffer_usage::raytracing_as_scratch:
+        {
+            mem_type = memory_type::rendering__vram__raytracing_buffer;
             usage_flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR;
+            break;
         }
-        else if (m_create_params.usage == ri_buffer_usage::raytracing_shader_binding_table)
+        case ri_buffer_usage::raytracing_shader_binding_table:
         {
+            mem_type = memory_type::rendering__vram__raytracing_buffer;
             usage_flags |= VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR;
+            break;
         }
-        else
+        case ri_buffer_usage::param_block:
         {
-            // Any other buffer (vertex/index/generic/instance-data/scratch) may end up used
-            // as BLAS/TLAS build input (eg. a model's vertex/index buffers passed to
-            // vulkan_ri_raytracing_blas::update) - there's no way to know at creation time
-            // whether a given buffer will be used this way, so this is applied unconditionally
-            // whenever raytracing is supported, same as the always-on flags above.
-            usage_flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            mem_type = memory_type::rendering__vram__param_blocks;
+            break;
+        }
+        case ri_buffer_usage::generic:
+        case ri_buffer_usage::readback:
+        default:
+        {
+            mem_type = memory_type::rendering__vram__generic_buffer;
+            break;
         }
     }
 
+    memory_scope mem_scope(mem_type, string_hash::empty, string_hash(m_debug_name));
+
+    // Create the buffer.
     VkBufferCreateInfo buffer_create_info = {};
     buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_create_info.size = total_size;
@@ -110,30 +140,18 @@ result<void> vulkan_ri_buffer::create_exclusive_buffer()
         return standard_errors::failed;
     }
 
+    // Create backing memory for the buffer.
     VkMemoryRequirements memory_requirements;
     vkGetBufferMemoryRequirements(m_renderer.get_device(), m_handle, &memory_requirements);
 
-    // Raytracing acceleration structures/scratch/SBT/instance-data are read by dedicated RT
-    // traversal hardware, which - unlike normal shader memory access - is not well tested (and
-    // may not be reliable, up to and including causing VK_ERROR_DEVICE_LOST) against memory
-    // that isn't device-local. Prefer a device-local+host-visible type for these (typically a
-    // small BAR-mapped heap) so they land in VRAM like a typical Vulkan RT application, falling
-    // back to the plain host-visible type used for everything else in this engine if no such
-    // type exists or the (usually small) device-local-visible heap can't fit this allocation.
-    bool prefer_device_local =
-        m_create_params.usage == ri_buffer_usage::raytracing_as ||
-        m_create_params.usage == ri_buffer_usage::raytracing_as_scratch ||
-        m_create_params.usage == ri_buffer_usage::raytracing_shader_binding_table ||
-        m_create_params.usage == ri_buffer_usage::raytracing_as_instance_data;
-
     result<uint32_t> memory_type;
-    if (prefer_device_local)
+    if (m_create_params.usage == ri_buffer_usage::readback)
     {
         memory_type = m_renderer.find_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    }
-    if (!prefer_device_local || !memory_type)
+    } 
+    else
     {
-        memory_type = m_renderer.find_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        memory_type = m_renderer.find_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     }
     if (!memory_type)
     {
@@ -151,35 +169,19 @@ result<void> vulkan_ri_buffer::create_exclusive_buffer()
     allocate_info.memoryTypeIndex = memory_type.get_result();
 
     vk_result = vkAllocateMemory(m_renderer.get_device(), &allocate_info, nullptr, &m_memory);
-    if (vk_result != VK_SUCCESS && prefer_device_local)
-    {
-        // Preferred device-local-visible heap is likely too small for this allocation - retry
-        // with the plain host-visible type.
-        result<uint32_t> fallback_memory_type = m_renderer.find_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        if (fallback_memory_type && fallback_memory_type.get_result() != memory_type.get_result())
-        {
-            allocate_info.memoryTypeIndex = fallback_memory_type.get_result();
-            vk_result = vkAllocateMemory(m_renderer.get_device(), &allocate_info, nullptr, &m_memory);
-        }
-    }
     if (!m_renderer.check_result(vk_result, "vkAllocateMemory"))
     {
         return standard_errors::failed;
     }
 
+    // Assign backing memor to the buffer.
     vk_result = vkBindBufferMemory(m_renderer.get_device(), m_handle, m_memory, 0);
     if (!m_renderer.check_result(vk_result, "vkBindBufferMemory"))
     {
         return standard_errors::failed;
     }
 
-    void* mapped = nullptr;
-    vk_result = vkMapMemory(m_renderer.get_device(), m_memory, 0, VK_WHOLE_SIZE, 0, &mapped);
-    if (!m_renderer.check_result(vk_result, "vkMapMemory"))
-    {
-        return standard_errors::failed;
-    }
-    m_mapped_ptr = reinterpret_cast<uint8_t*>(mapped);
+    m_memory_allocation_info = mem_scope.record_alloc(allocate_info.allocationSize);
 
     return true;
 }
@@ -191,7 +193,9 @@ result<void> vulkan_ri_buffer::create_resources()
 
     // Param blocks expect to be linearly indexable inside their buffer so we don't
     // support small buffer optimization for them.
-    if (m_create_params.usage == ri_buffer_usage::param_block)
+    if (m_create_params.usage == ri_buffer_usage::param_block ||
+        m_create_params.usage == ri_buffer_usage::generic ||
+        m_create_params.usage == ri_buffer_usage::readback)
     {
         m_is_small_buffer = false;
     }
@@ -206,34 +210,52 @@ result<void> vulkan_ri_buffer::create_resources()
     switch (m_create_params.usage)
     {
     case ri_buffer_usage::index_buffer:
-        m_common_state = ri_resource_state::index_buffer;
-        break;
+        {
+            m_common_state = ri_resource_state::index_buffer;
+            break;
+        }
     case ri_buffer_usage::raytracing_as:
-        m_common_state = ri_resource_state::raytracing_acceleration_structure;
-        m_srv_table = ri_descriptor_table::tlas;
-        break;
+        {
+            m_common_state = ri_resource_state::raytracing_acceleration_structure;
+            m_srv_table = ri_descriptor_table::tlas;
+            break;
+        }
     case ri_buffer_usage::raytracing_shader_binding_table:
     case ri_buffer_usage::raytracing_as_instance_data:
-        m_common_state = ri_resource_state::non_pixel_shader_resource;
-        break;
+        {
+            m_common_state = ri_resource_state::non_pixel_shader_resource;
+            break;
+        }
     case ri_buffer_usage::raytracing_as_scratch:
-        m_common_state = ri_resource_state::unordered_access;
-        break;
+        {
+            m_common_state = ri_resource_state::unordered_access;
+            break;
+        }
     case ri_buffer_usage::vertex_buffer:
-        m_common_state = ri_resource_state::pixel_shader_resource;
-        break;
+        {
+            m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
     case ri_buffer_usage::generic:
-        m_common_state = ri_resource_state::pixel_shader_resource;
-        break;
+        {
+            m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
     case ri_buffer_usage::param_block:
-        m_common_state = ri_resource_state::generic_read;
-        break;
+        {
+            m_common_state = ri_resource_state::generic_read;
+            break;
+        }
     case ri_buffer_usage::readback:
-        m_common_state = ri_resource_state::copy_dest;
-        break;
+        {
+            m_common_state = ri_resource_state::copy_dest;
+            break;
+        }
     default:
-        m_common_state = ri_resource_state::pixel_shader_resource;
-        break;
+        {
+            m_common_state = ri_resource_state::pixel_shader_resource;
+            break;
+        }
     }
 
     if (m_is_small_buffer)
@@ -245,32 +267,32 @@ result<void> vulkan_ri_buffer::create_resources()
     }
     else
     {
-        if (result<void> ret = create_exclusive_buffer(); !ret)
+        if (!create_exclusive_buffer())
         {
-            return ret;
+            return standard_errors::failed;
         }
     }
 
     size_t sub_allocation_offset = get_buffer_offset();
 
-    // Upload the linear data if any has been provided - since every buffer is persistently
-    // host-mapped, this is a direct memcpy with no upload-manager round trip needed.
+    // Upload the linear data if any has been provided.
     if (!m_create_params.linear_data.empty())
     {
-        uint8_t* destination = static_cast<uint8_t*>(map(0, m_create_params.linear_data.size()));
-        memcpy(destination, m_create_params.linear_data.data(), m_create_params.linear_data.size());
-        unmap(destination);
+        m_renderer.get_upload_manager().upload(
+            *this,
+            m_create_params.linear_data,
+            sub_allocation_offset
+        );
     }
 
-    // Register a bindless SRV (buffer table) so this buffer can be read via
-    // table_byte_buffers[idx].Load<T>(offset) from any shader.
+    // Create SRV view for buffer.
     m_srv = m_renderer.get_descriptor_table(m_srv_table).allocate();
     if (m_create_params.usage != ri_buffer_usage::raytracing_as)
     {
         m_renderer.get_descriptor_table(m_srv_table).write_storage_buffer(m_srv, get_buffer(), sub_allocation_offset, total_size);
     }
 
-    // Register a bindless UAV (rwbuffer table) for usages that may need unordered access.
+    // Create a UAV view for the buffer as well incase we need unordered access later.
     if (m_create_params.usage == ri_buffer_usage::generic ||
         m_create_params.usage == ri_buffer_usage::param_block ||
         m_create_params.usage == ri_buffer_usage::raytracing_as ||
@@ -345,16 +367,71 @@ void* vulkan_ri_buffer::map(size_t offset, size_t size)
 {
     if (m_is_small_buffer)
     {
+        db_assert(offset >= 0 && offset + size <= m_small_buffer_allocation.size);
+
         return static_cast<vulkan_ri_buffer*>(m_small_buffer_allocation.buffer)->map(m_small_buffer_allocation.offset + offset, size);
     }
+    else
+    {
+        std::scoped_lock lock(m_buffers_mutex);
+        db_assert(offset >= 0 && offset + size <= (m_create_params.element_count * m_create_params.element_size));
 
-    db_assert(m_mapped_ptr != nullptr);
-    return m_mapped_ptr + offset;
+        mapped_buffer& buf = m_buffers.emplace_back();
+        buf.offset = offset;
+        buf.size = size;
+
+        if (m_create_params.usage == ri_buffer_usage::readback)
+        {
+            if (m_map_counter.fetch_add(1) == 0)
+            {
+                VkResult vk_result = vkMapMemory(m_renderer.get_device(), m_memory, 0, VK_WHOLE_SIZE, 0, &m_mapped_ptr);
+                m_renderer.assert_result(vk_result, "vkMapMemory");
+            }
+            return (void*)((const uint8_t*)m_mapped_ptr + offset);
+        }
+        else
+        {
+            buf.data.resize(size);
+            return buf.data.data();
+        }
+    }
 }
 
 void vulkan_ri_buffer::unmap(void* pointer)
 {
-    // Memory is persistently mapped and coherent - nothing to do.
+    if (m_is_small_buffer)
+    {
+        return static_cast<vulkan_ri_buffer*>(m_small_buffer_allocation.buffer)->unmap(pointer);
+    }
+    else
+    {
+        std::scoped_lock lock(m_buffers_mutex);
+
+        for (auto iter = m_buffers.begin(); iter != m_buffers.end(); iter++)
+        {
+            if (iter->data.data() == pointer || iter->ptr == pointer)
+            {
+                if (m_create_params.usage == ri_buffer_usage::readback)
+                {
+                    if (m_map_counter.fetch_sub(1) == 1)
+                    {
+                        vkUnmapMemory(m_renderer.get_device(), m_memory);
+                    }
+                }
+                else
+                {
+                    m_renderer.get_upload_manager().upload(
+                        *this,
+                        iter->data,
+                        iter->offset
+                    );
+                }
+
+                m_buffers.erase(iter);
+                return;
+            }
+        }
+    }
 }
 
 }; // namespace ws
