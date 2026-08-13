@@ -31,7 +31,7 @@ public:
 
     result<void> create_resources();
 
-    void begin_frame();
+    void new_frame(size_t frame_index);
 
     allocation allocate_tiles(size_t tile_count);
     void free_tiles(allocation alloc);

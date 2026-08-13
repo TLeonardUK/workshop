@@ -15,14 +15,45 @@
 
 #include <array>
 #include <memory>
+#include <unordered_set>
 
 namespace ws {
+
+class vulkan_ri_param_block;
+class vulkan_ri_upload_manager;
+class vulkan_ri_tile_manager;
+class vulkan_ri_query_manager;
 
 // ================================================================================================
 //  Implementation of a renderer using Vulkan.
 // ================================================================================================
 class vulkan_render_interface : public ri_interface
 {
+public:
+    // How many frames can be in the pipeline at a given time, including
+    // the one currently being built. 
+    // The number of swap chain targets is one lower than this.
+    constexpr static size_t k_max_pipeline_depth = 3;
+
+    // Maximum amount of descriptors in each table.
+    constexpr static std::array<size_t, static_cast<int>(ri_descriptor_table::COUNT)> k_descriptor_table_sizes = {
+        100,    // texture_1d
+        100000, // texture_2d
+        1000,   // texture_3d
+        100,    // texture_cube
+        100,    // sampler
+        200000, // buffer
+        200000, // rwbuffer
+        200000, // rwbuffer_shader_invisible
+        1000,   // rwtexture_2d
+        100000, // tlas
+        1000,   // render_target
+        1000,   // depth_stencil
+    };
+
+    // Maximum amount of queries that can be allocated.
+    constexpr static size_t k_maximum_queries = 200;
+
 public:
     vulkan_render_interface(size_t ray_type_count, size_t ray_domain_count);
     virtual ~vulkan_render_interface();
@@ -54,13 +85,26 @@ public:
     virtual size_t get_cube_map_face_index(ri_cube_map_face face) override;
     virtual bool check_feature(ri_feature feature) override;
 
-    // Vulkan-specific accessors kept only because vulkan_ri_buffer (the one real
-    // implementation left in this module) still calls them. All trivial/no-op here since
-    // there is no real vulkan device backing this stub implementation.
+    // Marks a param block as dirty and tells the param block to upload its state
+    // the next time uploads are flushed.
+    void queue_dirty_param_block(vulkan_ri_param_block* block);
+    void dequeue_dirty_param_block(vulkan_ri_param_block* block);
+    std::recursive_mutex& get_dirty_param_block_mutex();
+
+    // Drains all of the defered deletes without regard for which frame they should
+    // be destroyed on. Be -very- careful with this, the only real usecase is when we are
+    // draining the entire pipeline at once.
+    void drain_deferred();
+
+    // Checks the the vk result for success and returns true if it was succesful. On failure, a debug log
+    // is written and any needed debugging information is dumped out, the function then returns false.
     bool check_result(VkResult result, const char* context);
+
+    // Same as check_result but terminates the program on failure.
     void assert_result(VkResult result, const char* context);
 
     VkDevice get_device();
+    VkInstance get_instance();
 
     result<uint32_t> find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties);
 
@@ -69,18 +113,99 @@ public:
     vulkan_ri_upload_manager& get_upload_manager();
 
 private:
+    result<void> create_device();
+    result<void> destroy_device();
+
+    result<void> create_command_queues();
+    result<void> destroy_command_queues();
+
+    result<void> create_heaps();
+    result<void> destroy_heaps();
+
+    result<void> create_misc();
+    result<void> destroy_misc();
+
+    result<void> check_feature_support();
+
+    bool check_extension_support(const char* name);
+    bool check_physical_device_extension_support(const char* name);
+    bool check_layer_support(const char* name);
+
+    result<void> get_extensions();
+    result<void> get_required_extensions();
+
+    result<void> get_layers();
+    result<void> get_required_layers();
+
+    result<void> select_physical_device();
+    result<void> select_queue_families();
+    result<void> create_logical_device();
+
+    result<void> resolve_instance_functions();
+    result<void> resolve_device_functions();
+
+    void process_pending_deletes();
+
+public:
+    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
+
+    PFN_vkGetAccelerationStructureBuildSizesKHR vkGetAccelerationStructureBuildSizesKHR = nullptr;
+    PFN_vkCreateAccelerationStructureKHR vkCreateAccelerationStructureKHR = nullptr;
+    PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructureKHR = nullptr;
+    PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructuresKHR = nullptr;
+    PFN_vkCmdCopyAccelerationStructureKHR vkCmdCopyAccelerationStructureKHR = nullptr;
+    PFN_vkCmdWriteAccelerationStructuresPropertiesKHR vkCmdWriteAccelerationStructuresPropertiesKHR = nullptr;
+    PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddressKHR = nullptr;
+    PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelinesKHR = nullptr;
+    PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandlesKHR = nullptr;
+    PFN_vkCmdTraceRaysKHR vkCmdTraceRaysKHR = nullptr;
+    PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT = nullptr;
+
+private:
     constexpr static size_t k_pipeline_depth = 3;
+
+    bool m_debug_device = false;
+    VkDevice m_device;
+    VkPhysicalDevice m_physical_device;
+    VkInstance m_instance;
+    VkDebugUtilsMessengerEXT m_debug_messenger;
 
     size_t m_ray_type_count;
     size_t m_ray_domain_count;
 
-    vulkan_ri_command_queue m_graphics_queue;
-    vulkan_ri_command_queue m_copy_queue;
-
-    vulkan_ri_upload_manager m_upload_manager;
-    vulkan_ri_small_buffer_allocator m_small_buffer_allocator;
+    std::unique_ptr<vulkan_ri_command_queue> m_graphics_queue;
+    std::unique_ptr<vulkan_ri_command_queue> m_copy_queue;
+    std::unique_ptr<vulkan_ri_upload_manager> m_upload_manager = nullptr;
+    std::unique_ptr<vulkan_ri_tile_manager> m_tile_manager = nullptr;
+    std::unique_ptr<vulkan_ri_query_manager> m_query_manager = nullptr;
+    std::unique_ptr<vulkan_ri_small_buffer_allocator> m_small_buffer_allocator = nullptr;
 
     std::array<std::unique_ptr<vulkan_ri_descriptor_table>, static_cast<int>(ri_descriptor_table::COUNT)> m_descriptor_tables;
+
+    std::array<bool, (int)ri_feature::COUNT> m_feature_support;
+
+    size_t m_frame_index = 0;
+
+    std::mutex m_pending_deletion_mutex;
+    std::array<std::vector<deferred_delete_function_t>, k_max_pipeline_depth> m_pending_deletions;
+
+    std::recursive_mutex m_dirty_param_block_mutex;
+    std::unordered_set<vulkan_ri_param_block*> m_dirty_param_blocks;
+    bool m_flush_upload_reentry = false;
+
+    std::vector<const char*> m_required_physical_device_extensions;
+    std::vector<const char*> m_required_extensions;
+    std::vector<const char*> m_required_layers;
+    std::vector<VkExtensionProperties> m_available_extensions;
+    std::vector<VkExtensionProperties> m_available_physical_device_extensions;
+    std::vector<VkLayerProperties> m_available_layers;
+
+    int m_graphics_queue_family;
+    int m_copy_queue_family;
+
+    size_t m_vram_total_local = 0;
+    size_t m_vram_total_non_local = 0;
 
 };
 

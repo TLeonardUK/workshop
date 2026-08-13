@@ -10,19 +10,17 @@ vulkan_ri_upload_manager::vulkan_ri_upload_manager(vulkan_render_interface& rend
 {
 }
 
-vulkan_ri_upload_manager::~vulkan_ri_upload_manager() = default;
+vulkan_ri_upload_manager::~vulkan_ri_upload_manager()
+{ 
+}
 
 result<void> vulkan_ri_upload_manager::create_resources()
 {
     return true;
 }
 
-void vulkan_ri_upload_manager::begin_frame()
-{
-}
-
-void vulkan_ri_upload_manager::flush()
-{
+void vulkan_ri_upload_manager::new_frame(size_t index)
+{ 
 }
 
 void vulkan_ri_upload_manager::upload(vulkan_ri_texture& texture, std::span<uint8_t> data)

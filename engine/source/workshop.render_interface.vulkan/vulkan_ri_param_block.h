@@ -28,6 +28,10 @@ public:
 
     virtual void get_table(size_t& index, size_t& offset) override;
 
+public:
+    // Called by renderer to upload the state of a dirty param block.
+    void upload_state();
+
 private:
     virtual bool set(string_hash field_name, const std::span<uint8_t>& values, size_t value_size, ri_data_type type) override;
 

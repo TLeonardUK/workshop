@@ -748,11 +748,6 @@ void dx12_render_interface::flush_uploads()
             block->upload_state();
         }
 
-        //if (!m_dirty_param_blocks.empty())
-        //{
-        //    db_log(core, "dirty-pb: %zi", m_dirty_param_blocks.size());
-        //}
-
         m_dirty_param_blocks.clear();
     }
 

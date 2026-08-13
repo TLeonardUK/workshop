@@ -57,4 +57,8 @@ bool vulkan_ri_param_block::set(string_hash field_name, const std::span<uint8_t>
     return true;
 }
 
+void vulkan_ri_param_block::upload_state()
+{ 
+}
+
 }; // namespace ws

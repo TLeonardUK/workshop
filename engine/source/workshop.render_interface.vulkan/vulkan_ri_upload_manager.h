@@ -27,8 +27,7 @@ public:
 
     result<void> create_resources();
 
-    void begin_frame();
-    void flush();
+    void new_frame(size_t index);
 
     void upload(vulkan_ri_texture& texture, std::span<uint8_t> data);
     void upload(vulkan_ri_texture& texture, size_t array_index, size_t mip_index, std::span<uint8_t> data);

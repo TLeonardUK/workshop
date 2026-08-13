@@ -10,7 +10,9 @@ vulkan_ri_small_buffer_allocator::vulkan_ri_small_buffer_allocator(vulkan_render
 {
 }
 
-vulkan_ri_small_buffer_allocator::~vulkan_ri_small_buffer_allocator() = default;
+vulkan_ri_small_buffer_allocator::~vulkan_ri_small_buffer_allocator()
+{ 
+}
 
 result<void> vulkan_ri_small_buffer_allocator::create_resources()
 {

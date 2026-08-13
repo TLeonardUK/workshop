@@ -10,14 +10,16 @@ vulkan_ri_tile_manager::vulkan_ri_tile_manager(vulkan_render_interface& renderer
 {
 }
 
-vulkan_ri_tile_manager::~vulkan_ri_tile_manager() = default;
+vulkan_ri_tile_manager::~vulkan_ri_tile_manager()
+{ 
+}
 
 result<void> vulkan_ri_tile_manager::create_resources()
 {
     return true;
 }
 
-void vulkan_ri_tile_manager::begin_frame()
+void vulkan_ri_tile_manager::new_frame(size_t frame_index)
 {
 }
 

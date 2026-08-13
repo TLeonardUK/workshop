@@ -10,7 +10,9 @@ vulkan_ri_query_manager::vulkan_ri_query_manager(vulkan_render_interface& render
 {
 }
 
-vulkan_ri_query_manager::~vulkan_ri_query_manager() = default;
+vulkan_ri_query_manager::~vulkan_ri_query_manager()
+{ 
+}
 
 result<void> vulkan_ri_query_manager::create_resources()
 {

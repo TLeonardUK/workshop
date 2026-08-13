@@ -4,6 +4,8 @@
 // ================================================================================================
 #pragma once
 
+#define VK_ONLY_EXPORTED_PROTOTYPES
+
 #include <vulkan/vulkan.h>
 
 #include "thirdparty/sdl2/include/SDL_vulkan.h"
